@@ -21,7 +21,7 @@ CELERYBEAT_SCHEDULE = {
         'task': 'task.inference',                                       # task name
         'schedule': crontab(minute='*/1'),                              # time
         # Args for tasj
-        'args': (os.path.normpath(os.path.join(file_path, u'../../../d2rq/dump-rdf')),             # dunmp-rdf
+        'args': (os.path.normpath(os.path.join(file_path, u'../../../d2rq')),             # dunmp-rdf
                  os.path.normpath(os.path.join(file_path, u'../../../d2rq/mapping.ttl')),         # in file
                  os.path.normpath(os.path.join(file_path, u'../../../d2rq/dump.rdf'))),           # out file in desired format
     },
