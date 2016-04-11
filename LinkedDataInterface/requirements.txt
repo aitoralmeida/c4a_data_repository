@@ -1,0 +1,8 @@
+amqp==1.4.9
+anyjson==0.3.3
+argparse==1.2.1
+billiard==3.3.0.23
+celery==3.1.23
+kombu==3.0.35
+pytz==2016.3
+wsgiref==0.1.2

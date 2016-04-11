@@ -13,6 +13,10 @@ __copyright__ = "foo"   # we need?¿
 
 # Get actual file absolute path
 file_path = os.path.realpath(__file__)
+# Set json as only accepted content type serializer (improves security).
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
 # Set Timezone
 CELERY_TIMEZONE = 'Europe/Madrid'
 # Set execution
