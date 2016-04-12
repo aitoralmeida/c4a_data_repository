@@ -5,6 +5,7 @@ SQLAlchemy==1.0.12
 Werkzeug==0.11.5
 argparse==1.2.1
 itsdangerous==0.24
+nose==1.3.7
 psycopg2==2.6.1
 uWSGI==2.0.12
 wsgiref==0.1.2
