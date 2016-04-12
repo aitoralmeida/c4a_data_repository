@@ -19,17 +19,21 @@ app = Flask(__name__)
 @app.route('/add_action', methods=['GET', 'POST'])
 def index():
     if request.method == 'POST':
-        orm = post_orm.PostgORM()
-        data = request.json # Data in JSON format
-
-
-        new_location = tables.Location(location=data['location']) # Creating new location
-        res = orm.insert_one(new_location)
-        # Only if ok
-        orm.close()
-        resp = make_response("Data stored in DB OK \n")
-        orm.close()
-        return resp
+        # Ensure that we are sending Json format data
+        if request.headers['content-type'] == 'application/json':
+            # todo handle this with try cath block
+            orm = post_orm.PostgORM()
+            data = request.json  # Data in JSON format
+            new_location = tables.Location(location=data['location']) # Creating new location
+            res = orm.insert_one(new_location)
+            # Only if ok
+            orm.close()
+            resp = make_response("Data stored in DB OK \n")
+            orm.close()
+            return resp
+        else:
+            # User submitted an unsupported Content-Type
+            return Response(status=400)
     else:
         orm = post_orm.PostgORM()
         # Devolvemos un usuario
