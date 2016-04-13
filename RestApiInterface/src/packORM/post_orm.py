@@ -5,11 +5,11 @@ This file is used to connect to the database using SQL Alchemy ORM
 
 """
 
+import tables
 from sqlalchemy import create_engine
 from sqlalchemy.engine.url import URL
-from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import OperationalError
-import tables
+from sqlalchemy.orm import sessionmaker
 
 __author__ = 'Rubén Mulero'
 __copyright__ = "foo"   # we need?¿
@@ -50,17 +50,9 @@ class PostgORM(object):
         Insert one desired data
 
         :param p_data: Object from Tables
-        :return: False if Nothing, Something if OK
+        :return: None
         """
-        res = False
-        self.session.add(p_data)         # Pending add (we can see new changes before commit)
-        if self.session.new:
-            res = self.session.commit()        # TODO parece que no devuelve nada
-        else:
-            # Raise error
-            print "Can't add new data into the current session"
-
-        return res
+        self.session.add(p_data)                  # Pending add (we can see new changes before commit)
 
 
     def insert_all(self, p_list_data):
@@ -68,29 +60,37 @@ class PostgORM(object):
         Insert a list of Type of datas
 
         :param p_list_data: List of data
-        :return:
+        :return: None
         """
-        res = False
         self.session.add_all(p_list_data)         # Multiple users, pending action
-        if self.session.new:
-            # Todo try catch con rollback en caso de fallo
-            res = self.session.commit()
-        else:
-            # Raise error
-            print "Can't add new data into the current session"
-
-        return res
 
     def query(self, p_class, **attrs):
-        # TODO definir mejor
+        # TODO define better
 
         return self.session.query(p_class)
 
 
-    def close(self):
+    def commit(self):
         """
-        Close the connection
+        Commit all data and close the connection to DB.
 
         :return: None
         """
-        self.session.close()
+        if self.session.new:  # todo check if we need to know that session is new or not
+            try:
+                self.session.commit()
+            except:
+                self.session.rollback()
+            finally:
+                self.session.close()
+        else:
+            print "Session is not new. Check it"
+
+    def close(self):
+        """
+        Force close the connecion of the actual session
+
+        :return: None
+        """
+        if self.session:
+            self.session.close()    # todo Session return anything?

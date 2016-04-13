@@ -5,9 +5,10 @@ IN this clase we define REST API actions. We define what url is needed and what 
 
 """
 
-from packORM import post_orm, tables
-from flask import Flask, request, make_response, jsonify, Response
 from json import dumps
+from src.packORM import post_orm
+from src.packORM import tables
+from flask import Flask, request, make_response, Response, abort
 from sqlalchemy.orm import class_mapper
 
 __author__ = 'Rubén Mulero'
@@ -21,23 +22,27 @@ def index():
     if request.method == 'POST':
         # Ensure that we are sending Json format data
         if request.headers['content-type'] == 'application/json':
-            # todo handle this with try cath block
-            orm = post_orm.PostgORM()
-            data = request.json  # Data in JSON format
-            new_location = tables.Location(location=data['location']) # Creating new location
-            res = orm.insert_one(new_location)
-            # Only if ok
-            orm.close()
-            resp = make_response("Data stored in DB OK \n")
-            orm.close()
-            return resp
+            data = request.json  # Request data in JSON formar if is bad flask makes a 400 response
+            if data and 'location' in data: # todo we can send empty data? and data.get('location') is not none.....
+                new_location = tables.Location(location=data.get('location', None))  # Creating new location
+                orm = post_orm.PostgORM()
+                # Need to control this part
+                orm.insert_one(new_location)
+                # Commit and close
+                orm.commit()
+                resp = make_response("Data stored in DB OK \n")
+                return resp
+            else:
+                # Data is incorrect
+                abort(500)
         else:
             # User submitted an unsupported Content-Type
-            return Response(status=400)
+            abort(400)
     else:
         orm = post_orm.PostgORM()
-        # Devolvemos un usuario
+        # Return one user: This is an example test
         res = orm.query(tables.User)
+        # todo we need to decide if we want to request all datasets or only one.
         serialized_labels = [serialize(label) for label in res]
         #res_json = dumps(serialized_labels)
 
@@ -46,6 +51,16 @@ def index():
 
         # multiple datasets(not recommended)
         return Response(dumps(serialized_labels), mimetype='application/json')
+
+@app.errorhandler(400)
+def not_found(error):
+    resp = make_response("Your content type or data is not in JSON format\n", 400)
+    return resp
+
+@app.errorhandler(500)
+def data_sent_error(error):
+    resp = make_response("Data entered is invalid, please check your JSON headers\n", 500)
+    return resp
 
 
 def serialize(model):
@@ -56,8 +71,6 @@ def serialize(model):
     return dict((c, getattr(model, c)) for c in columns)
 
 
-
-
 # todo change the location of the main execution file
 if __name__ == '__main__':
     app.run(debug=True)
@@ -65,9 +78,9 @@ if __name__ == '__main__':
 
 """
 
-curl -X POST -d @filename.txt http://127.0.0.1:5000/ --header "Content-Type:application/json"
+curl -X POST -d @filename.txt http://127.0.0.1:5000/add_action --header "Content-Type:application/json"
 
-curl -X POST -d '{"name1":"Rodolfo","name2":"Pakorro"}' http://127.0.0.1:5000/ --header "Content-Type:application/json"
+curl -X POST -d '{"name1":"Rodolfo","name2":"Pakorro"}' http://127.0.0.1:5000/add_action --header "Content-Type:application/json"
 
 """
 
