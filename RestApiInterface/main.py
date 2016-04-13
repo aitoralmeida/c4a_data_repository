@@ -1,6 +1,10 @@
+# -*- coding: utf-8 -*-
+
 import sys
 import os
 
+__author__ = 'Rubén Mulero'
+__copyright__ = "foo"   # we need?¿
 
 # Prepare base dir working directory
 basedir = os.path.dirname(os.path.realpath(__file__))
