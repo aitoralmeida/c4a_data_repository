@@ -70,12 +70,6 @@ def serialize(model):
     # then we return their values in a dict
     return dict((c, getattr(model, c)) for c in columns)
 
-
-# todo change the location of the main execution file
-if __name__ == '__main__':
-    app.run(debug=True)
-
-
 """
 
 curl -X POST -d @filename.txt http://127.0.0.1:5000/add_action --header "Content-Type:application/json"

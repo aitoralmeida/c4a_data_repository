@@ -6,6 +6,7 @@ This file is used to connect to the database using SQL Alchemy ORM
 """
 
 import tables
+import ConfigParser
 from sqlalchemy import create_engine
 from sqlalchemy.engine.url import URL
 from sqlalchemy.exc import OperationalError
@@ -14,15 +15,30 @@ from sqlalchemy.orm import sessionmaker
 __author__ = 'Rubén Mulero'
 __copyright__ = "foo"   # we need?¿
 
+
 # Database settings
-DATABASE = {
-    'drivername': 'postgres',
-    'host': 'localhost',
-    'port': '5432',
-    'username': 'postgres',
-    'password': 'postgres',
-    'database': 'postgres'
-}
+config = ConfigParser.ConfigParser()
+config.readfp(open('../conf/rest_api.cfg'))
+if 'database' in config.sections():
+    # We have config file with data
+    DATABASE = {
+                    'drivername': config.get('database', 'drivername') or 'postgres',
+                    'host': config.get('database', 'host') or 'localhost',
+                    'port': config.get('database', 'port') or '5432',
+                    'username': config.get('database', 'username') or 'postgres',
+                    'password': config.get('database', 'password') or 'postgres',
+                    'database': config.get('database', 'database') or 'postgres'
+    }
+else:
+    # Any config file detected, load default settings.
+    DATABASE = {
+        'drivername': 'postgres',
+        'host': 'localhost',
+        'port': '5432',
+        'username': 'postgres',
+        'password': 'postgres',
+        'database': 'postgres'
+    }
 
 class PostgORM(object):
 
