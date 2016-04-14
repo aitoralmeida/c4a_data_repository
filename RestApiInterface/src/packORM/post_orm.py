@@ -7,7 +7,7 @@ This file is used to connect to the database using SQL Alchemy ORM
 
 import tables
 import ConfigParser
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, desc
 from sqlalchemy.engine.url import URL
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import sessionmaker
@@ -18,7 +18,7 @@ __copyright__ = "foo"   # we need?¿
 
 # Database settings
 config = ConfigParser.ConfigParser()
-config.readfp(open('../conf/rest_api.cfg'))
+config.readfp(open('./conf/rest_api.cfg'))
 if 'database' in config.sections():
     # We have config file with data
     DATABASE = {
@@ -80,11 +80,29 @@ class PostgORM(object):
         """
         self.session.add_all(p_list_data)         # Multiple users, pending action
 
-    def query(self, p_class, **attrs):
-        # TODO define better
+    def query(self, p_class, web_dict, limit=10, offset=0, orderby='asc'):
+        """
+        Makes a query to the desired table of databse and filter the result based on user choice.
 
-        return self.session.query(p_class)
-
+        :param p_class:  Name of the table to query
+        :param web_dict: A dict with colums and data to filter.
+        :param limit: query limit (default is 10)
+        :param offset: offset (default is 0)
+        :return:
+        """
+        q = self.session.query(p_class)
+        if q and web_dict and web_dict.items():
+            # Filter based of the content of the dict
+            for attr, value in web_dict.items():
+                q = q.filter(getattr(p_class, attr).like("%%%s%%" % value))
+        # Limit and offset our query
+        q = q.limit(limit)
+        q = q.offset(offset)
+        # ORder by
+        if orderby is not 'asc':
+            # Default order by id
+            q = q.order_by(desc(p_class.id))
+        return q
 
     def commit(self):
         """
@@ -110,3 +128,12 @@ class PostgORM(object):
         """
         if self.session:
             self.session.close()    # todo Session return anything?
+
+
+
+
+######### OOFSET
+##### for u in session.query(User).order_by(User.id)[1:3]:
+
+
+##query.filter(User.name == 'ed', User.fullname == 'Ed Jones')
