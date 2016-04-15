@@ -12,6 +12,7 @@ from sqlalchemy.engine.url import URL
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import sessionmaker
 
+
 __author__ = 'Rubén Mulero'
 __copyright__ = "foo"   # we need?¿
 
@@ -104,6 +105,21 @@ class PostgORM(object):
             q = q.order_by(desc(p_class.id))
         return q
 
+    # todo think if needed or not
+    def query_get(self, p_class,  p_id):
+        """
+        Makes a querty to the desired Table of databased based on row ID
+
+        :param p_class:  Name of the table to query
+        :param p_id: id of the row
+        :return: Object instance of the class or None
+        """
+        q = None
+        res = self.session.query(p_class).get(p_id)
+        if res:
+            q = res
+        return q
+
     def commit(self):
         """
         Commit all data and close the connection to DB.
@@ -129,9 +145,46 @@ class PostgORM(object):
         if self.session:
             self.session.close()    # todo Session return anything?
 
+    def verify_user_login(self, p_data, app, expiration=600):
+        """
+        This method generates a new auth token to the user when username and password are OK
+
+        :param p_data: A Python dic with username and password.
+        :param app: Flask application Object.
+        :param expiration: Expiration time of the token.
+
+        :return: A string with token data or Error String.
+        """
+        if 'username' in p_data and 'password' in p_data and app:
+            user_data = self.query(tables.User, p_data)
+            if user_data and user_data[0]:
+                # Login OK
+                res = user_data[0].generate_auth_token(app, expiration)
+            else:
+                res = "username or password incorrect"
+        else:
+            res = "Incorrect behaviour"
+        return res
+
+    def verify_auth_token(self, token, app):
+        """
+        This method verify user's token
+
+        :param token: Token information
+        :param app: Flask application Object
+
+        :return: All user data or None
+        """
+        user_data = None
+        if app and token:
+            res = tables.User.verify_auth_token(token, app)
+            if res and res.get('id', False):
+                user_data = self.session.query(tables.User).get(res.get('id', 0))
+        return user_data
 
 
 
+# todo delete after finish all
 ######### OOFSET
 ##### for u in session.query(User).order_by(User.id)[1:3]:
 

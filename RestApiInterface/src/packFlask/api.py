@@ -8,19 +8,26 @@ IN this clase we define REST API actions. We define what url is needed and what 
 from json import dumps
 from src.packORM import post_orm
 from src.packORM import tables
-from flask import Flask, request, make_response, Response, abort, redirect, url_for, session
+from flask import Flask, request, make_response, Response, abort, redirect, url_for, session, flash
 from sqlalchemy.orm import class_mapper
+
 
 __author__ = 'Rubén Mulero'
 __copyright__ = "foo"   # we need?¿
 
 
-app = Flask(__name__)
+# Configuration
 ACTUAL_API = '0.1'
 AVAILABLE_API = '0.1', '0.2', '0.3'
+SECRET_KEY = 'development key'
 DATABASE = 'Database'
 USERNAME = 'admin'
 PASSWORD = 'admin'
+
+# Create application and load config.
+app = Flask(__name__)
+app.config.from_object(__name__)
+
 
 @app.before_request
 def before_request():
@@ -40,7 +47,7 @@ def index():
 
     :return: Redirect to the latest api version
     """
-    return redirect(url_for('api', version=ACTUAL_API))
+    return redirect(url_for('api', version=app.config['ACTUAL_API']))
 
 
 @app.route('/api')
@@ -50,11 +57,11 @@ def api_redirect():
 
     :return: Redirection to the current api version
     """
-    return redirect(url_for('api', version=ACTUAL_API))
+    return redirect(url_for('api', version=app.config['ACTUAL_API']))
 
 
 @app.route('/api/<version>')
-def api(version=ACTUAL_API):
+def api(version=app.config['ACTUAL_API']):
     """
     This is our main page.
 
@@ -74,9 +81,8 @@ def api(version=ACTUAL_API):
         return "You have entered a invalid api version", 404
 
 
-
-@app.route('/api/<version>/login', methods=['GET', 'POST'])
-def login(version=ACTUAL_API):
+@app.route('/api/<version>/login', methods=['POST'])
+def login(version=app.config['ACTUAL_API']):
     """
     Gives the hability to login in the API an insert new DATA
 
@@ -84,30 +90,42 @@ def login(version=ACTUAL_API):
     :return:
     """
     if _check_version(version):
-        # todo check tutorial
-        if request.method == 'POST':
-            pass
-        pass
+        if request.headers['content-type'] == 'application/json':
+            data = request.json
+            if 'username' in data and 'password' in data:
+                # Credentials ok
+                res = DATABASE.verify_user_login(data, app, expiration=600)
+
+                """
+                    # Redirect
+                    return redirect(url_for('api', version=app.config['ACTUAL_API']))
+                """
+                return res
+
+        else:
+            abort(400)
     else:
         return "You have entered a invalid api version", 404
 
 
-@app.route('/api/<version>/login')
-def logout():
-
-
-
-    # TODO
+@app.route('/api/<version>/logout', methods=['POST'])
+def logout(version=app.config['ACTUAL_API']):
     """
-    session.pop('logged_in', None)
-    flash('You were logged out')
-    return redirect(url_for('show_entries'))
-    """
+    Logout from the system and removes session mark
 
+    :param version:
+    :return:
+    """
+    if _check_version(version):
+        session.pop('logged_in', None)
+        flash('You were logged out')
+        return redirect(url_for('show_entries'))
+    else:
+        return "You have entered a invalid api version", 404
 
 
 @app.route('/api/<version>/search', methods=['GET', 'POST'])
-def search(version=ACTUAL_API):
+def search(version=app.config['ACTUAL_API']):
     """
     Return a specified search pattern
 
@@ -138,9 +156,24 @@ def search(version=ACTUAL_API):
         return "You have entered a invalid api version", 404
 
 
-
-
-
+@app.route('/api/<version>/add', methods=['POST'])
+def add(version=app.config['ACTUAL_API']):
+    if _check_version(version):
+        if request.headers['content-type'] == 'application/json':
+            # Check if token is ok
+            data = request.json
+            if data.get('token', False):
+                user_id = DATABASE.verify_auth_token(data['token'], app)
+                if user_id:
+                    pass
+                else:
+                    return "Token Expired or incorrect"
+            else:
+                abort(500)
+        else:
+            abort(400)
+    else:
+        return "You have entered a invalid api version", 404
 
 
 # TODO only for example
@@ -208,7 +241,7 @@ def _check_version(p_ver):
     :return:  True or False
     """
     api_good_version = False
-    if p_ver in AVAILABLE_API:
+    if p_ver in app.config['AVAILABLE_API']:
         api_good_version = True
     return api_good_version
 
