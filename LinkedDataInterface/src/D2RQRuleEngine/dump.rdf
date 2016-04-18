@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+
+<RDF>
+  <Description about="http://www.w3schools.com/rdf">
+    <author>Jan Egil Refsnes</author>
+    <homepage>http://www.w3schools.com</homepage>
+  </Description>
+</RDF> 

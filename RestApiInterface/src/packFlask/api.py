@@ -19,7 +19,7 @@ __copyright__ = "foo"   # we need?¿
 # Configuration
 ACTUAL_API = '0.1'
 AVAILABLE_API = '0.1', '0.2', '0.3'
-SECRET_KEY = 'development key'
+SECRET_KEY = '\xc2O\xd1\xbb\xd6\xb2\xc2pxRS\x12l\xee8X\xcb\xc3(\xeer\xc5\x08s'
 DATABASE = 'Database'
 USERNAME = 'admin'
 PASSWORD = 'admin'
@@ -33,11 +33,15 @@ app.config.from_object(__name__)
 def before_request():
     global DATABASE
     DATABASE = post_orm.PostgORM()
+    # Make sessions permament with some time
+    #session.permanent = True
+    #app.permanent_session_lifetime = timedelta(minutes=5) # days=232323 years=2312321 blablabla
 
 @app.teardown_request
 def teardown_request(exception):
     global DATABASE
     if DATABASE is not None:
+        # Close database active session
         DATABASE.close()
 
 @app.route('/')
@@ -73,12 +77,12 @@ def api(version=app.config['ACTUAL_API']):
 
         Here you have a list of available commands to use:
 
-        /s  --> Search datasets (can be modified by limit and offset
+        This API is designed to be used with curl and JSON request.
+
 
         """
     else:
-        #todo list available apis
-        return "You have entered a invalid api version", 404
+        return "You have entered an invalid api version", 404
 
 
 @app.route('/api/<version>/login', methods=['POST'])
@@ -93,19 +97,19 @@ def login(version=app.config['ACTUAL_API']):
         if request.headers['content-type'] == 'application/json':
             data = request.json
             if 'username' in data and 'password' in data:
-                # Credentials ok
-                res = DATABASE.verify_user_login(data, app, expiration=600)
-
-                """
-                    # Redirect
+                # Loggin OK!
+                user_data = DATABASE.verify_user_login(data)
+                if user_data and user_data[0]:
+                    # Login ok
+                    session['logged_in'] = True
+                    flash('You were logged in')
                     return redirect(url_for('api', version=app.config['ACTUAL_API']))
-                """
-                return res
-
+                else:
+                    return "You have entered an invalid username or password"
         else:
             abort(400)
     else:
-        return "You have entered a invalid api version", 404
+        return "You have entered an invalid api version", 404
 
 
 @app.route('/api/<version>/logout', methods=['POST'])
@@ -113,106 +117,93 @@ def logout(version=app.config['ACTUAL_API']):
     """
     Logout from the system and removes session mark
 
-    :param version:
+    :param version: APi version
     :return:
     """
     if _check_version(version):
         session.pop('logged_in', None)
         flash('You were logged out')
-        return redirect(url_for('show_entries'))
+        return redirect(url_for('api', version=app.config['ACTUAL_API']))
     else:
-        return "You have entered a invalid api version", 404
+        return "You have entered an invalid api version", 404
 
 
-@app.route('/api/<version>/search', methods=['GET', 'POST'])
+@app.route('/api/<version>/search', methods=['POST'])
 def search(version=app.config['ACTUAL_API']):
     """
-    Return a specified search pattern
+    Return data based on specified search filters:
+
+    Example of JSON search call:
+
+    {
+        'colum_1': 'value_1',
+        'colum_2': 'value_2',
+        ###### Optional parameters
+        'limit': 2323,
+        'offset': 2,
+        'order_by': 'desc'
+    }
+
+    You only need to define a JSON with needed filters and you can optionally add some data to define limits, orders
+    and offsets.
 
     :param version: Api version
     :return:
     """
     if _check_version(version):
-        if request.method == 'POST':
-            # JSON based Search
-            if request.headers['content-type'] == 'application/json':
-                data = request.json
-                # Query database and select needed elements
-                res = DATABASE.query(tables.User, data)
-                serialized_labels = [serialize(label) for label in res]
-                return Response(dumps(serialized_labels), mimetype='application/json')
-            else:
-                abort(400)
-        else:
-            # Args based search
-            # arguments, i.e ?lastname=some-value)
-            # lastname = request.args.get('lastname')
-            # todo if we have args we need to see if are or not correct
-            res = DATABASE.query(tables.User, request.args)
+        if not session.get('logged_in'):
+            abort(401)
+        if request.headers['content-type'] == 'application/json':
+            data = request.json
+            limit = 10
+            offset = 0
+            order_by = 'asc'
+            if data.get('limit', False):
+                limit = data.get('limit', 10)
+                del data['limit']
+            if data.get('offset', False):
+                offset = data.get('offset', 0)
+                del data['offset']
+            if data.get('order_by', False):
+                order_by = data.get('order_by', 'asc')
+                del data['order_by']
+            # Query database and select needed elements
+            res = DATABASE.query(tables.User, data, limit=limit, offset=offset, order_by=order_by)
             serialized_labels = [serialize(label) for label in res]
-            return Response(dumps(serialized_labels), mimetype='application/json')
-
+            if len(serialized_labels) == 0:
+                return Response("No data found with this filters.\n")
+            else:
+                return Response(dumps(serialized_labels), mimetype='application/json')
+        else:
+            abort(400)
     else:
-        return "You have entered a invalid api version", 404
+        return "You have entered an invalid api version", 404
 
 
+# todo we need to define add_one and add_multI???
 @app.route('/api/<version>/add', methods=['POST'])
 def add(version=app.config['ACTUAL_API']):
+    """
+    Add a new element in DB.
+
+
+    :param version: Api version
+    :return:
+    """
     if _check_version(version):
+        if not session.get('logged_in'):
+            abort(401)
         if request.headers['content-type'] == 'application/json':
             # Check if token is ok
             data = request.json
-            if data.get('token', False):
-                user_id = DATABASE.verify_auth_token(data['token'], app)
-                if user_id:
-                    pass
-                else:
-                    return "Token Expired or incorrect"
-            else:
-                abort(500)
+            # validate data
+            # if data is validated
+                # insert into database
+            return Response('Data stored in database OK')
         else:
             abort(400)
     else:
-        return "You have entered a invalid api version", 404
-
-
-# TODO only for example
-
-@app.route('/add_action', methods=['GET', 'POST'])
-def add_action():
-    if request.method == 'POST':
-        # Ensure that we are sending Json format data
-        if request.headers['content-type'] == 'application/json':
-            data = request.json  # Request data in JSON formar if is bad flask makes a 400 response
-            if data and 'location' in data: # todo we can send empty data? and data.get('location') is not none.....
-                new_location = tables.Location(location=data.get('location', None))  # Creating new location
-                orm = post_orm.PostgORM()
-                # Need to control this part
-                orm.insert_one(new_location)
-                # Commit and close
-                orm.commit()
-                resp = make_response("Data stored in DB OK \n")
-                return resp
-            else:
-                # Data is incorrect
-                abort(500)
-        else:
-            # User submitted an unsupported Content-Type
-            abort(400)
-    else:
-        orm = post_orm.PostgORM()
-        # Return one user: This is an example test
-        res = orm.query(tables.User, None)
-        # todo we need to decide if we want to request all datasets or only one.
-        serialized_labels = [serialize(label) for label in res]
-        #res_json = dumps(serialized_labels)
-
-        # Only one dataset
-        #return jsonify(**serialized_labels[0])
-
-        # multiple datasets(not recommended)
-        return Response(dumps(serialized_labels), mimetype='application/json')
-
+        return "You have entered an invalid api version", 404
 
 @app.errorhandler(400)
 def not_found(error):
@@ -244,6 +235,18 @@ def _check_version(p_ver):
     if p_ver in app.config['AVAILABLE_API']:
         api_good_version = True
     return api_good_version
+
+
+def _check_data(p_data):
+    """
+    Check if data is ok
+
+
+    :param p_data: data from the user.
+    :return: True or False if data is ok.
+    """
+    # todo define what kind of data we need to validate
+    pass
 
 
 """

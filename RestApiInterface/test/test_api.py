@@ -5,6 +5,8 @@ import unittest
 
 from src.packFlask.api import app
 
+#todo we need to change this test to final form when we have defined DB structure
+
 class FlaskTestCase(unittest.TestCase):
     def setUp(self):
         self.app = app.test_client()

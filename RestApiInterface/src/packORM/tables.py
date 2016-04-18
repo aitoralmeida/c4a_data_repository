@@ -87,37 +87,38 @@ class User(Base):
                 #registered_on=self.registered_on.isoformat()
                 genre=self.genre, age=self.age )
 
-    # Token management
-    def generate_auth_token(self, app, expiration=600):
-        """
-        This method generates a new auth token to the user.
+    # # Token management
+    # def generate_auth_token(self, app, expiration=600):
+    #     """
+    #     This method generates a new auth token to the user.
+    #
+    #     :param app: Flask application Object
+    #     :param expiration: Expiration time of the token
+    #
+    #     :return: A string with the token.
+    #     """
+    #     s = Serializer(app.config['SECRET_KEY'], expires_in=expiration)
+    #     return s.dumps({'id': self.id})
+    #
+    # @staticmethod
+    # def verify_auth_token(token, app):
+    #     """
+    #     This method verify user's token
+    #
+    #     :param token: Token information
+    #     :param app: Flask application Object
+    #
+    #     :return: User ID
+    #     """
+    #     s = Serializer(app.config['SECRET_KEY'])
+    #     try:
+    #         data = s.loads(token)
+    #     except SignatureExpired:
+    #         return None  # valid token, but expired
+    #     except BadSignature:
+    #         return None  # invalid token
+    #     return data
 
-        :param app: Flask application Object
-        :param expiration: Expiration time of the token
-
-        :return: A string with the token.
-        """
-        s = Serializer(app.config['SECRET_KEY'], expires_in=expiration)
-        return s.dumps({'id': self.id})
-
-    @staticmethod
-    def verify_auth_token(token, app):
-        """
-        This method verify user's token
-
-        :param token: Token information
-        :param app: Flask application Object
-
-        :return: User ID
-        """
-        s = Serializer(app.config['SECRET_KEY'])
-        try:
-            data = s.loads(token)
-        except SignatureExpired:
-            return None  # valid token, but expired
-        except BadSignature:
-            return None  # invalid token
-        return data
 
 
 class Action(Base):

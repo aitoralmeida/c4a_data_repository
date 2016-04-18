@@ -81,7 +81,7 @@ class PostgORM(object):
         """
         self.session.add_all(p_list_data)         # Multiple users, pending action
 
-    def query(self, p_class, web_dict, limit=10, offset=0, orderby='asc'):
+    def query(self, p_class, web_dict, limit=10, offset=0, order_by='asc'):
         """
         Makes a query to the desired table of databse and filter the result based on user choice.
 
@@ -89,6 +89,7 @@ class PostgORM(object):
         :param web_dict: A dict with colums and data to filter.
         :param limit: query limit (default is 10)
         :param offset: offset (default is 0)
+        :param order_by: Set order of query (default is 'asc' on ID column)
         :return:
         """
         q = self.session.query(p_class)
@@ -96,16 +97,15 @@ class PostgORM(object):
             # Filter based of the content of the dict
             for attr, value in web_dict.items():
                 q = q.filter(getattr(p_class, attr).like("%%%s%%" % value))
+        # ORder by
+        if order_by is not 'asc':
+            # Default order by id
+            q = q.order_by(desc(p_class.id))
         # Limit and offset our query
         q = q.limit(limit)
         q = q.offset(offset)
-        # ORder by
-        if orderby is not 'asc':
-            # Default order by id
-            q = q.order_by(desc(p_class.id))
         return q
 
-    # todo think if needed or not
     def query_get(self, p_class,  p_id):
         """
         Makes a querty to the desired Table of databased based on row ID
@@ -129,10 +129,8 @@ class PostgORM(object):
         if self.session.new:  # todo check if we need to know that session is new or not
             try:
                 self.session.commit()
-            except:
+            except Exception:
                 self.session.rollback()
-            finally:
-                self.session.close()
         else:
             print "Session is not new. Check it"
 
@@ -143,44 +141,62 @@ class PostgORM(object):
         :return: None
         """
         if self.session:
-            self.session.close()    # todo Session return anything?
+            self.session.close()
 
-    def verify_user_login(self, p_data, app, expiration=600):
+    def verify_user_login(self, p_data):
         """
-        This method generates a new auth token to the user when username and password are OK
+        This method check given user and password and create a new session for the current user.
 
-        :param p_data: A Python dic with username and password.
-        :param app: Flask application Object.
-        :param expiration: Expiration time of the token.
-
-        :return: A string with token data or Error String.
+        :param p_data: User and password
+        :return:
         """
-        if 'username' in p_data and 'password' in p_data and app:
+        res = None
+        if 'username' in p_data and 'password' in p_data:
             user_data = self.query(tables.User, p_data)
             if user_data and user_data[0]:
-                # Login OK
-                res = user_data[0].generate_auth_token(app, expiration)
-            else:
-                res = "username or password incorrect"
+                # LOGIN OK
+                res = user_data
         else:
-            res = "Incorrect behaviour"
+            print "Rare exception"
         return res
 
-    def verify_auth_token(self, token, app):
-        """
-        This method verify user's token
 
-        :param token: Token information
-        :param app: Flask application Object
-
-        :return: All user data or None
-        """
-        user_data = None
-        if app and token:
-            res = tables.User.verify_auth_token(token, app)
-            if res and res.get('id', False):
-                user_data = self.session.query(tables.User).get(res.get('id', 0))
-        return user_data
+    # def verify_user_login(self, p_data, app, expiration=600):
+    #     """
+    #     This method generates a new auth token to the user when username and password are OK
+    #
+    #     :param p_data: A Python dic with username and password.
+    #     :param app: Flask application Object.
+    #     :param expiration: Expiration time of the token.
+    #
+    #     :return: A string with token data or Error String.
+    #     """
+    #     if 'username' in p_data and 'password' in p_data and app:
+    #         user_data = self.query(tables.User, p_data)
+    #         if user_data and user_data[0]:
+    #             # Login OK
+    #             res = user_data[0].generate_auth_token(app, expiration)
+    #         else:
+    #             res = "username or password incorrect"
+    #     else:
+    #         res = "Incorrect behaviour"
+    #     return res
+    #
+    # def verify_auth_token(self, token, app):
+    #     """
+    #     This method verify user's token
+    #
+    #     :param token: Token information
+    #     :param app: Flask application Object
+    #
+    #     :return: All user data or None
+    #     """
+    #     user_data = None
+    #     if app and token:
+    #         res = tables.User.verify_auth_token(token, app)
+    #         if res and res.get('id', False):
+    #             user_data = self.session.query(tables.User).get(res.get('id', 0))
+    #     return user_data
 
 
 
