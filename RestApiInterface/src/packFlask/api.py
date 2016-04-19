@@ -79,6 +79,12 @@ def api(version=app.config['ACTUAL_API']):
 
         This API is designed to be used with curl and JSON request.
 
+        <ul>
+            <li><b>add</b>: Adds new element into databse.</li>
+            <li><b>login</b>: Login into API.</li>
+            <li><b>logout</b>: Disconnect current user from the API.</li>
+            <li><b>search</b>: Search some datasets.</li>
+        </ul
 
         """
     else:
@@ -98,14 +104,13 @@ def login(version=app.config['ACTUAL_API']):
             data = request.json
             if 'username' in data and 'password' in data:
                 # Loggin OK!
-                user_data = DATABASE.verify_user_login(data)
-                if user_data and user_data[0]:
-                    # Login ok
+                res = DATABASE.verify_user_login(data)
+                if res:
                     session['logged_in'] = True
                     flash('You were logged in')
                     return redirect(url_for('api', version=app.config['ACTUAL_API']))
                 else:
-                    return "You have entered an invalid username or password"
+                    abort(401)
         else:
             abort(400)
     else:
@@ -194,12 +199,14 @@ def add(version=app.config['ACTUAL_API']):
         if not session.get('logged_in'):
             abort(401)
         if request.headers['content-type'] == 'application/json':
-            # Check if token is ok
             data = request.json
-            # validate data
-            # if data is validated
-                # insert into database
-            return Response('Data stored in database OK')
+            # validate users data
+            if data and _check_data(data):
+                print "data is ok"
+                # todo add new data based on crieteria. Maybe we need more endpoints
+                return Response('Data stored in database OK\n')
+            else:
+                abort(500)
         else:
             abort(400)
     else:
@@ -212,7 +219,7 @@ def not_found(error):
 
 @app.errorhandler(500)
 def data_sent_error(error):
-    resp = make_response("Data entered is invalid, please check your JSON headers\n", 500)
+    resp = make_response("Data entered is invalid, please check your JSON\n", 500)
     return resp
 
 
@@ -229,7 +236,7 @@ def _check_version(p_ver):
     Check if we are using a good api version
 
     :param p_ver: version
-    :return:  True or False
+    :return:  True or False if api used is ok.
     """
     api_good_version = False
     if p_ver in app.config['AVAILABLE_API']:
@@ -239,14 +246,21 @@ def _check_version(p_ver):
 
 def _check_data(p_data):
     """
-    Check if data is ok
+    Check if data is ok and if the not nullable values are filled.
 
 
     :param p_data: data from the user.
     :return: True or False if data is ok.
     """
-    # todo define what kind of data we need to validate
-    pass
+    res = False
+    # todo define what kind of data we need to validate. For the moment we are going to set some basic data
+    # Check if JSON has all needed values
+    if all(k in p_data for k in ("name", "lastname", "genre", 'age', 'username', 'password')):
+        # Check not nullable values:
+        if p_data['username'] and p_data['password']:
+            # All values ok
+            res = True
+    return res
 
 
 """

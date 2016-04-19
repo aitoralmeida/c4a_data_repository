@@ -6,8 +6,9 @@ This file uses SQL alchemy declarative base model to create SQL Tables
 """
 
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import relationship
-from sqlalchemy import Column, Integer, String, Sequence, Float, Table, ForeignKey, TIMESTAMP
+from sqlalchemy.orm import relationship, validates
+from sqlalchemy import Column, Integer, String, Sequence, Float, Table, ForeignKey, TIMESTAMP, Text, TypeDecorator
+from PasswordHash import PasswordHash
 from itsdangerous import (TimedJSONWebSignatureSerializer
                           as Serializer, BadSignature, SignatureExpired)
 
@@ -17,6 +18,43 @@ __copyright__ = "foo"   # we need?¿
 
 # Global variable declatarive base
 Base = declarative_base()
+
+
+class Password(TypeDecorator):
+    """Allows storing and retrieving password hashes using PasswordHash."""
+    impl = Text
+
+    def __init__(self, rounds=12, **kwds):
+        self.rounds = rounds
+        super(Password, self).__init__(**kwds)
+
+    def process_bind_param(self, value, dialect):
+        """Ensure the value is a PasswordHash and then return its hash."""
+        return self._convert(value).hash
+
+    def process_result_value(self, value, dialect):
+        """Convert the hash to a PasswordHash, if it's non-NULL."""
+        if value is not None:
+            return PasswordHash(value, rounds=self.rounds)
+
+    def validator(self, password):
+        """Provides a validator/converter for @validates usage."""
+        return self._convert(password)
+
+    def _convert(self, value):
+        """Returns a PasswordHash from the given string.
+
+        PasswordHash instances or None values will return unchanged.
+        Strings will be hashed and the resulting PasswordHash returned.
+        Any other input will result in a TypeError.
+        """
+        if isinstance(value, PasswordHash):
+            return value
+        elif isinstance(value, basestring):
+            return PasswordHash.new(value, self.rounds)
+        elif value is not None:
+            raise TypeError(
+                'Cannot convert {} to a PasswordHash'.format(type(value)))
 
 
 def create_tables(p_engine):
@@ -66,12 +104,17 @@ class User(Base):
     __tablename__ = 'user'
 
     id = Column(Integer, Sequence('user_id_seq'), primary_key=True)
-    username = Column(String(50))
-    password = Column(String(50)) # todo see how to save using "encrypted module" to store it secure.
+    username = Column(Text, nullable=False, unique=True)
+    password = Column(Password(rounds=13), nullable=False)
+    # Or specify a cost factor other than the default 12
+    # password = Column(Password(rounds=10))
+    # Without rounds System will use 12 rounds by default
     name = Column(String(50))
     lastname = Column(String(50))
     genre = Column(String(12))
     age = Column(Integer)
+    #todo uncoment for user roles
+    #role = Column(String(15), default='user')
     # one2many
     payload = relationship("Payload")
     # m2m
@@ -86,6 +129,13 @@ class User(Base):
         return dict(name=self.name, lastname=self.lastname,
                 #registered_on=self.registered_on.isoformat()
                 genre=self.genre, age=self.age )
+
+    # Password Encryption validation
+    @validates('password')
+    def _validate_password(self, key, password):
+        return getattr(type(self), key).type.validator(password)
+
+
 
     # # Token management
     # def generate_auth_token(self, app, expiration=600):

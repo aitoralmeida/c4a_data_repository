@@ -19,6 +19,7 @@ __copyright__ = "foo"   # we need?¿
 
 # Database settings
 config = ConfigParser.ConfigParser()
+#config.readfp(open('./conf/rest_api.cfg'))
 config.readfp(open('./conf/rest_api.cfg'))
 if 'database' in config.sections():
     # We have config file with data
@@ -148,14 +149,17 @@ class PostgORM(object):
         This method check given user and password and create a new session for the current user.
 
         :param p_data: User and password
-        :return:
+        :return: True or False if user/password are valid.
         """
         res = None
         if 'username' in p_data and 'password' in p_data:
-            user_data = self.query(tables.User, p_data)
-            if user_data and user_data[0]:
-                # LOGIN OK
-                res = user_data
+            user_data = self.query(tables.User, {'username': p_data['username']})
+            if user_data and user_data[0].password == p_data['password'] \
+                    and user_data[0].username == p_data['username']:
+                print 'Access granted'
+                res = True
+            else:
+                print "Wrong username/password"
         else:
             print "Rare exception"
         return res
@@ -200,9 +204,13 @@ class PostgORM(object):
 
 
 
-# todo delete after finish all
-######### OOFSET
-##### for u in session.query(User).order_by(User.id)[1:3]:
+# todo insert new user method
+"""
+# Create plain user with default key complexity
+john = User(name='John', password='flatten-shallow-ideal')
 
-
-##query.filter(User.name == 'ed', User.fullname == 'Ed Jones')
+# Create an admin user with higher key derivation complexity
+administrator = User(
+    name='Simon',
+    password=PasswordHash.new('working-as-designed', 15))
+"""
