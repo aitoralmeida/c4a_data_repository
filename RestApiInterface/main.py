@@ -16,6 +16,6 @@ sys.path.insert(0, basedir)
 
 # main execution
 if __name__ == '__main__':
-    from src.packFlask.api import app
+    from src.packFlask.api import app as application
     # todo change this to --> app.run(host='0.0.0.0', port=int("231") and debug=False.
-    app.run(debug=True)
+    application.run(debug=True)
