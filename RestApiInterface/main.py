@@ -14,8 +14,8 @@ if not os.path.exists(os.path.join(basedir, "main.py")):
         basedir = cwd
 sys.path.insert(0, basedir)
 
+from src.packFlask.api import app as application
+
 # main execution
 if __name__ == '__main__':
-    from src.packFlask.api import app as application
-    # todo change this to --> app.run(host='0.0.0.0', port=int("231") and debug=False.
-    application.run(debug=True)
+    application.run(debug=False, host='0.0.0.0')

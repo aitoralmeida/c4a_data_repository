@@ -20,7 +20,10 @@ __copyright__ = "foo"   # we need?¿
 # Database settings
 config = ConfigParser.ConfigParser()
 #config.readfp(open('./conf/rest_api.cfg'))
-config.readfp(open('./conf/rest_api.cfg'))
+#todo change this later
+config.readfp(open('../conf/rest_api.cfg'))
+
+
 if 'database' in config.sections():
     # We have config file with data
     DATABASE = {
@@ -151,10 +154,10 @@ class PostgORM(object):
         :param p_data: User and password
         :return: True or False if user/password are valid.
         """
-        res = None
+        res = False
         if 'username' in p_data and 'password' in p_data:
             user_data = self.query(tables.User, {'username': p_data['username']})
-            if user_data and user_data[0].password == p_data['password'] \
+            if user_data and user_data.count() == 1 and user_data[0].password == p_data['password'] \
                     and user_data[0].username == p_data['username']:
                 print 'Access granted'
                 res = True

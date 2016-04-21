@@ -29,6 +29,8 @@ app = Flask(__name__)
 app.config.from_object(__name__)
 
 
+#todo rember that we need to change the session loggin cookie name
+
 @app.before_request
 def before_request():
     global DATABASE
@@ -111,6 +113,8 @@ def login(version=app.config['ACTUAL_API']):
                     return redirect(url_for('api', version=app.config['ACTUAL_API']))
                 else:
                     abort(401)
+            else:
+                abort(500)
         else:
             abort(400)
     else:
@@ -155,34 +159,41 @@ def search(version=app.config['ACTUAL_API']):
     :param version: Api version
     :return:
     """
+    res = None
     if _check_version(version):
         if not session.get('logged_in'):
             abort(401)
         if request.headers['content-type'] == 'application/json':
             data = request.json
+            # default query values
             limit = 10
             offset = 0
             order_by = 'asc'
-            if data.get('limit', False):
-                limit = data.get('limit', 10)
+            if data.get('limit', False) and data.get('limit') > 0:
+                limit = data.get('limit')
                 del data['limit']
-            if data.get('offset', False):
-                offset = data.get('offset', 0)
+            if data.get('offset', False) and data.get('offset') >= 0:
+                offset = data.get('offset')
                 del data['offset']
-            if data.get('order_by', False):
-                order_by = data.get('order_by', 'asc')
+            if data.get('order_by', False) and data.get('offset') == 'asc' or data.get('offset') == 'desc':
+                order_by = data.get('order_by')
                 del data['order_by']
             # Query database and select needed elements
-            res = DATABASE.query(tables.User, data, limit=limit, offset=offset, order_by=order_by)
-            serialized_labels = [serialize(label) for label in res]
-            if len(serialized_labels) == 0:
-                return Response("No data found with this filters.\n")
-            else:
-                return Response(dumps(serialized_labels), mimetype='application/json')
+            try:
+                res = DATABASE.query(tables.User, data, limit=limit, offset=offset, order_by=order_by)
+                serialized_labels = [serialize(label) for label in res]
+                if len(serialized_labels) == 0:
+                    res = Response("No data found with this filters.\n")
+                else:
+                    res = Response(dumps(serialized_labels), mimetype='application/json')
+            except AttributeError:
+                abort(500)
         else:
             abort(400)
     else:
-        return "You have entered an invalid api version", 404
+        res = "You have entered an invalid api version", 404
+
+    return res
 
 
 # todo we need to define add_one and add_multI???
