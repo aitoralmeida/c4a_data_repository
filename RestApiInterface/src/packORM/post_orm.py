@@ -19,9 +19,7 @@ __copyright__ = "foo"   # we need?¿
 
 # Database settings
 config = ConfigParser.ConfigParser()
-#config.readfp(open('./conf/rest_api.cfg'))
-#todo change this later
-config.readfp(open('../conf/rest_api.cfg'))
+config.readfp(open('./conf/rest_api.cfg'))
 
 
 if 'database' in config.sections():

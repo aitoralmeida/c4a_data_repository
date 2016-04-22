@@ -70,31 +70,32 @@ class FlaskTestCase(unittest.TestCase):
                                  follow_redirects=True)
         self.assertEqual(response.status_code, 200)
 
-    # todo see another way to obtain user session login
     def test_basic_search(self):
         """ Test if we got any results """
         with self.app as c:
             with c.session_transaction() as sess:
                 sess['logged_in'] = True
+        response = c.post('/api/0.1/search',
+                          data=json.dumps(dict(username='admin')),
+                          content_type='application/json',
+                          follow_redirects=True)
 
-        # ?
-        response = self.app.post('/api/0.1/search',
-                                 data=json.dumps(dict(username='admin')),
-                                 content_type='application/json',
-                                 follow_redirects=True)
-        self.assertEqual(response.status_code, 200)
+        assert "No data found with this filters" not in response.data and response.status_code == 200
+
 
     def test_search_limit(self):
         """ Test if a search has a limit"""
         with self.app as c:
             with c.session_transaction() as sess:
                 sess['logged_in'] = True
-        response = self.app.post('/api/0.1/search',
-                                 data=json.dumps(dict(username='Ruben', limit=2)),
+        response = c.post('/api/0.1/search',
+                                 data=json.dumps(dict(username='rmulero', limit=2)),
                                  content_type='application/json',
                                  follow_redirects=True)
 
-        # See an assert to 2 items only (count(
+        # We search in the final string if the username rmulero appears only twice.
+        assert response.data.count('rmulero') == 2
+
 
 
     def test_search_offset(self):
@@ -103,12 +104,14 @@ class FlaskTestCase(unittest.TestCase):
             with c.session_transaction() as sess:
                 sess['logged_in'] = True
         response = self.app.post('/api/0.1/search',
-                                 data=json.dumps(dict(username='Ruben', offset=3)),
+                                 data=json.dumps(dict(username='rmulero', offset=3)),
                                  content_type='application/json',
                                  follow_redirects=True)
 
-        # See assert for only one element if we use offset = 3 (4 result in DB).
+        assert response.data.count('rmulero') == 1
 
+
+# todo add data test when we have Datbase logic finished
 
 if __name__ == '__main__':
     unittest.main()
