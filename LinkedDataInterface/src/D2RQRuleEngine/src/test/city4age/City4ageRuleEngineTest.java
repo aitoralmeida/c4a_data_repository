@@ -47,13 +47,6 @@ public class City4ageRuleEngineTest {
         instancesSave.close();
     }
 
-    /**
-     *
-     * Vamos a probar. Si se lee bien el fichero.
-     * Si se guarda correctamnete.
-     * Si se infieren nuevos métodos o no.
-     */
-
 
     /**
      * Test if exist Any data in dataset.txt file
@@ -89,6 +82,7 @@ public class City4ageRuleEngineTest {
      */
     @Test
     public void newInferedMethods() throws Exception {
+        boolean mewStatements = false;
         instancesRead.read("file:"+ absolute_path +"/dataset.txt", "N3");
         Reasoner myReasoner = new GenericRuleReasoner(Rule.rulesFromURL("file:"+ absolute_path +"/rules.txt"));
         myReasoner.setDerivationLogging(true);
@@ -102,12 +96,11 @@ public class City4ageRuleEngineTest {
         Model deductions = ModelFactory.createDefaultModel().add( new StmtIteratorImpl(stmts));
         if (deductions.getGraph().size() > 0) {
             // We have some new statements
-            assertTrue(true);
-        }else {
-            assertTrue(false);
+            mewStatements = true;
         }
         deductions.close();
         stmts.close();
+        assertTrue(mewStatements);
     }
 
     /**
