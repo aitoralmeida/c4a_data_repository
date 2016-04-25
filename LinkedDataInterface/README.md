@@ -29,6 +29,16 @@ To install this project you need to perform the following actions:
     ```
     Performing this Ubuntu will discover new system unit services.
 
+7. Open *celerybeat.conf* and *celeryd.conf*  modify _CELERY_CHDIR_ and point out to task file folder.
+
+8. Go to **src/d2rq** folder and copy _d2rq.war_ to **/var/lib/tomcat7/webapps**
+    1. <Maybe we need to explain more things in this point>
+9. Start tomcat7 service to deploy war file
+    ```bash
+       sudo service tomcat7 start
+    ````
+10.  Go to **scripts/** and execute _copy_to_tomcat_lib.sh_
+
 Thats all.
 
 

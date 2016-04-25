@@ -8,33 +8,42 @@ This file contains different set of task to be executed by Celery Beat
 from celery import Celery
 import subprocess as sub
 import os
+import sys
 
 __author__ = "Rubén Mulero"
 __copyright__ = "foo"  # we need?¿
+
+# Prepare base dir working directory
+basedir = os.path.dirname(os.path.realpath(__file__))
+if not os.path.exists(os.path.join(basedir, "task.py")):
+    cwd = os.getcwd()
+    if os.path.exists(os.path.join(cwd, "task.py")):
+        basedir = cwd
+sys.path.insert(0, basedir)
 
 app = Celery('tasks')
 app.config_from_object('celeryconfig')
 
 
 @app.task
-def inference(p_d2rq_path, p_in_path, p_out_path):
+def inference(p_path_to_reasoner, p_path_to_new_mapping, p_path_to_tomcat):
     # all ok, we are going to launch Jena Rule Engine jar file
     # Execute jar file. We take this python file and put relative path to jar,
     java_call = sub.Popen(['java', '-jar', os.path.normpath(os.path.join(os.path.realpath(__file__),
-                                                                         u'../../../ruleEngine/reasoner.jar'))],
+                                                                         p_path_to_reasoner))],
                           stdout=sub.PIPE, stderr=sub.PIPE)
     output, errors = java_call.communicate()
     if not errors and output:
         # If all is OK, we copy generated archive and activate server
         print "New mapping.ttl file generated"
-        check = "Checking if tomcat is ready....."
+        print "Checking if tomcat is ready....."
         # Subprogram to check if tomcat7 is ready
         _server_activate()
         # todo make celery permissions to copy new mapping ttl
         # Remember this is only for ubuntu. Maybe Tomca7 dir is in other path
         copy = sub.Popen(['cp', os.path.normpath(os.path.join(os.path.realpath(__file__),
-                                                              u'../../../ruleEngine/mapping.ttl')),
-                          u'/var/lib/tomcat7/webapps/d2rq/WEB-INF/'],
+                                                              p_path_to_new_mapping)),
+                          p_path_to_tomcat],
                          stdout=sub.PIPE, stderr=sub.PIPE)
         copy_out, copy_err = copy.communicate()
         if not copy_err:
@@ -45,6 +54,7 @@ def inference(p_d2rq_path, p_in_path, p_out_path):
             raise MalformedException(copy_err)
     else:
         print errors
+        print output
         raise ErrorJavaException(errors)
 
 

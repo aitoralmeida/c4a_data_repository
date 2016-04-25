@@ -55,6 +55,7 @@ public class City4ageRuleEngine {
 				// Close files
 				destFile.close();
 				inf.close();
+				System.out.println("Rule engine executed OK");
 			}else {
 				System.out.println("Something happen, maybe we don't have any rules or datasets?");
 			}

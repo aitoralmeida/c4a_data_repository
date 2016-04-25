@@ -24,9 +24,9 @@ CELERYBEAT_SCHEDULE = {
     'execute-inference': {
         'task': 'task.inference',                                       # task name
         'schedule': crontab(minute='*/1'),                              # time
-        # Args for tasj
-        'args': (os.path.normpath(os.path.join(file_path, u'../../../d2rq')),             # dunmp-rdf
-                 os.path.normpath(os.path.join(file_path, u'../../../d2rq/mapping.ttl')),         # in file
-                 os.path.normpath(os.path.join(file_path, u'../../../d2rq/dump.rdf'))),           # out file in desired format
+        # Optional args for task.
+        'args': (os.path.normpath(os.path.join(file_path, u'../../../ruleEngine/reasoner.jar')),      # Path to rule engine reasoner
+                 os.path.normpath(os.path.join(file_path, u'../../../ruleEngine/mapping.ttl')),       # Path to new mapping file
+                 os.path.normpath(os.path.join(file_path, u'/var/lib/tomcat7/webapps/d2rq/WEB-INF/'))) # Path to Tomcat
     },
 }
