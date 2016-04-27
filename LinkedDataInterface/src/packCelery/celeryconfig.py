@@ -30,3 +30,6 @@ CELERYBEAT_SCHEDULE = {
                  os.path.normpath(os.path.join(file_path, u'/var/lib/tomcat7/webapps/d2rq/WEB-INF/'))) # Path to Tomcat
     },
 }
+
+
+# todo we need to change args paths. Only if we want to use ubuntu 16.04

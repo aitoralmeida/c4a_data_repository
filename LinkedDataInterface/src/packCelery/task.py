@@ -58,6 +58,7 @@ def inference(p_path_to_reasoner, p_path_to_new_mapping, p_path_to_tomcat):
         raise ErrorJavaException(errors)
 
 
+# todo change this part for ubuntu 16.04 using tomcat8 engine
 def _server_activate():
     """
     This method checks if Tomcat is running and it starts with the new infered mapping.ttl
