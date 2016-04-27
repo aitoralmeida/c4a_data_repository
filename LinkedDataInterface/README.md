@@ -5,9 +5,11 @@ LinkedDataInterface need some requisites:
 
 * A well installed and configured Tomcat server.
 * Python-Celery installed on the system.
+* RabbitMq for Celery and system messages.
+* Build-essentials to have gcc and compile python requirements.txt.
 * Java 1.8 (OpenJDK).
-* Your own "mapping.ttl" file prevoously created with D2RQ.
-* Your own "rules.txt" with several rules prepared to be infered.
+* Your own "mapping.ttl" file previously created with D2RQ.
+* Your own "rules.txt" with several rules prepared to be inferred.
 * Some knowledge of GNU/Linux.
 
 

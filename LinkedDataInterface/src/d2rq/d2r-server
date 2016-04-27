@@ -1,4 +1,9 @@
 #!/bin/bash
+if [ ! -e "./d2r-server" ]
+then
+  echo "Please cd into the D2R Server directory to run the server"
+  exit 1
+fi
 D2RQ_ROOT="$( dirname "${BASH_SOURCE[0]}" )"
 CP="$D2RQ_ROOT/build"
 SEP=':'

@@ -10,6 +10,7 @@ RestApiInterface need the following dependencies.
 3. Development packages:
     1. python-dev
     2. postgresql-server-dev
+    3. build-essential
 4. PostgreSQL database.
 5. Nginx.
 
