@@ -280,6 +280,8 @@ curl -X POST -d @filename.txt http://127.0.0.1:5000/add_action --header "Content
 
 curl -X POST -d '{"name1":"Rodolfo","name2":"Pakorro"}' http://127.0.0.1:5000/add_action --header "Content-Type:application/json"
 
+curl -X POST -k -d '{"username":"admin","password":"admin"}' https://10.48.1.49/api/0.1/login --header "Content-Type:application/json"
+
 """
 
 

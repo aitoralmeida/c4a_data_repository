@@ -1,6 +1,9 @@
 server {
-    listen 80;
-    server_name 127.0.0.1;
+    listen 443 ssl;
+    server_name localhost;
+
+    ssl_certificate /etc/nginx/ssl/nginx.crt;
+    ssl_certificate_key /etc/nginx/ssl/nginx.key;
 
     location / {
         include uwsgi_params;

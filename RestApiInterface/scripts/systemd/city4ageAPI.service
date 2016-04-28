@@ -1,0 +1,14 @@
+[Unit]
+Description=City4age Project uWSGI execution.
+After=nginx.target
+
+[Service]
+Type=simple
+# Set working dir to main.py file and *.ini file.
+WorkingDirectory=/home/city4age/c4a_data_infrastructure/RestApiInterface
+ExecStart=/home/city4age/c4a_data_infrastructure/RestApiInterface/bin/uwsgi --ini city4ageAPI.ini
+User=root
+Group=www-data
+
+[Install]
+WantedBy=multi-user.target
