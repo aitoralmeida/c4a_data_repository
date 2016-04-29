@@ -13,7 +13,7 @@
 @prefix meta: <http://www4.wiwiss.fu-berlin.de/bizer/d2r-server/metadata#> .
 
 <> a d2r:Server;
-	rdfs:label "City4age D2R Server";
+	rdfs:label "City4age D2R Server Modified";
 	d2r:baseURI <http://localhost:8080/d2rq/>;
 	d2r:port 8080;
 	d2r:vocabularyIncludeInstances true;

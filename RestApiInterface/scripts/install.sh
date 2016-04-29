@@ -1,10 +1,32 @@
 #!/bin/bash
 
-# This script is fon installation purposes.
+#################################################################
+########
+########       Install script
+########
+########       The goal of this script is to install all REST API interface
+########       in the system and use the path of the current installed project directory.
+########
+########
+#################################################################
 
+
+############ Nginx destination path
 NGINX="/etc/nginx"
 
+########### Instalation parameteres
+TFILE="/tmp/out.tmp.$$"
 
+# Main folder of the project.
+MAINFOLDER=`cd .. ; pwd`
+# Source folders
+NGINXCONFIGFILE=$PWD/nginx_config/nginxCity4ageAPI
+SYSTEMDCONFILE=$PWD/systemd/city4ageAPI.service
+# Destination folders
+NGINXDESTFILE=$NGINX/sites-available/nginxCity4ageAPI
+SYSTEMDDESTFILE="/etc/systemd/system/city4ageAPI.service"
+# Text to be replaced (this text is inside config files)
+OLD="<project path>"
 
 ############# Control check
 
@@ -36,19 +58,54 @@ fi
 
 ################################## Main execution Script
 
+# Todo Open Conf File to edit database options
+
 #Create ssl directory
-mkdir $NGINX/ssl
+[ ! -d $NGINX/ssl ] && mkdir -p $NGINX/ssl || :
 # Create new SSL CERTS
 read -p "Do you want to create a new SSL CERT KEYS? " -n 1 -r
 echo    # mew line
 if [[ ! $REPLY =~ ^[Yy]$ ]]
 then
-    openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout $NGINX/ssl/nginx.key -out $NGINX/ssl/nginx.crt
+    echo "We are going to copy SSL certs from our SSL folder........"
+    /bin/cp $PWD/../ssl/nginx.crt $NGINX/ssl
+    /bin/cp $PWD/../ssl/nginx.key $NGINX/ssl
+    echo "Files copied successfully!!!"
 else
-    # We are going to copy SSL certs from our SSL folder
-    cp $PWD/../ssl/nginx.crt / $NGINX/ssl
-    cp $PWD/../ssl/nginx.key / $NGINX/ssl
+    echo "Creating new pair of keys................................."
+    openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout $NGINX/ssl/nginx.key -out $NGINX/ssl/nginx.crt
+    echo "Done!"
 fi
 
-######### Now we are going to open nginx_config and systemd files to changes PATHS to PWD --> dest
-#todo
+# Copy Systemd unit file, modify paths and start it
+if [ -f $SYSTEMDCONFILE -a -r $SYSTEMDCONFILE ]; then
+    # Change old text with Path of the projecs' mainfolder and copy to DestFile
+    sed "s+$OLD+$MAINFOLDER+g" "$SYSTEMDCONFILE" > $TFILE && mv $TFILE $SYSTEMDDESTFILE
+    chmod 664 $SYSTEMDDESTFILE
+    echo "uWSGI unit file installed succesfully!!"
+    echo "We are going to reload systemd unit files and activate our new unit"
+    # Launch daemon-reload and start uWSGI service
+    systemctl daemon-reload
+    systemctl start city4ageAPI.service
+    systemctl enable city4ageAPI.service
+    echo "Service unit file installed and activated!!"
+else
+    echo "Error: Cannot read $SYSTEMDCONFILE"
+    exit 1
+fi
+
+# Copy Nging config file and replace with configuration paths
+if [ -f $NGINXCONFIGFILE -a -r $NGINXCONFIGFILE ]; then
+    # Change old text with Path of the projecs' mainfolder and copy to DestFile
+    sed "s+$OLD+$MAINFOLDER+g" "$NGINXCONFIGFILE" > $TFILE && mv $TFILE $NGINXDESTFILE
+    # Generate a symlink to enable our new config to nginx
+    ln -s $NGINXDESTFILE $NGINX/sites-enabled
+    # delete default symlink (avoid some problems)
+    rm $NGINX/sites-enabled/default
+    echo "Nginx config file installed succesfully!!"
+    echo "Attemping to restart the server........"
+    service nginx restart
+else
+    echo "Error: Cannot read $NGINXCONFIGFILE"
+    exit 1
+fi

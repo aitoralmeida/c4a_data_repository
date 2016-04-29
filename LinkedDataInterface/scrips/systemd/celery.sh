@@ -3,7 +3,7 @@
 # This file is for Ubuntu 16.04 only. It is a basic shell script.
 
 CELERY_APP="task"
-CELERY_CHDIR="/home/deusto/PycharmProjects/c4a_data_infrastructure/LinkedDataInterface/src/packCelery"
+CELERY_CHDIR="<project path>/src/packCelery"
 CELERY_NODES="task"
 
 CELERY_LOG_DIR="/var/log/celery"

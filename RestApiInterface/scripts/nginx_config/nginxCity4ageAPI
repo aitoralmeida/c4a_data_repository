@@ -7,6 +7,6 @@ server {
 
     location / {
         include uwsgi_params;
-        uwsgi_pass unix:/home/deusto/<main path of the project>/city4ageAPI.sock;
+        uwsgi_pass unix:<project path>/city4ageAPI.sock;
     }
 }

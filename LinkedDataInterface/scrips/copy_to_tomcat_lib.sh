@@ -2,8 +2,8 @@
 
 ##############################################################################
 ##### This script creates war file and put in in Tomcat's webapp folder ready to start
-##### This script is for Ubuntu 14.04 or 16.04 Instalations
-##### Remember to configure env variables to know if you are goint to use tomcat7 or 8
+##### This script is for Ubuntu 14.04 or 16.04 Installations
+##### Remember to configure env variables to know if you are going to use tomcat7 or 8
 #####
 ###############################################################################
 
@@ -31,7 +31,7 @@ fi
 
 # Test if you are root user
 if [ "$(id -u)" != "0" ]; then
-    echo "You need to run this script with sudo privileges"
+    echo "You need to run this script with root privileges"
     exit 1
 fi
 
@@ -59,7 +59,7 @@ mv $D2RQ/d2rq.war $WEBAPPS
 echo "Copying jar files to Tomcat/lib installation"
 for data in `find $D2RQ/lib -name '*.jar'`;
 do
-    # If there are jar files, we will copy in Tomcat dir
+    # If there are jar files, we will copy into Tomcat dir
     cp $data $LIB
 done
 
