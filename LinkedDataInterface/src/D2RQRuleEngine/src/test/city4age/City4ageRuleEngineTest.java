@@ -1,6 +1,7 @@
 package test.city4age;
 
 import java.io.File;
+import java.util.Iterator;
 
 import com.hp.hpl.jena.rdf.model.InfModel;
 import com.hp.hpl.jena.rdf.model.Model;
@@ -8,6 +9,7 @@ import com.hp.hpl.jena.rdf.model.ModelFactory;
 import com.hp.hpl.jena.rdf.model.Statement;
 import com.hp.hpl.jena.rdf.model.impl.StmtIteratorImpl;
 import com.hp.hpl.jena.reasoner.Reasoner;
+import com.hp.hpl.jena.reasoner.ValidityReport;
 import com.hp.hpl.jena.reasoner.rulesys.GenericRuleReasoner;
 import com.hp.hpl.jena.reasoner.rulesys.Rule;
 import com.hp.hpl.jena.util.iterator.ExtendedIterator;
@@ -112,5 +114,29 @@ public class City4ageRuleEngineTest {
         instancesRead.read("file:"+ absolute_path +"/dataset.txt", "TURTLE");
         instancesSave.read("file:"+ absolute_path +"/mapping.ttl", "TURTLE");
         assertNotSame(instancesRead, instancesSave);
+    }
+
+    /**
+     * Tes if our inferred model is consistent or not
+     * We use Jena ValidityReport Class to know it.
+     *
+     */
+    @Test
+    public void consistentModel() throws Exception {
+        Boolean icConsistent = false;
+        instancesRead.read("file:"+ absolute_path +"/dataset.txt", "N3");
+        Reasoner myReasoner = new GenericRuleReasoner(Rule.rulesFromURL("file:"+ absolute_path +"/rules.txt"));
+        myReasoner.setDerivationLogging(true);
+        InfModel inf = ModelFactory.createInfModel(myReasoner, instancesRead);
+        ValidityReport validity = inf.validate();
+        if (validity.isValid()) {
+            icConsistent = true;
+        } else {
+            System.out.println("Conflicts");
+            for (Iterator i = validity.getReports(); i.hasNext(); ) {
+                System.out.println(" - " + i.next());
+            }
+        }
+        assertTrue(icConsistent);
     }
 }

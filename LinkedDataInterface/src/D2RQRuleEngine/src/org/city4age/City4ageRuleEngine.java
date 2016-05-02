@@ -3,9 +3,11 @@ package org.city4age;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.Iterator;
 
 import com.hp.hpl.jena.rdf.model.*;
 import com.hp.hpl.jena.reasoner.Reasoner;
+import com.hp.hpl.jena.reasoner.ValidityReport;
 import com.hp.hpl.jena.reasoner.rulesys.GenericRuleReasoner;
 import com.hp.hpl.jena.reasoner.rulesys.Rule;
 import com.hp.hpl.jena.util.PrintUtil;
@@ -39,23 +41,33 @@ public class City4ageRuleEngine {
 			instances.read("file:"+ absolute +"/dataset.txt", "TURTLE");
 			// Load rules using Rule and create instance of Rule Reasoner.
 			Reasoner myReasoner = new GenericRuleReasoner(Rule.rulesFromURL("file:"+ absolute +"/rules.txt"));
-			myReasoner.setDerivationLogging(true);
+			myReasoner.setDerivationLogging(true); 		// Allow to getDerivation return useful information.
 			// Infer new instances using rules and our instances
 			InfModel inf = ModelFactory.createInfModel(myReasoner, instances);
 			if (!inf.isEmpty()){
-				// Write inference in a new file
-				// inf.setNsPrefix("drc", "http://www.moreschemas.org/#");	### If We want to add adicional prefix
-				PrintWriter destFile = new PrintWriter(absolute +"/mapping.ttl", "UTF-8");
-				//inf.write(System.out, "RDF/XML"); Write in console
-				inf.write(destFile, "TURTLE"); // Write using PW in UTF-8 to an archive
-				// Print results in console
-				// new City4ageRuleEngine().printResults(inf);
-				// Print new infered elements (if any)
-				new City4ageRuleEngine().printOnlyNews(inf, instances);
-				// Close files
-				destFile.close();
-				inf.close();
-				System.out.println("Rule engine executed OK");
+				// Check if new Model is consistent
+				ValidityReport validity = inf.validate();
+				if (validity.isValid()) {
+					// Write inference in a new file
+					// inf.setNsPrefix("drc", "http://www.moreschemas.org/#");	### If We want to add adicional prefix
+					PrintWriter destFile = new PrintWriter(absolute +"/mapping.ttl", "UTF-8");
+					//inf.write(System.out, "RDF/XML"); Write in console
+					inf.write(destFile, "TURTLE"); // Write using PW in UTF-8 to an archive
+					// Print results in console
+					// new City4ageRuleEngine().printResults(inf);
+					// Print new infered elements (if any)
+					new City4ageRuleEngine().printOnlyNews(inf, instances);
+					// Close files
+					destFile.close();
+					inf.close();
+					System.out.println("Rule engine executed OK");
+				} else {
+					// There are conflicts
+					System.err.println("Conflicts");
+					for (Iterator i = validity.getReports(); i.hasNext(); ) {
+						System.err.println(" - " + i.next());
+					}
+				}
 			}else {
 				System.out.println("Something happen, maybe we don't have any rules or datasets?");
 			}

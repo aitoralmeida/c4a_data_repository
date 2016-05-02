@@ -18,7 +18,7 @@ NGINX="/etc/nginx"
 TFILE="/tmp/out.tmp.$$"
 
 # Main folder of the project.
-MAINFOLDER=`cd .. ; pwd`
+MAINFOLDER=`cd .. ; pwd`    # MainFolder of the RestAPiInterface
 # Source folders
 NGINXCONFIGFILE=$PWD/nginx_config/nginxCity4ageAPI
 SYSTEMDCONFILE=$PWD/systemd/city4ageAPI.service
@@ -50,15 +50,22 @@ if [ ! -d $NGINX ]; then
 fi
 
 # Test if there are all files ready to work
-if [ ! -f $PWD/nginx_config/nginxCity4ageAPI ] || [ ! -f $PWD/systemd/city4ageAPI.service ] || [ ! -f $PWD/../ssl/nginx.crt ] || [ ! -f $PWD/../ssl/nginx.key ]
+if [ ! -f $PWD/nginx_config/nginxCity4ageAPI ] || [ ! -f $PWD/systemd/city4ageAPI.service ] || [ ! -f $MAINFOLDER/ssl/nginx.crt ] || [ ! -f $MAINFOLDER/ssl/nginx.key ]
 then
     echo "Some basic files are missing."
     exit 1
 fi
 
-################################## Main execution Script
+# Test if rest_api.cfg exists.
+if [ ! -f $MAINFOLDER/conf/rest_api.cfg ]
+then
+    echo "It seems that you don't have any Rest Api configuration file under conf folder"
+fi
 
-# Todo Open Conf File to edit database options
+################################## Main execution Script
+echo "We are going to open database conf file to edit database connection parameters"
+slepp 4
+nano "$MAINFOLDER/conf/rest_api.cfg" 3>&1 1>&2 2>&3
 
 #Create ssl directory
 [ ! -d $NGINX/ssl ] && mkdir -p $NGINX/ssl || :
@@ -68,8 +75,8 @@ echo    # mew line
 if [[ ! $REPLY =~ ^[Yy]$ ]]
 then
     echo "We are going to copy SSL certs from our SSL folder........"
-    /bin/cp $PWD/../ssl/nginx.crt $NGINX/ssl
-    /bin/cp $PWD/../ssl/nginx.key $NGINX/ssl
+    /bin/cp $MAINFOLDER/ssl/nginx.crt $NGINX/ssl
+    /bin/cp $MAINFOLDER/ssl/nginx.key $NGINX/ssl
     echo "Files copied successfully!!!"
 else
     echo "Creating new pair of keys................................."
