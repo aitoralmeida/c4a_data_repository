@@ -1,5 +1,0 @@
-#!/bin/sh
-
-# For the moment this is an simple script to run our program. We need to improve when is finally installed
-./python ../main.py
-exit $?

@@ -37,12 +37,6 @@ then
   exit 1
 fi
 
-# Test if you are root user
-if [ "$(id -u)" != "0" ]; then
-    echo "You need to run this script with sudo privileges"
-    exit 1
-fi
-
 # Test if Nginx is installed in the system
 if [ ! -d $NGINX ]; then
     echo "You don't have installed Nginx."
@@ -65,7 +59,7 @@ fi
 ################################## Main execution Script
 echo "We are going to open database conf file to edit database connection parameters"
 slepp 4
-nano "$MAINFOLDER/conf/rest_api.cfg" 3>&1 1>&2 2>&3
+sudo nano "$MAINFOLDER/conf/rest_api.cfg" 3>&1 1>&2 2>&3
 
 #Create ssl directory
 [ ! -d $NGINX/ssl ] && mkdir -p $NGINX/ssl || :
@@ -75,26 +69,26 @@ echo    # mew line
 if [[ ! $REPLY =~ ^[Yy]$ ]]
 then
     echo "We are going to copy SSL certs from our SSL folder........"
-    /bin/cp $MAINFOLDER/ssl/nginx.crt $NGINX/ssl
-    /bin/cp $MAINFOLDER/ssl/nginx.key $NGINX/ssl
+    sudo /bin/cp $MAINFOLDER/ssl/nginx.crt $NGINX/ssl
+    sudo /bin/cp $MAINFOLDER/ssl/nginx.key $NGINX/ssl
     echo "Files copied successfully!!!"
 else
     echo "Creating new pair of keys................................."
-    openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout $NGINX/ssl/nginx.key -out $NGINX/ssl/nginx.crt
+    sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout $NGINX/ssl/nginx.key -out $NGINX/ssl/nginx.crt
     echo "Done!"
 fi
 
 # Copy Systemd unit file, modify paths and start it
 if [ -f $SYSTEMDCONFILE -a -r $SYSTEMDCONFILE ]; then
     # Change old text with Path of the projecs' mainfolder and copy to DestFile
-    sed "s+$OLD+$MAINFOLDER+g" "$SYSTEMDCONFILE" > $TFILE && mv $TFILE $SYSTEMDDESTFILE
-    chmod 664 $SYSTEMDDESTFILE
+    sudo sed "s+$OLD+$MAINFOLDER+g" "$SYSTEMDCONFILE" > $TFILE && mv $TFILE $SYSTEMDDESTFILE
+    sudo chmod 664 $SYSTEMDDESTFILE
     echo "uWSGI unit file installed succesfully!!"
     echo "We are going to reload systemd unit files and activate our new unit"
     # Launch daemon-reload and start uWSGI service
-    systemctl daemon-reload
-    systemctl start city4ageAPI.service
-    systemctl enable city4ageAPI.service
+    sudo systemctl daemon-reload
+    sudo systemctl start city4ageAPI.service
+    sudo systemctl enable city4ageAPI.service
     echo "Service unit file installed and activated!!"
 else
     echo "Error: Cannot read $SYSTEMDCONFILE"
@@ -104,14 +98,14 @@ fi
 # Copy Nging config file and replace with configuration paths
 if [ -f $NGINXCONFIGFILE -a -r $NGINXCONFIGFILE ]; then
     # Change old text with Path of the projecs' mainfolder and copy to DestFile
-    sed "s+$OLD+$MAINFOLDER+g" "$NGINXCONFIGFILE" > $TFILE && mv $TFILE $NGINXDESTFILE
+    sudo sed "s+$OLD+$MAINFOLDER+g" "$NGINXCONFIGFILE" > $TFILE && mv $TFILE $NGINXDESTFILE
     # Generate a symlink to enable our new config to nginx
-    ln -s $NGINXDESTFILE $NGINX/sites-enabled
+    sudo ln -s $NGINXDESTFILE $NGINX/sites-enabled
     # delete default symlink (avoid some problems)
-    rm $NGINX/sites-enabled/default
+    sudo rm $NGINX/sites-enabled/default
     echo "Nginx config file installed succesfully!!"
     echo "Attemping to restart the server........"
-    service nginx restart
+    sudo service nginx restart
 else
     echo "Error: Cannot read $NGINXCONFIGFILE"
     exit 1
