@@ -7,7 +7,7 @@ from fabric.context_managers import cd
 
 # Server Hosts
 env.hosts = [
-    '10.48.1.19',
+    '10.48.1.115:5800',
     # odin.deusto.es:5800
     # third.server.es,
     # and.so.on ......
@@ -15,9 +15,6 @@ env.hosts = [
 
 # Set the username
 env.user = "city4age"
-
-# Set pwd
-env.password = "city4age"   # TODO we must remove it
 
 
 # Install methods
@@ -28,7 +25,8 @@ def _install_deps():
     :return:
     """
     sudo('apt-get update && apt-get -y install python-dev postgresql-9.5 postgresql-server-dev-9.5 virtualenv '
-         'build-essential nginx python-celery rabbitmq-server openjdk-8-jre tomcat8 python-celery-common ant openjdk-8-jdk')
+         'build-essential nginx python-celery rabbitmq-server openjdk-8-jre tomcat8 '
+         'python-celery-common ant openjdk-8-jdk')
 
 
 def _deploy():
@@ -68,6 +66,7 @@ def _create_database():
     with cd('/opt/c4a_data_infrastructure/Database'):
         run('psql -U %s -d %s < database' % (db_user, db_table))
 
+
 def _install_rest_api():
     """
     Install Rest API Interface in the server.
@@ -99,10 +98,9 @@ def main_install():
             --> Install Linked Data Interface
     :return:
     """
-    # We ask to user the name of the current user of the machine and we make the connection
+    # Call to every part of the program to install entire system.
     _install_deps()
     _deploy()
     _create_database()
     _install_rest_api()
     _install_linked_data()
-
