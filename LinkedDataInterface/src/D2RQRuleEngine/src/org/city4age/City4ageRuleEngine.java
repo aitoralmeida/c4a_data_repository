@@ -38,7 +38,7 @@ public class City4ageRuleEngine {
 			File relative_dest = new File(execution_path, "../../ruleEngine");
 			String absolute = relative_dest.getCanonicalPath();
 			// Read datasets
-			instances.read("file:"+ absolute +"/dataset.txt", "TURTLE");
+			instances.read("file:"+ absolute +"/mapping.ttl", "TURTLE");
 			// Load rules using Rule and create instance of Rule Reasoner.
 			Reasoner myReasoner = new GenericRuleReasoner(Rule.rulesFromURL("file:"+ absolute +"/rules.txt"));
 			myReasoner.setDerivationLogging(true); 		// Allow to getDerivation return useful information.

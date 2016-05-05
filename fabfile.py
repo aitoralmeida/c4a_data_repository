@@ -1,14 +1,14 @@
-from fabric.api import run, env, sudo
+from fabric.api import run, env, sudo, prefix
 from fabric.context_managers import cd
 
 
-####################################
-####################################
-######### Set servers information
 
+##### Server configuration
+
+# Server Hosts
 env.hosts = [
     '10.48.1.19',
-    # Second.server.com,
+    # odin.deusto.es:5800
     # third.server.es,
     # and.so.on ......
 ]
@@ -20,26 +20,15 @@ env.user = "city4age"
 env.password = "city4age"   # TODO we must remove it
 
 
-####################################
-####################################
-######### Installation functions.
-
-# For the momment we assume that the project is in /home dir maybe we will change this to /opt
-# this require to create folders with user=city4age and change permissions
-
-# todo examples
-# Create a directory as another user
-# sudo("mkdir /var/www/web-app-one", user="web-admin")
-
-
+# Install methods
 def _install_deps():
     """
     Install needed dependencies
 
     :return:
     """
-    sudo('apt-get install python-dev postgresql-9.5 postgresql-server-dev-9.5 virtualenv build-essential nginx '
-         'python-celery rabbitmq-server openjdk-8-jre')
+    sudo('apt-get update && apt-get -y install python-dev postgresql-9.5 postgresql-server-dev-9.5 virtualenv '
+         'build-essential nginx python-celery rabbitmq-server openjdk-8-jre tomcat8 python-celery-common ant openjdk-8-jdk')
 
 
 def _deploy():
@@ -50,32 +39,34 @@ def _deploy():
     """
     with cd('/opt'):
         sudo('git clone https://elektro108@bitbucket.org/elektro108/c4a_data_infrastructure.git')
-        sudo ('chown' + env.user + ':' + env.user)
+        sudo('chown -R ' + env.user + ':' + env.user + ' c4a_data_infrastructure')
+        with cd('/opt/c4a_data_infrastructure'):
+            run('virtualenv ./LinkedDataInterface')
+            run('virtualenv ./RestApiInterface')
+            with cd('/opt/c4a_data_infrastructure'):
+                with prefix('source ./LinkedDataInterface/bin/activate'):
+                    run('pip install -r ./LinkedDataInterface/requirements.txt')
+                    run('deactivate')
+                with prefix('source ./RestApiInterface/bin/activate'):
+                    run('pip install -r ./RestApiInterface/requirements.txt')
+                    run('deactivate')
 
-    """
-    with cd('/opt/c4a_data_infrastructure'):
-        run('virtualenv ./LinkedDataInterface')
-        run('virtualenv ./RestApiInterface')
-    """
 
-
-def _create_databbase():
+def _create_database():
     """
-    Create basic structure of databsae
+    Send user, password and table to create a new database and then, restore all data.
 
     :return:
     """
-
-    # TODO we need to dump an image to postgresql
-
-    # The idea is to create a new user in database called city4agedb and restore all database tables
-
-    """
-    with cd('/opt/c4a_data_infrastructure/RestApiInterface'):
-        run('./bin/python ./src/packORM/create_tables.py')
-    """
-    pass
-
+    db_user = 'city4agedb'      # User login
+    db_pass = 'city4agedb'      # User password (stored encrypted in db)
+    db_table = 'city4agedb'     # Database name
+    sudo('psql -c "CREATE USER %s WITH NOCREATEDB NOCREATEUSER ENCRYPTED PASSWORD E\'%s\'"' %
+         (db_user, db_pass), user='postgres')
+    sudo('psql -c "CREATE DATABASE %s WITH OWNER %s"' % (db_table, db_user), user='postgres')
+    # Restore database
+    with cd('/opt/c4a_data_infrastructure/Database'):
+        run('psql -U %s -d %s < database' % (db_user, db_table))
 
 def _install_rest_api():
     """
@@ -97,12 +88,21 @@ def _install_linked_data():
         run('/bin/bash ./install.sh')
 
 
+# Main installation method.
 def main_install():
     """
     Install entire project in the server:
-            --> Rest API Interface
-            --> Linked Data Interface
+            --> Project packages
+            --> Deploy project and prepare virtualenv
+            --> Create database user and restore data
+            --> Install Rest API Interface
+            --> Install Linked Data Interface
     :return:
     """
     # We ask to user the name of the current user of the machine and we make the connection
+    _install_deps()
     _deploy()
+    _create_database()
+    _install_rest_api()
+    _install_linked_data()
+

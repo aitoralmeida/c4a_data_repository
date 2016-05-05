@@ -62,7 +62,7 @@ slepp 4
 sudo nano "$MAINFOLDER/conf/rest_api.cfg" 3>&1 1>&2 2>&3
 
 #Create ssl directory
-[ ! -d $NGINX/ssl ] && mkdir -p $NGINX/ssl || :
+[ ! -d $NGINX/ssl ] && sudo mkdir -p $NGINX/ssl || :
 # Create new SSL CERTS
 read -p "Do you want to create a new SSL CERT KEYS? " -n 1 -r
 echo    # mew line
@@ -81,7 +81,7 @@ fi
 # Copy Systemd unit file, modify paths and start it
 if [ -f $SYSTEMDCONFILE -a -r $SYSTEMDCONFILE ]; then
     # Change old text with Path of the projecs' mainfolder and copy to DestFile
-    sudo sed "s+$OLD+$MAINFOLDER+g" "$SYSTEMDCONFILE" > $TFILE && mv $TFILE $SYSTEMDDESTFILE
+    sudo sed "s+$OLD+$MAINFOLDER+g" "$SYSTEMDCONFILE" > $TFILE && sudo mv $TFILE $SYSTEMDDESTFILE
     sudo chmod 664 $SYSTEMDDESTFILE
     echo "uWSGI unit file installed succesfully!!"
     echo "We are going to reload systemd unit files and activate our new unit"
@@ -98,7 +98,7 @@ fi
 # Copy Nging config file and replace with configuration paths
 if [ -f $NGINXCONFIGFILE -a -r $NGINXCONFIGFILE ]; then
     # Change old text with Path of the projecs' mainfolder and copy to DestFile
-    sudo sed "s+$OLD+$MAINFOLDER+g" "$NGINXCONFIGFILE" > $TFILE && mv $TFILE $NGINXDESTFILE
+    sudo sed "s+$OLD+$MAINFOLDER+g" "$NGINXCONFIGFILE" > $TFILE && sudo mv $TFILE $NGINXDESTFILE
     # Generate a symlink to enable our new config to nginx
     sudo ln -s $NGINXDESTFILE $NGINX/sites-enabled
     # delete default symlink (avoid some problems)

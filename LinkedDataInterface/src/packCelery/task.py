@@ -37,9 +37,8 @@ def inference(p_path_to_reasoner, p_path_to_new_mapping, p_path_to_tomcat):
         # If all is OK, we copy generated archive and activate server
         print "New mapping.ttl file generated"
         print "Checking if tomcat is ready....."
-        # Subprogram to check if tomcat7 is ready
+        # Subprogram to check if tomcat8 is ready
         _server_activate()
-        # todo make celery permissions to copy new mapping ttl
         # Remember this is only for ubuntu. Maybe Tomca7 dir is in other path
         copy = sub.Popen(['cp', os.path.normpath(os.path.join(os.path.realpath(__file__),
                                                               p_path_to_new_mapping)),
@@ -68,12 +67,12 @@ def _server_activate():
     """
 
     ####### UBUNTU ONLY -- UPSTAR
-    tomcat_ready = sub.Popen(['service', 'tomcat7', 'status'], stdout=sub.PIPE, stderr=sub.PIPE)
+    tomcat_ready = sub.Popen(['service', 'tomcat8', 'status'], stdout=sub.PIPE, stderr=sub.PIPE)
     tomcat_ready_output, tomcat_ready_error = tomcat_ready.communicate()
     if tomcat_ready_output and not tomcat_ready_error and "with pid" not in tomcat_ready_output:
         print "Tomcat service is not activated, we are going to activate now!!!"
         # Tomcat service is not activated or something is wrong.
-        tomcat_launch = sub.Popen(['service', 'tomcat7', 'start'], stdout=sub.PIPE, stderr=sub.PIPE)
+        tomcat_launch = sub.Popen(['service', 'tomcat8', 'start'], stdout=sub.PIPE, stderr=sub.PIPE)
         tomcat_launch_output, tomcat_launch_error = tomcat_launch.communicate()
         if tomcat_launch_error:
             # Something wrong happen, Raise Error

@@ -27,9 +27,6 @@ CELERYBEAT_SCHEDULE = {
         # Optional args for task.
         'args': (os.path.normpath(os.path.join(file_path, u'../../../ruleEngine/reasoner.jar')),      # Path to rule engine reasoner
                  os.path.normpath(os.path.join(file_path, u'../../../ruleEngine/mapping.ttl')),       # Path to new mapping file
-                 os.path.normpath(os.path.join(file_path, u'/var/lib/tomcat7/webapps/d2rq/WEB-INF/'))) # Path to Tomcat
+                 os.path.normpath(os.path.join(file_path, u'/var/lib/tomcat8/webapps/d2rq/WEB-INF/'))) # Path to Tomcat
     },
 }
-
-
-# todo we need to change args paths. Only if we want to use ubuntu 16.04
