@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 
 """
-This file uses SQL alchemy declarative base model to create SQL Tables
+This file uses SQL alchemy declarative base model to create SQL Tables.
+
+Here we define tables, relationships between tables and so on.
 
 """
 
@@ -217,6 +219,7 @@ class Extra(Base):
         return "<Extra(pilot='%s', city='%s')>" % (self.pilot, self.city)
 
 
+#todo delete it we don't need it
 class Payload(Base):
     """
     Payload: User and GPS position of the current action

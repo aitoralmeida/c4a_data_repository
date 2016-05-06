@@ -7,17 +7,18 @@ import random
 
 # Server Hosts
 env.hosts = [
-    '10.48.1.115:5800',
+    #'10.48.1.115:5800',
     'odin.deusto.es:5800',
     # third.server.es,
     # and.so.on ......
 ]
 
 # Set the username
-env.user = "city4age"
+env.user = "elektro"
 
 
-# Install methods
+###### Install methods
+
 def _install_deps():
     """
     Install needed dependencies

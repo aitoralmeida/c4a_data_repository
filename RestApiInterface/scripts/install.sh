@@ -58,7 +58,7 @@ fi
 
 ################################## Main execution Script
 echo "We are going to open database conf file to edit database connection parameters"
-slepp 4
+sleep 4
 sudo nano "$MAINFOLDER/conf/rest_api.cfg" 3>&1 1>&2 2>&3
 
 #Create ssl directory
