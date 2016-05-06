@@ -1,6 +1,6 @@
 from fabric.api import run, env, sudo, prefix
 from fabric.context_managers import cd
-
+import random
 
 
 ##### Server configuration
@@ -8,7 +8,7 @@ from fabric.context_managers import cd
 # Server Hosts
 env.hosts = [
     '10.48.1.115:5800',
-    # odin.deusto.es:5800
+    'odin.deusto.es:5800',
     # third.server.es,
     # and.so.on ......
 ]
@@ -56,6 +56,16 @@ def _create_database():
 
     :return:
     """
+    # WORKAROUND: We need to change default PostgreSQL config file to change "peer" connection to "md5"
+    # to avoid some problems with psql.
+    random_numer = random.randint(100, 999)
+    temp_file = '/tmp/out.tmp.%s' % random_numer
+    with cd('/etc/postgresql/9.5/main'):
+        sudo("sed -e '90s/peer/md5/g' ./pg_hba.conf > " + temp_file + " && mv " + temp_file + " ./pg_hba.conf")
+        # Restart postgres
+        sudo('systemctl restart postgresql.service')
+
+    # Create user, database and restore data.
     db_user = 'city4agedb'      # User login
     db_pass = 'city4agedb'      # User password (stored encrypted in db)
     db_table = 'city4agedb'     # Database name
