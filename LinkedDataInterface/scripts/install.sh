@@ -14,6 +14,7 @@
 TOMCAT_VERSION="tomcat8"
 LIB="/usr/share/""${TOMCAT_VERSION}""/lib"
 WEBAPPS="/var/lib/""${TOMCAT_VERSION}""/webapps/"
+CONFIG="/etc/""${TOMCAT_VERSION}""/"
 
 # Path related variables
 MAINFOLDER=`cd .. ; pwd`    # Mainfolder or the LinkedDataInterface
@@ -98,6 +99,9 @@ do
     # If there are jar files, we will copy into Tomcat dir
     sudo /bin/cp $data $LIB
 done
+
+# Copy server.xml config File
+sudo /bin/cp $MAINFOLDER/../confs/server.xml $CONFIG
 
 echo "Starting Tomcat service................."
 sudo service $TOMCAT_VERSION restart
