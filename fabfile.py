@@ -8,13 +8,18 @@ import random
 # Server Hosts
 env.hosts = [
     '10.48.1.115:5800',
-    #'odin.deusto.es:5800',
+    # 'odin.deusto.es:5800',
     # third.server.es,
     # and.so.on ......
 ]
 
 # Set the username
 env.user = "city4age"
+
+# Set database creation parameters (Remember to change your mapping.ttl file)
+DB_USER = 'city4agedb'      # User login
+DB_PASS = 'city4agedb'      # User password (stored encrypted in db)
+DB_TABLE = 'city4agedb'     # Database name
 
 
 ###### Install methods
@@ -67,15 +72,12 @@ def _create_database():
         sudo('systemctl restart postgresql.service')
 
     # Create user, database and restore data.
-    db_user = 'city4agedb'      # User login
-    db_pass = 'city4agedb'      # User password (stored encrypted in db)
-    db_table = 'city4agedb'     # Database name
     sudo('psql -c "CREATE USER %s WITH NOCREATEDB NOCREATEUSER ENCRYPTED PASSWORD E\'%s\'"' %
-         (db_user, db_pass), user='postgres')
-    sudo('psql -c "CREATE DATABASE %s WITH OWNER %s"' % (db_table, db_user), user='postgres')
+         (DB_USER, DB_PASS), user='postgres')
+    sudo('psql -c "CREATE DATABASE %s WITH OWNER %s"' % (DB_TABLE, DB_USER), user='postgres')
     # Restore database
     with cd('/opt/c4a_data_infrastructure/Database'):
-        run('psql -U %s -d %s < database' % (db_user, db_table))
+        run('psql -U %s -d %s < database' % (DB_USER, DB_TABLE))
 
 
 def _install_rest_api():

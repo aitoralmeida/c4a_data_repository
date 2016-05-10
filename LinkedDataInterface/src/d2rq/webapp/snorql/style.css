@@ -28,14 +28,14 @@ img.depiction { border: none; height: auto; max-width: 200px; }
 .directory small { font-size: 80%; color: #666; }
 .footnote { font-style: italic; color: #666; }
 
-.snorql h1, .snorql h2 { color: #400; }
-.snorql #header, .snorql .section { background: #ccf; }
+.snorql h1, .snorql h2 { color: #000000; }
+.snorql #header, .snorql .section { background: rgba(203, 204, 155, 0.73); }
 .snorql .queryresults th { background: #88c; }
 .snorql .queryresults .odd td { background: #f2f2ff; }
 .snorql .queryresults .even td { background: #ddf; }
 
-.browser h1, .browser h2 { color: #810; }
-.browser #header, .browser .section { background: #beb; }
-.browser .queryresults th { background: #7b7; }
-.browser .queryresults .odd td { background: #f0fcf0; }
-.browser .queryresults .even td { background: #d4f6d4; }
+.browser h1, .browser h2 { color: #000000; }
+.browser #header, .browser .section { background: #bbe9f5; }
+.browser .queryresults th { background: #7272bb; }
+.browser .queryresults .odd td { background: #efedfc; }
+.browser .queryresults .even td { background: #cdd8e9; }
