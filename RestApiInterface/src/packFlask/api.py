@@ -29,6 +29,14 @@ app = Flask(__name__)
 app.config.from_object(__name__)
 
 
+
+###################################################################################################
+###################################################################################################
+######                              GET FUNCTIONS
+###################################################################################################
+###################################################################################################
+
+
 #todo rember that we need to change the session loggin cookie name
 
 @app.before_request
@@ -92,6 +100,15 @@ def api(version=app.config['ACTUAL_API']):
     else:
         return "You have entered an invalid api version", 404
 
+
+###################################################################################################
+###################################################################################################
+######                              POST functions
+###################################################################################################
+###################################################################################################
+
+
+# todo now POST data is received in JSON lists
 
 @app.route('/api/<version>/login', methods=['POST'])
 def login(version=app.config['ACTUAL_API']):
@@ -223,6 +240,46 @@ def add(version=app.config['ACTUAL_API']):
     else:
         return "You have entered an invalid api version", 404
 
+
+@app.route('/api/<version>/add_activity', methods=['POST'])
+def add_activity(version=app.config['ACTUAL_API']):
+    """
+    Adds a new activity into the system
+
+    :param version: Api version
+    :return:
+    """
+    # Todo we need to code this part
+    if _check_version(version):
+        res = "Added ok"
+    else:
+        res = "You have entered an invalid api version", 404
+
+    return res
+
+
+@app.route('/api/<version>/add_behavior', methods=['POST'])
+def add_behavior(version=app.config['ACTUAL_API']):
+    """
+    Adds a new behavior into the system
+
+    :param version: Api version
+    :return:
+    """
+    # Todo we need to code This part
+    if _check_version(version):
+        res = "Added ok"
+    else:
+        res = "You have entered an invalid api version", 404
+    return res
+
+
+###################################################################################################
+###################################################################################################
+######                              Error handlers
+###################################################################################################
+###################################################################################################
+
 @app.errorhandler(400)
 def not_found(error):
     resp = make_response("Your content type or data is not in JSON format or need some arguments\n", 400)
@@ -232,6 +289,13 @@ def not_found(error):
 def data_sent_error(error):
     resp = make_response("Data entered is invalid, please check your JSON\n", 500)
     return resp
+
+
+###################################################################################################
+###################################################################################################
+######                              Extra functions
+###################################################################################################
+###################################################################################################
 
 
 def serialize(model):
