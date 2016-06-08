@@ -7,6 +7,8 @@ This file is used to connect to the database using SQL Alchemy ORM
 
 import tables
 import ConfigParser
+import logging
+import datetime
 from sqlalchemy import create_engine, desc
 from sqlalchemy.engine.url import URL
 from sqlalchemy.exc import OperationalError
@@ -20,6 +22,7 @@ __copyright__ = "foo"   # we need?¿
 # Database settings
 config = ConfigParser.ConfigParser()
 config.readfp(open('./conf/rest_api.cfg'))
+#config.readfp(open('../../conf/rest_api.cfg'))
 
 
 if 'database' in config.sections():
@@ -72,7 +75,7 @@ class PostgORM(object):
         :return: None
         """
         self.session.add(p_data)                  # Pending add (we can see new changes before commit)
-
+        #self.session.flush()                      # Generation of Pk of new objects
 
     def insert_all(self, p_list_data):
         """
@@ -82,6 +85,7 @@ class PostgORM(object):
         :return: None
         """
         self.session.add_all(p_list_data)         # Multiple users, pending action
+        #self.session.flush()                      # Generation of PK of new objects
 
     def query(self, p_class, web_dict, limit=10, offset=0, order_by='asc'):
         """
@@ -126,15 +130,20 @@ class PostgORM(object):
         """
         Commit all data and close the connection to DB.
 
-        :return: None
+        :return: True if commit is successfully done.
+                 False if there are any error in db
         """
-        if self.session.new:  # todo check if we need to know that session is new or not
-            try:
-                self.session.commit()
-            except Exception:
-                self.session.rollback()
-        else:
-            print "Session is not new. Check it"
+        res = False
+        try:
+            self.session.commit()
+            # Commit successful
+            logging.info("post_orm: commit successful")
+            res = True
+        except Exception as e:
+            logging.exception("post_orm: An error happened when commit in DB: %s", e)
+            self.session.rollback()
+            #self.session.flush()
+        return res
 
     def close(self):
         """
@@ -154,15 +163,15 @@ class PostgORM(object):
         """
         res = False
         if 'username' in p_data and 'password' in p_data:
-            user_data = self.query(tables.User, {'username': p_data['username']})
+            user_data = self.query(tables.UserInRole, {'username': p_data['username']})
             if user_data and user_data.count() == 1 and user_data[0].password == p_data['password'] \
                     and user_data[0].username == p_data['username']:
-                print 'Access granted'
-                res = True
+                logging.info("verify_user_login: Login ok.")
+                res = user_data[0].id
             else:
-                print "Wrong username/password"
+                logging.error("verify_user_login: User entered invalid username/password")
         else:
-            print "Rare exception"
+            logging.error("verify_user_login: Rare error detected")
         return res
 
 
@@ -204,6 +213,70 @@ class PostgORM(object):
     #     return user_data
 
 
+    def add_activity(self, p_data):
+        """
+        Adds new activity into the database
+
+        :param p_data: Related data about activity
+        :return:
+        """
+        # todo bla
+        pass
+
+    def add_behavior(self, p_data):
+        """
+        Adds new behavior into the database
+
+        :param p_data: Related data about behavior
+        :return:
+        """
+        #  todo ble
+        pass
+
+    def add_action(self, p_data):
+        """
+        Adds a new action into the database.
+
+        This method divided all data in p_data parameter to create needed data and store it into database
+
+
+        :param p_data: a Python d
+        :return: True if everything is OK or False if there is a problem.
+        """
+        for data in p_data:
+            insert_list_data = []
+            # Basic tables
+            user = tables.User(id=data['payload']['user'])
+            action = tables.Action(action_name=data['action'])
+            location = tables.Location(location_name=data['location'], indoor=True)
+            # We are going to check if basic data exist in DB and insert it in case that is the first time.
+            db_user = self.session.query(tables.User).filter(tables.User.id == user.id)
+            db_action = self.session.query(tables.Action).filter(tables.Action.action_name == data['action'])
+            db_location = self.session.query(tables.Location).filter(tables.Location.location_name == data['location'])
+            if db_user and not db_user.all():
+                insert_list_data.append(user)
+            if db_action and not db_action.all():
+                insert_list_data.append(action)
+            if db_location and not db_location.all():
+                insert_list_data.append(location)
+            # Related tables
+            date = datetime.datetime.strptime(data['timestamp'], '%Y-%m-%d %H:%M:%S.%f')
+            pilot = tables.Pilot(name=data['extra']['pilot'], location_id=location.id)
+            executed_action = tables.ExecutedAction(date=date, rating=data['rating'],
+                                                    location_id=location.id,
+                                                    action_id=action.id,
+                                                    user_id=data['payload']['user'])
+            # We are going to check if Related data exist in db
+            db_pilot = self.session.query(tables.Pilot).filter(tables.Pilot.location_id == location.id)
+            # if pilot has location id none
+            if db_pilot and not db_pilot.all():
+                insert_list_data.append(pilot)
+            insert_list_data.append(executed_action)
+            self.insert_all(insert_list_data)
+        # Whe prepared all data, now we are going to commit it into DB.
+        return self.commit()
+
+
 
 # todo insert new user method
 """
@@ -215,3 +288,7 @@ administrator = User(
     name='Simon',
     password=PasswordHash.new('working-as-designed', 15))
 """
+
+if __name__ == '__main__':
+    orm = PostgORM()
+    orm.create_tables()

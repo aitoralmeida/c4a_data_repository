@@ -9,7 +9,7 @@ Here we define tables, relationships between tables and so on.
 
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, validates
-from sqlalchemy import Column, Integer, String, Sequence, Float, Table, ForeignKey, TIMESTAMP, Text, TypeDecorator
+from sqlalchemy import Column, Integer, String, Boolean, Sequence, Float, BigInteger , Table, ForeignKey, TIMESTAMP, Text, TypeDecorator
 from PasswordHash import PasswordHash
 from itsdangerous import (TimedJSONWebSignatureSerializer
                           as Serializer, BadSignature, SignatureExpired)
@@ -70,67 +70,86 @@ def create_tables(p_engine):
 
 
 # Association tables for m2m Relationships
-class UserActionRel(Base):
+class ExecutedAction(Base):
     """
+    Multi relationship table.
 
-    User ---> Action m2m REL
-
+    User - Action -- Activity -- Location
     """
-    __tablename__ = 'user_action_rel'
+    __tablename__ = 'executed_action'
 
-    user_id = Column(Integer, ForeignKey('user.id'), primary_key=True)
-    action_id = Column(Integer, ForeignKey('action.id'), primary_key=True)
+    id = Column(Integer, Sequence('executed_action_id_seq'), primary_key=True)
+    #user_in_role_id = Column(Integer, ForeignKey('user_in_role.id'))
+    user_id = Column(String(75), ForeignKey('user.id'))
+    action_id = Column(Integer, ForeignKey('action.id'))
+    activity_id = Column(Integer, ForeignKey('activity.id'), nullable=True)
+    location_id = Column(Integer, ForeignKey('location.id'))
     date = Column(TIMESTAMP)
+    # Asociated information
+    rating = Column(Integer)
+    sensor_id = Column(Integer)
+    payload = Column(String(50))
+    extra_information = Column(Text)
+    # Relationship with other TABLES
     action = relationship("Action")
-
-
-class UserLocationRel(Base):
-    """
-
-    User ---> Location m2m REL
-
-    """
-    __tablename__ = 'user_location_rel'
-
-    user_id = Column(Integer, ForeignKey('user.id'), primary_key=True)
-    location_id = Column(Integer, ForeignKey('location.id'), primary_key=True)
-    date = Column(TIMESTAMP)
+    activity = relationship("Activity")
     location = relationship("Location")
+    # m2m
+    risk = relationship('RiskExecutedActionRel')
+
+
+class RiskBehaviorRel(Base):
+    """
+    Behavior <---> Risk M2m REL
+    """
+    __tablename__ = 'risk_behavior_rel'
+
+    behavior_id = Column(Integer, ForeignKey('behavior.id'), primary_key=True)
+    risk_id = Column(Integer, ForeignKey('risk.id'), primary_key=True)
+    risk = relationship('Risk')
+
+
+class RiskExecutedActionRel(Base):
+    """
+    ExecutedAction < --> Risk
+    """
+    __tablename__ = 'risk_executed_action_rel'
+
+    executed_action_id = Column(Integer, ForeignKey('executed_action.id'), primary_key=True)
+    risk_id = Column(Integer, ForeignKey('risk.id'), primary_key=True)
+    risk = relationship('Risk')
 
 
 # Tables
-class User(Base):
+
+
+
+class UserInRole(Base):
     """
     Base data of the users
     """
-    __tablename__ = 'user'
+    __tablename__ = 'user_in_role'
 
-    id = Column(Integer, Sequence('user_id_seq'), primary_key=True)
+    id = Column(Integer, Sequence('user_in_role_seq'), primary_key=True)
     username = Column(Text, nullable=False, unique=True)
     password = Column(Password(rounds=13), nullable=False)
-    # Or specify a cost factor other than the default 12
+    # Or specify a cost factor other than the default 13
     # password = Column(Password(rounds=10))
-    # Without rounds System will use 12 rounds by default
-    name = Column(String(50))
-    lastname = Column(String(50))
-    genre = Column(String(12))
-    age = Column(Integer)
-    #todo uncoment for user roles
-    #role = Column(String(15), default='user')
-    # one2many
-    payload = relationship("Payload")
+    # Without rounds System will use 13 rounds by default
+    role = Column(String(15), default='user')
     # m2m
-    action = relationship("UserActionRel")
-    location = relationship("UserLocationRel")
+    #action = relationship("ExecutedAction")
+    # Fkey
+    pilot_id = Column(Integer, ForeignKey('pilot.id'))
 
     def __repr__(self):
-        return "<User(name='%s', lastname='%s', genre='%s', age='%s')>" % (
-            self.name, self.lastname, self.genre, self.age)
+        return "<UserInRole(username='%s', password='%s', role='%s')>" % (
+            self.username, self.password, self.role)
 
     def to_json(self):
-        return dict(name=self.name, lastname=self.lastname,
-                #registered_on=self.registered_on.isoformat()
-                genre=self.genre, age=self.age )
+        return dict(username=self.username,
+                    password=self.password,
+                    role=self.role)
 
     # Password Encryption validation
     @validates('password')
@@ -172,7 +191,6 @@ class User(Base):
     #     return data
 
 
-
 class Action(Base):
     """
     Action registration
@@ -180,15 +198,12 @@ class Action(Base):
     __tablename__ = 'action'
 
     id = Column(Integer, Sequence('action_id_seq'), primary_key=True)
-    action_name = Column(String(75))
-    rating = Column(Float(3))
-    # one2many
-    extra = relationship("Extra")
-    payload = relationship("Payload")
+    action_name = Column(String(50))
+    category = Column(String(25))
 
     def __repr__(self):
-        return "<Action(action_name='%s', rating='%s')>" % (
-            self.action_name, self.rating)
+        return "<Action(action_name='%s', category='%s')>" % (
+            self.action_name, self.category)
 
 
 class Location(Base):
@@ -198,38 +213,104 @@ class Location(Base):
     __tablename__ = 'location'
 
     id = Column(Integer, Sequence('location_id_seq'), primary_key=True)
-    location = Column(String(75))
+    location_name = Column(String(75))
+    indoor = Column(Boolean)
+    # One2Many
+    pilot = relationship('Pilot')
 
     def __repr__(self):
-        return "<Location(location='%s')>" % self.location
+        return "<Location(location_name='%s', indoor='%s')>" % (self.location_name, self.indoor)
 
 
-class Extra(Base):
+class Activity(Base):
     """
-    Extra infor from Pilot
-    """
-    __tablename__ = 'extra'
+    Activity is a collection of different actions. For example "Make breakfast is an activity and could have some actions
+    like:
 
-    id = Column(Integer, Sequence('extra_id_seq'), primary_key=True)
-    pilot = Column(String(75))
-    city = Column(String(50))
-    action_id = Column(Integer, ForeignKey('action.id'))
+        --> Put the milk in the bowl
+        --> Open the fridge
+        --> .....
+    """
+    __tablename__ = 'activity'
+
+    id = Column(Integer, Sequence('activity_id_seq'), primary_key=True)
+    activity_name = Column(String(50))
+
+    # Fkeys
+    behavior_id = Column(Integer, ForeignKey('behavior.id'))
 
     def __repr__(self):
-        return "<Extra(pilot='%s', city='%s')>" % (self.pilot, self.city)
+        return "<Activity(activity_name='%s')>" % self.activity_name
 
 
-#todo delete it we don't need it
-class Payload(Base):
+class Behavior(Base):
     """
-    Payload: User and GPS position of the current action
+    Behavior is a collection os different activities. For example some everyday activities can result on "Go to the park
+    at weekdays"
     """
-    __tablename__ = 'payload'
 
-    id = Column(Integer, Sequence('payload_id_seq'), primary_key=True)
-    position = Column(String(75))
-    user_id = Column(Integer, ForeignKey('user.id'))
-    action_id = Column(Integer, ForeignKey('action.id'))
+    __tablename__ = 'behavior'
+
+    id = Column(Integer, Sequence('behavior_id_seq'), primary_key=True)
+    behavior_name = Column(String(50))
+    # one2many relantionship
+    activity = relationship('Activity')
+    # m2m relationship
+    risk = relationship('RiskBehaviorRel')
 
     def __repr__(self):
-        return "<Payload(position='%s')>" % self.position
+        return "<Behavior(behavior_name='%s', risk='%s')>" % (self.behavior_name, self.risk)
+
+
+class Risk(Base):
+    """
+    Some actions or behavior have an associated % of risk. For example, it is possible that "Go to the park at weekdays"
+    has a % of chance to have MCI if the user performs some strange actions.
+    """
+
+    __tablename__ = 'risk'
+
+    id = Column(Integer, Sequence('risk_id_seq'), primary_key=True)
+    risk_name = Column(String(50))
+    ratio = Column(Float(3))
+    description = Column(String(255))
+
+    def __repr__(self):
+        return "<Risk(risk_name='%s', ratio='%s', description='%s')>" % self.risk_name, self.ratio, self.description
+
+
+class Pilot(Base):
+    """
+    The pilot table stores the information about the Pilots in a defined locations and what users are participating
+    """
+
+    __tablename__ = 'pilot'
+
+    id = Column(Integer, Sequence('pilot_id_seq'), primary_key=True)
+    name = Column(String(50))
+    population_size = Column(BigInteger)
+    # One2Many
+    user_in_role = relationship('UserInRole')
+    # Fkeys
+    location_id = Column(Integer, ForeignKey('location.id'))
+
+    def __repr__(self):
+        return "<Pilot(name='%s', population_size='%s')>" % (self.name, self.population_size)
+
+
+class User(Base):
+    """
+    This table allows to store all related data from User who makes the executed_action
+    """
+
+    __tablename__ = 'user'
+
+    id = Column(String(75), primary_key=True)
+    # m2m
+    action = relationship("ExecutedAction")
+
+    def __repr__(self):
+        return "<User(id='%s')>" % self.id
+
+
+# Todo we need to build profile with openSHR and registed with  created_date = Column(DateTime, default=datetime.datetime.utcnow)

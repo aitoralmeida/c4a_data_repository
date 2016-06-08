@@ -10,6 +10,7 @@ from src.packORM import post_orm
 from src.packORM import tables
 from flask import Flask, request, make_response, Response, abort, redirect, url_for, session, flash
 from sqlalchemy.orm import class_mapper
+import logging
 
 
 __author__ = 'Rubén Mulero'
@@ -57,7 +58,7 @@ def teardown_request(exception):
 @app.route('/')
 def index():
     """
-    Redirect to the latest version
+    Redirect to the latest  API version
 
     :return: Redirect to the latest api version
     """
@@ -67,7 +68,7 @@ def index():
 @app.route('/api')
 def api_redirect():
     """
-    Redirect to the latest version
+    Redirect to the latest API version
 
     :return: Redirection to the current api version
     """
@@ -113,7 +114,7 @@ def api(version=app.config['ACTUAL_API']):
 @app.route('/api/<version>/login', methods=['POST'])
 def login(version=app.config['ACTUAL_API']):
     """
-    Gives the hability to login in the API an insert new DATA
+    Gives the ability to login into API
 
     :param version: Api version
     :return:
@@ -122,12 +123,15 @@ def login(version=app.config['ACTUAL_API']):
         if request.headers['content-type'] == 'application/json':
             data = request.json
             if 'username' in data and 'password' in data:
-                # Loggin OK!
                 res = DATABASE.verify_user_login(data)
                 if res:
-                    session['logged_in'] = True
-                    flash('You were logged in')
-                    return redirect(url_for('api', version=app.config['ACTUAL_API']))
+                    # Username and password are OK
+                    logging.info("login: User loggin sucesfully with %s username", data['username'])
+                    # Saving session cookie.
+                    session['username'] = data['username']
+                    session['id'] = res
+                    # return redirect(url_for('api', version=app.config['ACTUAL_API']))
+                    return "You were logged in", 200
                 else:
                     abort(401)
             else:
@@ -146,6 +150,8 @@ def logout(version=app.config['ACTUAL_API']):
     :param version: APi version
     :return:
     """
+
+    # todo check first client cookie
     if _check_version(version):
         session.pop('logged_in', None)
         flash('You were logged out')
@@ -153,6 +159,9 @@ def logout(version=app.config['ACTUAL_API']):
     else:
         return "You have entered an invalid api version", 404
 
+
+
+## todo develop separated searchs!!
 
 @app.route('/api/<version>/search', methods=['POST'])
 def search(version=app.config['ACTUAL_API']):
@@ -178,7 +187,9 @@ def search(version=app.config['ACTUAL_API']):
     """
     res = None
     if _check_version(version):
-        if not session.get('logged_in'):
+        # todo define better this part.
+
+        if not session.get('username'):
             abort(401)
         if request.headers['content-type'] == 'application/json':
             data = request.json
@@ -214,31 +225,33 @@ def search(version=app.config['ACTUAL_API']):
 
 
 # todo we need to define add_one and add_multI???
-@app.route('/api/<version>/add', methods=['POST'])
+@app.route('/api/<version>/add_action', methods=['POST'])
 def add(version=app.config['ACTUAL_API']):
     """
-    Add a new element in DB.
-
+    Add a new action in DB
 
     :param version: Api version
     :return:
     """
-    if _check_version(version):
-        if not session.get('logged_in'):
-            abort(401)
-        if request.headers['content-type'] == 'application/json':
-            data = request.json
-            # validate users data
-            if data and _check_data(data):
-                print "data is ok"
-                # todo add new data based on crieteria. Maybe we need more endpoints
-                return Response('Data stored in database OK\n')
+    if _check_connection(version):
+        # We created a list of Python dics.
+        data = request.json
+        username = session['username']
+        id = session['id']
+        # todo Check if session data is OK in DB
+        # validate users data
+        if data and _check_add_action_data(data):
+            # User and data are OK. save data into DB
+            res = DATABASE.add_action(data)
+            if res:
+                logging.info("add_action: Stored in database ok")
+                return Response('Data stored in database OK\n'), 200
             else:
-                abort(500)
+                logging.error("add_action: Stored in database failed")
+                return "There is an error in DB", 500
         else:
-            abort(400)
-    else:
-        return "You have entered an invalid api version", 404
+            abort(500)
+
 
 
 @app.route('/api/<version>/add_activity', methods=['POST'])
@@ -267,6 +280,22 @@ def add_behavior(version=app.config['ACTUAL_API']):
     :return:
     """
     # Todo we need to code This part
+    if _check_version(version):
+        res = "Added ok"
+    else:
+        res = "You have entered an invalid api version", 404
+    return res
+
+
+@app.route('/api/<version>/add_user', methods=['POST'])
+def add_user(version=app.config['ACTUAL_API']):
+    """
+    Adds a new user into the system
+
+    :param version:
+    :return:
+    """
+    # Todo we need to code this part
     if _check_version(version):
         res = "Added ok"
     else:
@@ -306,6 +335,61 @@ def serialize(model):
     return dict((c, getattr(model, c)) for c in columns)
 
 
+def _check_connection(p_ver):
+    """
+    Make a full check of all needed data
+
+
+    :param p_ver: Actual version of the API
+    :return: True if everithing is OK.
+            An error code (abort) if something is bad
+    """
+
+    if _check_version(p_ver=p_ver):
+        if _check_content_tye():
+            if _check_session():
+                logging.info("check_connection: User entered data is OK")
+                return True
+            else:
+                logging.error("check_connection: User session cookie is not OK, 401")
+                abort(401)
+        else:
+            logging.error("check_connection: Content-type is not JSON serializable, 400")
+            abort(400)
+    else:
+        logging.error("check_connection, Actual API is WRONG, 404")
+        abort(404)
+
+
+def _check_session():
+    """
+    Checks if the actual user has a session cookie registered
+
+    :return: True if cookie is ok
+            False is there isn't any cookie or cookie is bad.
+    """
+    res = False
+    if session.get('username') and session.get('id'):
+        res = True
+    return res
+
+
+def _check_content_tye():
+    """
+    Checks if actual content_type is OK
+
+
+    :param p_ver: Actual version of API
+    :return: True if everything is ok.
+            False if something is wrong
+    """
+    content_type_ok = False
+    # Check if request headers are ok
+    if request.headers['content-type'] == 'application/json':
+        content_type_ok = True
+    return content_type_ok
+
+
 def _check_version(p_ver):
     """
     Check if we are using a good api version
@@ -319,7 +403,22 @@ def _check_version(p_ver):
     return api_good_version
 
 
-def _check_data(p_data):
+
+def _check_add_activity_data(p_data):
+    """
+    Check if add activity data is ok before enter data into the system
+
+    :param p_data: data from the user
+    :return: True if data is ok or False is data is invalid
+    """
+    res = False
+    for data in p_data:
+            if all(k in data for k in ("activity", "behavior")): # todo maybe the user needs to insert ids?
+                # data entered is present
+                res = True
+    return res
+
+def _check_add_action_data(p_data):
     """
     Check if data is ok and if the not nullable values are filled.
 
@@ -328,13 +427,15 @@ def _check_data(p_data):
     :return: True or False if data is ok.
     """
     res = False
-    # todo define what kind of data we need to validate. For the moment we are going to set some basic data
+    # todo we are going to define add_action data from WP3
     # Check if JSON has all needed values
-    if all(k in p_data for k in ("name", "lastname", "genre", 'age', 'username', 'password')):
-        # Check not nullable values:
-        if p_data['username'] and p_data['password']:
-            # All values ok
-            res = True
+    for data in p_data:
+            if all(k in data for k in ("action", "location", "payload", 'timestamp', 'rating', 'extra', 'secret')):
+                if all(l in data['payload'] for l in ("user", "position")):
+                    if "pilot" in data['extra']:
+                        # todo make sure if we need to ensure that variables ar not null
+                        res = True
+
     return res
 
 
@@ -345,6 +446,13 @@ curl -X POST -d @filename.txt http://127.0.0.1:5000/add_action --header "Content
 curl -X POST -d '{"name1":"Rodolfo","name2":"Pakorro"}' http://127.0.0.1:5000/add_action --header "Content-Type:application/json"
 
 curl -X POST -k -d '{"username":"admin","password":"admin"}' https://10.48.1.49/api/0.1/login --header "Content-Type:application/json"
+
+-c cookie.txt --> Save the actual cookie
+-b cookie.txt --> Loads actual cookie
+
+Sample curl to store new actions
+
+curl -X POST -b cookie.txt -k -d @json_data.txt http://0.0.0.0:5000/api/0.1/add_action --header "Content-Type:application/json"
 
 """
 
