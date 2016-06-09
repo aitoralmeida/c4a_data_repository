@@ -4,12 +4,12 @@ City4Age European Project LinkedData and RestAPI servers.
 
 This repository contains two projects. 
 
-1. LinkedDataInterface: An interface to infer new statements using a RuleEngine Reasoner and serve it with SPARQL, Linked Data client or HTML endpoints.
+1. LinkedDataInterface: An interface to infer new statements using a RuleEngine Reasoner and to serve it with SPARQL, Linked Data client or HTML endpoints.
 2. RestApiInterface: A REST API interface to manage some user personal information in a POSTGRESQL relational database.
 
 For more information, please read each project README.
 
-There are other folders wich contains other data needed for installation purposes.
+There are other folders containing more information for installation purposes.
 
 Requirements
 -------------
@@ -44,11 +44,10 @@ To install the entire project please follow this steps.
     To install entire project
 
 
-Additional immportant notes
+Additional important notes
 -----------------------------
 
-All project needed dependencies are installed automatically. The user don't need to bother about this,
-however here is a complete list of project dependencies and some advices:
+All needed dependencies for the project are installed automatically. The user does not need to bother about this issue. However, here is a complete list of project dependencies and some advices:
 
 * Python 2.7
 * Python-dev (2.7)
@@ -63,8 +62,8 @@ however here is a complete list of project dependencies and some advices:
 * Tomcat 8
 * Apache Ant
 
-You need to provide ssh password to establish connection to the server and run some
+You must provide a ssh password to establish connection to the server and run some
 _sudo_ commands.
 
-In some steps, application may ask some thinks such us ssl keys generation, d2rq mapping.tll
+In some steps, application may ask some things such as ssl keys generation, d2rq mapping.tll
 file verification or rules verification.
