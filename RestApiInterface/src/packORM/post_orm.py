@@ -75,7 +75,6 @@ class PostgORM(object):
         :return: None
         """
         self.session.add(p_data)                  # Pending add (we can see new changes before commit)
-        #self.session.flush()                      # Generation of Pk of new objects
 
     def insert_all(self, p_list_data):
         """
@@ -85,7 +84,6 @@ class PostgORM(object):
         :return: None
         """
         self.session.add_all(p_list_data)         # Multiple users, pending action
-        #self.session.flush()                      # Generation of PK of new objects
 
     def query(self, p_class, web_dict, limit=10, offset=0, order_by='asc'):
         """
@@ -142,7 +140,6 @@ class PostgORM(object):
         except Exception as e:
             logging.exception("post_orm: An error happened when commit in DB: %s", e)
             self.session.rollback()
-            #self.session.flush()
         return res
 
     def close(self):
@@ -244,38 +241,46 @@ class PostgORM(object):
         :return: True if everything is OK or False if there is a problem.
         """
         for data in p_data:
-            insert_list_data = []
+            # todo we need to know where i need to store location in database.
+            insert_data_list = []
             # Basic tables
-            user = tables.User(id=data['payload']['user'])
-            action = tables.Action(action_name=data['action'])
-            location = tables.Location(location_name=data['location'], indoor=True)
             # We are going to check if basic data exist in DB and insert it in case that is the first time.
-            db_user = self.session.query(tables.User).filter(tables.User.id == user.id)
-            db_action = self.session.query(tables.Action).filter(tables.Action.action_name == data['action'])
-            db_location = self.session.query(tables.Location).filter(tables.Location.location_name == data['location'])
-            if db_user and not db_user.all():
-                insert_list_data.append(user)
-            if db_action and not db_action.all():
-                insert_list_data.append(action)
-            if db_location and not db_location.all():
-                insert_list_data.append(location)
+            user = self._get_or_create(tables.User, id=data['payload']['user'])
+            action = self._get_or_create(tables.Action, action_name=data['action'])
+            location = self._get_or_create(tables.Location, location_name=data['location'], indoor=True)
             # Related tables
             date = datetime.datetime.strptime(data['timestamp'], '%Y-%m-%d %H:%M:%S.%f')
-            pilot = tables.Pilot(name=data['extra']['pilot'], location_id=location.id)
+            pilot = self._get_or_create(tables.Pilot, name=data['extra']['pilot'], location_id=location.id)
+            # We insert all related data to executed_action
             executed_action = tables.ExecutedAction(date=date, rating=data['rating'],
                                                     location_id=location.id,
                                                     action_id=action.id,
                                                     user_id=data['payload']['user'])
-            # We are going to check if Related data exist in db
-            db_pilot = self.session.query(tables.Pilot).filter(tables.Pilot.location_id == location.id)
-            # if pilot has location id none
-            if db_pilot and not db_pilot.all():
-                insert_list_data.append(pilot)
-            insert_list_data.append(executed_action)
-            self.insert_all(insert_list_data)
+            insert_data_list.append(executed_action)
+            self.insert_all(insert_data_list)
         # Whe prepared all data, now we are going to commit it into DB.
         return self.commit()
 
+    def _get_or_create(self, model, **kwargs):
+        """
+        This method creates a new entry in db if this isn't exist yet or retrieve the instance information based on
+        some arguments.
+
+        :param model: The Table name defined in Tables class
+        :param kwargs: The needed arguments to create the table for example
+
+                (id=23, name='pako', lastname='rodriguez')
+
+        :return: An instance of  the Table.
+        """
+        instance = self.session.query(model).filter_by(**kwargs).first()
+        if instance:
+            return instance
+        else:
+            instance = model(**kwargs)
+            self.insert_one(instance)
+            self.commit()
+            return instance
 
 
 # todo insert new user method

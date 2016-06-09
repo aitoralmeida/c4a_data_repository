@@ -137,6 +137,8 @@ class UserInRole(Base):
     # password = Column(Password(rounds=10))
     # Without rounds System will use 13 rounds by default
     role = Column(String(15), default='user')
+    valid_from = Column(TIMESTAMP, nullable=False)
+    valid_to = Column(TIMESTAMP, nullable=False)
     # m2m
     #action = relationship("ExecutedAction")
     # Fkey
