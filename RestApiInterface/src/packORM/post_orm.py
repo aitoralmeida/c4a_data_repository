@@ -160,7 +160,7 @@ class PostgORM(object):
         """
         res = False
         if 'username' in p_data and 'password' in p_data:
-            user_data = self.query(tables.UserInRole, {'username': p_data['username']})
+            user_data = self.query(tables.UserInSystem, {'username': p_data['username']})
             if user_data and user_data.count() == 1 and user_data[0].password == p_data['password'] \
                     and user_data[0].username == p_data['username']:
                 logging.info("verify_user_login: Login ok.")
@@ -209,27 +209,6 @@ class PostgORM(object):
     #             user_data = self.session.query(tables.User).get(res.get('id', 0))
     #     return user_data
 
-
-    def add_activity(self, p_data):
-        """
-        Adds new activity into the database
-
-        :param p_data: Related data about activity
-        :return:
-        """
-        # todo bla
-        pass
-
-    def add_behavior(self, p_data):
-        """
-        Adds new behavior into the database
-
-        :param p_data: Related data about behavior
-        :return:
-        """
-        #  todo ble
-        pass
-
     def add_action(self, p_data):
         """
         Adds a new action into the database.
@@ -241,27 +220,88 @@ class PostgORM(object):
         :return: True if everything is OK or False if there is a problem.
         """
         for data in p_data:
-            # todo we need to know where i need to store location in database.
             insert_data_list = []
             # Basic tables
             # We are going to check if basic data exist in DB and insert it in case that is the first time.
-            user = self._get_or_create(tables.User, id=data['payload']['user'])
             action = self._get_or_create(tables.Action, action_name=data['action'])
-            location = self._get_or_create(tables.Location, location_name=data['location'], indoor=True)
-            # Related tables
             date = datetime.datetime.strptime(data['timestamp'], '%Y-%m-%d %H:%M:%S.%f')
-            pilot = self._get_or_create(tables.Pilot, name=data['extra']['pilot'], location_id=location.id)
+            pilot = self._get_or_create(tables.Pilot, name=data['extra']['pilot'])
+            user = self._get_or_create(tables.UserInRole, id=data['payload']['user'], pilot_id=pilot.id)
+            location = self._get_or_create(tables.Location, location_name=data['location'], indoor=True,
+                                           pilot_id=pilot.id)
             # We insert all related data to executed_action
             executed_action = tables.ExecutedAction(date=date, rating=data['rating'],
                                                     location_id=location.id,
                                                     action_id=action.id,
-                                                    user_id=data['payload']['user'])
+                                                    user_in_role_id=data['payload']['user'])
             insert_data_list.append(executed_action)
             self.insert_all(insert_data_list)
         # Whe prepared all data, now we are going to commit it into DB.
         return self.commit()
 
+    def add_risk(self, p_data):
+        """
+        Adds a new risk into the database
+
+        This method inserts into database all information about risk and their type to be related later with desired
+        data.
+
+        :param p_data:
+        :return: True if everything goes well.
+                False if there are any problem
+
+        """
+        # todo this is a first version, maybe in the future the user need to specify relationships
+        res = False
+        for data in p_data:
+            risk = self._get_or_create(tables.Risk, risk_name=data['risk_name'], ratio=data['ratio'],
+                                       description=data['description'])
+            if risk:
+                res = True
+            else:
+                res = False
+        return res
+
+    def add_behavior(self, p_data):
+        """
+        Adds a new behavrior into the database
+
+        :param p_data:
+        :return: True if everything goes well.
+                False if there are any problem
+
+        """
+        # todo this is a first version, maybe in the future the user need to specify relationships
+        res = False
+        for data in p_data:
+            behavior = self._get_or_create(tables.Behavior, behavior_name=data['behavior_name'])
+            if behavior:
+                res = True
+            else:
+                res = False
+        return res
+
+    def add_activity(self, p_data):
+        """
+        Adds a new activity into the database
+
+        :param p_data:
+        :return: True if everything goes well.
+                False if there are any problem
+
+        """
+        # todo this is a first version, maybe in the future the user need to specify relationships
+        res = False
+        for data in p_data:
+            activity = self._get_or_create(tables.Activity, activity_name=data['activity_name'])
+            if activity:
+                res = True
+            else:
+                res = False
+        return res
+
     def _get_or_create(self, model, **kwargs):
+        # type: (object, object) -> object
         """
         This method creates a new entry in db if this isn't exist yet or retrieve the instance information based on
         some arguments.
@@ -297,3 +337,6 @@ administrator = User(
 if __name__ == '__main__':
     orm = PostgORM()
     orm.create_tables()
+    admin = john = tables.UserInSystem(username='admin', password='admin')
+    orm.session.add(admin)
+    orm.commit()

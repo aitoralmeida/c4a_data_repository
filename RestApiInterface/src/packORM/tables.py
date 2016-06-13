@@ -9,14 +9,15 @@ Here we define tables, relationships between tables and so on.
 
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, validates
-from sqlalchemy import Column, Integer, String, Boolean, Sequence, Float, BigInteger , Table, ForeignKey, TIMESTAMP, Text, TypeDecorator
+from sqlalchemy import Column, Integer, String, Boolean, Sequence, Float, BigInteger, Table, ForeignKey, TIMESTAMP, \
+    Text, TypeDecorator
 from PasswordHash import PasswordHash
 from itsdangerous import (TimedJSONWebSignatureSerializer
                           as Serializer, BadSignature, SignatureExpired)
-
+import datetime
 
 __author__ = 'Rubén Mulero'
-__copyright__ = "foo"   # we need?¿
+__copyright__ = "foo"  # we need?¿
 
 # Global variable declatarive base
 Base = declarative_base()
@@ -79,8 +80,8 @@ class ExecutedAction(Base):
     __tablename__ = 'executed_action'
 
     id = Column(Integer, Sequence('executed_action_id_seq'), primary_key=True)
-    #user_in_role_id = Column(Integer, ForeignKey('user_in_role.id'))
-    user_id = Column(String(75), ForeignKey('user.id'))
+    # user_in_role_id = Column(Integer, ForeignKey('user_in_role.id'))
+    user_in_role_id = Column(String(75), ForeignKey('user_in_role.id'))
     action_id = Column(Integer, ForeignKey('action.id'))
     activity_id = Column(Integer, ForeignKey('activity.id'), nullable=True)
     location_id = Column(Integer, ForeignKey('location.id'))
@@ -121,14 +122,31 @@ class RiskExecutedActionRel(Base):
 
 
 # Tables
-
-
-
 class UserInRole(Base):
+    """
+    This table allows to store all related data from User who makes the executed_action
+    """
+
+    __tablename__ = 'user_in_role'
+
+    id = Column(String(75), primary_key=True)
+    valid_from = Column(TIMESTAMP, default=datetime.datetime.utcnow)
+    valid_to = Column(TIMESTAMP)
+    # m2m
+    action = relationship("ExecutedAction")
+    # one2many
+    stake_holder_id = Column(Integer, ForeignKey('stake_holder.id'))
+    pilot_id = Column(Integer, ForeignKey('pilot.id'))
+
+    def __repr__(self):
+        return "<User(id='%s', valid_from='%s'. valid_to='%s')>" % (self.id, self.valid_from, self.valid_to)
+
+
+class UserInSystem(Base):
     """
     Base data of the users
     """
-    __tablename__ = 'user_in_role'
+    __tablename__ = 'user_in_system'
 
     id = Column(Integer, Sequence('user_in_role_seq'), primary_key=True)
     username = Column(Text, nullable=False, unique=True)
@@ -136,22 +154,18 @@ class UserInRole(Base):
     # Or specify a cost factor other than the default 13
     # password = Column(Password(rounds=10))
     # Without rounds System will use 13 rounds by default
-    role = Column(String(15), default='user')
-    valid_from = Column(TIMESTAMP, nullable=False)
-    valid_to = Column(TIMESTAMP, nullable=False)
-    # m2m
-    #action = relationship("ExecutedAction")
-    # Fkey
-    pilot_id = Column(Integer, ForeignKey('pilot.id'))
+    created_date = Column(TIMESTAMP, default=datetime.datetime.utcnow)
+    # One2Many
+    stake_holder_id = Column(Integer, ForeignKey('stake_holder.id'))
 
     def __repr__(self):
-        return "<UserInRole(username='%s', password='%s', role='%s')>" % (
-            self.username, self.password, self.role)
+        return "<UserInRole(username='%s', password='%s', created_date='%s')>" % (
+            self.username, self.password, self.created_date)
 
     def to_json(self):
         return dict(username=self.username,
                     password=self.password,
-                    role=self.role)
+                    created_date=self.created_date)
 
     # Password Encryption validation
     @validates('password')
@@ -160,37 +174,37 @@ class UserInRole(Base):
 
 
 
-    # # Token management
-    # def generate_auth_token(self, app, expiration=600):
-    #     """
-    #     This method generates a new auth token to the user.
-    #
-    #     :param app: Flask application Object
-    #     :param expiration: Expiration time of the token
-    #
-    #     :return: A string with the token.
-    #     """
-    #     s = Serializer(app.config['SECRET_KEY'], expires_in=expiration)
-    #     return s.dumps({'id': self.id})
-    #
-    # @staticmethod
-    # def verify_auth_token(token, app):
-    #     """
-    #     This method verify user's token
-    #
-    #     :param token: Token information
-    #     :param app: Flask application Object
-    #
-    #     :return: User ID
-    #     """
-    #     s = Serializer(app.config['SECRET_KEY'])
-    #     try:
-    #         data = s.loads(token)
-    #     except SignatureExpired:
-    #         return None  # valid token, but expired
-    #     except BadSignature:
-    #         return None  # invalid token
-    #     return data
+        # # Token management
+        # def generate_auth_token(self, app, expiration=600):
+        #     """
+        #     This method generates a new auth token to the user.
+        #
+        #     :param app: Flask application Object
+        #     :param expiration: Expiration time of the token
+        #
+        #     :return: A string with the token.
+        #     """
+        #     s = Serializer(app.config['SECRET_KEY'], expires_in=expiration)
+        #     return s.dumps({'id': self.id})
+        #
+        # @staticmethod
+        # def verify_auth_token(token, app):
+        #     """
+        #     This method verify user's token
+        #
+        #     :param token: Token information
+        #     :param app: Flask application Object
+        #
+        #     :return: User ID
+        #     """
+        #     s = Serializer(app.config['SECRET_KEY'])
+        #     try:
+        #         data = s.loads(token)
+        #     except SignatureExpired:
+        #         return None  # valid token, but expired
+        #     except BadSignature:
+        #         return None  # invalid token
+        #     return data
 
 
 class Action(Base):
@@ -218,7 +232,7 @@ class Location(Base):
     location_name = Column(String(75))
     indoor = Column(Boolean)
     # One2Many
-    pilot = relationship('Pilot')
+    pilot_id = Column(Integer, ForeignKey('pilot.id'))
 
     def __repr__(self):
         return "<Location(location_name='%s', indoor='%s')>" % (self.location_name, self.indoor)
@@ -293,26 +307,29 @@ class Pilot(Base):
     population_size = Column(BigInteger)
     # One2Many
     user_in_role = relationship('UserInRole')
-    # Fkeys
-    location_id = Column(Integer, ForeignKey('location.id'))
+    location = relationship('Location')
 
     def __repr__(self):
         return "<Pilot(name='%s', population_size='%s')>" % (self.name, self.population_size)
 
 
-class User(Base):
+class StakeHolder(Base):
     """
-    This table allows to store all related data from User who makes the executed_action
+    This table stores all related data of project stakeholders to identify each user with his role in the system
     """
 
-    __tablename__ = 'user'
+    __tablename__ = 'stake_holder'
 
-    id = Column(String(75), primary_key=True)
-    # m2m
-    action = relationship("ExecutedAction")
+    id = Column(Integer, Sequence('stake_holder_seq'), primary_key=True)
+    name = Column(String(25), nullable=False)
+    type = Column(String(25))
+    # one2many
+    user_in_system = relationship('UserInSystem')
+    user_in_role = relationship('UserInRole')
 
     def __repr__(self):
-        return "<User(id='%s')>" % self.id
+        return "<StakeHolder(name='%s', type='%s')>" % (self.name, self.type)
 
 
-# Todo we need to build profile with openSHR and registed with  created_date = Column(DateTime, default=datetime.datetime.utcnow)
+
+# Todo: we need to create Profile engine and some more entities.

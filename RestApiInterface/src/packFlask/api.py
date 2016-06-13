@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 
 """
-IN this clase we define REST API actions. We define what url is needed and what actions we need to perform
+Main class of the Rest API. Here we define endpoints with their functions. Also we define some configuration
+for Flask and manage error codes.
 
 """
 
@@ -22,8 +23,6 @@ ACTUAL_API = '0.1'
 AVAILABLE_API = '0.1', '0.2', '0.3'
 SECRET_KEY = '\xc2O\xd1\xbb\xd6\xb2\xc2pxRS\x12l\xee8X\xcb\xc3(\xeer\xc5\x08s'
 DATABASE = 'Database'
-USERNAME = 'admin'
-PASSWORD = 'admin'
 
 # Create application and load config.
 app = Flask(__name__)
@@ -253,7 +252,6 @@ def add(version=app.config['ACTUAL_API']):
             abort(500)
 
 
-
 @app.route('/api/<version>/add_activity', methods=['POST'])
 def add_activity(version=app.config['ACTUAL_API']):
     """
@@ -262,13 +260,23 @@ def add_activity(version=app.config['ACTUAL_API']):
     :param version: Api version
     :return:
     """
-    # Todo we need to code this part
-    if _check_version(version):
-        res = "Added ok"
-    else:
-        res = "You have entered an invalid api version", 404
-
-    return res
+    if _check_connection(version):
+        data = request.json
+        username = session['username']
+        id = session['id']
+        # todo Check if session data is OK in DB
+        # validate users data
+        if data and _check_add_activity_data(data):
+            # User and data are OK. save data into DB
+            res = DATABASE.add_activity(data)
+            if res:
+                logging.info("add_activity: Stored in database ok")
+                return Response('Data stored in database OK\n'), 200
+            else:
+                logging.error("add_activity: Stored in database failed")
+                return "There is an error in DB", 500
+        else:
+            abort(500)
 
 
 @app.route('/api/<version>/add_behavior', methods=['POST'])
@@ -279,20 +287,30 @@ def add_behavior(version=app.config['ACTUAL_API']):
     :param version: Api version
     :return:
     """
-    # Todo we need to code This part
-    if _check_version(version):
-        res = "Added ok"
-    else:
-        res = "You have entered an invalid api version", 404
-    return res
-
+    if _check_connection(version):
+        data = request.json
+        username = session['username']
+        id = session['id']
+        # todo Check if session data is OK in DB
+        # validate users data
+        if data and _check_add_behavior_data(data):
+            # User and data are OK. save data into DB
+            res = DATABASE.add_behavior(data)
+            if res:
+                logging.info("add_behavior: Stored in database ok")
+                return Response('Data stored in database OK\n'), 200
+            else:
+                logging.error("add_behavior: Stored in database failed")
+                return "There is an error in DB", 500
+        else:
+            abort(500)
 
 @app.route('/api/<version>/add_user', methods=['POST'])
 def add_user(version=app.config['ACTUAL_API']):
     """
     Adds a new user into the system
 
-    :param version:
+    :param version: Api version
     :return:
     """
     # Todo we need to code this part
@@ -301,6 +319,33 @@ def add_user(version=app.config['ACTUAL_API']):
     else:
         res = "You have entered an invalid api version", 404
     return res
+
+
+@app.route('/api/<version>/add_risk', methods=['POST'])
+def add_risk(version=app.config['ACTUAL_API']):
+    """
+    Adds a new risk into the system
+
+    :param version: Api version
+    :return:
+    """
+    if _check_connection(version):
+        data = request.json
+        username = session['username']
+        id = session['id']
+        # todo Check if session data is OK in DB
+        # validate users data
+        if data and _check_add_risk_data(data):
+            # User and data are OK. save data into DB
+            res = DATABASE.add_risk(data)
+            if res:
+                logging.info("add_risk: Stored in database ok")
+                return Response('Data stored in database OK\n'), 200
+            else:
+                logging.error("add_risk: Stored in database failed")
+                return "There is an error in DB", 500
+        else:
+            abort(500)
 
 
 ###################################################################################################
@@ -403,21 +448,6 @@ def _check_version(p_ver):
     return api_good_version
 
 
-
-def _check_add_activity_data(p_data):
-    """
-    Check if add activity data is ok before enter data into the system
-
-    :param p_data: data from the user
-    :return: True if data is ok or False is data is invalid
-    """
-    res = False
-    for data in p_data:
-            if all(k in data for k in ("activity", "behavior")): # todo maybe the user needs to insert ids?
-                # data entered is present
-                res = True
-    return res
-
 def _check_add_action_data(p_data):
     """
     Check if data is ok and if the not nullable values are filled.
@@ -436,6 +466,51 @@ def _check_add_action_data(p_data):
                         # todo make sure if we need to ensure that variables ar not null
                         res = True
 
+    return res
+
+def _check_add_risk_data(p_data):
+    """
+    Check if data is ok and if the not nullable values are filled.
+
+    :param p_data:
+    :return: True or False if data i ok
+    """
+    res = False
+    # Check if JSON has all needed values
+    for data in p_data:
+        if all(k in data for k in ("risk_name", "ratio", "description")):   # todo add the name of behavior or action
+            res = True
+    return res
+
+def _check_add_behavior_data(p_data):
+    """
+    Check if data is ok and if the not nullable values are filled.
+
+    :param p_data:
+    :return: True or False if data is ok
+    """
+    res = False
+    # Check if JSON has all needed values
+    for data in p_data:
+        #if all(k in data for k in "behavior_name"):
+        if "behavior_name" in data:
+            res = True
+    return res
+
+
+def _check_add_activity_data(p_data):
+    """
+    Check if data is ok and if the not nullable values are filled.
+
+    :param p_data:
+    :return: True or False if data is ok
+    """
+    res = False
+    # Check if JSON has all needed values
+    for data in p_data:
+        #if all(k in data for k in "activity_name"):
+        if "activity_name" in data:
+            res = True
     return res
 
 
