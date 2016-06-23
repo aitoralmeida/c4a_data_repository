@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="joseki-3.4.4">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/lib/joseki-3.4.4/joseki-3.4.4.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

@@ -5,6 +5,7 @@ This file is used to connect to the database using SQL Alchemy ORM
 
 """
 
+import os, inspect
 import tables
 import ConfigParser
 import logging
@@ -18,11 +19,12 @@ from sqlalchemy.orm import sessionmaker
 __author__ = 'Rubén Mulero'
 __copyright__ = "foo"   # we need?¿
 
-
 # Database settings
 config = ConfigParser.ConfigParser()
-config.readfp(open('./conf/rest_api.cfg'))
-#config.readfp(open('../../conf/rest_api.cfg'))
+# Checks actual path of the file and sets config file.
+current_dir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+config_dir = os.path.abspath(current_dir + '../../../conf/rest_api.cfg')
+config.read(config_dir)
 
 
 if 'database' in config.sections():

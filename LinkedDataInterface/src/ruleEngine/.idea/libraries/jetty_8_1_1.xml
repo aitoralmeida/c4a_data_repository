@@ -1,0 +1,18 @@
+<component name="libraryTable">
+  <library name="jetty-8.1.1">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/lib/jetty-8.1.1/jetty-security-8.1.1.v20120215.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/jetty-8.1.1/jetty-util-8.1.1.v20120215.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/jetty-8.1.1/jetty-server-8.1.1.v20120215.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/jetty-8.1.1/jetty-servlet-8.1.1.v20120215.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/jetty-8.1.1/jetty-webapp-8.1.1.v20120215.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/jetty-8.1.1/jetty-continuation-8.1.1.v20120215.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/jetty-8.1.1/jetty-xml-8.1.1.v20120215.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/jetty-8.1.1/jetty-io-8.1.1.v20120215.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/jetty-8.1.1/jetty-http-8.1.1.v20120215.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/jetty-8.1.1/servlet-api-3.0.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

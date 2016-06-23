@@ -1,0 +1,19 @@
+<component name="ArtifactManager">
+  <artifact name="ruleEngine:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/ruleEngine_jar</output-path>
+    <root id="root">
+      <element id="archive" name="ruleEngine.jar">
+        <element id="module-output" name="ruleEngine" />
+        <element id="module-test-output" name="ruleEngine" />
+      </element>
+      <element id="library" level="project" name="arq-2.9" />
+      <element id="library" level="project" name="d2rq-0.8.1" />
+      <element id="library" level="project" name="joseki-3.4.4" />
+      <element id="library" level="project" name="hsqldb" />
+      <element id="library" level="project" name="velocity-1.7" />
+      <element id="library" level="project" name="logging" />
+      <element id="library" level="project" name="db-drivers" />
+      <element id="library" level="project" name="jetty-8.1.1" />
+    </root>
+  </artifact>
+</component>

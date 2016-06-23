@@ -1,0 +1,6 @@
+@prefix pre: <http://jena.hpl.hp.com/prefix#>.
+@prefix foaf: <http://xmlns.com/foaf/0.1/>.
+@prefix schm: <http://schema.org/>.
+[rule1: (?f pre:father ?a) (?u pre:brother ?f) -> (?u pre:uncle ?a)]
+[rule2: (?persona/1 schm:familyName "Mulero") -> (?persona/1 foaf:givenName "Mule")]
+[rule3: (?persona/1 schm:givenName "Ruben") -> (?persona/1 foaf:family_name "Rub")]
