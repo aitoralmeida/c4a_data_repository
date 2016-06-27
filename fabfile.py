@@ -100,6 +100,8 @@ def _install_linked_data():
         run('/bin/bash ./install.sh')
 
 
+# TODO WE NEED TO CHANGE THE BEHAVIOR OF THIS MAIN INSTALLATION METHOD.
+
 # Main installation method.
 def main_install():
     """

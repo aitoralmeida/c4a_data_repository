@@ -5,7 +5,8 @@ This file is used to connect to the database using SQL Alchemy ORM
 
 """
 
-import os, inspect
+import os
+import inspect
 import tables
 import ConfigParser
 import logging

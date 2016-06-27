@@ -19,7 +19,7 @@ import datetime
 __author__ = 'Rubén Mulero'
 __copyright__ = "foo"  # we need?¿
 
-# Global variable declatarive base
+# Global variable declarative base
 Base = declarative_base()
 
 
@@ -77,6 +77,7 @@ class ExecutedAction(Base):
 
     User - Action -- Activity -- Location
     """
+
     __tablename__ = 'executed_action'
 
     id = Column(Integer, Sequence('executed_action_id_seq'), primary_key=True)
@@ -101,8 +102,9 @@ class ExecutedAction(Base):
 
 class RiskBehaviorRel(Base):
     """
-    Behavior <---> Risk M2m REL
+    Behavior < -- > Risk M2m REL
     """
+
     __tablename__ = 'risk_behavior_rel'
 
     behavior_id = Column(Integer, ForeignKey('behavior.id'), primary_key=True)
@@ -112,13 +114,38 @@ class RiskBehaviorRel(Base):
 
 class RiskExecutedActionRel(Base):
     """
-    ExecutedAction < --> Risk
+    ExecutedAction < -- > Risk
     """
+
     __tablename__ = 'risk_executed_action_rel'
 
     executed_action_id = Column(Integer, ForeignKey('executed_action.id'), primary_key=True)
     risk_id = Column(Integer, ForeignKey('risk.id'), primary_key=True)
     risk = relationship('Risk')
+
+
+class EAMStartRangeRel(Base):
+    """
+    EAM < -- > StartRange
+    """
+
+    __tablename__ = 'eam_start_range_rel'
+
+    eam_id = Column(Integer, ForeignKey('eam.id'), primary_key=True)
+    start_range_id = Column(Integer, ForeignKey('start_range.id'), primary_key=True)
+    start_range = relationship("StartRange")
+
+
+class EAMSimpleLocationRel(Base):
+    """
+    EAM < -- > SimpleLocation
+    """
+
+    __tablename__ = 'eam_simple_location_rel'
+    eam_id = Column(Integer, ForeignKey('eam.id'), primary_key=True)
+    simple_locataion_id = Column(Integer, ForeignKey('simple_location.id'), primary_key=True)
+    simple_location = relationship("SimpleLocation")
+
 
 
 # Tables
@@ -217,6 +244,9 @@ class Action(Base):
     action_name = Column(String(50))
     category = Column(String(25))
 
+    # one2many
+    eam = relationship("EAM")
+
     def __repr__(self):
         return "<Action(action_name='%s', category='%s')>" % (
             self.action_name, self.category)
@@ -255,10 +285,14 @@ class Activity(Base):
     # Fkeys
     behavior_id = Column(Integer, ForeignKey('behavior.id'))
 
+    # One2one
+    eam = relationship("EAM", uselist=False, back_populates="activity")
+
     def __repr__(self):
         return "<Activity(activity_name='%s')>" % self.activity_name
 
 
+# Todo we need to delete behavior because we slipt this class into two new classes.
 class Behavior(Base):
     """
     Behavior is a collection os different activities. For example some everyday activities can result on "Go to the park
@@ -330,3 +364,55 @@ class StakeHolder(Base):
     def __repr__(self):
         return "<StakeHolder(name='%s', type='%s')>" % (self.name, self.type)
 
+
+# EAM Related Tables
+class EAM(Base):
+    """
+    This table stores the duration of each related action/activity in a simple place.
+    """
+
+    __tablename__ = 'eam'
+
+    id = Column(Integer, Sequence('eam_seq'), primary_key=True)
+    duration = Column(Integer)
+    #one2one
+    activity_id = Column(Integer, ForeignKey('activity.id'))
+    activity = relationship("Activity", back_populates="eam")
+    # one2many
+    action_id = Column(Integer, ForeignKey('action.id'))
+    # many2many
+    start_range = relationship("EAMStartRangeRel")
+    simple_location = relationship("EAMSimpleLocationRel")
+
+    def __repr__(self):
+        return "<EAM(duration='%s')>" % self.duration
+
+
+class SimpleLocation(Base):
+    """
+    This table defines a list of simple locations. For example:
+
+    "Kitchen", "Bathroom", "Restroom"......
+
+    """
+
+    __tablename__ = 'simple_location'
+
+    id = Column(Integer, Sequence('simple_location_seq'), primary_key=True)
+    simple_location_name = Column(String(25), unique=True)
+
+    def __repr__(self):
+        return "<SimpleLocation(simple_location_name='%s')>" % self.simple_location_name
+
+
+class StartRange(Base):
+    """
+    This table defines some ranges of dates to store what is start time and end time of each
+    EAM performed by each user.
+    """
+
+    __tablename__ = 'start_range'
+
+    id = Column(Integer, Sequence('start_range_seq'), primary_key=True)
+    start_hour = Column(TIMESTAMP)
+    end_hour = Column(TIMESTAMP)

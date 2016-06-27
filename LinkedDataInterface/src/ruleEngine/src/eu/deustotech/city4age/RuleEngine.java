@@ -85,8 +85,8 @@ public class RuleEngine {
         pModel.write(out, "RDF/XML");
         String result = out.toString();
         // Launch curl to upload or current knowledge into Fuseki
-        ProcessBuilder p = new ProcessBuilder("curl","-X", "POST", "--header","Content-Type: application/rdf+xml",
-                "-d", result, "http://localhost:8080/fuseki/city4age/data");
+        ProcessBuilder p = new ProcessBuilder("curl", "-k", "-X", "POST", "--header", "Content-Type: application/rdf+xml",
+                "-d", result, "https://localhost:8443/fuseki/city4age/data");
         try {
             System.out.println("Uploading new Knowledge to Fuseki......................");
             System.out.println("");
@@ -151,7 +151,7 @@ public class RuleEngine {
 
 ##################################################### An example of SPARQL call
 
-curl -i -X POST -d 'SELECT ?subject ?predicate ?object WHERE {?subject ?predicate ?object} LIMIT 25' http://10.48.1.115:8080/fuseki/city4age/query --header "Content-Type: application/sparql-query"
+curl -k -i -X POST -d 'SELECT ?subject ?predicate ?object WHERE {?subject ?predicate ?object} LIMIT 25' http://10.48.1.115:8080/fuseki/city4age/query --header "Content-Type: application/sparql-query"
 
 
 
