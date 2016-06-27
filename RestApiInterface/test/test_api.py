@@ -3,7 +3,7 @@
 import json
 import unittest
 
-from src.packFlask.api import app
+from packFlask.api import app
 
 
 class FlaskTestCase(unittest.TestCase):
@@ -82,21 +82,18 @@ class FlaskTestCase(unittest.TestCase):
 
         assert "No data found with this filters" not in response.data and response.status_code == 200
 
-
     def test_search_limit(self):
         """ Test if a search has a limit"""
         with self.app as c:
             with c.session_transaction() as sess:
                 sess['logged_in'] = True
         response = c.post('/api/0.1/search',
-                                 data=json.dumps(dict(username='rmulero', limit=2)),
-                                 content_type='application/json',
-                                 follow_redirects=True)
+                          data=json.dumps(dict(username='rmulero', limit=2)),
+                          content_type='application/json',
+                          follow_redirects=True)
 
         # We search in the final string if the username rmulero appears only twice.
         assert response.data.count('rmulero') == 2
-
-
 
     def test_search_offset(self):
         """ Test if a search has a offset"""

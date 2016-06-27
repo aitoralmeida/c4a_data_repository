@@ -325,16 +325,30 @@ class PostgORM(object):
             return instance
 
 
-# todo insert new user method
-"""
-# Create plain user with default key complexity
-john = User(name='John', password='flatten-shallow-ideal')
+    # todo insert new user's method
 
-# Create an admin user with higher key derivation complexity
-administrator = User(
-    name='Simon',
-    password=PasswordHash.new('working-as-designed', 15))
-"""
+    def add_new_user_in_system(self, p_data):
+        """
+        This method, allows to administrative system users, add new user into the system.
+
+        These administrative users need to set what is the stakeholder of the user in this sysyem.
+
+        :param p_data:
+        :return:
+        """
+
+        # todo set available fixed stakeholders in this system via a static final global parameter.
+        # we are going to define a list with some predefined stake holders.
+
+
+        pass
+
+
+    # todo maybe we need to create stakeholders methods ???
+
+
+
+# todo for testing purposes, we need to delete later.
 
 if __name__ == '__main__':
     orm = PostgORM()

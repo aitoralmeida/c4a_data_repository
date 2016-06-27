@@ -330,6 +330,3 @@ class StakeHolder(Base):
     def __repr__(self):
         return "<StakeHolder(name='%s', type='%s')>" % (self.name, self.type)
 
-
-
-# Todo: we need to create Profile engine and some more entities.

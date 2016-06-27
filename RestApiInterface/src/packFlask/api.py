@@ -37,8 +37,6 @@ app.config.from_object(__name__)
 ###################################################################################################
 
 
-#todo rember that we need to change the session loggin cookie name
-
 @app.before_request
 def before_request():
     global DATABASE
@@ -108,8 +106,6 @@ def api(version=app.config['ACTUAL_API']):
 ###################################################################################################
 
 
-# todo now POST data is received in JSON lists
-
 @app.route('/api/<version>/login', methods=['POST'])
 def login(version=app.config['ACTUAL_API']):
     """
@@ -149,8 +145,6 @@ def logout(version=app.config['ACTUAL_API']):
     :param version: APi version
     :return:
     """
-
-    # todo check first client cookie
     if _check_version(version):
         session.pop('logged_in', None)
         flash('You were logged out')
@@ -223,7 +217,6 @@ def search(version=app.config['ACTUAL_API']):
     return res
 
 
-# todo we need to define add_one and add_multI???
 @app.route('/api/<version>/add_action', methods=['POST'])
 def add(version=app.config['ACTUAL_API']):
     """
@@ -237,7 +230,6 @@ def add(version=app.config['ACTUAL_API']):
         data = request.json
         username = session['username']
         id = session['id']
-        # todo Check if session data is OK in DB
         # validate users data
         if data and _check_add_action_data(data):
             # User and data are OK. save data into DB
@@ -264,7 +256,6 @@ def add_activity(version=app.config['ACTUAL_API']):
         data = request.json
         username = session['username']
         id = session['id']
-        # todo Check if session data is OK in DB
         # validate users data
         if data and _check_add_activity_data(data):
             # User and data are OK. save data into DB
@@ -291,7 +282,6 @@ def add_behavior(version=app.config['ACTUAL_API']):
         data = request.json
         username = session['username']
         id = session['id']
-        # todo Check if session data is OK in DB
         # validate users data
         if data and _check_add_behavior_data(data):
             # User and data are OK. save data into DB
@@ -333,7 +323,6 @@ def add_risk(version=app.config['ACTUAL_API']):
         data = request.json
         username = session['username']
         id = session['id']
-        # todo Check if session data is OK in DB
         # validate users data
         if data and _check_add_risk_data(data):
             # User and data are OK. save data into DB
@@ -358,6 +347,7 @@ def add_risk(version=app.config['ACTUAL_API']):
 def not_found(error):
     resp = make_response("Your content type or data is not in JSON format or need some arguments\n", 400)
     return resp
+
 
 @app.errorhandler(500)
 def data_sent_error(error):
@@ -468,6 +458,7 @@ def _check_add_action_data(p_data):
 
     return res
 
+
 def _check_add_risk_data(p_data):
     """
     Check if data is ok and if the not nullable values are filled.
@@ -482,6 +473,7 @@ def _check_add_risk_data(p_data):
             res = True
     return res
 
+
 def _check_add_behavior_data(p_data):
     """
     Check if data is ok and if the not nullable values are filled.
@@ -492,7 +484,7 @@ def _check_add_behavior_data(p_data):
     res = False
     # Check if JSON has all needed values
     for data in p_data:
-        #if all(k in data for k in "behavior_name"):
+        # if all(k in data for k in "behavior_name"):
         if "behavior_name" in data:
             res = True
     return res
@@ -508,7 +500,7 @@ def _check_add_activity_data(p_data):
     res = False
     # Check if JSON has all needed values
     for data in p_data:
-        #if all(k in data for k in "activity_name"):
+        # if all(k in data for k in "activity_name"):
         if "activity_name" in data:
             res = True
     return res
