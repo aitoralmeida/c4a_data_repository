@@ -265,6 +265,8 @@ class PostgORM(object):
                 res = False
         return res
 
+
+    # todo this will be deleted and change by "Intra and Inter activity behavior"
     def add_behavior(self, p_data):
         """
         Adds a new behavrior into the database

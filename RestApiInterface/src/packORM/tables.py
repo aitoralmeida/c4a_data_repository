@@ -100,16 +100,32 @@ class ExecutedAction(Base):
     risk = relationship('RiskExecutedActionRel')
 
 
-class RiskBehaviorRel(Base):
+class InterBehaviourRiskRel(Base):
     """
-    Behavior < -- > Risk M2m REL
+    InterBehaviour < -- > Risk M2m REL
     """
 
-    __tablename__ = 'risk_behavior_rel'
+    __tablename__ = 'inter_behaviour_risk_rel'
 
-    behavior_id = Column(Integer, ForeignKey('behavior.id'), primary_key=True)
+    inter_behaviour_id = Column(Integer, ForeignKey('inter_behaviour.id'), primary_key=True)
     risk_id = Column(Integer, ForeignKey('risk.id'), primary_key=True)
     risk = relationship('Risk')
+
+
+class IntraActivity(Base):
+    """
+    Activity < -- > IntraBehaviour
+    """
+
+    __tablename__ = 'intra_activity'
+
+    # M2M Relantionship
+    activity_id = Column(Integer, ForeignKey('activity.id'), primary_key=True)
+    intra_behaviour_id = Column(Integer, ForeignKey('intra_behaviour.id'), primary_key=True)
+    start_interval = Column(TIMESTAMP, default=datetime.datetime.utcnow, primary_key=True)      # Defined by the user?
+    end_interval = Column(TIMESTAMP, primary_key=True)                                          # Defined by the user
+
+    intra_behaviour = relationship("IntraBehaviour")
 
 
 class RiskExecutedActionRel(Base):
@@ -142,10 +158,50 @@ class EAMSimpleLocationRel(Base):
     """
 
     __tablename__ = 'eam_simple_location_rel'
+
     eam_id = Column(Integer, ForeignKey('eam.id'), primary_key=True)
-    simple_locataion_id = Column(Integer, ForeignKey('simple_location.id'), primary_key=True)
+    simple_location_id = Column(Integer, ForeignKey('simple_location.id'), primary_key=True)
     simple_location = relationship("SimpleLocation")
 
+
+class PilotGeriatricIndicatorRel(Base):
+    """
+    Pilot < -- > GeriatricIndicator
+    """
+
+    __tablename__ = 'pilot_geriatric_indicator_rel'
+
+    pilot_id = Column(Integer, ForeignKey('pilot.id'), primary_key=True)
+    geriatric_indicator_id = Column(Integer, ForeignKey('geriatric_indicator.id'), primary_key=True)
+    geriatric_indicator = relationship("GeriatricIndicator")
+    # Extra Values
+    date = Column(TIMESTAMP, primary_key=True)
+
+
+class UserInRoleGeriatricIndicatorRel(Base):
+    """
+    UserInRole < -- > GeriatricIndicator
+    """
+
+    __tablename__ = 'user_in_role_geriatric_indicator_rel'
+
+    user_in_role_id = Column(String(75), ForeignKey('user_in_role.id'), primary_key=True)
+    geriatric_indicator_id = Column(Integer, ForeignKey('geriatric_indicator.id'), primary_key=True)
+    geriatric_indicator = relationship("GeriatricIndicator")
+    # Extra Values
+    date = Column(TIMESTAMP)
+
+
+class GeriatricIndicatorGeriatricSubIndicatorRel(Base):
+    """
+    GeriatricIndicator < -- > GeriatricSubIndicator
+    """
+
+    __tablename__ = 'geriatric_indicator_geriatric_sub_indicator_rel'
+
+    geriatric_indicator_id = Column(Integer, ForeignKey('geriatric_indicator.id'), primary_key=True)
+    geriatric_sub_indicator_id = Column(Integer, ForeignKey('geriatric_sub_indicator.id'), primary_key=True)
+    geriatric_sub_indicator = relationship("GeriatricSubIndicator")
 
 
 # Tables
@@ -161,6 +217,7 @@ class UserInRole(Base):
     valid_to = Column(TIMESTAMP)
     # m2m
     action = relationship("ExecutedAction")
+    geriatric_indicator = relationship("UserInRoleGeriatricIndicatorRel")
     # one2many
     stake_holder_id = Column(Integer, ForeignKey('stake_holder.id'))
     pilot_id = Column(Integer, ForeignKey('pilot.id'))
@@ -282,34 +339,18 @@ class Activity(Base):
     id = Column(Integer, Sequence('activity_id_seq'), primary_key=True)
     activity_name = Column(String(50))
 
-    # Fkeys
-    behavior_id = Column(Integer, ForeignKey('behavior.id'))
-
     # One2one
     eam = relationship("EAM", uselist=False, back_populates="activity")
 
+    # one2many
+    expected_inter_behaviour = relationship("InterBehaviour", foreign_keys='InterBehaviour.expected_activity_id')
+    real_inter_behaviour = relationship("InterBehaviour", foreign_keys='InterBehaviour.real_activity_id')
+
+    # many2many
+    intra_behaviour = relationship("IntraActivity")
+
     def __repr__(self):
         return "<Activity(activity_name='%s')>" % self.activity_name
-
-
-# Todo we need to delete behavior because we slipt this class into two new classes.
-class Behavior(Base):
-    """
-    Behavior is a collection os different activities. For example some everyday activities can result on "Go to the park
-    at weekdays"
-    """
-
-    __tablename__ = 'behavior'
-
-    id = Column(Integer, Sequence('behavior_id_seq'), primary_key=True)
-    behavior_name = Column(String(50))
-    # one2many relantionship
-    activity = relationship('Activity')
-    # m2m relationship
-    risk = relationship('RiskBehaviorRel')
-
-    def __repr__(self):
-        return "<Behavior(behavior_name='%s', risk='%s')>" % (self.behavior_name, self.risk)
 
 
 class Risk(Base):
@@ -342,6 +383,8 @@ class Pilot(Base):
     # One2Many
     user_in_role = relationship('UserInRole')
     location = relationship('Location')
+    # Many2Many
+    geriatric_indicator = relationship("PilotGeriatricIndicatorRel")
 
     def __repr__(self):
         return "<Pilot(name='%s', population_size='%s')>" % (self.name, self.population_size)
@@ -363,6 +406,47 @@ class StakeHolder(Base):
 
     def __repr__(self):
         return "<StakeHolder(name='%s', type='%s')>" % (self.name, self.type)
+
+
+class InterBehaviour(Base):
+    """
+    This table contains all data related to InterBehaviours. Here we are going to store some data about what is
+    expected activity. What is the real activity and what is the deviation value.
+    """
+
+    __tablename__ = 'inter_behaviour'
+
+    id = Column(Integer, Sequence('inter_behaviour_seq'), primary_key=True)
+    deviation = Column(Float(10))
+    # many2one relationships
+    expected_activity_id = Column(Integer, ForeignKey('activity.id'))
+    real_activity_id = Column(Integer, ForeignKey('activity.id'))
+    intra_behaviour_id = Column(Integer, ForeignKey('intra_behaviour.id'))
+
+    # many2many
+    risk = relationship("InterBehaviourRiskRel")
+
+    def __repr__(self):
+        return "<InterBehaviour(deviation='%s')>" % self.deviation
+
+
+class IntraBehaviour(Base):
+    """
+    This table contains information about spatio-temporal time intervals in activities and try to store some measures
+    """
+
+    __tablename__ = 'intra_behaviour'
+
+    id = Column(Integer, Sequence('intra_behaviour_seq'), primary_key=True)
+    mean = Column(Float(10))
+    period = Column(Float(10))
+    deviation = Column(Float(10))
+
+    # one2many
+    inter_behaviour = relationship("InterBehaviour")
+
+    def __repr__(self):
+        return "<IntraBehaviour(mean='%s', period='%s', deviation='%s')>" % (self.mean, self.period, self.deviation)
 
 
 # EAM Related Tables
@@ -416,3 +500,45 @@ class StartRange(Base):
     id = Column(Integer, Sequence('start_range_seq'), primary_key=True)
     start_hour = Column(TIMESTAMP)
     end_hour = Column(TIMESTAMP)
+
+    def __repr__(self):
+        return "<SimpleLocation(start_hour='%s', end_hour='%s')>" % (self.start_hour, self.end_hour)
+
+
+# New tables based on POLIMI Geriatrician suggestions.
+class GeriatricIndicator(Base):
+    """
+    This table records some data about Geriatric indicators. For example an GI could be "Mobility" as a representation
+    of some differnet actions related with "Mobility.
+
+    Here we need to store some extra value like Score to helps geriatricians to have a better approach of stored data.
+    """
+
+    __tablename__ = 'geriatric_indicator'
+
+    id = Column(Integer, Sequence('geriatric_indicator_seq'), primary_key=True)
+    name = Column(String(50))
+    score = Column(Integer)
+    # M2M
+    geriatric_sub_indicator = relationship("GeriatricIndicatorGeriatricSubIndicatorRel")
+
+    def __repr__(self):
+        return "<GeriatricIndicator(name='%s', score='%s')>" % (self.name, self.score)
+
+
+class GeriatricSubIndicator(Base):
+    """
+    In this table is stored some sub value of Geriatric indicators. A sub values related to "Mobility"
+    could be "Walking, Still, Moving, Moving across rooms" and so on.
+
+    Like GeriatricIndicator this table has some extra values.
+    """
+
+    __tablename__ = 'geriatric_sub_indicator'
+
+    id = Column(Integer, Sequence('geriatric_sub_indicator_seq'), primary_key=True)
+    name = Column(String(50))
+    score = Column(Integer)
+
+    def __repr__(self):
+        return "<SimpleLocation(name='%s', score='%s')>" % (self.name, self.score)
