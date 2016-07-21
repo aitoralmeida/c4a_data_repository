@@ -49,6 +49,45 @@ else:
         'database': 'postgres'
     }
 
+# Definition of stakeholders
+# todo maybe is very interesint to assign some "roles" in the system to have some access". convert this into a dict
+stakeholders = [
+                    # System
+                    "admin",
+                    # Care
+                    "elderly_citizen",
+                    "informal_caregiver",
+                    "caregiver",
+                    "operator",
+                    "elderly_operator",
+                    "sheltered_managers",
+                    # Medical
+                    "general_practicioners",
+                    "geriatricians",
+                    "medical_researcher",
+                    # Behavioral science
+                    "behaviour_scienticist",
+                    # Health management
+                    "epidermiologist",
+                    # City services
+                    "social_services",
+                    "city_planner",
+                    # Community services
+                    "transport_manager",
+                    "energy_company",
+                    "cultural_manager",
+                    "fitness_manager",
+                    "shop_manager",
+                    "shop",     # banks, restaurants, book shop........
+                    # Business
+                    "market_researche",
+                    "app_developer",
+                    "sensor_designer",
+                    "expert_consultancie",
+                    "behavioral_science",
+                ]
+
+
 class PostgORM(object):
 
     def __init__(self):
@@ -236,7 +275,7 @@ class PostgORM(object):
             executed_action = tables.ExecutedAction(date=date, rating=data['rating'],
                                                     location_id=location.id,
                                                     action_id=action.id,
-                                                    user_in_role_id=data['payload']['user'])
+                                                    user_in_role_id=user.id)
             insert_data_list.append(executed_action)
             self.insert_all(insert_data_list)
         # Whe prepared all data, now we are going to commit it into DB.
@@ -260,27 +299,6 @@ class PostgORM(object):
             risk = self._get_or_create(tables.Risk, risk_name=data['risk_name'], ratio=data['ratio'],
                                        description=data['description'])
             if risk:
-                res = True
-            else:
-                res = False
-        return res
-
-
-    # todo this will be deleted and change by "Intra and Inter activity behavior"
-    def add_behavior(self, p_data):
-        """
-        Adds a new behavrior into the database
-
-        :param p_data:
-        :return: True if everything goes well.
-                False if there are any problem
-
-        """
-        # todo this is a first version, maybe in the future the user need to specify relationships
-        res = False
-        for data in p_data:
-            behavior = self._get_or_create(tables.Behavior, behavior_name=data['behavior_name'])
-            if behavior:
                 res = True
             else:
                 res = False
@@ -327,25 +345,38 @@ class PostgORM(object):
             self.commit()
             return instance
 
-
-    # todo insert new user's method
-
     def add_new_user_in_system(self, p_data):
         """
         This method, allows to administrative system users, add new user into the system.
 
-        These administrative users need to set what is the stakeholder of the user in this sysyem.
+        These administrative users need to set what is the stakeholder of the user in this system.
+
+        If all is well, this method will return a boolean value, otherwise it will return a message containing a list of
+        stakeholders, defined in a global list variable.
 
         :param p_data:
-        :return:
+        :return: True if everything goes well.
+                 False if there are any problem
+                 A list of stakeholders if the user entered an invalid stakeholder.
+
         """
+        res = False
+        for data in p_data:
+            if data and 'type' in data and data['stakeholder'] in stakeholders:
+                # StakeHolder entered ok we are going to enter data in DB
+                stakeholder = self._get_or_create(tables.StakeHolder, name=data['stakeholder'])    # consider to enter a user type according to it'ts current role
+                user_in_system = self._get_or_create(tables.UserInSystem, username=data['username'], password=data['password'],
+                                                     stake_holder_id=stakeholder.name)
 
-        # todo set available fixed stakeholders in this system via a static final global parameter.
-        # we are going to define a list with some predefined stake holders.
-
-
-        pass
-
+                if stakeholder and user_in_system:
+                    logging.info("Data entered ok into the system")
+                    res = True
+            else:
+                res = stakeholders
+                logging.error("There isn't a stakeholder inside JSON or data is invalid, value is: ", data['type'] or
+                              None)
+                break
+        return res
 
     # todo maybe we need to create stakeholders methods ???
 

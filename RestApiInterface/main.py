@@ -3,6 +3,9 @@
 import sys
 import os
 
+
+from src.packFlask.api import app as application
+
 __author__ = 'Rubén Mulero'
 __copyright__ = "foo"   # we need?¿
 
@@ -13,8 +16,6 @@ if not os.path.exists(os.path.join(basedir, "main.py")):
     if os.path.exists(os.path.join(cwd, "main.py")):
         basedir = cwd
 sys.path.insert(0, basedir)
-
-from src.packFlask.api import app as application
 
 # main execution
 if __name__ == '__main__':

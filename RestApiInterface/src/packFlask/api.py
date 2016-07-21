@@ -295,6 +295,7 @@ def add_behavior(version=app.config['ACTUAL_API']):
         else:
             abort(500)
 
+
 @app.route('/api/<version>/add_user', methods=['POST'])
 def add_user(version=app.config['ACTUAL_API']):
     """
@@ -333,6 +334,33 @@ def add_risk(version=app.config['ACTUAL_API']):
             else:
                 logging.error("add_risk: Stored in database failed")
                 return "There is an error in DB", 500
+        else:
+            abort(500)
+
+
+@app.route('/api/<version>/add_new_user', methods=['POST'])
+def add_new_user(version=app.config['ACTUAL_API']):
+    """
+    Adds a new system user into the system. The idea is to add a user with a stakeholder to create some role based system.
+
+    :param version:
+    :return:
+    """
+    if _check_connection(version):
+        data = request.json
+        # Validate new user data
+        if data and _check_add_new_user(data):
+            # Data entered is ok
+            res = DATABASE.add_new_user_in_system(data)
+            if res and isinstance(res, list):
+                # The user entered a bad state holder. Return something
+                msg = "Your request is not 100% finished because you have entered an invalid stakeholder, please, " \
+                      "review your JSON request and set 'type' value to one of the following " \
+                      "list to decide what is the best choice for you: \n \n %s" % res
+                return Response(msg, 412)
+            if res and res is True:
+                # Data entered ok
+                return Response('Data stored in database OK\n'), 200
         else:
             abort(500)
 
@@ -506,13 +534,29 @@ def _check_add_activity_data(p_data):
     return res
 
 
+def _check_add_new_user(p_data):
+    """
+    Check if data is ok and if the not nullable values are filled.
+
+    :param p_data:
+    :return:  True or False if data is ok
+    """
+    res = False
+    # Check if JSON has all needed values
+    for data in p_data:
+        # if all(k in data for k in "activity_name"):
+        if "username" in data and 'password' in data and 'type' in data:
+            res = True
+    return res
+
+
 """
 
 curl -X POST -d @filename.txt http://127.0.0.1:5000/add_action --header "Content-Type:application/json"
 
 curl -X POST -d '{"name1":"Rodolfo","name2":"Pakorro"}' http://127.0.0.1:5000/add_action --header "Content-Type:application/json"
 
-curl -X POST -k -d '{"username":"admin","password":"admin"}' https://10.48.1.49/api/0.1/login --header "Content-Type:application/json"
+curl -X POST -k -c cookie.txt -d '{"username":"admin","password":"admin"}' https://10.48.1.49/api/0.1/login --header "Content-Type:application/json"
 
 -c cookie.txt --> Save the actual cookie
 -b cookie.txt --> Loads actual cookie

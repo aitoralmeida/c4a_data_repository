@@ -219,7 +219,7 @@ class UserInRole(Base):
     action = relationship("ExecutedAction")
     geriatric_indicator = relationship("UserInRoleGeriatricIndicatorRel")
     # one2many
-    stake_holder_id = Column(Integer, ForeignKey('stake_holder.id'))
+    stake_holder_id = Column(String(25), ForeignKey('stake_holder.name'))
     pilot_id = Column(Integer, ForeignKey('pilot.id'))
 
     def __repr__(self):
@@ -240,7 +240,7 @@ class UserInSystem(Base):
     # Without rounds System will use 13 rounds by default
     created_date = Column(TIMESTAMP, default=datetime.datetime.utcnow)
     # One2Many
-    stake_holder_id = Column(Integer, ForeignKey('stake_holder.id'))
+    stake_holder_id = Column(String(25), ForeignKey('stake_holder.name'))
 
     def __repr__(self):
         return "<UserInRole(username='%s', password='%s', created_date='%s')>" % (
@@ -397,8 +397,7 @@ class StakeHolder(Base):
 
     __tablename__ = 'stake_holder'
 
-    id = Column(Integer, Sequence('stake_holder_seq'), primary_key=True)
-    name = Column(String(25), nullable=False)
+    name = Column(String(25), primary_key=True)
     type = Column(String(25))
     # one2many
     user_in_system = relationship('UserInSystem')
