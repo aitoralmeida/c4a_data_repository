@@ -4,8 +4,12 @@ Instalation
 To install fuseki server engine you need to to the following tasks:
 
 * Copy __fuseki.war__ into Tomcat's webapps folder (*/var/lib/tomcat8/webapps*)
-* Create a new folder in __/etc__ called *fuseki*.
+* Create a new folder in __/etc__ called *fuseki* (__/etc/fuseki)__).
 * Copy contents of *run* and *shiro.ini* file in __/etc/fuseki__ folder.
+* Go to __/etc__ folder and change owned to tomcat to user and group by executing:
+        ```bash
+        sudo chown -R 
+        ```
 * Restart Tomcat8 server using systemctl command.
 
 

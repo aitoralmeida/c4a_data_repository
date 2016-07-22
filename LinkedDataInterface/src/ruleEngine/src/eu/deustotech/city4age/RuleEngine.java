@@ -60,7 +60,7 @@ public class RuleEngine {
                 this.instances = finalResult.getBaseModel();
                 this.printResults(finalResult, inf);
                 //Upload into Fuseki
-                if (inf.getDeductionsModel().size() > 0.0) {
+                if (inf.getDeductionsModel().size() > 0.0 || this.execution == 1) {
                     this.serve(finalResult);
                 }
             } else {

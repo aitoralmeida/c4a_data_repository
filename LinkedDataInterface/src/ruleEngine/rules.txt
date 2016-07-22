@@ -4,3 +4,4 @@
 [rule1: (?f pre:father ?a) (?u pre:brother ?f) -> (?u pre:uncle ?a)]
 [rule2: (?persona/1 schm:familyName "Mulero") -> (?persona/1 foaf:givenName "Mule")]
 [rule3: (?persona/1 schm:givenName "Ruben") -> (?persona/1 foaf:family_name "Rub")]
+[rule4: (?user_in_system/7 ?vocab/user_in_system_username "ruben") -> (?user_in_system/7 schm:givenName "Ruben")]
