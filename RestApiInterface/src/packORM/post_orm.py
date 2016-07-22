@@ -362,9 +362,9 @@ class PostgORM(object):
         """
         res = False
         for data in p_data:
-            if data and 'type' in data and data['stakeholder'] in stakeholders:
+            if data and 'type' in data and data['type'] in stakeholders:
                 # StakeHolder entered ok we are going to enter data in DB
-                stakeholder = self._get_or_create(tables.StakeHolder, name=data['stakeholder'])    # consider to enter a user type according to it'ts current role
+                stakeholder = self._get_or_create(tables.StakeHolder, name=data['type'])    # consider to enter a user type according to it'ts current role
                 user_in_system = self._get_or_create(tables.UserInSystem, username=data['username'], password=data['password'],
                                                      stake_holder_id=stakeholder.name)
 

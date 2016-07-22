@@ -240,7 +240,7 @@ class UserInSystem(Base):
     # Without rounds System will use 13 rounds by default
     created_date = Column(TIMESTAMP, default=datetime.datetime.utcnow)
     # One2Many
-    stake_holder_id = Column(String(25), ForeignKey('stake_holder.name'))
+    stake_holder_name = Column(String(25), ForeignKey('stake_holder.name'))
 
     def __repr__(self):
         return "<UserInRole(username='%s', password='%s', created_date='%s')>" % (

@@ -6,7 +6,8 @@ for Flask and manage error codes.
 
 """
 
-from json import dumps
+from json import dumps, loads
+
 from src.packORM import post_orm
 from src.packORM import tables
 from flask import Flask, request, make_response, Response, abort, redirect, url_for, session, flash
@@ -23,6 +24,7 @@ ACTUAL_API = '0.1'
 AVAILABLE_API = '0.1', '0.2', '0.3'
 SECRET_KEY = '\xc2O\xd1\xbb\xd6\xb2\xc2pxRS\x12l\xee8X\xcb\xc3(\xeer\xc5\x08s'
 DATABASE = 'Database'
+MAX_DATASETS = 50
 
 # Create application and load config.
 app = Flask(__name__)
@@ -116,7 +118,7 @@ def login(version=app.config['ACTUAL_API']):
     """
     if _check_version(version):
         if request.headers['content-type'] == 'application/json':
-            data = request.json
+            data = _convert_to_dict(request.json)
             if 'username' in data and 'password' in data:
                 res = DATABASE.verify_user_login(data)
                 if res:
@@ -185,7 +187,7 @@ def search(version=app.config['ACTUAL_API']):
         if not session.get('username'):
             abort(401)
         if request.headers['content-type'] == 'application/json':
-            data = request.json
+            data = _convert_to_dict(request.json)
             # default query values
             limit = 10
             offset = 0
@@ -227,9 +229,7 @@ def add(version=app.config['ACTUAL_API']):
     """
     if _check_connection(version):
         # We created a list of Python dics.
-        data = request.json
-        username = session['username']
-        id = session['id']
+        data = _convert_to_dict(request.json)
         # validate users data
         if data and _check_add_action_data(data):
             # User and data are OK. save data into DB
@@ -253,7 +253,7 @@ def add_activity(version=app.config['ACTUAL_API']):
     :return:
     """
     if _check_connection(version):
-        data = request.json
+        data = _convert_to_dict(request.json)
         username = session['username']
         id = session['id']
         # validate users data
@@ -279,7 +279,7 @@ def add_behavior(version=app.config['ACTUAL_API']):
     :return:
     """
     if _check_connection(version):
-        data = request.json
+        data = _convert_to_dict(request.json)
         username = session['username']
         id = session['id']
         # validate users data
@@ -296,22 +296,6 @@ def add_behavior(version=app.config['ACTUAL_API']):
             abort(500)
 
 
-@app.route('/api/<version>/add_user', methods=['POST'])
-def add_user(version=app.config['ACTUAL_API']):
-    """
-    Adds a new user into the system
-
-    :param version: Api version
-    :return:
-    """
-    # Todo we need to code this part
-    if _check_version(version):
-        res = "Added ok"
-    else:
-        res = "You have entered an invalid api version", 404
-    return res
-
-
 @app.route('/api/<version>/add_risk', methods=['POST'])
 def add_risk(version=app.config['ACTUAL_API']):
     """
@@ -321,7 +305,7 @@ def add_risk(version=app.config['ACTUAL_API']):
     :return:
     """
     if _check_connection(version):
-        data = request.json
+        data = _convert_to_dict(request.json)
         username = session['username']
         id = session['id']
         # validate users data
@@ -347,7 +331,7 @@ def add_new_user(version=app.config['ACTUAL_API']):
     :return:
     """
     if _check_connection(version):
-        data = request.json
+        data = _convert_to_dict(request.json)
         # Validate new user data
         if data and _check_add_new_user(data):
             # Data entered is ok
@@ -380,6 +364,13 @@ def not_found(error):
 @app.errorhandler(500)
 def data_sent_error(error):
     resp = make_response("Data entered is invalid, please check your JSON\n", 500)
+    return resp
+
+
+@app.errorhandler(413)
+def data_sent_too_long(error):
+    msg = "Data entered is too long, please send datasets with max length of %d \n" % MAX_DATASETS
+    resp = make_response(msg, 413)
     return resp
 
 
@@ -550,6 +541,39 @@ def _check_add_new_user(p_data):
     return res
 
 
+def _convert_to_dict(p_requested_data):
+    """
+    This method checks if current data is in JSON list format or it needs to be convert to one
+
+    Furthermore if data is too long, this method returns 413 error code to the user.
+
+    :param p_requested_data: A list containing Json Strings datasets or a List of JSON dicts
+    :return: A Python dict list, containing requiring data or an error code if the list is too long
+    """
+    if len(p_requested_data) > MAX_DATASETS:
+        # Entered data is too long
+        logging.error("The user sends valid data but is too long")
+        abort(413)
+    else:
+        list_of_dicts = []
+        if all(isinstance(n, dict) for n in p_requested_data):
+            # We have already a list of dictionaries
+            return p_requested_data
+        elif isinstance(p_requested_data, dict):
+            # This is a simple dict item
+            list_of_dicts.append(p_requested_data)
+        elif all(isinstance(n, unicode) for n in p_requested_data):
+            # This is a list of Json strings
+            for dt in p_requested_data:
+                list_of_dicts.append(loads(dt))
+        else:
+            # Something wrong happened
+            logging.error("The user sends some estrange dataset list that it is impossible to parse "
+                          "into a list of dicts")
+            abort(500)
+
+        return list_of_dicts
+
 """
 
 curl -X POST -d @filename.txt http://127.0.0.1:5000/add_action --header "Content-Type:application/json"
@@ -564,6 +588,11 @@ curl -X POST -k -c cookie.txt -d '{"username":"admin","password":"admin"}' https
 Sample curl to store new actions
 
 curl -X POST -b cookie.txt -k -d @json_data.txt http://0.0.0.0:5000/api/0.1/add_action --header "Content-Type:application/json"
+
+
+
+
+todo we need to add support to role-based system user actions. Some actions can only be performed by certain roles.
 
 """
 
