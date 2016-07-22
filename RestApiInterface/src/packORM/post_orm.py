@@ -366,7 +366,7 @@ class PostgORM(object):
                 # StakeHolder entered ok we are going to enter data in DB
                 stakeholder = self._get_or_create(tables.StakeHolder, name=data['type'])    # consider to enter a user type according to it'ts current role
                 user_in_system = self._get_or_create(tables.UserInSystem, username=data['username'], password=data['password'],
-                                                     stake_holder_id=stakeholder.name)
+                                                     stake_holder_name=stakeholder.name)
 
                 if stakeholder and user_in_system:
                     logging.info("Data entered ok into the system")

@@ -12,6 +12,7 @@ from src.packORM import post_orm
 from src.packORM import tables
 from flask import Flask, request, make_response, Response, abort, redirect, url_for, session, flash
 from sqlalchemy.orm import class_mapper
+from functools import wraps
 import logging
 
 
@@ -24,12 +25,31 @@ ACTUAL_API = '0.1'
 AVAILABLE_API = '0.1', '0.2', '0.3'
 SECRET_KEY = '\xc2O\xd1\xbb\xd6\xb2\xc2pxRS\x12l\xee8X\xcb\xc3(\xeer\xc5\x08s'
 DATABASE = 'Database'
-MAX_DATASETS = 50
+MAX_LENGHT = 8 * 1024 * 1024        # in bytes
 
 # Create application and load config.
 app = Flask(__name__)
 app.config.from_object(__name__)
 
+
+def limit_content_length(max_length):
+    """
+    This is a decorator method that checks if the user send too long data to the API.
+
+    If user sends data that is too long this method makes an error code 413
+
+    :param max_length: The maximum length of the requested data in bytes
+    :return: decorator if all is ok or an error code 413 if data is too long
+    """
+    def decorator(f):
+        @wraps(f)
+        def wrapper(*args, **kwargs):
+            cl = request.content_length
+            if cl is not None and cl > max_length:
+                abort(413)
+            return f(*args, **kwargs)
+        return wrapper
+    return decorator
 
 
 ###################################################################################################
@@ -109,6 +129,7 @@ def api(version=app.config['ACTUAL_API']):
 
 
 @app.route('/api/<version>/login', methods=['POST'])
+@limit_content_length(MAX_LENGHT)
 def login(version=app.config['ACTUAL_API']):
     """
     Gives the ability to login into API
@@ -159,6 +180,7 @@ def logout(version=app.config['ACTUAL_API']):
 ## todo develop separated searchs!!
 
 @app.route('/api/<version>/search', methods=['POST'])
+@limit_content_length(MAX_LENGHT)
 def search(version=app.config['ACTUAL_API']):
     """
     Return data based on specified search filters:
@@ -220,6 +242,7 @@ def search(version=app.config['ACTUAL_API']):
 
 
 @app.route('/api/<version>/add_action', methods=['POST'])
+@limit_content_length(MAX_LENGHT)
 def add(version=app.config['ACTUAL_API']):
     """
     Add a new action in DB
@@ -245,6 +268,7 @@ def add(version=app.config['ACTUAL_API']):
 
 
 @app.route('/api/<version>/add_activity', methods=['POST'])
+@limit_content_length(MAX_LENGHT)
 def add_activity(version=app.config['ACTUAL_API']):
     """
     Adds a new activity into the system
@@ -271,6 +295,7 @@ def add_activity(version=app.config['ACTUAL_API']):
 
 
 @app.route('/api/<version>/add_behavior', methods=['POST'])
+@limit_content_length(MAX_LENGHT)
 def add_behavior(version=app.config['ACTUAL_API']):
     """
     Adds a new behavior into the system
@@ -297,6 +322,7 @@ def add_behavior(version=app.config['ACTUAL_API']):
 
 
 @app.route('/api/<version>/add_risk', methods=['POST'])
+@limit_content_length(MAX_LENGHT)
 def add_risk(version=app.config['ACTUAL_API']):
     """
     Adds a new risk into the system
@@ -323,6 +349,7 @@ def add_risk(version=app.config['ACTUAL_API']):
 
 
 @app.route('/api/<version>/add_new_user', methods=['POST'])
+@limit_content_length(MAX_LENGHT)
 def add_new_user(version=app.config['ACTUAL_API']):
     """
     Adds a new system user into the system. The idea is to add a user with a stakeholder to create some role based system.
@@ -369,7 +396,7 @@ def data_sent_error(error):
 
 @app.errorhandler(413)
 def data_sent_too_long(error):
-    msg = "Data entered is too long, please send datasets with max length of %d \n" % MAX_DATASETS
+    msg = "Data entered is too long, please send data with max length of %d bytes \n" % MAX_LENGHT
     resp = make_response(msg, 413)
     return resp
 
@@ -545,34 +572,29 @@ def _convert_to_dict(p_requested_data):
     """
     This method checks if current data is in JSON list format or it needs to be convert to one
 
-    Furthermore if data is too long, this method returns 413 error code to the user.
-
     :param p_requested_data: A list containing Json Strings datasets or a List of JSON dicts
-    :return: A Python dict list, containing requiring data or an error code if the list is too long
+    :return: A Python dict list, containing requiring data or an error code in some rare cases
     """
-    if len(p_requested_data) > MAX_DATASETS:
-        # Entered data is too long
-        logging.error("The user sends valid data but is too long")
-        abort(413)
+    list_of_dicts = []
+    if all(isinstance(n, dict) for n in p_requested_data):
+        # We have already a list of dictionaries
+        return p_requested_data
+    elif isinstance(p_requested_data, dict):
+        # This is a simple dict item
+        list_of_dicts.append(p_requested_data)
+    elif all(isinstance(n, unicode) for n in p_requested_data):
+        # This is a list of Json strings
+        for dt in p_requested_data:
+            list_of_dicts.append(loads(dt))
     else:
-        list_of_dicts = []
-        if all(isinstance(n, dict) for n in p_requested_data):
-            # We have already a list of dictionaries
-            return p_requested_data
-        elif isinstance(p_requested_data, dict):
-            # This is a simple dict item
-            list_of_dicts.append(p_requested_data)
-        elif all(isinstance(n, unicode) for n in p_requested_data):
-            # This is a list of Json strings
-            for dt in p_requested_data:
-                list_of_dicts.append(loads(dt))
-        else:
-            # Something wrong happened
-            logging.error("The user sends some estrange dataset list that it is impossible to parse "
-                          "into a list of dicts")
-            abort(500)
+        # Something wrong happened
+        logging.error("The user sends some estrange dataset list that it is impossible to parse "
+                      "into a list of dicts")
+        abort(500)
 
-        return list_of_dicts
+    return list_of_dicts
+
+
 
 """
 
@@ -588,7 +610,6 @@ curl -X POST -k -c cookie.txt -d '{"username":"admin","password":"admin"}' https
 Sample curl to store new actions
 
 curl -X POST -b cookie.txt -k -d @json_data.txt http://0.0.0.0:5000/api/0.1/add_action --header "Content-Type:application/json"
-
 
 
 
