@@ -6,12 +6,13 @@ This file is used to connect to the database using SQL Alchemy ORM
 """
 
 import os
+import sys
 import inspect
 import tables
 import ConfigParser
 import logging
 import datetime
-from sqlalchemy import create_engine, desc
+from sqlalchemy import create_engine, desc, MetaData
 from sqlalchemy.engine.url import URL
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import sessionmaker
@@ -380,12 +381,57 @@ class PostgORM(object):
 
     # todo maybe we need to create stakeholders methods ???
 
+    def get_tables(self):
+        """
+        List current database tables in DATABASE active connection (Current installed system).
+
+        :return: A list containing current tables.
+        """
+
+        m = MetaData()
+        m.reflect(self.engine)
+        return m.tables.keys()
+
+    def get_table_by_name(self, p_table_name):
+        """
+        Using a table name, this class search an retrieves, Table Object Class.
+
+        :param p_table_name: The named of target table
+        :return:  A table class object.
+        """
+        # Get all classes in tables
+        #clsmembers = inspect.getmembers(sys.modules['src.packORM.tables'], inspect.isclass)
+        # todo this is a workaround, we need to find a better solution
+        all_tables = {
+                        'action': tables.Action,
+                        'activity': tables.Activity,
+                        'eam': tables.EAM,
+                        'executed_action': tables.ExecutedAction,
+                        'geriatric_indicator': tables.GeriatricIndicator,
+                        'geriatric_sub_indicator': tables.GeriatricSubIndicator,
+                        'inter_behaviour': tables.InterBehaviour,
+                        'intra_activity': tables.IntraActivity,
+                        'location': tables.Location,
+                        'pilot': tables.Pilot,
+                        'risk': tables.Risk,
+                        'simple_location': tables.SimpleLocation,
+                        'stake_holder': tables.StakeHolder,
+                        'user_in_role': tables.UserInRole,
+                        'user_in_system': tables.UserInSystem
+                    }
+        # We intantiate desired table
+        return all_tables[p_table_name]
+
+
+
+
 
 
 # todo for testing purposes, we need to delete later.
 
 if __name__ == '__main__':
     orm = PostgORM()
+    orm.get_table_by_name('as')
     orm.create_tables()
     admin = john = tables.UserInSystem(username='admin', password='admin')
     orm.session.add(admin)

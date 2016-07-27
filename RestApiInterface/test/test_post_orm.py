@@ -128,7 +128,7 @@ class PostOrmTestCase(unittest.TestCase):
             None --> Any user with this ID
             User Object --> User with this ID
         """
-        user = self.orm.query_get(tables.UserInSystem, p_id=3)
+        user = self.orm.query_get(tables.UserInSystem, p_id=7)
         self.assertTrue(user)
 
 
@@ -178,6 +178,16 @@ class PostOrmTestCase(unittest.TestCase):
         credentials = {}
         res = self.orm.verify_user_login(credentials)
         self.assertFalse(res)
+
+
+    ###################################################
+    ########   List tables
+    ###################################################
+
+    def test_listing_ok_active_tables(self):
+        """ Test if the method get_tables is listing well all tables"""
+        res = self.orm.get_tables()
+        self.assertTrue(len(res) > 0)
 
 
     ###################################################

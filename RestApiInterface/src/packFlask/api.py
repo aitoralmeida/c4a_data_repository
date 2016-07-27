@@ -15,17 +15,15 @@ from sqlalchemy.orm import class_mapper
 from functools import wraps
 import logging
 
-
 __author__ = 'Rubén Mulero'
-__copyright__ = "foo"   # we need?¿
-
+__copyright__ = "foo"  # we need?¿
 
 # Configuration
 ACTUAL_API = '0.1'
 AVAILABLE_API = '0.1', '0.2', '0.3'
 SECRET_KEY = '\xc2O\xd1\xbb\xd6\xb2\xc2pxRS\x12l\xee8X\xcb\xc3(\xeer\xc5\x08s'
 DATABASE = 'Database'
-MAX_LENGHT = 8 * 1024 * 1024        # in bytes
+MAX_LENGHT = 8 * 1024 * 1024  # in bytes
 
 # Create application and load config.
 app = Flask(__name__)
@@ -34,13 +32,15 @@ app.config.from_object(__name__)
 
 def limit_content_length(max_length):
     """
-    This is a decorator method that checks if the user send too long data to the API.
+    This is a decorator method that checks if the user is sending too long data. The idea is to have some control
+    over user's POST data to avoid server overload.
 
     If user sends data that is too long this method makes an error code 413
 
     :param max_length: The maximum length of the requested data in bytes
     :return: decorator if all is ok or an error code 413 if data is too long
     """
+
     def decorator(f):
         @wraps(f)
         def wrapper(*args, **kwargs):
@@ -48,7 +48,9 @@ def limit_content_length(max_length):
             if cl is not None and cl > max_length:
                 abort(413)
             return f(*args, **kwargs)
+
         return wrapper
+
     return decorator
 
 
@@ -64,8 +66,10 @@ def before_request():
     global DATABASE
     DATABASE = post_orm.PostgORM()
     # Make sessions permament with some time
-    #session.permanent = True
-    #app.permanent_session_lifetime = timedelta(minutes=5) # days=232323 years=2312321 blablabla
+    # session.permanent = True
+    # todo uncoment session lifetime when you have finished this part of application.
+    # app.permanent_session_lifetime = timedelta(minutes=5) # days=232323 years=2312321 blablabla
+
 
 @app.teardown_request
 def teardown_request(exception):
@@ -74,6 +78,7 @@ def teardown_request(exception):
         # Close database active session
         DATABASE.close()
 
+
 @app.route('/')
 def index():
     """
@@ -81,6 +86,7 @@ def index():
 
     :return: Redirect to the latest api version
     """
+    logging.info("Redirection to last api version.....")
     return redirect(url_for('api', version=app.config['ACTUAL_API']))
 
 
@@ -91,6 +97,7 @@ def api_redirect():
 
     :return: Redirection to the current api version
     """
+    logging.info("Redirection to last api version.....")
     return redirect(url_for('api', version=app.config['ACTUAL_API']))
 
 
@@ -99,7 +106,7 @@ def api(version=app.config['ACTUAL_API']):
     """
     This is our main page.
 
-    :param version:
+    :param version: Api version
     :return:
     """
     if _check_version(version):
@@ -110,7 +117,10 @@ def api(version=app.config['ACTUAL_API']):
         This API is designed to be used with curl and JSON request.
 
         <ul>
-            <li><b>add</b>: Adds new element into databse.</li>
+            <li><b>add_action</b>: Adds new ExecutedAction into databse.</li>
+            <li><b>add_activity</b>: Adds new Activity into DB.</li>
+            <li><b>add_behavior</b>: Adds new behaviour into DB.</li>
+            <li><b>add_risk</b>: Adds new risk into DB.</li>
             <li><b>login</b>: Login into API.</li>
             <li><b>logout</b>: Disconnect current user from the API.</li>
             <li><b>search</b>: Search some datasets.</li>
@@ -139,7 +149,7 @@ def login(version=app.config['ACTUAL_API']):
     """
     if _check_version(version):
         if request.headers['content-type'] == 'application/json':
-            data = _convert_to_dict(request.json)
+            data = _convert_to_dict(request.json)[0]
             if 'username' in data and 'password' in data:
                 res = DATABASE.verify_user_login(data)
                 if res:
@@ -176,8 +186,7 @@ def logout(version=app.config['ACTUAL_API']):
         return "You have entered an invalid api version", 404
 
 
-
-## todo develop separated searchs!!
+## Todo this parts needs to be re-evaluated an re-implemented
 
 @app.route('/api/<version>/search', methods=['POST'])
 @limit_content_length(MAX_LENGHT)
@@ -188,8 +197,11 @@ def search(version=app.config['ACTUAL_API']):
     Example of JSON search call:
 
     {
-        'colum_1': 'value_1',
-        'colum_2': 'value_2',
+        'table': 'table_name',
+        'criteria': {
+            "col1": "value",
+            "col2": "value"
+        },
         ###### Optional parameters
         'limit': 2323,
         'offset': 2,
@@ -203,47 +215,40 @@ def search(version=app.config['ACTUAL_API']):
     :return:
     """
     res = None
-    if _check_version(version):
-        # todo define better this part.
-
-        if not session.get('username'):
-            abort(401)
-        if request.headers['content-type'] == 'application/json':
-            data = _convert_to_dict(request.json)
-            # default query values
-            limit = 10
-            offset = 0
-            order_by = 'asc'
-            if data.get('limit', False) and data.get('limit') > 0:
-                limit = data.get('limit')
-                del data['limit']
-            if data.get('offset', False) and data.get('offset') >= 0:
-                offset = data.get('offset')
-                del data['offset']
-            if data.get('order_by', False) and data.get('offset') == 'asc' or data.get('offset') == 'desc':
-                order_by = data.get('order_by')
-                del data['order_by']
+    if _check_connection(version):
+        data = _convert_to_dict(request.json)[0]
+        # check if data is OK
+        # ENTER HERE A CHECK TABLES FUNCTION
+        if _check_search(data):
+            # data Entered by the user is OK
+            limit = data and data.get('limit', 10) and data.get('limit', 10) >= 0 or 10
+            offset = data and data.get('offset', 0) and data.get('offset', 0) >= 0 or 0
+            order_by = data and data.get('order_by', 'asc') and data.get('order_by', 'asc') in ['asc', 'desc'] \
+                       or 'asc' # We are limint order_by to asc or desc
+            # Obtain table class using the name of the desired table
+            table_class = DATABASE.get_table_by_name(data['table'])
             # Query database and select needed elements
             try:
-                res = DATABASE.query(tables.User, data, limit=limit, offset=offset, order_by=order_by)
+                res = DATABASE.query(table_class, data['criteria'], limit=limit, offset=offset, order_by=order_by)
                 serialized_labels = [serialize(label) for label in res]
                 if len(serialized_labels) == 0:
                     res = Response("No data found with this filters.\n")
                 else:
-                    res = Response(dumps(serialized_labels), mimetype='application/json')
+                    res = Response(dumps(serialized_labels, default=date_handler), mimetype='application/json')
             except AttributeError:
                 abort(500)
         else:
-            abort(400)
-    else:
-        res = "You have entered an invalid api version", 404
-
+            # Some user data is not well
+            res = Response(
+                "You have entered incorrect JSON format Data, check if your JSON is OK. Here there are current database"
+                "tables, check if you type one of the following tables: %s" % DATABASE.get_tables()
+            ), 413
     return res
 
 
 @app.route('/api/<version>/add_action', methods=['POST'])
 @limit_content_length(MAX_LENGHT)
-def add(version=app.config['ACTUAL_API']):
+def add_action(version=app.config['ACTUAL_API']):
     """
     Add a new action in DB
 
@@ -289,7 +294,7 @@ def add_activity(version=app.config['ACTUAL_API']):
                 return Response('Data stored in database OK\n'), 200
             else:
                 logging.error("add_activity: Stored in database failed")
-                return "There is an error in DB", 500
+                return Response("There is an error in DB"), 500
         else:
             abort(500)
 
@@ -384,18 +389,24 @@ def add_new_user(version=app.config['ACTUAL_API']):
 
 @app.errorhandler(400)
 def not_found(error):
+    error_msg = "An error 400 is happened with the following error msg: %s" % error
+    logging.error(error_msg)
     resp = make_response("Your content type or data is not in JSON format or need some arguments\n", 400)
     return resp
 
 
 @app.errorhandler(500)
 def data_sent_error(error):
+    error_msg = "An error 500 is happened with the following error msg: %s" % error
+    logging.error(error_msg)
     resp = make_response("Data entered is invalid, please check your JSON\n", 500)
     return resp
 
 
 @app.errorhandler(413)
 def data_sent_too_long(error):
+    error_msg = "An error 413 is happened with the following error msg: %s" % error
+    logging.error(error_msg)
     msg = "Data entered is too long, please send data with max length of %d bytes \n" % MAX_LENGHT
     resp = make_response(msg, 413)
     return resp
@@ -407,15 +418,25 @@ def data_sent_too_long(error):
 ###################################################################################################
 ###################################################################################################
 
-
+# JSON RELATED
 def serialize(model):
     """Transforms a model into a dictionary which can be dumped to JSON."""
     # first we get the names of all the columns on your model
-    columns = [c.key for c in class_mapper(model.__class__).columns if c.key is not 'password'] # Avoids to return password
+    columns = [c.key for c in class_mapper(model.__class__).columns if
+               c.key is not 'password']  # Avoids to return password
     # then we return their values in a dict
     return dict((c, getattr(model, c)) for c in columns)
 
 
+def date_handler(obj):
+    """ A simple method to handle and encode Python datetimes to JSON"""
+    if hasattr(obj, 'isoformat'):
+        return obj.isoformat()
+    else:
+        raise TypeError
+
+
+# CHECKS RELATED
 def _check_connection(p_ver):
     """
     Make a full check of all needed data
@@ -493,14 +514,13 @@ def _check_add_action_data(p_data):
     :return: True or False if data is ok.
     """
     res = False
-    # todo we are going to define add_action data from WP3
     # Check if JSON has all needed values
     for data in p_data:
-            if all(k in data for k in ("action", "location", "payload", 'timestamp', 'rating', 'extra', 'secret')):
-                if all(l in data['payload'] for l in ("user", "position")):
-                    if "pilot" in data['extra']:
-                        # todo make sure if we need to ensure that variables ar not null
-                        res = True
+        if all(k in data for k in ("action", "location", "payload", 'timestamp', 'rating', 'extra', 'secret')):
+            if all(l in data['payload'] for l in ("user", "position")):
+                if "pilot" in data['extra']:
+                    # todo make sure if we need to ensure that variables ar not null
+                    res = True
 
     return res
 
@@ -515,11 +535,14 @@ def _check_add_risk_data(p_data):
     res = False
     # Check if JSON has all needed values
     for data in p_data:
-        if all(k in data for k in ("risk_name", "ratio", "description")):   # todo add the name of behavior or action
+        if all(k in data for k in (
+                "risk_name", "ratio",
+                "description")):  # todo behavior is not user anymore, consider to check intra and Inter
             res = True
     return res
 
 
+# todo this check is not longer needed, maybe is very interesting to change this into intra and inter check
 def _check_add_behavior_data(p_data):
     """
     Check if data is ok and if the not nullable values are filled.
@@ -568,6 +591,30 @@ def _check_add_new_user(p_data):
     return res
 
 
+def _check_search(p_data):
+    """
+    Check if search data is ok and evaluates what is the best table that fits with search criteria
+
+    :param p_data:
+    :return:    True if all is OK
+                False if there is a problem
+    """
+    res = False
+    if all(k in p_data for k in ("table", "criteria")):
+        logging.debug("JSON data is OK")
+        # Data entered is OK we are going to check if tables exists or not
+        table = p_data['table'].lower() or None  # lowering string cases
+        current_tables = DATABASE.get_tables()
+        if table in current_tables:
+            # all ok
+            res = True
+        else:
+            # User is trying to search in an incorrect table, show a list of current tables
+            logging.error("User entered an invalid table name: %s" % tables)
+            res = False
+    return res
+
+
 def _convert_to_dict(p_requested_data):
     """
     This method checks if current data is in JSON list format or it needs to be convert to one
@@ -595,7 +642,6 @@ def _convert_to_dict(p_requested_data):
     return list_of_dicts
 
 
-
 """
 
 curl -X POST -d @filename.txt http://127.0.0.1:5000/add_action --header "Content-Type:application/json"
@@ -616,5 +662,3 @@ curl -X POST -b cookie.txt -k -d @json_data.txt http://0.0.0.0:5000/api/0.1/add_
 todo we need to add support to role-based system user actions. Some actions can only be performed by certain roles.
 
 """
-
-

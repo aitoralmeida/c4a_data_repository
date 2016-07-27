@@ -4,6 +4,7 @@ import json
 import unittest
 
 from packFlask.api import app
+from packFlask import api
 
 
 class FlaskTestCase(unittest.TestCase):
@@ -14,7 +15,10 @@ class FlaskTestCase(unittest.TestCase):
         # app.config['SESSION_COOKIE_DOMAIN'] = None
         self.app = app.test_client()
 
-    ######## GET TESTS
+    ###################################################
+    ########   GET Tests
+    ###################################################
+
     def test_good_api(self):
         """ Test if application wams about api level"""
         response = self.app.get('/api/0.9')
@@ -30,7 +34,10 @@ class FlaskTestCase(unittest.TestCase):
         response = self.app.get('/api', follow_redirects=True)
         assert "<h1>Welcome to City4Age Rest A" in response.data
 
-    ####### POST TEST
+    ###################################################
+    ########   POST Tests
+    ###################################################
+
     def test_no_header(self):
         """ Test status code 400: when there isn't any content_type header"""
         response = self.app.post('/api/0.1/login',
@@ -74,9 +81,14 @@ class FlaskTestCase(unittest.TestCase):
         """ Test if we got any results """
         with self.app as c:
             with c.session_transaction() as sess:
-                sess['logged_in'] = True
+                sess['username'] = 'admin'
+                sess['id'] = 6
         response = c.post('/api/0.1/search',
-                          data=json.dumps(dict(username='admin')),
+                          data=json.dumps(dict(table='user_in_system',
+                                               criteria={'username': 'admin'},
+                                               limit=100,
+                                               order_by='desc'
+                                               )),
                           content_type='application/json',
                           follow_redirects=True)
 
@@ -88,24 +100,54 @@ class FlaskTestCase(unittest.TestCase):
             with c.session_transaction() as sess:
                 sess['logged_in'] = True
         response = c.post('/api/0.1/search',
-                          data=json.dumps(dict(username='rmulero', limit=2)),
+                          data=json.dumps(dict(table='user_in_system',
+                                               criteria={'username': 'admin'},
+                                               limit=1,
+                                               order_by='desc'
+                                               )),
                           content_type='application/json',
                           follow_redirects=True)
 
-        # We search in the final string if the username rmulero appears only twice.
-        assert response.data.count('rmulero') == 2
+        # todo we need to add more data
+        assert response.data.count('admin') == 1
 
     def test_search_offset(self):
         """ Test if a search has a offset"""
         with self.app as c:
             with c.session_transaction() as sess:
                 sess['logged_in'] = True
-        response = self.app.post('/api/0.1/search',
-                                 data=json.dumps(dict(username='rmulero', offset=3)),
-                                 content_type='application/json',
-                                 follow_redirects=True)
+        response = c.post('/api/0.1/search',
+                          data=json.dumps(dict(table='user_in_system',
+                                               criteria={'username': 'admin'},
+                                               limit=100,
+                                               order_by='desc',
+                                               offset=1,
+                                               )),
+                          content_type='application/json',
+                          follow_redirects=True)
 
-        assert response.data.count('rmulero') == 1
+        assert response.data.count('ruben') == 0
+
+
+    ###################################################
+    ########   INTERNAl Tests
+    ###################################################
+
+    def test_check_search(self):
+        """ Test if search check is working well"""
+        json_example_search = {
+                            'table': 'user_in_system',
+                            'criteria': {
+                                "col1": "value",
+                                "col2": "value"
+                            },
+                            ###### Optional parameters
+                            'limit': 2323,
+                            'offset': 2,
+                            'order_by': 'desc'
+                        }
+
+        self.assertTrue(api._check_search(json_example_search))
 
 
 # todo add data test when we have Datbase logic finished
