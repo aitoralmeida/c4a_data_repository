@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.StringWriter;
 import java.util.Iterator;
+import java.util.logging.Logger;
 
 
 /**
@@ -27,6 +28,7 @@ import java.util.Iterator;
 
 public class RuleEngine {
 
+    private static final Logger LOGGER = Logger.getLogger( RuleEngine.class.getName() );
 
     private Model instances;
     private Integer execution = 0;
@@ -86,7 +88,7 @@ public class RuleEngine {
         String result = out.toString();
         // Launch curl to upload or current knowledge into Fuseki
         ProcessBuilder p = new ProcessBuilder("curl", "-k", "-X", "POST", "--header", "Content-Type: application/rdf+xml",
-                "-d", result, "https://localhost:8443/fuseki/city4age/data");
+                "-d", result, "https://localhost:8443/fuseki/city4age/data");                   // todo if processbuilder makes some error, maybe it is interesting to change to HTTP
         try {
             System.out.println("Uploading new Knowledge to Fuseki......................");
             System.out.println("");
