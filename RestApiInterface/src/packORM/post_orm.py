@@ -363,6 +363,7 @@ class PostgORM(object):
         """
         res = False
         for data in p_data:
+            # TODO You need to check first if ALL data is in stakeholders before doing anything.
             if data and 'type' in data and data['type'] in stakeholders:
                 # StakeHolder entered ok we are going to enter data in DB
                 stakeholder = self._get_or_create(tables.StakeHolder, name=data['type'])    # consider to enter a user type according to it'ts current role
@@ -402,6 +403,7 @@ class PostgORM(object):
         # Get all classes in tables
         #clsmembers = inspect.getmembers(sys.modules['src.packORM.tables'], inspect.isclass)
         # todo this is a workaround, we need to find a better solution
+        # todo maybe we can obtain all tables from get_tables and filter it?¿?
         all_tables = {
                         'action': tables.Action,
                         'activity': tables.Activity,

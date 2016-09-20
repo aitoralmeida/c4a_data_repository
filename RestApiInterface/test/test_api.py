@@ -81,8 +81,8 @@ class FlaskTestCase(unittest.TestCase):
         """ Test if we got any results """
         with self.app as c:
             with c.session_transaction() as sess:
-                sess['username'] = 'admin'
-                sess['id'] = 6
+                sess['username'] = 'admin'  # This simulates and encrypted cookie with username "admin"
+                sess['id'] = 6              # and user id = 6
         response = c.post('/api/0.1/search',
                           data=json.dumps(dict(table='user_in_system',
                                                criteria={'username': 'admin'},
@@ -98,7 +98,8 @@ class FlaskTestCase(unittest.TestCase):
         """ Test if a search has a limit"""
         with self.app as c:
             with c.session_transaction() as sess:
-                sess['logged_in'] = True
+                sess['username'] = 'admin'
+                sess['id'] = 6
         response = c.post('/api/0.1/search',
                           data=json.dumps(dict(table='user_in_system',
                                                criteria={'username': 'admin'},
@@ -109,13 +110,14 @@ class FlaskTestCase(unittest.TestCase):
                           follow_redirects=True)
 
         # todo we need to add more data
-        assert response.data.count('admin') == 1
+        assert response.data.count('admin') == 1 and response.status_code == 200
 
     def test_search_offset(self):
         """ Test if a search has a offset"""
         with self.app as c:
             with c.session_transaction() as sess:
-                sess['logged_in'] = True
+                sess['username'] = 'admin'
+                sess['id'] = 6
         response = c.post('/api/0.1/search',
                           data=json.dumps(dict(table='user_in_system',
                                                criteria={'username': 'admin'},
@@ -126,26 +128,72 @@ class FlaskTestCase(unittest.TestCase):
                           content_type='application/json',
                           follow_redirects=True)
 
-        assert response.data.count('ruben') == 0
-
+        assert response.data.count('ruben') == 0 and response.status_code == 200
 
     ###################################################
     ########   INTERNAl Tests
     ###################################################
 
+    def test_check_add_action_data(self):
+        """ Test if action data check is working well"""
+        json_example_action = [{
+            "action": "eu:c4a:usermotility:enter_bus",
+            "location": "it:puglia:lecce:bus:39",
+            "payload": {
+                "user": "eu:c4a:pilot:madrid:user:12346",
+                "position": "urn:ogc:def:crs:EPSG:6.6:4326"
+            },
+            "timestamp": "2014-05-20 07:08:41.22222",
+            "rating": 0.1,
+            "extra": {
+                "pilot": "lecce"
+            },
+            "secret": "jwt_token"
+        }]
+
+        self.assertTrue(api._check_add_action_data(json_example_action))
+
+    def test_check_add_risk_data(self):
+        """ Test if risk data check is working well"""
+        json_example_risk = [{
+            "risk_name": "Lose your head",
+            "ratio": 0.3,
+            "description": "This is a risk description"
+        }]
+
+        self.assertTrue(api._check_add_risk_data(json_example_risk))
+
+    def test_check_add_activity_data(self):
+        """ Test if activity data check is working well"""
+        json_example_activity = [{
+            "activity_name": "Make breakfast"
+        }]
+
+        self.assertTrue(api._check_add_activity_data(json_example_activity))
+
+    def test_check_add_new_user(self):
+        """ Test if the add new user check is working well"""
+        json_example_user = [{
+            "username": "rmulero",
+            "password": "heyPassWord1212323@@@#@3!!",
+            "type": "admin"
+        }]
+
+        self.assertTrue(api._check_add_new_user(json_example_user))
+
     def test_check_search(self):
         """ Test if search check is working well"""
         json_example_search = {
-                            'table': 'user_in_system',
-                            'criteria': {
-                                "col1": "value",
-                                "col2": "value"
-                            },
-                            ###### Optional parameters
-                            'limit': 2323,
-                            'offset': 2,
-                            'order_by': 'desc'
-                        }
+            'table': 'user_in_system',
+            'criteria': {
+                "col1": "value",
+                "col2": "value"
+            },
+            ###### Optional parameters
+            'limit': 2323,
+            'offset': 2,
+            'order_by': 'desc'
+        }
 
         self.assertTrue(api._check_search(json_example_search))
 

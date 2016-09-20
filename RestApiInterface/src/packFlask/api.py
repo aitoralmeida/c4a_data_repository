@@ -225,6 +225,7 @@ def search(version=app.config['ACTUAL_API']):
             offset = data and data.get('offset', 0) and data.get('offset', 0) >= 0 or 0
             order_by = data and data.get('order_by', 'asc') and data.get('order_by', 'asc') in ['asc', 'desc'] \
                        or 'asc' # We are limint order_by to asc or desc
+            # Todo insert a filter to avoid to user search in ceratin tables
             # Obtain table class using the name of the desired table
             table_class = DATABASE.get_table_by_name(data['table'])
             # Query database and select needed elements
@@ -463,6 +464,7 @@ def _check_connection(p_ver):
         abort(404)
 
 
+# Todo this will ask into database if the username and ID are valid or not. Needs to be developed to the folowing versions.
 def _check_session():
     """
     Checks if the actual user has a session cookie registered
@@ -472,6 +474,7 @@ def _check_session():
     """
     res = False
     if session.get('username') and session.get('id'):
+        # todo define a method in post_orm to validate user based on username and row ID
         res = True
     return res
 
