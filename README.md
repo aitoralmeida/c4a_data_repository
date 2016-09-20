@@ -1,6 +1,6 @@
 # README #
 
-City4Age European Project LinkedData and RestAPI servers.
+City4Age Project's (H2020 grant agreement number 689731) LinkedData and RestAPI servers.
 
 This repository contains two projects. 
 
