@@ -433,8 +433,14 @@ class PostgORM(object):
 
 if __name__ == '__main__':
     orm = PostgORM()
-    orm.get_table_by_name('as')
+    # Creating base tables
     orm.create_tables()
-    admin = john = tables.UserInSystem(username='admin', password='admin')
+    # Adding system stakeholders
+    list_of_stakeholders = []
+    for stakeholder in stakeholders:
+        list_of_stakeholders.append(tables.StakeHolder(name=stakeholder, type=stakeholder))
+    orm.session.add_all(list_of_stakeholders)
+    # Creating a simple admin user
+    admin = john = tables.UserInSystem(username='admin', password='admin', stake_holder_name='admin')
     orm.session.add(admin)
     orm.commit()
