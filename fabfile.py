@@ -19,7 +19,7 @@ env.user = "city4age"
 # Set database creation parameters (Remember to change your mapping.ttl file)
 DB_USER = 'city4agedb'      # User login
 DB_PASS = 'city4agedb'      # User password (stored encrypted in db)
-DB_TABLE = 'city4agedb'     # Database name
+DB_DATABASE = 'city4agedb'     # Database name
 
 
 ###### Install methods
@@ -42,12 +42,12 @@ def _deploy():
     :return:
     """
     with cd('/opt'):
-        sudo('git clone https://elektro108@bitbucket.org/elektro108/c4a_data_infrastructure.git')
-        sudo('chown -R ' + env.user + ':' + env.user + ' c4a_data_infrastructure')
-        with cd('/opt/c4a_data_infrastructure'):
+        sudo('git clone https://github.com/aitoralmeida/c4a_data_repository.git')
+        sudo('chown -R ' + env.user + ':' + env.user + ' c4a_data_repository')
+        with cd('/opt/c4a_data_repository'):
             run('virtualenv ./LinkedDataInterface')
             run('virtualenv ./RestApiInterface')
-            with cd('/opt/c4a_data_infrastructure'):
+            with cd('/opt/c4a_data_repository'):
                 with prefix('source ./LinkedDataInterface/bin/activate'):
                     run('pip install -r ./LinkedDataInterface/requirements.txt')
                     run('deactivate')
@@ -74,10 +74,10 @@ def _create_database():
     # Create user, database and restore data.
     sudo('psql -c "CREATE USER %s WITH NOCREATEDB NOCREATEUSER ENCRYPTED PASSWORD E\'%s\'"' %
          (DB_USER, DB_PASS), user='postgres')
-    sudo('psql -c "CREATE DATABASE %s WITH OWNER %s"' % (DB_TABLE, DB_USER), user='postgres')
+    sudo('psql -c "CREATE DATABASE %s WITH OWNER %s"' % (DB_DATABASE, DB_USER), user='postgres')
     # Restore database
-    with cd('/opt/c4a_data_infrastructure/Database'):
-        run('psql -U %s -d %s < database' % (DB_USER, DB_TABLE))
+    with cd('/opt/c4a_data_repository/Database'):
+        run('psql -U %s -d %s < database' % (DB_USER, DB_DATABASE))
 
 
 def _install_rest_api():
@@ -86,7 +86,7 @@ def _install_rest_api():
 
     :return:
     """
-    with cd('/opt/c4a_data_infrastructure/RestApiInterface/scripts'):
+    with cd('/opt/c4a_data_repository/RestApiInterface/scripts'):
         run('/bin/bash ./install.sh')
 
 
@@ -96,7 +96,7 @@ def _install_linked_data():
 
     :return:
     """
-    with cd('/opt/c4a_data_infrastructure/LinkedDataInterface/scripts'):
+    with cd('/opt/c4a_data_repository/LinkedDataInterface/scripts'):
         run('/bin/bash ./install.sh')
 
 

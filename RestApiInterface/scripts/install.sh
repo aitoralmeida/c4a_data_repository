@@ -57,9 +57,10 @@ then
 fi
 
 ################################## Main execution Script
-echo "We are going to open database conf file to edit database connection parameters"
+# todo this is important to review when we are 100% trust that we can solve the uggly console problem.
+#echo "We are going to open database conf file to edit database connection parameters"
 sleep 4
-sudo nano "$MAINFOLDER/conf/rest_api.cfg" 3>&1 1>&2 2>&3
+#sudo nano "$MAINFOLDER/conf/rest_api.cfg" 3>&1 1>&2 2>&3
 
 #Create ssl directory
 [ ! -d $NGINX/ssl ] && sudo mkdir -p $NGINX/ssl || :
