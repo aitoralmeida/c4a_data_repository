@@ -32,19 +32,20 @@ public class RuleEngine {
 
     private Model instances;
     private Integer execution = 0;
+    private String rulesFile;
 
-    public RuleEngine(String pMapFile) {
+    public RuleEngine(String pMapFile, String pRulesFiles) {
         // Load mapping file for the first time
         Model mapModel = FileManager.get().loadModel(pMapFile);
         this.instances = new ModelD2RQ(mapModel, "http://www.morelab.deusto.es/ontologies/sorelcom#");
-
+        this.rulesFile = pRulesFiles;
     }
 
     public void inference() {
         // Create a new ontoloyModel
         final OntModel finalResult = ModelFactory.createOntologyModel();
         // Load rules defined by the user.
-        Reasoner myReasoner = new GenericRuleReasoner(Rule.rulesFromURL("file:./rules.txt"));
+        Reasoner myReasoner = new GenericRuleReasoner(Rule.rulesFromURL("file:" + this.rulesFile));
         myReasoner.setDerivationLogging(true);        // Allow to getDerivation: return useful information.
         // Infer new instances using rules and our instances
         InfModel inf = ModelFactory.createInfModel(myReasoner, instances);

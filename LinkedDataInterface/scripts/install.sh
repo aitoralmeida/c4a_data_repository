@@ -16,19 +16,23 @@ LIB="/usr/share/""${TOMCAT_VERSION}""/lib"
 WEBAPPS="/var/lib/""${TOMCAT_VERSION}""/webapps/"
 CONFIG="/etc/""${TOMCAT_VERSION}""/"
 
+
 # Path related variables
 MAINFOLDER=`cd .. ; pwd`    # Mainfolder or the LinkedDataInterface
 D2RQ="${MAINFOLDER}""/src/d2rq"
-MAPPING="${MAINFOLDER}""/src/d2rq/webapp/WEB-INF/mapping.ttl"
+MAPPING="${MAINFOLDER}""/scripts/mapping.ttl"
+RULES="${MAINFOLDER}""/scripts/rules.txt"
 
-# Celery related variables
-CELERY="/usr/bin/celery"
-CELERYSCRIPTFILE=$MAINFOLDER/scripts/systemd/celery.sh
-CELERYDESTFILE="/usr/local/bin/celery.sh"
+# Java jar file and System configuration file paths
+RULEREASONERFOLDER=$MAINFOLDER/src/ruleEngine/out/artifacts/ruleEngine_jar
+SYSTEMDFILE=$MAINFOLDER/scripts/systemd/city4ageRuleEngine.service
+SYSTEMDDESTINATIONFILE="/etc/systemd/system/city4ageRuleEngine.service"
+
+# Fuseki main folder path
+FUSEKI="${MAINFOLDER}""/src/fuseki"
+
+
 TFILE="/tmp/out.tmp.$$"
-
-# Apache ANT related variables
-ANT="/usr/bin/ant"
 
 # Text to be replaced (this text is inside config files)
 OLD="<project path>"
@@ -46,18 +50,6 @@ if [ ! -d $LIB ]; then
     exit 1
 fi
 
-# Test if celery is installed in the system
-if [ ! -f $CELERY ]; then
-    echo "Is Python-Celery installed in your system?"
-    exit 1
-fi
-
-# Test if RabbitMQ is installed in the system
-if [ ! -d /usr/lib/rabbitmq/bin ]; then
-    echo "Is RabbitMQ installed in your system?"
-    exit 1
-fi
-
 # Test if OpenJDK 8 is installed in the system
 if [ ! -d /usr/lib/jvm/java-8-openjdk-amd64 ]; then
     echo "Is OpenJDK8-jre installed in your system?"
@@ -70,38 +62,55 @@ if [ ! -f $MAPPING ]; then
     exit 1
 fi
 
-# Test if exist apache ant installed in the system
-if [ ! -f $ANT ]; then
-    echo "Is Ant installed in your system?"
+# Test if exist a rules.txt file.
+if [ ! -f $MAPPING ]; then
+    echo "Do you create mapping.ttl file and put in WE-INF?"
     exit 1
 fi
+
+# Test if exist fuseki folder.
+
+if [ ! -d $FUSEKI ]; then
+    echo "Your fuseki installation in scripts folders doesn't exist"
+    exit 1
+fi
+
 
 ############### Main script execution
 # Open mapping.ttl file to edit some values
 echo "We are going to open 'mapping.ttl' file to edit some values..........."
 sleep 3
-nano "$MAINFOLDER/src/d2rq/webapp/WEB-INF/mapping.ttl" 3>&1 1>&2 2>&3
-# We are going to copy this original mapping.ttl file to ruleEngine folder
-/bin/cp $MAINFOLDER/src/d2rq/webapp/WEB-INF/mapping.ttl $MAINFOLDER/ruleEngine
+nano "$MAINFOLDER/scripts/mapping.ttl" 3>&1 1>&2 2>&3
 
-# Create WAR FILE
-if [ ! -f $D2RQ/d2rq.war ]; then
-    echo "Creating war file.............................."
-    ant war -s $D2RQ
-    echo "War file created!!!"
-fi
 # Move war file to tomcat dest
-sudo mv $D2RQ/d2rq.war $WEBAPPS
-# Copy Libs
-echo "Copying jar files to Tomcat/lib installation"
-for data in `find $D2RQ/lib -name '*.jar'`;
-do
-    # If there are jar files, we will copy into Tomcat dir
-    sudo /bin/cp $data $LIB
-done
+sudo cp $FUSEKI/fuseki.war $WEBAPPS
 
+echo "Creating fuseki configuration directory"
+# Creating fuseki libs
+if [ ! -d "/etc/fuseki" ]; then
+    sudo mkdir "/etc/fuseki"
+    sudo chown -R tomcat8:tomcat8 "/etc/fuseki"
+fi
+sleep 1
+# Copy needed files into fuseki configuration folder
+sudo /bin/cp -R $FUSEKI/run/configuration /etc/fuseki
+sudo /bin/cp $FUSEKI/run/shiro.ini /etc/fuseki
+echo "Fuseki files and cofigurations copied"
+sleep 3
+
+# Copy Libs
+
+#echo "Copying jar files to Tomcat/lib installation"
+#for data in `find $D2RQ/lib -name '*.jar'`;
+#do
+#    # If there are jar files, we will copy into Tomcat dir
+#    sudo /bin/cp $data $LIB
+#done
+
+
+# todo this will changed to an SSL service
 # Copy server.xml config File
-sudo /bin/cp $MAINFOLDER/../confs/server.xml $CONFIG
+#sudo /bin/cp $MAINFOLDER/../confs/server.xml $CONFIG
 
 echo "Starting Tomcat service................."
 sudo service $TOMCAT_VERSION restart
@@ -110,32 +119,22 @@ sleep 2
 
 # Configure Rule Engine and install Celery service
 printf "\n"
-echo "Installing celery service..............."
 
 # Open rule file and edit,
 echo "We are going to open 'rules.txt' file to edit some values..........."
 sleep 3
-nano "$MAINFOLDER/ruleEngine/rules.txt" 3>&1 1>&2 2>&3
+nano "$MAINFOLDER/scripts/rules.txt" 3>&1 1>&2 2>&3
 sleep 2
-# Copy Celery script and modify Paths
-if [ -f $CELERYSCRIPTFILE -a -x $CELERYSCRIPTFILE ]; then
-    # Change old text with Path of the projecs' mainfolder and copy to DestFile
-    sudo sed "s+$OLD+$MAINFOLDER+g" "$CELERYSCRIPTFILE" > $TFILE && sudo mv $TFILE $CELERYDESTFILE
-    sudo chmod +x $CELERYDESTFILE
-    # Copy systemd unit file and reload all
-    echo "We are goingt o copy celery systemd service and activate it......"
-    sleep 2
-    sudo /bin/cp $MAINFOLDER/scripts/systemd/celery.service /etc/systemd/system
-    # Launch daemon-reload and start uWSGI service
-    echo "Reloading daemons and activating celery services........"
-    sudo systemctl daemon-reload
-    sudo systemctl start celery.service
-    sudo systemctl enable celery.service
-    echo "Service unit file installed and activated!!"
-else
-    echo "Error: Cannot execute $CELERYSCRIPTFILE"
-    echo "Maybe you need to put that file with +x"
-    exit 1
-fi
+
+# Change old text with Path of the projecs' mainfolder and copy to DestFile
+sudo sed "s+$OLD+$RULEREASONERFOLDER+g" "$SYSTEMDFILE" > $TFILE && sudo mv $TFILE $SYSTEMDDESTINATIONFILE
+sudo chmod +x $SYSTEMDDESTINATIONFILE
+
+# Launch daemon-reload and start unit target.
+echo "Reloading daemons and activating RuleEngineReasoner........"
+sudo systemctl daemon-reload
+sudo systemctl start city4ageRuleEngine.service
+sudo systemctl enable city4ageRuleEngine.service
+echo "Service unit file installed and activated!!"
 
 exit 0

@@ -1,9 +1,0 @@
-<component name="libraryTable">
-  <library name="jena-core-2.7.0-incubating-tests">
-    <CLASSES>
-      <root url="jar://$PROJECT_DIR$/lib/jena-core-2.7.0-incubating-tests.jar!/" />
-    </CLASSES>
-    <JAVADOC />
-    <SOURCES />
-  </library>
-</component>

@@ -31,8 +31,7 @@ def _install_deps():
     :return:
     """
     sudo('apt-get update && apt-get -y install python-dev postgresql-9.5 postgresql-server-dev-9.5 virtualenv '
-         'build-essential nginx python-celery rabbitmq-server openjdk-8-jre tomcat8 '
-         'python-celery-common ant openjdk-8-jdk')
+         'build-essential nginx openjdk-8-jre tomcat8 openjdk-8-jdk')
 
 
 def _deploy():
@@ -45,12 +44,9 @@ def _deploy():
         sudo('git clone https://github.com/aitoralmeida/c4a_data_repository.git')
         sudo('chown -R ' + env.user + ':' + env.user + ' c4a_data_repository')
         with cd('/opt/c4a_data_repository'):
-            run('virtualenv ./LinkedDataInterface')
+            # run('virtualenv ./LinkedDataInterface')
             run('virtualenv ./RestApiInterface')
             with cd('/opt/c4a_data_repository'):
-                with prefix('source ./LinkedDataInterface/bin/activate'):
-                    run('pip install -r ./LinkedDataInterface/requirements.txt')
-                    run('deactivate')
                 with prefix('source ./RestApiInterface/bin/activate'):
                     run('pip install -r ./RestApiInterface/requirements.txt')
                     run('deactivate')
@@ -100,8 +96,6 @@ def _install_linked_data():
         run('/bin/bash ./install.sh')
 
 
-# TODO WE NEED TO CHANGE THE BEHAVIOR OF THIS MAIN INSTALLATION METHOD.
-
 # Main installation method.
 def main_install():
     """
@@ -118,4 +112,4 @@ def main_install():
     _deploy()
     _create_database()
     _install_rest_api()
-#    _install_linked_data()
+    _install_linked_data()
