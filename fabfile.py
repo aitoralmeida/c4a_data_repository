@@ -118,4 +118,4 @@ def main_install():
     _deploy()
     _create_database()
     _install_rest_api()
-    _install_linked_data()
+#    _install_linked_data()
