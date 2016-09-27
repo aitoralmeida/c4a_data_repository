@@ -52,25 +52,43 @@ class PostOrmTestCase(unittest.TestCase):
         self.assertTrue(res)
 
 
-    def test_insert_one_action(self):
+
+    def test_insert_one_data(self):
         # todo we need to do this check to ensure that our data is in database.
-        """ Test if defined data is insertet into DB
+        """ Test if defined data is inserted into DB
 
         For that reason we want simulate that we have a Dict of data and checks that this data in into
         the database
 
         """
         list_of_dic_data = []
-        data1 = {}
+        data1 = {
+            'username': 'rub',
+            'password': 'mul',
+            'type': 'caregiver'
+        }
         data2 = {
-
+            'username': 'smith12',
+            'password': '12345',
+            'type': 'operator'
             }
         data3 = {
-
+            'username': 'neonni',
+            'password': '23ASW@',
+            'type': 'elderly_operator'
             }
 
-        pass
+        list_of_dic_data.append(data1)
+        list_of_dic_data.append(data2)
+        list_of_dic_data.append(data3)
+        # Insert data into database
+        # self.orm.add_new_user_in_system(list_of_dic_data)
+        # Real insert by commiting
+        # self.orm.commit()
+        # Now we are going to select data
+        q = self.orm.query(tables.UserInSystem, {'username': 'rub'})
 
+        self.assertTrue(q.count() > 0)
 
     ###################################################
     ########   Basic queries
@@ -82,10 +100,8 @@ class PostOrmTestCase(unittest.TestCase):
         t_class = tables.UserInSystem
         q = self.orm.query(t_class, filters)
         # No matches found
-        if q.count() == 0:
-            self.assertTrue(True)
-        else:
-            self.assertTrue(False)
+        self.assertTrue(q.count() == 0)
+
 
     def test_basic_query_found(self):
         """ Test if there is a result"""
@@ -93,10 +109,7 @@ class PostOrmTestCase(unittest.TestCase):
         t_class = tables.UserInSystem
         q = self.orm.query(t_class, filters)
         # No matches found
-        if q.count() > 0 and q[0].username == 'admin':
-            self.assertTrue(True)
-        else:
-            self.assertTrue(False)
+        self.assertTrue(q.count() > 0 and q[0].username == 'admin')
 
     """
     def test_offset_query(self):
@@ -214,10 +227,7 @@ class PostOrmTestCase(unittest.TestCase):
         t_class = tables.UserInSystem
         q = self.orm.query(t_class, filters, limit=-1)
         # No matches found
-        if q.count() > 0:
-            self.assertTrue(True)
-        else:
-            self.assertTrue(False)
+        self.assertTrue(q.count() > 0)
 
     @should_raise(DataError)
     def test_bad_offset(self):
@@ -226,10 +236,8 @@ class PostOrmTestCase(unittest.TestCase):
         t_class = tables.UserInSystem
         q = self.orm.query(t_class, filters, offset=-1)
         # No matches found
-        if q.count() > 0:
-            self.assertTrue(True)
-        else:
-            self.assertTrue(False)
+        self.assertTrue(q.count() > 0)
+
 
     def test_bad_order_by(self):
         """ Test if orderby have a diferent arg"""
@@ -237,10 +245,8 @@ class PostOrmTestCase(unittest.TestCase):
         t_class = tables.UserInSystem
         q = self.orm.query(t_class, filters, order_by=-1)
         # No matches found
-        if q.count() > 0:
-            self.assertTrue(True)
-        else:
-            self.assertTrue(False)
+        self.assertTrue(q.count() > 0)
+
 
 
 if __name__ == '__main__':
