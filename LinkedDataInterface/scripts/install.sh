@@ -20,8 +20,8 @@ CONFIG="/etc/""${TOMCAT_VERSION}""/"
 # Path related variables
 MAINFOLDER=`cd .. ; pwd`    # Mainfolder or the LinkedDataInterface
 D2RQ="${MAINFOLDER}""/src/d2rq"
-MAPPING="${MAINFOLDER}""/scripts/mapping.ttl"
-RULES="${MAINFOLDER}""/scripts/rules.txt"
+MAPPING="${MAINFOLDER}""/conf/mapping.ttl"
+RULES="${MAINFOLDER}""/conf/rules.txt"
 
 # Java jar file and System configuration file paths
 #RULEREASONERFOLDER=$MAINFOLDER/src/ruleEngine/out/artifacts/ruleEngine_jar
@@ -80,7 +80,7 @@ fi
 # Open mapping.ttl file to edit some values
 echo "We are going to open 'mapping.ttl' file to edit some values..........."
 sleep 3
-nano "$MAINFOLDER/scripts/mapping.ttl" 3>&1 1>&2 2>&3
+nano $MAPPING 3>&1 1>&2 2>&3
 
 # Move war file to tomcat dest
 sudo cp $FUSEKI/fuseki.war $WEBAPPS
@@ -124,7 +124,7 @@ printf "\n"
 # Open rule file and edit,
 echo "We are going to open 'rules.txt' file to edit some values..........."
 sleep 3
-nano "$MAINFOLDER/scripts/rules.txt" 3>&1 1>&2 2>&3
+nano $RULES 3>&1 1>&2 2>&3
 sleep 2
 
 # Change old text with Path of the projecs' mainfolder and copy to DestFile

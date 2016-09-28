@@ -7,8 +7,8 @@ import random
 
 # Server Hosts
 env.hosts = [
-    '10.48.1.115:5800',
-    # 'odin.deusto.es:5800',
+    #'10.48.1.115:5800',
+    'odin.deusto.es:5800',
     # third.server.es,
     # and.so.on ......
 ]
