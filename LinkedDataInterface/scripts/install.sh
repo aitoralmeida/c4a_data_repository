@@ -110,7 +110,8 @@ sleep 3
 
 # todo this will changed to an SSL service
 # Copy server.xml config File
-#sudo /bin/cp $MAINFOLDER/../confs/server.xml $CONFIG
+sudo /bin/cp $MAINFOLDER/conf/tomcat/server.xml $CONFIG
+sudo /bin/cp $MAINFOLDER/conf/tomcat/.keystore $HOME
 
 echo "Starting Tomcat service................."
 sudo service $TOMCAT_VERSION restart

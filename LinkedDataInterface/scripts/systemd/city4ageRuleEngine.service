@@ -6,7 +6,7 @@ After=nginx.target
 Type=simple
 # Set working dir to java jar directory.
 WorkingDirectory=<project path>
-ExecStart=/usr/bin/java -jar /src/ruleEngine/out/artifacts/ruleEngine_jar/ruleEngine.jar /scripts/mapping.ttl /scripts/rules.txt
+ExecStart=/usr/bin/java -jar ./src/ruleEngine/out/artifacts/ruleEngine_jar/ruleEngine.jar ./conf/mapping.ttl ./conf/rules.txt
 User=root
 Group=www-data
 
