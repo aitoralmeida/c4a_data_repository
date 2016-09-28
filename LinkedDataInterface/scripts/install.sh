@@ -24,7 +24,7 @@ MAPPING="${MAINFOLDER}""/scripts/mapping.ttl"
 RULES="${MAINFOLDER}""/scripts/rules.txt"
 
 # Java jar file and System configuration file paths
-RULEREASONERFOLDER=$MAINFOLDER/src/ruleEngine/out/artifacts/ruleEngine_jar
+#RULEREASONERFOLDER=$MAINFOLDER/src/ruleEngine/out/artifacts/ruleEngine_jar
 SYSTEMDFILE=$MAINFOLDER/scripts/systemd/city4ageRuleEngine.service
 SYSTEMDDESTINATIONFILE="/etc/systemd/system/city4ageRuleEngine.service"
 
@@ -127,7 +127,7 @@ nano "$MAINFOLDER/scripts/rules.txt" 3>&1 1>&2 2>&3
 sleep 2
 
 # Change old text with Path of the projecs' mainfolder and copy to DestFile
-sudo sed "s+$OLD+$RULEREASONERFOLDER+g" "$SYSTEMDFILE" > $TFILE && sudo mv $TFILE $SYSTEMDDESTINATIONFILE
+sudo sed "s+$OLD+$MAINFOLDER+g" "$SYSTEMDFILE" > $TFILE && sudo mv $TFILE $SYSTEMDDESTINATIONFILE
 sudo chmod +x $SYSTEMDDESTINATIONFILE
 
 # Launch daemon-reload and start unit target.
