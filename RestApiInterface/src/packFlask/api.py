@@ -179,10 +179,16 @@ def logout(version=app.config['ACTUAL_API']):
     :return:
     """
     if _check_version(version):
-        session.pop('logged_in', None)
-        flash('You were logged out')
-        return redirect(url_for('api', version=app.config['ACTUAL_API']))
+        if _check_session():
+            session.pop('username', None)
+            session.pop('id', None)
+            flash('You were logged out')
+            return redirect(url_for('api', version=app.config['ACTUAL_API']))
+        else:
+            logging.error("check_connection: User session cookie is not OK, 401")
+            abort(401)
     else:
+        logging.error("check_version: User entered an invalid api version, 404")
         return "You have entered an invalid api version", 404
 
 
