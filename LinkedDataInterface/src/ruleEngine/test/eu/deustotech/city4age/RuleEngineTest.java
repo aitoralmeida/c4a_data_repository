@@ -17,10 +17,7 @@ import org.junit.Test;
 import org.junit.experimental.theories.suppliers.TestedOn;
 
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.StringWriter;
+import java.io.*;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -55,6 +52,15 @@ public class RuleEngineTest {
         instances.close();
         finalResult.close();
     }
+
+
+    ////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////
+    ////////////
+    //////////// This tests are spare. Only tests some pieces of the implemented solutions
+    ////////////
+    ////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////
 
 
     /**
@@ -191,4 +197,33 @@ public class RuleEngineTest {
         assertTrue(res);
     }
 
+
+    ////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////
+    ////////////
+    //////////// Full real program tests, based on the response of the main
+    ////////////
+    ////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////
+
+
+    /**
+     * Test if the program can handle an empty file. when the user sends a valid mapping file but this is empty.
+     */
+
+    @Test
+    public void testEmptyMapFile() throws Exception {
+        RuleEngine rEngine = new RuleEngine("./mappingEmpty.ttl", "./rules.txt");
+        assertFalse(rEngine.inference());       // The mappingFile is Empty so,it needs to returns a False State
+    }
+
+
+    /**
+     * Test if the prorgram can handle an empty Rules file, when the user sends a valid Rules file but this is empty.
+     */
+    @Test
+    public void testEmptyRulesFile() throws Exception {
+        RuleEngine rEngine = new RuleEngine("./mapping.ttl", "./rulesEmpty.txt");
+        assertFalse(rEngine.inference());
+    }
 }

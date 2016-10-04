@@ -6,7 +6,10 @@ import com.hp.hpl.jena.reasoner.Reasoner;
 import com.hp.hpl.jena.reasoner.ValidityReport;
 import com.hp.hpl.jena.reasoner.rulesys.GenericRuleReasoner;
 import com.hp.hpl.jena.reasoner.rulesys.Rule;
+import com.hp.hpl.jena.shared.RulesetNotFoundException;
 import com.hp.hpl.jena.util.FileManager;
+import com.hp.hpl.jena.vocabulary.RDF;
+import com.sun.javafx.util.Logging;
 import de.fuberlin.wiwiss.d2rq.jena.ModelD2RQ;
 
 import java.io.BufferedReader;
@@ -14,6 +17,8 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.StringWriter;
 import java.util.Iterator;
+import java.util.List;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 
@@ -33,52 +38,86 @@ public class RuleEngine {
     private Model instances;
     private Integer execution = 0;
     private String rulesFile;
+    private String mapFile;
+    private OntModel oldOntModel = null;
 
     public RuleEngine(String pMapFile, String pRulesFiles) {
-        // Load mapping file for the first time
-        Model mapModel = FileManager.get().loadModel(pMapFile);
-        this.instances = new ModelD2RQ(mapModel, "http://www.morelab.deusto.es/ontologies/sorelcom#");
+        this.mapFile = pMapFile;
         this.rulesFile = pRulesFiles;
     }
 
-    public void inference() {
-        // Create a new ontoloyModel
-        final OntModel finalResult = ModelFactory.createOntologyModel();
+    /**
+     * The main execution method for this class. Here we are going to take loaded Mapping and Rules file to try
+     * infer new statmenets based on saved data in database.
+     *
+     * This method will extract and map all data into knowledge and then, use the loaded Rules to try to create
+     * new statements.
+     *
+     * If all the process works as intented and the new knowledge is valid with the actual Design of the Ontology
+     * then this data will be uploaded into Fuseki server.
+     *
+     *
+     * @return True or false if the operation is done successfully.
+     */
+
+    public boolean inference() {
+        boolean res = false;
+        // Loading mapModelFile from Path
+        Model mapModel = FileManager.get().loadModel(this.mapFile);
         // Load rules defined by the user.
-        Reasoner myReasoner = new GenericRuleReasoner(Rule.rulesFromURL("file:" + this.rulesFile));
-        myReasoner.setDerivationLogging(true);        // Allow to getDerivation: return useful information.
-        // Infer new instances using rules and our instances
-        InfModel inf = ModelFactory.createInfModel(myReasoner, instances);
-        if (!inf.isEmpty()) {
-            // Check if new Model is consistent
-            ValidityReport validity = inf.validate();
-            if (validity.isValid()) {
-                // Add new knowledge to the model.
-                finalResult.add(this.instances);
-                finalResult.add(inf.getDeductionsModel());
-                // Set prefix map
-                finalResult.setNsPrefixes(this.instances.getNsPrefixMap());
-                finalResult.setNsPrefixes(inf.getDeductionsModel().getNsPrefixMap());
-                // updated instances
-                this.instances = finalResult.getBaseModel();
-                this.printResults(finalResult, inf);
-                //Upload into Fuseki
-                if (inf.getDeductionsModel().size() > 0.0 || this.execution == 1) {
-                    this.serve(finalResult);
+        List <Rule> listRules = Rule.rulesFromURL("file:" + this.rulesFile);
+        // We check if we have usefull data
+        if (!mapModel.isEmpty() && !listRules.isEmpty()) {
+            this.instances = new ModelD2RQ(mapModel, "http://www.morelab.deusto.es/ontologies/sorelcom#");
+            // Create a new ontoloyModel
+            final OntModel finalResult = ModelFactory.createOntologyModel();
+            // Creating the reasoner based on previously loaded rules
+            Reasoner myReasoner = new GenericRuleReasoner(listRules);
+            myReasoner.setDerivationLogging(true);        // Allow to getDerivation: return useful information.
+            // Infer new instances using rules and our instances
+            InfModel inf = ModelFactory.createInfModel(myReasoner, this.instances);
+            if (!inf.isEmpty()) {
+                // Check if new Model is consistent
+                ValidityReport validity = inf.validate();
+                if (validity.isValid()) {
+                    // Add new knowledge to the model.
+                    finalResult.add(this.instances);
+                    finalResult.add(inf.getDeductionsModel());
+                    // Set prefix map
+                    finalResult.setNsPrefixes(this.instances.getNsPrefixMap());
+                    finalResult.setNsPrefixes(inf.getDeductionsModel().getNsPrefixMap());
+                    // updated instances
+                    this.instances = finalResult.getBaseModel();            // todo check for the next version if this global variable is needed.
+                    this.printResults(finalResult, inf);
+                    //Upload into Fuseki
+                    if (this.oldOntModel == null || !this.checkAreEquals(this.oldOntModel, finalResult)) {
+                        // If the base model is different (new data into DB) or if the inference model is different (new inference throught new rules
+                        // Then we will upload all data to Fuseki
+                        LOGGER.log(Level.FINE, "Uploading new data into Fuseki Server");
+                        this.oldOntModel = finalResult;
+                        this.serve(finalResult);
+                    }
+                    // The function works well, so we return a True state
+                    res = true;
+                } else {
+                    // There are conflicts
+                    System.err.println("Conflicts");
+                    for (Iterator i = validity.getReports(); i.hasNext(); ) {
+                        System.err.println(" - " + i.next());
+                    }
                 }
-            } else {
-                // There are conflicts
-                System.err.println("Conflicts");
-                for (Iterator i = validity.getReports(); i.hasNext(); ) {
-                    System.err.println(" - " + i.next());
-                }
+            }else {
+                // There is a problem in the inference model
+                System.err.println("Problems in the inference model, it returns a empty state");
+                LOGGER.log(Level.SEVERE, "The inference returns a empty state. May the rule reasoner is not working well or instances model is bad formed.");
             }
         }
+        return res;
     }
 
     /**
      *
-     * Upload Data into fuseki server
+     * Upload Data into Fuseki server
      *
      * @param pModel Result model with all statements
      */
@@ -89,7 +128,7 @@ public class RuleEngine {
         String result = out.toString();
         // Launch curl to upload or current knowledge into Fuseki
         ProcessBuilder p = new ProcessBuilder("curl", "-k", "-X", "POST", "--header", "Content-Type: application/rdf+xml",
-                "-d", result, "https://localhost:8443/fuseki/city4age/data");                   // todo if processbuilder makes some error, maybe it is interesting to change to HTTP
+                "-d", result, "http://localhost:8080/fuseki/city4age/data");
         try {
             System.out.println("Uploading new Knowledge to Fuseki......................");
             System.out.println("");
@@ -116,8 +155,36 @@ public class RuleEngine {
         }
     }
 
+    /**
+     * Checks if the ouputs of two diferent OntoModels are or not different.
+     *
+     * This is usefull to know if there is some new data in DB or if there are new Rules defined and we need to
+     * upload data to a server.
+     *
+     * @param oldOntModel The Old Ontology Model
+     * @param newOntModel The new Ontology Model
+     * @return True if the Ontology's are equal or False if they are different.
+     */
+    private boolean checkAreEquals(Model oldOntModel, Model newOntModel) {
+        boolean res = false;
+        StringWriter oldOut = new StringWriter();
+        StringWriter newOut = new StringWriter();
+        oldOntModel.write(oldOut, "RDF/XML");
+        newOntModel.write(newOut, "RDF/XML");
+        if (oldOut.toString().equals(newOut.toString())) {
+            res = true;
+        }
+        return res;
+    }
 
-    // todo this method is only for testing. Delete after finished.
+    /**
+     * Prints the actual knowledge with the actual execution number and what new statements are created with
+     * ruleEngine
+     *
+     *
+     * @param pOntology The actual knowledge ( Base + inferred)
+     * @param pInf: The list containing the inferred elements.
+     */
     private void printResults(OntModel pOntology, InfModel pInf) {
         this.execution++;
         pOntology.write(System.out, "N-TRIPLES");
@@ -127,6 +194,7 @@ public class RuleEngine {
 
         System.out.println("Infered count list "+pInf.getDeductionsModel().size());
     }
+
 }
 
 // curl -X PUT -H "Content-Type: application/rdf+xml" -d @./knowledge.rdf http://localhost:3030/city4age/data
