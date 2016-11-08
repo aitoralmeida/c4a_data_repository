@@ -10,9 +10,9 @@ Use __eq__ to compare if the password given is correct.
 
 """
 
-
 import bcrypt
 from sqlalchemy.ext.mutable import Mutable
+
 
 __author__ = 'Elmer de Looff'
 

@@ -6,9 +6,7 @@ This file is used to connect to the database using SQL Alchemy ORM
 """
 
 import os
-import sys
 import inspect
-import tables
 import ConfigParser
 import logging
 import datetime
@@ -16,9 +14,17 @@ from sqlalchemy import create_engine, desc, MetaData
 from sqlalchemy.engine.url import URL
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import sessionmaker
+import tables
+
 
 __author__ = 'Rubén Mulero'
-__copyright__ = "foo"  # we need?¿
+__copyright__ = "Copyright 2016, City4Age project"
+__credits__ = ["Rubén Mulero", "Aitor Almeida", "Gorka Azkune", "David Buján"]
+__license__ = "GPL"
+__version__ = "0.2"
+__maintainer__ = "Rubén Mulero"
+__email__ = "ruben.mulero@deusto.es"
+__status__ = "Prototype"
 
 # Database settings
 config = ConfigParser.ConfigParser()

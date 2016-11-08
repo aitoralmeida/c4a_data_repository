@@ -1,30 +1,32 @@
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function
-
-
 """
 Main class of the Rest API. Here we define endpoints with their functions. Also we define some configuration
 for Flask and manage error codes.
 
 """
 
+from __future__ import print_function
+import logging
 from json import dumps, loads
-from src.packORM import post_orm
-from src.packORM import tables
-from src.packUtils.utilities import Utilities
-
+from functools import wraps
+from datetime import timedelta
 from flask import Flask, request, make_response, Response, abort, redirect, url_for, session, flash, jsonify, \
     current_app, request_finished
 from sqlalchemy.orm import class_mapper
-from functools import wraps
-from datetime import timedelta
-from jsonschema import validate, ValidationError
-import logging
-import json
+from src.packORM import post_orm
+from src.packUtils.utilities import Utilities
+
 
 __author__ = 'Rubén Mulero'
-__copyright__ = "foo"  # we need?¿
+__copyright__ = "Copyright 2016, City4Age project"
+__credits__ = ["Rubén Mulero", "Aitor Almeida", "Gorka Azkune", "David Buján"]
+__license__ = "GPL"
+__version__ = "0.2"
+__maintainer__ = "Rubén Mulero"
+__email__ = "ruben.mulero@deusto.es"
+__status__ = "Prototype"
+
 
 # Configuration
 ACTUAL_API = '0.1'
@@ -151,9 +153,8 @@ def api(version=app.config['ACTUAL_API']):
         This API is designed to be used with curl and JSON request.
 
         <ul>
-            <li><b>add_action</b>: Adds new ExecutedAction into databse.</li>
-            <li><b>add_activity</b>: Adds new Activity into DB.</li>
-            <li><b>add_behavior</b>: Adds new behaviour into DB.</li>
+            <li><b>add_action</b>: Adds new ExecutedAction into database.</li>
+            <li><b>add_activity</b>: Adds new Activity into database.</li>
             <li><b>login</b>: Login into API.</li>
             <li><b>logout</b>: Disconnect current user from the API.</li>
             <li><b>search</b>: Search some datasets.</li>
@@ -315,7 +316,7 @@ def add_action(version=app.config['ACTUAL_API']):
         # Verifying the user
         user_data = Utilities.check_session(app, DATABASE)
         # validate users data
-        if data and Utilities.check_add_activity_data(data) and user_data:             # Todo include a filter with access level.
+        if data and Utilities.check_add_activity_data(data) and user_data:
             # User and data are OK. save data into DB
             res = DATABASE.add_action(data)
             if res:
@@ -370,7 +371,7 @@ def add_activity(version=app.config['ACTUAL_API']):
         # Verifying the user
         user_data = Utilities.check_session(app, DATABASE)
         # validate users data
-        if data and Utilities.check_add_activity_data(data) and user_data:           # Todo include a filter with access level.
+        if data and Utilities.check_add_activity_data(data) and user_data:
             # User and data are OK. save data into DB
             res = DATABASE.add_activity(data)
             if res:
@@ -379,34 +380,6 @@ def add_activity(version=app.config['ACTUAL_API']):
             else:
                 logging.error("add_activity: Stored in database failed")
                 return Response("There is an error in DB"), 500
-        else:
-            abort(500)
-
-
-# TODO candidate to DELETE
-@app.route('/api/<version>/add_behavior', methods=['POST'])
-@limit_content_length(MAX_LENGHT)
-def add_behavior(version=app.config['ACTUAL_API']):
-    """
-    Adds a new behavior into the system
-
-    :param version: Api version
-    :return:
-    """
-    if Utilities.check_connection(app, version):
-        data = _convert_to_dict(request.json)
-        # Verifying the user
-        user_data = Utilities.check_session(app, DATABASE)
-        # validate users data
-        if data and Utilities.check_add_behavior_data(data) and user_data:           # TODO include a filter with access level.
-            # User and data are OK. save data into DB
-            res = DATABASE.add_behavior(data)
-            if res:
-                logging.info("add_behavior: Stored in database ok")
-                return Response('Data stored in database OK\n'), 200
-            else:
-                logging.error("add_behavior: Stored in database failed")
-                return "There is an error in DB", 500
         else:
             abort(500)
 

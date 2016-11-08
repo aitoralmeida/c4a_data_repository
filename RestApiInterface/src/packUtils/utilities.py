@@ -7,13 +7,20 @@ This class has all utilities of the project. The idea is to store all checkers, 
 
 """
 
-from src.packORM import tables
+import logging
 from flask import abort, session, request
 from jsonschema import validate, ValidationError
-import logging
+from src.packORM import tables
 
 
 __author__ = 'Rubén Mulero'
+__copyright__ = "Copyright 2016, City4Age project"
+__credits__ = ["Rubén Mulero", "Aitor Almeida", "Gorka Azkune", "David Buján"]
+__license__ = "GPL"
+__version__ = "0.2"
+__maintainer__ = "Rubén Mulero"
+__email__ = "ruben.mulero@deusto.es"
+__status__ = "Prototype"
 
 
 class Utilities(object):
@@ -170,23 +177,6 @@ class Utilities(object):
         except ValidationError:
             logging.error("The schema entered by the user is invalid")
 
-        return res
-
-    # Todo candidate to be modified with inter behaviour
-    def check_add_behavior_data(self, p_data):
-        """
-        Check if data is ok and if the not nullable values are filled.
-
-        :param p_data: User sent data
-
-        :return: True or False if data is ok
-        """
-        res = False
-        # Check if JSON has all needed values
-        for data in p_data:
-            # if all(k in data for k in "behavior_name"):
-            if "behavior_name" in data:
-                res = True
         return res
 
     @staticmethod

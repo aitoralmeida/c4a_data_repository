@@ -7,17 +7,25 @@ Here we define tables, relationships between tables and so on.
 
 """
 
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import relationship, validates
-from sqlalchemy import Column, Integer, String, Boolean, Sequence, Float, BigInteger, Table, ForeignKey, TIMESTAMP, \
-    Text, TypeDecorator
-from PasswordHash import PasswordHash
+import datetime
 from itsdangerous import (TimedJSONWebSignatureSerializer
                           as Serializer, BadSignature, SignatureExpired)
-import datetime
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import relationship, validates
+from sqlalchemy import Column, Integer, String, Boolean, Sequence, Float, BigInteger, ForeignKey, TIMESTAMP, \
+    Text, TypeDecorator
+from PasswordHash import PasswordHash
+
 
 __author__ = 'Rubén Mulero'
-__copyright__ = "foo"  # we need?¿
+__copyright__ = "Copyright 2016, City4Age project"
+__credits__ = ["Rubén Mulero", "Aitor Almeida", "Gorka Azkune", "David Buján"]
+__license__ = "GPL"
+__version__ = "0.2"
+__maintainer__ = "Rubén Mulero"
+__email__ = "ruben.mulero@deusto.es"
+__status__ = "Prototype"
+
 
 # Global variable declarative base
 Base = declarative_base()
