@@ -17,9 +17,8 @@ from sqlalchemy.engine.url import URL
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import sessionmaker
 
-
 __author__ = 'Rubén Mulero'
-__copyright__ = "foo"   # we need?¿
+__copyright__ = "foo"  # we need?¿
 
 # Database settings
 config = ConfigParser.ConfigParser()
@@ -28,16 +27,15 @@ current_dir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentfra
 config_dir = os.path.abspath(current_dir + '../../../conf/rest_api.cfg')
 config.read(config_dir)
 
-
 if 'database' in config.sections():
     # We have config file with data
     DATABASE = {
-                    'drivername': config.get('database', 'drivername') or 'postgres',
-                    'host': config.get('database', 'host') or 'localhost',
-                    'port': config.get('database', 'port') or '5432',
-                    'username': config.get('database', 'username') or 'postgres',
-                    'password': config.get('database', 'password') or 'postgres',
-                    'database': config.get('database', 'database') or 'postgres'
+        'drivername': config.get('database', 'drivername') or 'postgres',
+        'host': config.get('database', 'host') or 'localhost',
+        'port': config.get('database', 'port') or '5432',
+        'username': config.get('database', 'username') or 'postgres',
+        'password': config.get('database', 'password') or 'postgres',
+        'database': config.get('database', 'database') or 'postgres'
     }
 else:
     # Any config file detected, load default settings.
@@ -51,51 +49,52 @@ else:
     }
 
 # Definition of stakeholders
-# todo maybe is very interesint to assign some "roles" in the system to have some access". convert this into a dict
+# todo maybe is very interesting to assign some "roles" in the system to have some access". convert this into a dict
 stakeholders = [
-                    # System
-                    "admin",
-                    # Care
-                    "elderly_citizen",
-                    "informal_caregiver",
-                    "caregiver",
-                    "operator",
-                    "elderly_operator",
-                    "sheltered_managers",
-                    # Medical
-                    "general_practicioners",
-                    "geriatricians",
-                    "medical_researcher",
-                    # Behavioral science
-                    "behaviour_scienticist",
-                    # Health management
-                    "epidermiologist",
-                    # City services
-                    "social_services",
-                    "city_planner",
-                    # Community services
-                    "transport_manager",
-                    "energy_company",
-                    "cultural_manager",
-                    "fitness_manager",
-                    "shop_manager",
-                    "shop",     # banks, restaurants, book shop........
-                    # Business
-                    "market_researche",
-                    "app_developer",
-                    "sensor_designer",
-                    "expert_consultancie",
-                    "behavioral_science",
-                ]
+    # System
+    "admin",
+    # Care
+    "elderly_citizen",
+    "informal_caregiver",
+    "caregiver",
+    "operator",
+    "elderly_operator",
+    "sheltered_managers",
+    # Medical
+    "general_practicioners",
+    "geriatricians",
+    "medical_researcher",
+    # Behavioral science
+    "behaviour_scienticist",
+    # Health management
+    "epidermiologist",
+    # City services
+    "social_services",
+    "city_planner",
+    # Community services
+    "transport_manager",
+    "energy_company",
+    "cultural_manager",
+    "fitness_manager",
+    "shop_manager",
+    "shop",  # banks, restaurants, book shop........
+    # Business
+    "market_researche",
+    "app_developer",
+    "sensor_designer",
+    "expert_consultancie",
+    "behavioral_science",
+]
+
+
 
 
 class PostgORM(object):
-
     def __init__(self):
         # Make basic connection and setup declatarive
         self.engine = create_engine(URL(**DATABASE))
         try:
-            session_mark = sessionmaker(bind=self.engine)   # Bind session engine Test connection
+            session_mark = sessionmaker(bind=self.engine)  # Bind session engine Test connection
             session = session_mark()
             if session:
                 print "Connection OK"
@@ -117,7 +116,7 @@ class PostgORM(object):
         :param p_data: Object from Tables
         :return: None
         """
-        self.session.add(p_data)                  # Pending add (we can see new changes before commit)
+        self.session.add(p_data)  # Pending add (we can see new changes before commit)
 
     def insert_all(self, p_list_data):
         """
@@ -126,7 +125,7 @@ class PostgORM(object):
         :param p_list_data: List of data
         :return: None
         """
-        self.session.add_all(p_list_data)         # Multiple users, pending action
+        self.session.add_all(p_list_data)  # Multiple users, pending action
 
     def query(self, p_class, web_dict, limit=10, offset=0, order_by='asc'):
         """
@@ -153,7 +152,7 @@ class PostgORM(object):
         q = q.offset(offset)
         return q
 
-    def query_get(self, p_class,  p_id):
+    def query_get(self, p_class, p_id):
         """
         Makes a querty to the desired Table of databased based on row ID
 
@@ -194,63 +193,45 @@ class PostgORM(object):
         if self.session:
             self.session.close()
 
-    def verify_user_login(self, p_data):
+    def verify_user_login(self, p_data, app, expiration=600):
         """
-        This method check given user and password and create a new session for the current user.
+        This method generates a new auth token to the user when username and password are OK
 
-        :param p_data: User and password
-        :return: True or False if user/password are valid.
+        :param p_data: A Python dic with username and password.
+        :param app: Flask application Object.
+        :param expiration: Expiration time of the token.
+
+        :return: A string with token data or Error String.
         """
         res = False
-        if 'username' in p_data and 'password' in p_data:
+        if 'username' in p_data and 'password' in p_data and app:
             user_data = self.query(tables.UserInSystem, {'username': p_data['username']})
             if user_data and user_data.count() == 1 and user_data[0].password == p_data['password'] \
                     and user_data[0].username == p_data['username']:
                 logging.info("verify_user_login: Login ok.")
-                res = user_data[0].id
+                # Generation of a new user Toke containing user ID
+                res = user_data[0].generate_auth_token(app, expiration)
             else:
                 logging.error("verify_user_login: User entered invalid username/password")
         else:
             logging.error("verify_user_login: Rare error detected")
         return res
 
+    def verify_auth_token(self, token, app):
+        """
+        This method verify user's token
 
-    # def verify_user_login(self, p_data, app, expiration=600):
-    #     """
-    #     This method generates a new auth token to the user when username and password are OK
-    #
-    #     :param p_data: A Python dic with username and password.
-    #     :param app: Flask application Object.
-    #     :param expiration: Expiration time of the token.
-    #
-    #     :return: A string with token data or Error String.
-    #     """
-    #     if 'username' in p_data and 'password' in p_data and app:
-    #         user_data = self.query(tables.User, p_data)
-    #         if user_data and user_data[0]:
-    #             # Login OK
-    #             res = user_data[0].generate_auth_token(app, expiration)
-    #         else:
-    #             res = "username or password incorrect"
-    #     else:
-    #         res = "Incorrect behaviour"
-    #     return res
-    #
-    # def verify_auth_token(self, token, app):
-    #     """
-    #     This method verify user's token
-    #
-    #     :param token: Token information
-    #     :param app: Flask application Object
-    #
-    #     :return: All user data or None
-    #     """
-    #     user_data = None
-    #     if app and token:
-    #         res = tables.User.verify_auth_token(token, app)
-    #         if res and res.get('id', False):
-    #             user_data = self.session.query(tables.User).get(res.get('id', 0))
-    #     return user_data
+        :param token: Token information
+        :param app: Flask application Object
+
+        :return: All user data or None
+        """
+        user_data = None
+        if app and token:
+            res = tables.UserInSystem.verify_auth_token(token, app)
+            if res and res.get('id', False):
+                user_data = self.session.query(tables.UserInSystem).get(res.get('id', 0))
+        return user_data
 
     def add_action(self, p_data):
         """
@@ -270,7 +251,7 @@ class PostgORM(object):
             date = datetime.datetime.strptime(data['timestamp'], '%Y-%m-%d %H:%M:%S.%f')
             pilot = self._get_or_create(tables.Pilot, name=data['extra']['pilot'])
             user = self._get_or_create(tables.UserInRole, id=data['payload']['user'], pilot_id=pilot.id)
-            location = self._get_or_create(tables.Location, location_name=data['location'], indoor=True,
+            location = self._get_or_create(tables.Location, location_name=data['location'], indoor=True,    # Default indoor value
                                            pilot_id=pilot.id)
             # We insert all related data to executed_action
             executed_action = tables.ExecutedAction(date=date, rating=data['rating'],
@@ -282,47 +263,31 @@ class PostgORM(object):
         # Whe prepared all data, now we are going to commit it into DB.
         return self.commit()
 
-    def add_risk(self, p_data):
-        """
-        Adds a new risk into the database
-
-        This method inserts into database all information about risk and their type to be related later with desired
-        data.
-
-        :param p_data:
-        :return: True if everything goes well.
-                False if there are any problem
-
-        """
-        # todo this is a first version, maybe in the future the user need to specify relationships
-        res = False
-        for data in p_data:
-            risk = self._get_or_create(tables.Risk, risk_name=data['risk_name'], ratio=data['ratio'],
-                                       description=data['description'])
-            if risk:
-                res = True
-            else:
-                res = False
-        return res
-
     def add_activity(self, p_data):
         """
-        Adds a new activity into the database
+        Adds a new activity into the database by finding first if the location exists or not into DB
 
         :param p_data:
         :return: True if everything goes well.
                 False if there are any problem
 
         """
-        # todo this is a first version, maybe in the future the user need to specify relationships
-        res = False
         for data in p_data:
-            activity = self._get_or_create(tables.Activity, activity_name=data['activity_name'])
-            if activity:
-                res = True
-            else:
-                res = False
-        return res
+            # We are going to find if location is inside DB
+            pilot = self._get_or_create(tables.Pilot, name=data['pilot'])
+            location = self._get_or_create(tables.Location, location_name=data['location']['name'],
+                                           indoor=data['location']['indoor'], pilot_id=pilot.id)
+            # Creating new Activity.......
+            activity = tables.Activity(activity_name=data['activity_name'],
+                                       activity_start_date=data['activity_start_date'],
+                                       activity_end_date=data['activity_end_date'],
+                                       since=data['since'],
+                                       house_number=data['house_number'],
+                                       location_id=location.id
+                                       )
+            # Insert data into DB
+            self.insert_one(activity)
+        return self.commit()
 
     def _get_or_create(self, model, **kwargs):
         # type: (object, object) -> object
@@ -366,8 +331,10 @@ class PostgORM(object):
             # TODO You need to check first if ALL data is in stakeholders before doing anything.
             if data and 'type' in data and data['type'] in stakeholders:
                 # StakeHolder entered ok we are going to enter data in DB
-                stakeholder = self._get_or_create(tables.StakeHolder, name=data['type'])    # consider to enter a user type according to it'ts current role
-                user_in_system = self._get_or_create(tables.UserInSystem, username=data['username'], password=data['password'],
+                stakeholder = self._get_or_create(tables.StakeHolder, name=data[
+                    'type'])  # consider to enter a user type according to it'ts current role
+                user_in_system = self._get_or_create(tables.UserInSystem, username=data['username'],
+                                                     password=data['password'],
                                                      stake_holder_name=stakeholder.name)
 
                 if stakeholder and user_in_system:
@@ -380,7 +347,25 @@ class PostgORM(object):
                 break
         return res
 
-    # todo maybe we need to create stakeholders methods ???
+    def add_historical(self, p_user_id, p_route, p_ip, p_agent, p_data, p_status_code):
+        """
+
+        Adds a new entry in the historical database to record user action performed in the API.
+
+        :param p_user_id: The Id of the registered user in the system
+        :param p_route: The route that has been executed.
+        :param p_ip: The ip of the user's machine
+        :param p_agent: Information about the client (Browner, platform, operating system and so on)
+        :param p_data: The JSON data sended by the user.
+        :param p_status_code: If the response of the command is True (200 ok) or False (400, 401, 404, 500....)
+
+        :return: True if data is stored in database
+                False if there are some problems
+        """
+        new_historical = tables.Historical(route=p_route, data=p_data, ip=p_ip, agent=p_agent, status_code=p_status_code,
+                                           user_in_system_id=p_user_id)
+        self.insert_one(new_historical)
+        return self.commit()
 
     def get_tables(self):
         """
@@ -388,46 +373,32 @@ class PostgORM(object):
 
         :return: A list containing current tables.
         """
-
         m = MetaData()
         m.reflect(self.engine)
         return m.tables.keys()
 
-    def get_table_by_name(self, p_table_name):
+    def get_table_object_by_name(self, p_table_name):
         """
         Using a table name, this class search an retrieves, Table Object Class.
 
         :param p_table_name: The named of target table
         :return:  A table class object.
         """
-        # Get all classes in tables
-        #clsmembers = inspect.getmembers(sys.modules['src.packORM.tables'], inspect.isclass)
-        # todo this is a workaround, we need to find a better solution
-        # todo maybe we can obtain all tables from get_tables and filter it?¿?
         all_tables = {
-                        'action': tables.Action,
-                        'activity': tables.Activity,
-                        'eam': tables.EAM,
-                        'executed_action': tables.ExecutedAction,
-                        'geriatric_indicator': tables.GeriatricIndicator,
-                        'geriatric_sub_indicator': tables.GeriatricSubIndicator,
-                        'inter_behaviour': tables.InterBehaviour,
-                        'intra_activity': tables.IntraActivity,
-                        'location': tables.Location,
-                        'pilot': tables.Pilot,
-                        'risk': tables.Risk,
-                        'simple_location': tables.SimpleLocation,
-                        'stake_holder': tables.StakeHolder,
-                        'user_in_role': tables.UserInRole,
-                        'user_in_system': tables.UserInSystem
-                    }
-        # We intantiate desired table
+            'action': tables.Action,
+            'activity': tables.Activity,
+            'eam': tables.EAM,
+            'executed_action': tables.ExecutedAction,
+            'inter_behaviour': tables.InterBehaviour,
+            'location': tables.Location,
+            'pilot': tables.Pilot,
+            'simple_location': tables.SimpleLocation,
+            'stake_holder': tables.StakeHolder,
+            'user_in_role': tables.UserInRole,
+            'user_in_system': tables.UserInSystem
+        }
+        # We instantiate desired table
         return all_tables[p_table_name]
-
-
-
-
-
 
 # todo for testing purposes, we need to delete later.
 

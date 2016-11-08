@@ -14,7 +14,8 @@ env.hosts = [
 ]
 
 # Set the username
-env.user = "city4age"
+#env.user = "city4age"
+env.user = "elektro"
 
 # Set database creation parameters (Remember to change your mapping.ttl file)
 DB_USER = 'city4agedb'      # User login
@@ -31,7 +32,12 @@ def _install_deps():
     :return:
     """
     sudo('apt-get update && apt-get -y install python-dev postgresql-9.5 postgresql-server-dev-9.5 virtualenv '
-         'build-essential nginx openjdk-8-jre tomcat8 openjdk-8-jdk')
+         'build-essential nginx openjdk-8-jre tomcat8 openjdk-8-jdk git')
+
+    # Debian 8 install req
+    #sudo('apt-get install -y python-dev postgresql-9.4 postgresql-server-dev-9.4 virtualenv '
+     #    'build-essential nginx openjdk-8-jre tomcat8 openjdk-8-jdk git')
+
 
 
 def _deploy():
@@ -63,6 +69,8 @@ def _create_database():
     random_numer = random.randint(100, 999)
     temp_file = '/tmp/out.tmp.%s' % random_numer
     with cd('/etc/postgresql/9.5/main'):
+    # For debian 8
+    #with cd('/etc/postgresql/9.4/main'):
         sudo("sed -e '90s/peer/md5/g' ./pg_hba.conf > " + temp_file + " && mv " + temp_file + " ./pg_hba.conf")
         # Restart postgres
         sudo('systemctl restart postgresql.service')

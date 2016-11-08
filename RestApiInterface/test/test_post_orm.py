@@ -9,6 +9,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import IntegrityError, DataError
 from packORM import tables
 from packORM import post_orm
+from packFlask.api import app
 
 
 __author__ = 'Rubén Mulero'
@@ -51,43 +52,23 @@ class PostOrmTestCase(unittest.TestCase):
                 res = False
         self.assertTrue(res)
 
-
-
     def test_insert_one_data(self):
-        # todo we need to do this check to ensure that our data is in database.
         """ Test if defined data is inserted into DB
 
-        For that reason we want simulate that we have a Dict of data and checks that this data in into
-        the database
+        For this test it is going to simulate and addition of new user.
 
         """
         list_of_dic_data = []
-        data1 = {
+        user1 = {
             'username': 'rub',
             'password': 'mul',
             'type': 'caregiver'
         }
-        data2 = {
-            'username': 'smith12',
-            'password': '12345',
-            'type': 'operator'
-            }
-        data3 = {
-            'username': 'neonni',
-            'password': '23ASW@',
-            'type': 'elderly_operator'
-            }
-
-        list_of_dic_data.append(data1)
-        list_of_dic_data.append(data2)
-        list_of_dic_data.append(data3)
-        # Insert data into database
-        # self.orm.add_new_user_in_system(list_of_dic_data)
-        # Real insert by commiting
-        # self.orm.commit()
-        # Now we are going to select data
+        # Adding user in system
+        list_of_dic_data.append(user1)
+        self.orm.add_new_user_in_system(list_of_dic_data)
+        # check if exists.
         q = self.orm.query(tables.UserInSystem, {'username': 'rub'})
-
         self.assertTrue(q.count() > 0)
 
     ###################################################
@@ -102,7 +83,6 @@ class PostOrmTestCase(unittest.TestCase):
         # No matches found
         self.assertTrue(q.count() == 0)
 
-
     def test_basic_query_found(self):
         """ Test if there is a result"""
         filters = {'username': 'admin'}
@@ -111,37 +91,56 @@ class PostOrmTestCase(unittest.TestCase):
         # No matches found
         self.assertTrue(q.count() > 0 and q[0].username == 'admin')
 
-    """
-    def test_offset_query(self):
 
+
+# Todo not working well this 3 tests
+
+    def test_offset_query(self):
+        """ Test if the offset is working well by giving some user in system"""
         filters = {'username': 'admin'}
         t_class = tables.UserInSystem
         q = self.orm.query(t_class, filters, offset=3)
-        # No matches found
-        if q.count() > 0 and q[0].username == 'admin':
-            self.assertTrue(True)
-        else:
-            self.assertTrue(False)
+        w = self.orm.query(t_class, filters, offset=0)
+        # We know that there isn't 3 admins in system so with offset there isn't any results
+        self.assertTrue(q.count() == 0 and w.count() == 1)
+
 
     def test_limit_query(self):
-
-
-        filters = {'username': 'admin'}
-        t_class = tables.UserInSystem
-        q = self.orm.query(t_class, filters, limit=2)
-        # No matches found
-        if q.count() == 2:
-            self.assertTrue(True)
-        else:
-            self.assertTrue(False)
-    """
+        """ Test if the limit is working well by giving some data """
+        # We are going to insert 3 types of data in database
+        list_of_dic_data = []
+        user1 = {
+            'username': 'elementaltester1',
+            'password': 'sd029308sd02iah9dy302uoih',
+            'type': 'caregiver'
+        }
+        user2 = {
+            'username': 'elementaltester2',
+            'password': '··$)E2390dajd3049',
+            'type': 'caregiver'
+        }
+        user3 = {
+            'username': 'elementaltester3',
+            'password': '^d+sad2304820A$·aosidoawS',
+            'type': 'caregiver'
+        }
+        # Adding user in system
+        list_of_dic_data.append(user1)
+        list_of_dic_data.append(user2)
+        list_of_dic_data.append(user3)
+        self.orm.add_new_user_in_system(list_of_dic_data)
+        # Calling into DB
+        filters = {'username': 'elementaltester'}
+        q = self.orm.query(tables.UserInSystem, filters, limit=2)
+        # If we receive two elements the tests is OK
+        self.assertTrue(q.count() == 2)
 
     def test_query_get(self):
         """ Test if providing an existing ID, our query have user information
             None --> Any user with this ID
             User Object --> User with this ID
         """
-        user = self.orm.query_get(tables.UserInSystem, p_id=7)
+        user = self.orm.query_get(tables.UserInSystem, p_id=1)
         self.assertTrue(user)
 
 
@@ -153,43 +152,43 @@ class PostOrmTestCase(unittest.TestCase):
     def test_verify_user_login_ok(self):
         """ Test if an user login succesfully"""
         credentials = {'username': 'admin', 'password': 'admin'}
-        res = self.orm.verify_user_login(credentials)
+        res = self.orm.verify_user_login(credentials, app)
         self.assertTrue(res)
 
     def test_verify_user_login_ko_password(self):
         """ Test when users fails in login process """
         credentials = {'username': 'admin', 'password': 'adminnote'}
-        res = self.orm.verify_user_login(credentials)
+        res = self.orm.verify_user_login(credentials, app)
         self.assertFalse(res)
 
     def test_verify_user_login_ko_username(self):
         """ Test when users fails in login process """
         credentials = {'username': 'adminote', 'password': 'admin'}
-        res = self.orm.verify_user_login(credentials)
+        res = self.orm.verify_user_login(credentials, app)
         self.assertFalse(res)
 
     def test_verify_user_login_ko_empty_password(self):
         """ Test when users inserts an empty password"""
         credentials = {'username': 'adminote', 'password': ''}
-        res = self.orm.verify_user_login(credentials)
+        res = self.orm.verify_user_login(credentials, app)
         self.assertFalse(res)
 
     def test_verify_user_login_ko_empty_user(self):
         """ Test when users inserts an empty username"""
         credentials = {'username': '', 'password': 'admin'}
-        res = self.orm.verify_user_login(credentials)
+        res = self.orm.verify_user_login(credentials, app)
         self.assertFalse(res)
 
     def test_verify_user_login_ko_empty_user_password(self):
         """ Test when users inserts an empty username and password"""
         credentials = {'username': '', 'password': ''}
-        res = self.orm.verify_user_login(credentials)
+        res = self.orm.verify_user_login(credentials, app)
         self.assertFalse(res)
 
     def test_verify_user_login_ko_data(self):
         """ Test when user sends an invalid JSON"""
         credentials = {}
-        res = self.orm.verify_user_login(credentials)
+        res = self.orm.verify_user_login(credentials, app)
         self.assertFalse(res)
 
 
@@ -238,7 +237,6 @@ class PostOrmTestCase(unittest.TestCase):
         # No matches found
         self.assertTrue(q.count() > 0)
 
-
     def test_bad_order_by(self):
         """ Test if orderby have a diferent arg"""
         filters = {'username': 'admin'}
@@ -246,7 +244,6 @@ class PostOrmTestCase(unittest.TestCase):
         q = self.orm.query(t_class, filters, order_by=-1)
         # No matches found
         self.assertTrue(q.count() > 0)
-
 
 
 if __name__ == '__main__':

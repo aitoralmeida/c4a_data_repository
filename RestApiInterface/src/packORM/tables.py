@@ -96,48 +96,6 @@ class ExecutedAction(Base):
     action = relationship("Action")
     activity = relationship("Activity")
     location = relationship("Location")
-    # m2m
-    risk = relationship('RiskExecutedActionRel')
-
-
-class InterBehaviourRiskRel(Base):
-    """
-    InterBehaviour < -- > Risk M2m REL
-    """
-
-    __tablename__ = 'inter_behaviour_risk_rel'
-
-    inter_behaviour_id = Column(Integer, ForeignKey('inter_behaviour.id'), primary_key=True)
-    risk_id = Column(Integer, ForeignKey('risk.id'), primary_key=True)
-    risk = relationship('Risk')
-
-
-class IntraActivity(Base):
-    """
-    Activity < -- > IntraBehaviour
-    """
-
-    __tablename__ = 'intra_activity'
-
-    # M2M Relantionship
-    activity_id = Column(Integer, ForeignKey('activity.id'), primary_key=True)
-    intra_behaviour_id = Column(Integer, ForeignKey('intra_behaviour.id'), primary_key=True)
-    start_interval = Column(TIMESTAMP, default=datetime.datetime.utcnow, primary_key=True)      # Defined by the user?
-    end_interval = Column(TIMESTAMP, primary_key=True)                                          # Defined by the user
-
-    intra_behaviour = relationship("IntraBehaviour")
-
-
-class RiskExecutedActionRel(Base):
-    """
-    ExecutedAction < -- > Risk
-    """
-
-    __tablename__ = 'risk_executed_action_rel'
-
-    executed_action_id = Column(Integer, ForeignKey('executed_action.id'), primary_key=True)
-    risk_id = Column(Integer, ForeignKey('risk.id'), primary_key=True)
-    risk = relationship('Risk')
 
 
 class EAMStartRangeRel(Base):
@@ -164,46 +122,6 @@ class EAMSimpleLocationRel(Base):
     simple_location = relationship("SimpleLocation")
 
 
-class PilotGeriatricIndicatorRel(Base):
-    """
-    Pilot < -- > GeriatricIndicator
-    """
-
-    __tablename__ = 'pilot_geriatric_indicator_rel'
-
-    pilot_id = Column(Integer, ForeignKey('pilot.id'), primary_key=True)
-    geriatric_indicator_id = Column(Integer, ForeignKey('geriatric_indicator.id'), primary_key=True)
-    geriatric_indicator = relationship("GeriatricIndicator")
-    # Extra Values
-    date = Column(TIMESTAMP, primary_key=True)
-
-
-class UserInRoleGeriatricIndicatorRel(Base):
-    """
-    UserInRole < -- > GeriatricIndicator
-    """
-
-    __tablename__ = 'user_in_role_geriatric_indicator_rel'
-
-    user_in_role_id = Column(String(75), ForeignKey('user_in_role.id'), primary_key=True)
-    geriatric_indicator_id = Column(Integer, ForeignKey('geriatric_indicator.id'), primary_key=True)
-    geriatric_indicator = relationship("GeriatricIndicator")
-    # Extra Values
-    date = Column(TIMESTAMP)
-
-
-class GeriatricIndicatorGeriatricSubIndicatorRel(Base):
-    """
-    GeriatricIndicator < -- > GeriatricSubIndicator
-    """
-
-    __tablename__ = 'geriatric_indicator_geriatric_sub_indicator_rel'
-
-    geriatric_indicator_id = Column(Integer, ForeignKey('geriatric_indicator.id'), primary_key=True)
-    geriatric_sub_indicator_id = Column(Integer, ForeignKey('geriatric_sub_indicator.id'), primary_key=True)
-    geriatric_sub_indicator = relationship("GeriatricSubIndicator")
-
-
 # Tables
 class UserInRole(Base):
     """
@@ -217,7 +135,6 @@ class UserInRole(Base):
     valid_to = Column(TIMESTAMP)
     # m2m
     action = relationship("ExecutedAction")
-    geriatric_indicator = relationship("UserInRoleGeriatricIndicatorRel")
     # one2many
     stake_holder_id = Column(String(25), ForeignKey('stake_holder.name'))
     pilot_id = Column(Integer, ForeignKey('pilot.id'))
@@ -239,6 +156,9 @@ class UserInSystem(Base):
     # password = Column(Password(rounds=10))
     # Without rounds System will use 13 rounds by default
     created_date = Column(TIMESTAMP, default=datetime.datetime.utcnow)
+
+    historical = relationship('Historical')
+
     # One2Many
     stake_holder_name = Column(String(25), ForeignKey('stake_holder.name'))
 
@@ -256,39 +176,37 @@ class UserInSystem(Base):
     def _validate_password(self, key, password):
         return getattr(type(self), key).type.validator(password)
 
+    # Token management
+    def generate_auth_token(self, app, expiration=600):
+        """
+        This method generates a new auth token to the user.
 
+        :param app: Flask application Object
+        :param expiration: Expiration time of the token
 
-        # # Token management
-        # def generate_auth_token(self, app, expiration=600):
-        #     """
-        #     This method generates a new auth token to the user.
-        #
-        #     :param app: Flask application Object
-        #     :param expiration: Expiration time of the token
-        #
-        #     :return: A string with the token.
-        #     """
-        #     s = Serializer(app.config['SECRET_KEY'], expires_in=expiration)
-        #     return s.dumps({'id': self.id})
-        #
-        # @staticmethod
-        # def verify_auth_token(token, app):
-        #     """
-        #     This method verify user's token
-        #
-        #     :param token: Token information
-        #     :param app: Flask application Object
-        #
-        #     :return: User ID
-        #     """
-        #     s = Serializer(app.config['SECRET_KEY'])
-        #     try:
-        #         data = s.loads(token)
-        #     except SignatureExpired:
-        #         return None  # valid token, but expired
-        #     except BadSignature:
-        #         return None  # invalid token
-        #     return data
+        :return: A string with the token.
+        """
+        s = Serializer(app.config['SECRET_KEY'], expires_in=expiration)
+        return s.dumps({'id': self.id})
+
+    @staticmethod
+    def verify_auth_token(token, app):
+        """
+        This method verify user's token
+
+        :param token: Token information
+        :param app: Flask application Object
+
+        :return: User ID
+        """
+        s = Serializer(app.config['SECRET_KEY'])
+        try:
+            data = s.loads(token)
+        except SignatureExpired:
+            return None  # valid token, but expired
+        except BadSignature:
+            return None  # invalid token
+        return data
 
 
 class Action(Base):
@@ -319,7 +237,9 @@ class Location(Base):
     location_name = Column(String(75))
     indoor = Column(Boolean)
     # One2Many
-    pilot_id = Column(Integer, ForeignKey('pilot.id'))
+    pilot_id = Column(Integer, ForeignKey('pilot.id'), nullable=True)
+
+    activity = relationship("Activity")
 
     def __repr__(self):
         return "<Location(location_name='%s', indoor='%s')>" % (self.location_name, self.indoor)
@@ -338,6 +258,14 @@ class Activity(Base):
 
     id = Column(Integer, Sequence('activity_id_seq'), primary_key=True)
     activity_name = Column(String(50))
+    activity_start_date = Column(TIMESTAMP)
+    activity_end_date = Column(TIMESTAMP)
+    creation_date = Column(TIMESTAMP, default=datetime.datetime.utcnow)         # get current date
+    since = Column(TIMESTAMP, nullable=True)
+
+    # From Location class
+    house_number = Column(Integer)                                              # Associative class to this Activity
+    location_id = Column(Integer, ForeignKey('location.id'))
 
     # One2one
     eam = relationship("EAM", uselist=False, back_populates="activity")
@@ -346,28 +274,8 @@ class Activity(Base):
     expected_inter_behaviour = relationship("InterBehaviour", foreign_keys='InterBehaviour.expected_activity_id')
     real_inter_behaviour = relationship("InterBehaviour", foreign_keys='InterBehaviour.real_activity_id')
 
-    # many2many
-    intra_behaviour = relationship("IntraActivity")
-
     def __repr__(self):
         return "<Activity(activity_name='%s')>" % self.activity_name
-
-
-class Risk(Base):
-    """
-    Some actions or behavior have an associated % of risk. For example, it is possible that "Go to the park at weekdays"
-    has a % of chance to have MCI if the user performs some strange actions.
-    """
-
-    __tablename__ = 'risk'
-
-    id = Column(Integer, Sequence('risk_id_seq'), primary_key=True)
-    risk_name = Column(String(50))
-    ratio = Column(Float(3))
-    description = Column(String(255))
-
-    def __repr__(self):
-        return "<Risk(risk_name='%s', ratio='%s', description='%s')>" % self.risk_name, self.ratio, self.description
 
 
 class Pilot(Base):
@@ -378,13 +286,11 @@ class Pilot(Base):
     __tablename__ = 'pilot'
 
     id = Column(Integer, Sequence('pilot_id_seq'), primary_key=True)
-    name = Column(String(50))
+    name = Column(String(50), unique=True, nullable=False)
     population_size = Column(BigInteger)
     # One2Many
     user_in_role = relationship('UserInRole')
     location = relationship('Location')
-    # Many2Many
-    geriatric_indicator = relationship("PilotGeriatricIndicatorRel")
 
     def __repr__(self):
         return "<Pilot(name='%s', population_size='%s')>" % (self.name, self.population_size)
@@ -420,32 +326,9 @@ class InterBehaviour(Base):
     # many2one relationships
     expected_activity_id = Column(Integer, ForeignKey('activity.id'))
     real_activity_id = Column(Integer, ForeignKey('activity.id'))
-    intra_behaviour_id = Column(Integer, ForeignKey('intra_behaviour.id'))
-
-    # many2many
-    risk = relationship("InterBehaviourRiskRel")
 
     def __repr__(self):
         return "<InterBehaviour(deviation='%s')>" % self.deviation
-
-
-class IntraBehaviour(Base):
-    """
-    This table contains information about spatio-temporal time intervals in activities and try to store some measures
-    """
-
-    __tablename__ = 'intra_behaviour'
-
-    id = Column(Integer, Sequence('intra_behaviour_seq'), primary_key=True)
-    mean = Column(Float(10))
-    period = Column(Float(10))
-    deviation = Column(Float(10))
-
-    # one2many
-    inter_behaviour = relationship("InterBehaviour")
-
-    def __repr__(self):
-        return "<IntraBehaviour(mean='%s', period='%s', deviation='%s')>" % (self.mean, self.period, self.deviation)
 
 
 # EAM Related Tables
@@ -504,40 +387,21 @@ class StartRange(Base):
         return "<SimpleLocation(start_hour='%s', end_hour='%s')>" % (self.start_hour, self.end_hour)
 
 
-# New tables based on POLIMI Geriatrician suggestions.
-class GeriatricIndicator(Base):
+class Historical(Base):
     """
-    This table records some data about Geriatric indicators. For example an GI could be "Mobility" as a representation
-    of some differnet actions related with "Mobility.
-
-    Here we need to store some extra value like Score to helps geriatricians to have a better approach of stored data.
+    This table stores all user actions in DB. Each user has its historical data stored to study its actions in the
+    system. The idea is to have some reference in case of security breach.
     """
 
-    __tablename__ = 'geriatric_indicator'
+    __tablename__ = 'historical'
 
-    id = Column(Integer, Sequence('geriatric_indicator_seq'), primary_key=True)
-    name = Column(String(50))
-    score = Column(Integer)
-    # M2M
-    geriatric_sub_indicator = relationship("GeriatricIndicatorGeriatricSubIndicatorRel")
+    id = Column(Integer, Sequence('historical_seq'), primary_key=True)
+    route = Column(String(25))
+    data = Column(String(255))
+    ip = Column(String(60))
+    agent = Column(String(255))
+    date = Column(TIMESTAMP, default=datetime.datetime.utcnow)
+    status_code = Column(Integer)
 
-    def __repr__(self):
-        return "<GeriatricIndicator(name='%s', score='%s')>" % (self.name, self.score)
-
-
-class GeriatricSubIndicator(Base):
-    """
-    In this table is stored some sub value of Geriatric indicators. A sub values related to "Mobility"
-    could be "Walking, Still, Moving, Moving across rooms" and so on.
-
-    Like GeriatricIndicator this table has some extra values.
-    """
-
-    __tablename__ = 'geriatric_sub_indicator'
-
-    id = Column(Integer, Sequence('geriatric_sub_indicator_seq'), primary_key=True)
-    name = Column(String(50))
-    score = Column(Integer)
-
-    def __repr__(self):
-        return "<SimpleLocation(name='%s', score='%s')>" % (self.name, self.score)
+    # One2Many
+    user_in_system_id = Column(Integer, ForeignKey('user_in_system.id'))

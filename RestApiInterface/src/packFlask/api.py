@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import print_function
+
+
 """
 Main class of the Rest API. Here we define endpoints with their functions. Also we define some configuration
 for Flask and manage error codes.
@@ -7,13 +10,18 @@ for Flask and manage error codes.
 """
 
 from json import dumps, loads
-
 from src.packORM import post_orm
 from src.packORM import tables
-from flask import Flask, request, make_response, Response, abort, redirect, url_for, session, flash
+from src.packUtils.utilities import Utilities
+
+from flask import Flask, request, make_response, Response, abort, redirect, url_for, session, flash, jsonify, \
+    current_app, request_finished
 from sqlalchemy.orm import class_mapper
 from functools import wraps
+from datetime import timedelta
+from jsonschema import validate, ValidationError
 import logging
+import json
 
 __author__ = 'Rubén Mulero'
 __copyright__ = "foo"  # we need?¿
@@ -53,22 +61,20 @@ def limit_content_length(max_length):
 
     return decorator
 
-
 ###################################################################################################
 ###################################################################################################
-######                              GET FUNCTIONS
+######                              SIGNALS
 ###################################################################################################
 ###################################################################################################
-
 
 @app.before_request
 def before_request():
     global DATABASE
     DATABASE = post_orm.PostgORM()
     # Make sessions permament with some time
-    # session.permanent = True
-    # todo uncoment session lifetime when you have finished this part of application.
-    # app.permanent_session_lifetime = timedelta(minutes=5) # days=232323 years=2312321 blablabla
+    session.permanent = True
+    app.permanent_session_lifetime = timedelta(seconds=600)  # minutes=30 days=232323 years=2312321 and so on.
+    session.modified = True  # To force seesion expiration
 
 
 @app.teardown_request
@@ -78,6 +84,34 @@ def teardown_request(exception):
         # Close database active session
         DATABASE.close()
 
+@request_finished.connect_via(app)
+def when_request_finished(sender, response, **extra):
+    # We want to check if it is a registered user POST call.
+    if response.status_code != 401 and request.method == 'POST' and session.get('token', False):
+        # There is a registered user sending DATA
+        # ALL is ok we register the event
+        user_id = Utilities.check_session(app, DATABASE).id
+        route = request.url_rule and request.url_rule.endpoint or "Bad route or method"
+        ip = request.remote_addr or "Can read user Ip Address"
+        agent = request.user_agent.string or "User is not sending its agent"
+        data = "User entered an JSON with length of: %s" % request.content_length or "No data found"
+        status_code = response.status_code or "No status code. Check estrange behavior"
+
+        res = DATABASE.add_historical(user_id, route, ip, agent, data, status_code)
+        if not res:
+            logging.error("Historical data is not storing well into DB. The sent data is the following:"
+                          "\n User id: %s"
+                          "\n Route: %s"
+                          "\n Ip Address: %s"
+                          "\n User Agent: %s"
+                          "\n Data: %s"
+                          "\n Status code?: %s", user_id, route, ip, agent, data, status_code)
+
+###################################################################################################
+###################################################################################################
+######                              GET FUNCTIONS
+###################################################################################################
+###################################################################################################
 
 @app.route('/')
 def index():
@@ -109,7 +143,7 @@ def api(version=app.config['ACTUAL_API']):
     :param version: Api version
     :return:
     """
-    if _check_version(version):
+    if Utilities.check_version(app, version):
         return """<h1>Welcome to City4Age Rest API</h1>
 
         Here you have a list of available commands to use:
@@ -120,7 +154,6 @@ def api(version=app.config['ACTUAL_API']):
             <li><b>add_action</b>: Adds new ExecutedAction into databse.</li>
             <li><b>add_activity</b>: Adds new Activity into DB.</li>
             <li><b>add_behavior</b>: Adds new behaviour into DB.</li>
-            <li><b>add_risk</b>: Adds new risk into DB.</li>
             <li><b>login</b>: Login into API.</li>
             <li><b>logout</b>: Disconnect current user from the API.</li>
             <li><b>search</b>: Search some datasets.</li>
@@ -131,12 +164,17 @@ def api(version=app.config['ACTUAL_API']):
         return "You have entered an invalid api version", 404
 
 
+@app.route("/get_my_info", methods=["GET"])
+def get_my_ip():
+    return jsonify({'ip': request.remote_addr,
+                    'platform': request.user_agent.string,
+                    }), 200
+
 ###################################################################################################
 ###################################################################################################
 ######                              POST functions
 ###################################################################################################
 ###################################################################################################
-
 
 @app.route('/api/<version>/login', methods=['POST'])
 @limit_content_length(MAX_LENGHT)
@@ -147,27 +185,24 @@ def login(version=app.config['ACTUAL_API']):
     :param version: Api version
     :return:
     """
-    if _check_version(version):
-        if request.headers['content-type'] == 'application/json':
-            data = _convert_to_dict(request.json)[0]
-            if 'username' in data and 'password' in data:
-                res = DATABASE.verify_user_login(data)
-                if res:
-                    # Username and password are OK
-                    logging.info("login: User loggin sucesfully with %s username", data['username'])
-                    # Saving session cookie.
-                    session['username'] = data['username']
-                    session['id'] = res
-                    # return redirect(url_for('api', version=app.config['ACTUAL_API']))
-                    return "You were logged in", 200
-                else:
-                    abort(401)
+    if Utilities.check_connection(app, version):
+        data = _convert_to_dict(request.json)[0]
+        if 'username' in data and 'password' in data:
+            res = DATABASE.verify_user_login(data, app)
+            if res:
+                # Username and password are OK
+                logging.info("login: User login successfully with %s username", data['username'])
+                # Saving session cookie.
+                # session['username'] = data['username']
+                # session['id'] = res
+                session['token'] = res
+                # return redirect(url_for('api', version=app.config['ACTUAL_API']))
+                return "You were logged in", 200
             else:
-                abort(500)
+                logging.error("User entered an invalid username or password")
+                abort(401)
         else:
-            abort(400)
-    else:
-        return "You have entered an invalid api version", 404
+            abort(500)
 
 
 @app.route('/api/<version>/logout', methods=['POST'])
@@ -178,21 +213,16 @@ def logout(version=app.config['ACTUAL_API']):
     :param version: APi version
     :return:
     """
-    if _check_version(version):
-        if _check_session():
-            session.pop('username', None)
-            session.pop('id', None)
+    if Utilities.check_version(version):
+        user_data = Utilities.check_session(app, DATABASE)
+        if user_data:
+            session.pop('token', None)
             flash('You were logged out')
             return redirect(url_for('api', version=app.config['ACTUAL_API']))
-        else:
-            logging.error("check_connection: User session cookie is not OK, 401")
-            abort(401)
     else:
         logging.error("check_version: User entered an invalid api version, 404")
         return "You have entered an invalid api version", 404
 
-
-## Todo this parts needs to be re-evaluated an re-implemented
 
 @app.route('/api/<version>/search', methods=['POST'])
 @limit_content_length(MAX_LENGHT)
@@ -221,19 +251,18 @@ def search(version=app.config['ACTUAL_API']):
     :return:
     """
     res = None
-    if _check_connection(version):
+    if Utilities.check_connection(app, version):
         data = _convert_to_dict(request.json)[0]
-        # check if data is OK
-        # ENTER HERE A CHECK TABLES FUNCTION
-        if _check_search(data):
+        # Verifying the user
+        user_data = Utilities.check_session(app, DATABASE)     # TODO send to check_search, user stakeholder to limit search
+        if Utilities.check_search(DATABASE, data) and user_data:
             # data Entered by the user is OK
             limit = data and data.get('limit', 10) and data.get('limit', 10) >= 0 or 10
             offset = data and data.get('offset', 0) and data.get('offset', 0) >= 0 or 0
             order_by = data and data.get('order_by', 'asc') and data.get('order_by', 'asc') in ['asc', 'desc'] \
-                       or 'asc' # We are limint order_by to asc or desc
-            # Todo insert a filter to avoid to user search in ceratin tables
+                        or 'asc'  # We are limiting order_by to asc or desc
             # Obtain table class using the name of the desired table
-            table_class = DATABASE.get_table_by_name(data['table'])
+            table_class = DATABASE.get_table_object_by_name(data['table'])
             # Query database and select needed elements
             try:
                 res = DATABASE.query(table_class, data['criteria'], limit=limit, offset=offset, order_by=order_by)
@@ -259,14 +288,34 @@ def add_action(version=app.config['ACTUAL_API']):
     """
     Add a new action in DB
 
+    An example of add action is described by POLIMI in the following code:
+
+    {
+        "action": "eu:c4a:usermotility:enter_bus",
+        "location": "it:puglia:lecce:bus:39",
+        "payload": {
+            "user": "eu:c4a:pilot:madrid:user:12346",
+            "position": "urn:ogc:def:crs:EPSG:6.6:4326"
+        },
+        "timestamp": "2014-05-20 07:08:41.22222",
+        "rating": 0.1,
+        "extra": {
+            "pilot": "lecce"
+        },
+        "secret": "jwt_token"
+    }
+
+
     :param version: Api version
     :return:
     """
-    if _check_connection(version):
+    if Utilities.check_connection(app, version):
         # We created a list of Python dics.
         data = _convert_to_dict(request.json)
+        # Verifying the user
+        user_data = Utilities.check_session(app, DATABASE)
         # validate users data
-        if data and _check_add_action_data(data):
+        if data and Utilities.check_add_activity_data(data) and user_data:             # Todo include a filter with access level.
             # User and data are OK. save data into DB
             res = DATABASE.add_action(data)
             if res:
@@ -285,15 +334,43 @@ def add_activity(version=app.config['ACTUAL_API']):
     """
     Adds a new activity into the system
 
+
+    An example in JSON could be:
+
+    [{
+        "activity_name": "kitchenActivity",
+        "activity_start_date": "2014-05-20 06:08:41.22222",
+        "activity_end_date": "2014-05-20 07:08:41.22222",
+        "since": "2014-05-20 01:08:41.22222",
+        "house_number": 0,
+        "location": {
+            "name": "it:puglia:lecce:bus:39",
+            "indoor": false
+        },
+        "pilot": "lecce"
+    }, {
+        "activity_name": "doBreakFast",
+        "activity_start_date": "2015-05-20 06:18:41.22222",
+        "activity_end_date": "2015-05-20 07:08:41.22222",
+        "since": "2011-05-20 01:08:41.22222",
+        "house_number": 2,
+        "location": {
+            "name": "it:puglia:madrid:house:2",
+            "indoor": true
+        },
+        "pilot": "madrid"
+    }]
+
+
     :param version: Api version
     :return:
     """
-    if _check_connection(version):
+    if Utilities.check_connection(app, version):
         data = _convert_to_dict(request.json)
-        username = session['username']
-        id = session['id']
+        # Verifying the user
+        user_data = Utilities.check_session(app, DATABASE)
         # validate users data
-        if data and _check_add_activity_data(data):
+        if data and Utilities.check_add_activity_data(data) and user_data:           # Todo include a filter with access level.
             # User and data are OK. save data into DB
             res = DATABASE.add_activity(data)
             if res:
@@ -306,6 +383,7 @@ def add_activity(version=app.config['ACTUAL_API']):
             abort(500)
 
 
+# TODO candidate to DELETE
 @app.route('/api/<version>/add_behavior', methods=['POST'])
 @limit_content_length(MAX_LENGHT)
 def add_behavior(version=app.config['ACTUAL_API']):
@@ -315,12 +393,12 @@ def add_behavior(version=app.config['ACTUAL_API']):
     :param version: Api version
     :return:
     """
-    if _check_connection(version):
+    if Utilities.check_connection(app, version):
         data = _convert_to_dict(request.json)
-        username = session['username']
-        id = session['id']
+        # Verifying the user
+        user_data = Utilities.check_session(app, DATABASE)
         # validate users data
-        if data and _check_add_behavior_data(data):
+        if data and Utilities.check_add_behavior_data(data) and user_data:           # TODO include a filter with access level.
             # User and data are OK. save data into DB
             res = DATABASE.add_behavior(data)
             if res:
@@ -333,46 +411,30 @@ def add_behavior(version=app.config['ACTUAL_API']):
             abort(500)
 
 
-@app.route('/api/<version>/add_risk', methods=['POST'])
-@limit_content_length(MAX_LENGHT)
-def add_risk(version=app.config['ACTUAL_API']):
-    """
-    Adds a new risk into the system
-
-    :param version: Api version
-    :return:
-    """
-    if _check_connection(version):
-        data = _convert_to_dict(request.json)
-        username = session['username']
-        id = session['id']
-        # validate users data
-        if data and _check_add_risk_data(data):
-            # User and data are OK. save data into DB
-            res = DATABASE.add_risk(data)
-            if res:
-                logging.info("add_risk: Stored in database ok")
-                return Response('Data stored in database OK\n'), 200
-            else:
-                logging.error("add_risk: Stored in database failed")
-                return "There is an error in DB", 500
-        else:
-            abort(500)
-
-
 @app.route('/api/<version>/add_new_user', methods=['POST'])
 @limit_content_length(MAX_LENGHT)
 def add_new_user(version=app.config['ACTUAL_API']):
     """
-    Adds a new system user into the system. The idea is to add a user with a stakeholder to create some role based system.
+    Adds a new system user into the system. The idea is to add a user with a stakeholder.
 
-    :param version:
+    An example in JSON could be:
+
+    {
+        "username": "rubennS",
+        "password": "ruben",
+        "type": "admin"
+    }
+
+
+    :param version: Api version
     :return:
     """
-    if _check_connection(version):
+    if Utilities.check_connection(app, version):
         data = _convert_to_dict(request.json)
+        # Verifying the user
+        user_data = Utilities.check_session(app, DATABASE)
         # Validate new user data
-        if data and _check_add_new_user(data):
+        if data and Utilities.check_add_new_user(data) and user_data.stake_holder.name == "admin":
             # Data entered is ok
             res = DATABASE.add_new_user_in_system(data)
             if res and isinstance(res, list):
@@ -426,6 +488,7 @@ def data_sent_too_long(error):
 ###################################################################################################
 
 # JSON RELATED
+# TODO move this class to intermediate level to filter user password.
 def serialize(model):
     """Transforms a model into a dictionary which can be dumped to JSON."""
     # first we get the names of all the columns on your model
@@ -443,187 +506,7 @@ def date_handler(obj):
         raise TypeError
 
 
-# CHECKS RELATED
-def _check_connection(p_ver):
-    """
-    Make a full check of all needed data
-
-
-    :param p_ver: Actual version of the API
-    :return: True if everithing is OK.
-            An error code (abort) if something is bad
-    """
-
-    if _check_version(p_ver=p_ver):
-        if _check_content_tye():
-            if _check_session():
-                logging.info("check_connection: User entered data is OK")
-                return True
-            else:
-                logging.error("check_connection: User session cookie is not OK, 401")
-                abort(401)
-        else:
-            logging.error("check_connection: Content-type is not JSON serializable, 400")
-            abort(400)
-    else:
-        logging.error("check_connection, Actual API is WRONG, 404")
-        abort(404)
-
-
-# Todo this will ask into database if the username and ID are valid or not. Needs to be developed to the folowing versions.
-def _check_session():
-    """
-    Checks if the actual user has a session cookie registered
-
-    :return: True if cookie is ok
-            False is there isn't any cookie or cookie is bad.
-    """
-    res = False
-    if session.get('username') and session.get('id'):
-        # todo define a method in post_orm to validate user based on username and row ID
-        res = True
-    return res
-
-
-def _check_content_tye():
-    """
-    Checks if actual content_type is OK
-
-
-    :param p_ver: Actual version of API
-    :return: True if everything is ok.
-            False if something is wrong
-    """
-    content_type_ok = False
-    # Check if request headers are ok
-    if request.headers['content-type'] == 'application/json':
-        content_type_ok = True
-    return content_type_ok
-
-
-def _check_version(p_ver):
-    """
-    Check if we are using a good api version
-
-    :param p_ver: version
-    :return:  True or False if api used is ok.
-    """
-    api_good_version = False
-    if p_ver in app.config['AVAILABLE_API']:
-        api_good_version = True
-    return api_good_version
-
-
-def _check_add_action_data(p_data):
-    """
-    Check if data is ok and if the not nullable values are filled.
-
-
-    :param p_data: data from the user.
-    :return: True or False if data is ok.
-    """
-    res = False
-    # Check if JSON has all needed values
-    for data in p_data:
-        if all(k in data for k in ("action", "location", "payload", 'timestamp', 'rating', 'extra', 'secret')):
-            if all(l in data['payload'] for l in ("user", "position")):
-                if "pilot" in data['extra']:
-                    # todo make sure if we need to ensure that variables ar not null
-                    res = True
-
-    return res
-
-
-def _check_add_risk_data(p_data):
-    """
-    Check if data is ok and if the not nullable values are filled.
-
-    :param p_data:
-    :return: True or False if data i ok
-    """
-    res = False
-    # Check if JSON has all needed values
-    for data in p_data:
-        if all(k in data for k in (
-                "risk_name", "ratio",
-                "description")):  # todo behavior is not user anymore, consider to check intra and Inter
-            res = True
-    return res
-
-
-# todo this check is not longer needed, maybe is very interesting to change this into intra and inter check
-def _check_add_behavior_data(p_data):
-    """
-    Check if data is ok and if the not nullable values are filled.
-
-    :param p_data:
-    :return: True or False if data is ok
-    """
-    res = False
-    # Check if JSON has all needed values
-    for data in p_data:
-        # if all(k in data for k in "behavior_name"):
-        if "behavior_name" in data:
-            res = True
-    return res
-
-
-def _check_add_activity_data(p_data):
-    """
-    Check if data is ok and if the not nullable values are filled.
-
-    :param p_data:
-    :return: True or False if data is ok
-    """
-    res = False
-    # Check if JSON has all needed values
-    for data in p_data:
-        # if all(k in data for k in "activity_name"):
-        if "activity_name" in data:
-            res = True
-    return res
-
-
-def _check_add_new_user(p_data):
-    """
-    Check if data is ok and if the not nullable values are filled.
-
-    :param p_data:
-    :return:  True or False if data is ok
-    """
-    res = False
-    # Check if JSON has all needed values
-    for data in p_data:
-        # if all(k in data for k in "activity_name"):
-        if "username" in data and 'password' in data and 'type' in data:
-            res = True
-    return res
-
-
-def _check_search(p_data):
-    """
-    Check if search data is ok and evaluates what is the best table that fits with search criteria
-
-    :param p_data:
-    :return:    True if all is OK
-                False if there is a problem
-    """
-    res = False
-    if all(k in p_data for k in ("table", "criteria")):
-        logging.debug("JSON data is OK")
-        # Data entered is OK we are going to check if tables exists or not
-        table = p_data['table'].lower() or None  # lowering string cases
-        current_tables = DATABASE.get_tables()
-        if table in current_tables:
-            # all ok
-            res = True
-        else:
-            # User is trying to search in an incorrect table, show a list of current tables
-            logging.error("User entered an invalid table name: %s" % tables)
-            res = False
-    return res
-
-
+# CONVERSIONS RELATED
 def _convert_to_dict(p_requested_data):
     """
     This method checks if current data is in JSON list format or it needs to be convert to one

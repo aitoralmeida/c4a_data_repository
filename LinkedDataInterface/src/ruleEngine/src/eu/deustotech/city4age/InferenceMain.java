@@ -45,6 +45,7 @@ public class InferenceMain {
                         timer.purge();
                         LOGGER.log(Level.SEVERE, "The timer is forced to stop, there is problem in the code");
                         System.err.println("The timer stops due to some erros");
+                        // Todo send a mail to server admin to warm about this issuse (maybe we need to set up PostFix into the server
                     }
                 }
             };

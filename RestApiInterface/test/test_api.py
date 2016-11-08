@@ -5,6 +5,11 @@ import unittest
 
 from packFlask.api import app
 from packFlask import api
+from packORM import post_orm
+from jsonschema import ValidationError
+from testfixtures import should_raise
+
+from packUtils.utilities import Utilities
 
 
 class FlaskTestCase(unittest.TestCase):
@@ -14,6 +19,11 @@ class FlaskTestCase(unittest.TestCase):
         app.config['TESTING'] = True
         # app.config['SESSION_COOKIE_DOMAIN'] = None
         self.app = app.test_client()
+        self.database = post_orm.PostgORM()
+
+    def tearDown(self):
+        # Closing database
+        self.database.close()
 
     ###################################################
     ########   GET Tests
@@ -81,8 +91,10 @@ class FlaskTestCase(unittest.TestCase):
         """ Test if we got any results """
         with self.app as c:
             with c.session_transaction() as sess:
-                sess['username'] = 'admin'  # This simulates and encrypted cookie with username "admin"
-                sess['id'] = 6              # and user id = 6
+                database = post_orm.PostgORM()
+                sess['token'] = database.verify_user_login({
+                    'username': 'admin', 'password': 'admin'}, app)
+
         response = c.post('/api/0.1/search',
                           data=json.dumps(dict(table='user_in_system',
                                                criteria={'username': 'admin'},
@@ -98,8 +110,9 @@ class FlaskTestCase(unittest.TestCase):
         """ Test if a search has a limit"""
         with self.app as c:
             with c.session_transaction() as sess:
-                sess['username'] = 'admin'
-                sess['id'] = 6
+                database = post_orm.PostgORM()
+                sess['token'] = database.verify_user_login({
+                    'username': 'admin', 'password': 'admin'}, app)
         response = c.post('/api/0.1/search',
                           data=json.dumps(dict(table='user_in_system',
                                                criteria={'username': 'admin'},
@@ -110,14 +123,18 @@ class FlaskTestCase(unittest.TestCase):
                           follow_redirects=True)
 
         # todo we need to add more data
-        assert response.data.count('admin') == 1 and response.status_code == 200
+        # If the size of the response is equal 1 them OK
+        response_size = len(list(response.response))
+        assert response_size == 1 and response.status_code == 200 and \
+               'No data found with this filters' not in response.data
 
     def test_search_offset(self):
         """ Test if a search has a offset"""
         with self.app as c:
             with c.session_transaction() as sess:
-                sess['username'] = 'admin'
-                sess['id'] = 6
+                database = post_orm.PostgORM()
+                sess['token'] = database.verify_user_login({
+                    'username': 'admin', 'password': 'admin'}, app)
         response = c.post('/api/0.1/search',
                           data=json.dumps(dict(table='user_in_system',
                                                criteria={'username': 'admin'},
@@ -136,7 +153,22 @@ class FlaskTestCase(unittest.TestCase):
 
     def test_check_add_action_data(self):
         """ Test if action data check is working well"""
-        json_example_action = [{
+        json_example_action = {
+            "action": "eu:c4a:usermotility:enter_bus",
+            "location": "it:puglia:lecce:bus:39",
+            "payload": {
+                "user": "eu:c4a:pilot:madrid:user:12346",
+                "position": "urn:ogc:def:crs:EPSG:6.6:4326"
+            },
+            "timestamp": "2014-05-20 07:08:41.22222",
+            "rating": 0.1,
+            "extra": {
+                "pilot": "lecce"
+            },
+            "secret": "jwt_token"
+        }
+
+        json_example_action_list = [{
             "action": "eu:c4a:usermotility:enter_bus",
             "location": "it:puglia:lecce:bus:39",
             "payload": {
@@ -151,43 +183,64 @@ class FlaskTestCase(unittest.TestCase):
             "secret": "jwt_token"
         }]
 
-        self.assertTrue(api._check_add_action_data(json_example_action))
-
-    def test_check_add_risk_data(self):
-        """ Test if risk data check is working well"""
-        json_example_risk = [{
-            "risk_name": "Lose your head",
-            "ratio": 0.3,
-            "description": "This is a risk description"
-        }]
-
-        self.assertTrue(api._check_add_risk_data(json_example_risk))
+        self.assertTrue(Utilities.check_add_action_data(json_example_action) and
+                        Utilities.check_add_action_data(json_example_action_list))
 
     def test_check_add_activity_data(self):
         """ Test if activity data check is working well"""
-        json_example_activity = [{
-            "activity_name": "Make breakfast"
+        json_example_activity = {
+            "activity_name": "kitchenActivity",
+            "activity_start_date": "2014-05-20 06:08:41.22222",
+            "activity_end_date": "2014-05-20 07:08:41.22222",
+            "since": "2014-05-20 01:08:41.22222",
+            "house_number": 0,
+            "location": {
+                "name": "it:puglia:lecce:bus:39",
+                "indoor": False
+            },
+            "pilot": "lecce"
+        }
+
+        json_example_activity_list = [{
+            "activity_name": "kitchenActivity",
+            "activity_start_date": "2014-05-20 06:08:41.22222",
+            "activity_end_date": "2014-05-20 07:08:41.22222",
+            "since": "2014-05-20 01:08:41.22222",
+            "house_number": 0,
+            "location": {
+                "name": "it:puglia:lecce:bus:39",
+                "indoor": False
+            },
+            "pilot": "lecce"
         }]
 
-        self.assertTrue(api._check_add_activity_data(json_example_activity))
+        self.assertTrue(Utilities.check_add_activity_data(json_example_activity) and
+                        Utilities.check_add_activity_data(json_example_activity_list))
 
     def test_check_add_new_user(self):
         """ Test if the add new user check is working well"""
-        json_example_user = [{
+        json_example_user = {
+            "username": "rmulero",
+            "password": "heyPassWord1212323@@@#@3!!",
+            "type": "admin"
+        }
+
+        json_example_user_list = [{
             "username": "rmulero",
             "password": "heyPassWord1212323@@@#@3!!",
             "type": "admin"
         }]
 
-        self.assertTrue(api._check_add_new_user(json_example_user))
+        self.assertTrue(Utilities.check_add_new_user(json_example_user) and
+                        Utilities.check_add_new_user(json_example_user_list))
 
     def test_check_search(self):
         """ Test if search check is working well"""
         json_example_search = {
             'table': 'user_in_system',
             'criteria': {
-                "col1": "value",
-                "col2": "value"
+                'col1': 'value',
+                'col2': 'value'
             },
             ###### Optional parameters
             'limit': 2323,
@@ -195,10 +248,21 @@ class FlaskTestCase(unittest.TestCase):
             'order_by': 'desc'
         }
 
-        self.assertTrue(api._check_search(json_example_search))
+        json_example_search_list = [{
+            'table': 'user_in_system',
+            'criteria': {
+                'col1': 'value',
+                'col2': 'value'
+            },
+            ###### Optional parameters
+            'limit': 2323,
+            'offset': 2,
+            'order_by': 'desc'
+        }]
 
+        self.assertTrue(Utilities.check_search(self.database, json_example_search) and
+                        Utilities.check_search(self.database, json_example_search_list))
 
-# todo add data test when we have Datbase logic finished
 
 if __name__ == '__main__':
     unittest.main()
