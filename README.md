@@ -67,3 +67,9 @@ _sudo_ commands.
 
 In some steps, application may ask some things such as ssl keys generation, d2rq mapping.tll
 file verification or rules verification.
+
+License
+----------
+
+This project is licensed under the terms of the GPL v3 license.
+
