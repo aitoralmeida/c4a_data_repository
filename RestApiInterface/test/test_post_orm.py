@@ -1,5 +1,19 @@
 # -*- coding: utf-8 -*-
 
+"""
+This file test SQL Alchemy functionalities to know if all actions coded into Post_ORM file are working correctly.
+
+This file is divided into the following TESTS:
+
+-> Insert Test:         Contains various type of insert tests to know if data is inserting ok into DB.
+-> Basic Test:          Contains some tests to make basic queries into DB.
+-> Login Test:          Performs some tests to know if user login measures are working as indented.
+-> List Test:           A simple tests to know if SQL Alchemy is reflection well DB table list.
+-> Error Test:          Various test to know if errors are raising up as indented.
+
+"""
+
+
 import unittest
 from testfixtures import should_raise
 from sqlalchemy import create_engine, desc, inspect
@@ -7,13 +21,18 @@ from sqlalchemy.engine.url import URL
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import IntegrityError, DataError
-from packORM import tables
-from packORM import post_orm
+from packORM import tables, post_orm
 from packFlask.api import app
 
 
 __author__ = 'Rubén Mulero'
-__copyright__ = "foo"   # we need?¿
+__copyright__ = "Copyright 2016, City4Age project"
+__credits__ = ["Rubén Mulero", "Aitor Almeida", "Gorka Azkune", "David Buján"]
+__license__ = "GPL"
+__version__ = "0.2"
+__maintainer__ = "Rubén Mulero"
+__email__ = "ruben.mulero@deusto.es"
+__status__ = "Prototype"
 
 
 class PostOrmTestCase(unittest.TestCase):
@@ -23,7 +42,6 @@ class PostOrmTestCase(unittest.TestCase):
     def tearDown(self):
         """ Close session """
         self.orm.close()
-
 
     ###################################################
     ########   Insert tests
@@ -91,10 +109,6 @@ class PostOrmTestCase(unittest.TestCase):
         # No matches found
         self.assertTrue(q.count() > 0 and q[0].username == 'admin')
 
-
-
-# Todo not working well this 3 tests
-
     def test_offset_query(self):
         """ Test if the offset is working well by giving some user in system"""
         filters = {'username': 'admin'}
@@ -143,8 +157,6 @@ class PostOrmTestCase(unittest.TestCase):
         user = self.orm.query_get(tables.UserInSystem, p_id=1)
         self.assertTrue(user)
 
-
-
     ###################################################
     ########   Login Related Tests
     ###################################################
@@ -191,7 +203,6 @@ class PostOrmTestCase(unittest.TestCase):
         res = self.orm.verify_user_login(credentials, app)
         self.assertFalse(res)
 
-
     ###################################################
     ########   List tables
     ###################################################
@@ -200,7 +211,6 @@ class PostOrmTestCase(unittest.TestCase):
         """ Test if the method get_tables is listing well all tables"""
         res = self.orm.get_tables()
         self.assertTrue(len(res) > 0)
-
 
     ###################################################
     ########   Errors Test

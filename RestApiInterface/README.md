@@ -17,6 +17,7 @@ RestApiInterface need the following dependencies.
 
 
 * Some knowledge of GNU/Linux
+* An Ubuntu Server 16.04 LTS
 
 
 Available commands.
@@ -33,8 +34,17 @@ content header JSON. Example:
 
 * login: Sending existing username and password this endpoint returns a session cookie.
 * logout: This delete actual session cookie.
-* add: Add new user into the database.
-* search: Search for datasets in DB.
+* add_action: Add new action into the database.
+* add_activity: Add new activity into the database.
+* add_new_user: Add new user into the system (Administrator only)
+* search: Search for datasets in database.
+
+
+Aditional Important notes
+---------------------------
+
+This part of the project is in active developing so, it is possible that not all the functionality
+can be working as indented.
 
 
 DISCLAIMER

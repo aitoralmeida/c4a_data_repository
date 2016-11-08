@@ -5,7 +5,7 @@ City4Age Project's (H2020 grant agreement number 689731) LinkedData and RestAPI 
 This repository contains two projects. 
 
 1. LinkedDataInterface: An interface to infer new statements using a RuleEngine Reasoner and to serve it with SPARQL, Linked Data client or HTML endpoints.
-2. RestApiInterface: A REST API interface to manage some user personal information in a POSTGRESQL relational database.
+2. RestApiInterface: A REST API interface to manage some user personal information in a PostgreSQL relational database.
 
 For more information, please read each project README.
 

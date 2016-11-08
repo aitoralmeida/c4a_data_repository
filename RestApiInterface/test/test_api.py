@@ -1,15 +1,35 @@
 # -*- coding: utf-8 -*-
 
+"""
+This file emulates an user to test api.py file.
+
+This file is divided into the following TESTS:
+
+-> Get Test:        Containing various tests of GET calls.
+-> Post Test:       Containing various test of POST calls.
+-> Internal test:   Containing various test of internal functions (checks json by using JSON SCHEMA)
+
+"""
+
 import json
 import unittest
+from jsonschema import ValidationError
+from testfixtures import should_raise
 
 from packFlask.api import app
 from packFlask import api
 from packORM import post_orm
-from jsonschema import ValidationError
-from testfixtures import should_raise
-
 from packUtils.utilities import Utilities
+
+
+__author__ = 'Rubén Mulero'
+__copyright__ = "Copyright 2016, City4Age project"
+__credits__ = ["Rubén Mulero", "Aitor Almeida", "Gorka Azkune", "David Buján"]
+__license__ = "GPL"
+__version__ = "0.2"
+__maintainer__ = "Rubén Mulero"
+__email__ = "ruben.mulero@deusto.es"
+__status__ = "Prototype"
 
 
 class FlaskTestCase(unittest.TestCase):
