@@ -255,7 +255,7 @@ def search(version=app.config['ACTUAL_API']):
     if Utilities.check_connection(app, version):
         data = _convert_to_dict(request.json)[0]
         # Verifying the user
-        user_data = Utilities.check_session(app, DATABASE)     # TODO send to check_search, user stakeholder to limit search
+        user_data = Utilities.check_session(app, DATABASE)
         if Utilities.check_search(DATABASE, data) and user_data:
             # data Entered by the user is OK
             limit = data and data.get('limit', 10) and data.get('limit', 10) >= 0 or 10

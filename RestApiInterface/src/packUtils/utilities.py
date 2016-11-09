@@ -23,6 +23,16 @@ __email__ = "ruben.mulero@deusto.es"
 __status__ = "Prototype"
 
 
+# TODO decied a list of access levels.
+# Here there is defined a list with tables access level definition
+TABLE_ACCESS_0 = None
+TABLE_ACCESS_1 = None
+TABLE_ACCESS_2 = None
+TABLE_ACCESS_3 = None
+TABLE_ACCESS_4 = None
+TABLE_ACCESS_5 = None
+
+
 class Utilities(object):
 
     # CHECKS RELATED
@@ -49,7 +59,6 @@ class Utilities(object):
             logging.error("check_connection, Actual API is WRONG, 404")
             abort(404)
 
-    # Todo acces level definition
     @staticmethod
     def check_session(app, p_database):
         """
@@ -59,10 +68,16 @@ class Utilities(object):
         :param app: Flask application
         :param p_database: The database instantiation of SQL Alchemy
 
-        :return: True if cookie is ok
-                False is there isn't any cookie or cookie is bad.
+        :return: User Token if auth is OK. Abort is something is Wrong.
         """
         if session and session.get('token', False):
+            # Todo This piece of code will be used to check if the logged user has access to current data
+            """
+            user_id = p_database.verify_auth_token(session.get('token'), app)
+            stakeholder = p_database.query.query_ge(tables.UserInSystem, user_id).stake_holder_name
+            # Using users stakeholder we detect level of access
+            """
+
             return p_database.verify_auth_token(session.get('token'), app)
         else:
             logging.error("check_connection: User session cookie is not OK, 401")
@@ -376,7 +391,7 @@ class Utilities(object):
 
         return res
 
-    # TODO, here, we are goingi to DEFINE some filter of users tables. Define tables with some access level.
+    # TODO, here, we are going to DEFINE some filter of users tables. Define tables with some access level.
     @staticmethod
     def validate_search_tables(p_database, p_data):
         """
@@ -390,7 +405,9 @@ class Utilities(object):
         res = False
         if p_data and p_data.get('table', False):
             table = p_data['table'].lower() or None  # lowering string cases
-            current_tables = p_database.get_tables()            # TODO define next a filter algorithm.
+            current_tables = p_database.get_tables()
+            # We are going to validate user search based on its access level
+            # TODO set a list of access level in a global variable
             if table in current_tables:
                 res = True
         return res

@@ -160,7 +160,7 @@ class PostgORM(object):
 
     def query_get(self, p_class, p_id):
         """
-        Makes a querty to the desired Table of databased based on row ID
+        Makes a query to the desired Table of databased based on row ID
 
         :param p_class:  Name of the table to query
         :param p_id: id of the row
@@ -317,6 +317,7 @@ class PostgORM(object):
             self.commit()
             return instance
 
+    # TODO this class will change with v.2 stakeholder
     def add_new_user_in_system(self, p_data):
         """
         This method, allows to administrative system users, add new user into the system.
