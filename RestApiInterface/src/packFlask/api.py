@@ -227,10 +227,9 @@ def search(version=app.config['ACTUAL_API']):
         # ENTER HERE A CHECK TABLES FUNCTION
         if _check_search(data):
             # data Entered by the user is OK
-            limit = data and data.get('limit', 10) and data.get('limit', 10) >= 0 or 10
-            offset = data and data.get('offset', 0) and data.get('offset', 0) >= 0 or 0
-            order_by = data and data.get('order_by', 'asc') and data.get('order_by', 'asc') in ['asc', 'desc'] \
-                       or 'asc' # We are limint order_by to asc or desc
+            limit = data.get('limit', 10) if data and data.get('limit', 10) >= 0 else 10
+            offset = data.get('offset', 0) if data and data.get('offset', 0) >= 0 else 0
+            order_by = data.get('order_by', 'asc') if data and data.get('order_by', 'asc') in ['asc', 'desc'] else 'asc'
             # Todo insert a filter to avoid to user search in ceratin tables
             # Obtain table class using the name of the desired table
             table_class = DATABASE.get_table_by_name(data['table'])
