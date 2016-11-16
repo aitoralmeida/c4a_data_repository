@@ -94,7 +94,8 @@ class ExecutedAction(Base):
     action_id = Column(Integer, ForeignKey('action.id'))
     activity_id = Column(Integer, ForeignKey('activity.id'), nullable=True)
     location_id = Column(Integer, ForeignKey('location.id'))
-    date = Column(TIMESTAMP)
+    date = Column(TIMESTAMP, default=datetime.datetime.utcnow)
+    executed_action_date = Column(TIMESTAMP)
     # Asociated information
     rating = Column(Integer)
     sensor_id = Column(Integer)

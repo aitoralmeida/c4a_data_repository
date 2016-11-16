@@ -254,13 +254,13 @@ class PostgORM(object):
             # Basic tables
             # We are going to check if basic data exist in DB and insert it in case that is the first time.
             action = self._get_or_create(tables.Action, action_name=data['action'])
-            date = datetime.datetime.strptime(data['timestamp'], '%Y-%m-%d %H:%M:%S.%f')
+            executed_action_date = datetime.datetime.strptime(data['timestamp'], '%Y-%m-%d %H:%M:%S.%f')
             pilot = self._get_or_create(tables.Pilot, name=data['extra']['pilot'])
             user = self._get_or_create(tables.UserInRole, id=data['payload']['user'], pilot_id=pilot.id)
             location = self._get_or_create(tables.Location, location_name=data['location'], indoor=True,    # Default indoor value
                                            pilot_id=pilot.id)
             # We insert all related data to executed_action
-            executed_action = tables.ExecutedAction(date=date, rating=data['rating'],
+            executed_action = tables.ExecutedAction(executed_action_date=executed_action_date, rating=data['rating'],
                                                     location_id=location.id,
                                                     action_id=action.id,
                                                     user_in_role_id=user.id)
