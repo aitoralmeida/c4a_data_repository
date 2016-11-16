@@ -258,10 +258,9 @@ def search(version=app.config['ACTUAL_API']):
         user_data = Utilities.check_session(app, DATABASE)
         if Utilities.check_search(DATABASE, data) and user_data:
             # data Entered by the user is OK
-            limit = data and data.get('limit', 10) and data.get('limit', 10) >= 0 or 10
-            offset = data and data.get('offset', 0) and data.get('offset', 0) >= 0 or 0
-            order_by = data and data.get('order_by', 'asc') and data.get('order_by', 'asc') in ['asc', 'desc'] \
-                        or 'asc'  # We are limiting order_by to asc or desc
+            limit = data.get('limit', 10) if data and data.get('limit', 10) >= 0 else 10
+            offset = data.get('offset', 0) if data and data.get('offset', 0) >= 0 else 0
+            order_by = data.get('order_by', 'asc') if data and data.get('order_by', 'asc') in ['asc', 'desc'] else 'asc'
             # Obtain table class using the name of the desired table
             table_class = DATABASE.get_table_object_by_name(data['table'])
             # Query database and select needed elements
@@ -316,7 +315,7 @@ def add_action(version=app.config['ACTUAL_API']):
         # Verifying the user
         user_data = Utilities.check_session(app, DATABASE)
         # validate users data
-        if data and Utilities.check_add_activity_data(data) and user_data:
+        if data and Utilities.check_add_action_data(data) and user_data:
             # User and data are OK. save data into DB
             res = DATABASE.add_action(data)
             if res:
