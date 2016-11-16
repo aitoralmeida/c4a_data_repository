@@ -1,0 +1,14 @@
+{
+    "action": "eu:c4a:usermotility:enter_bus",
+    "location": "es:emt:madrid:bus:125",
+    "payload": {
+        "user": "eu:c4a:pilot:madrid:user:9854854",
+        "position": "urn:ogc:def:crs:EPSG:6.6:4326"
+    },
+    "timestamp": "2014-05-22 07:08:41.22222",
+    "rating": 0.1,
+    "extra": {
+        "pilot": "madrid"
+    },
+    "secret": "jwt_token"
+}

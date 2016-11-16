@@ -1,0 +1,8 @@
+{
+    "table": "executed_action",
+    "criteria": {
+        "user_in_role_id": "eu:c4a:pilot:madrid:user:9854854"
+    },
+    "limit": 2323,
+    "order_by": "desc"
+}

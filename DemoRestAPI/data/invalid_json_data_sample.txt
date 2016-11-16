@@ -1,0 +1,14 @@
+{
+    "actionSS": "eu:c4a:usermotility:enter_bus",
+    "locationes": "it:puglia:lecce:bus:39",
+    "payloading": {
+        "user": "eu:c4a:pilot:madrid:user:12346",
+        "positison": "urn:ogc:def:crs:EPSG:6.6:4326"
+    },
+    "timestamp": "2014-05-20 07:08:41.22222",
+    "ratinsg": 0.1,
+    "extras": {
+        "pillot": "lecce"
+    },
+    "secret": "jwt_token"
+}

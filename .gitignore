@@ -107,10 +107,7 @@ RestApiInterface/local/
 RestApiInterface/man/
 RestApiInterface/pip-selfcheck.json
 RestApiInterface/share/
-RestApiInterface/src/__init__.pyc
-RestApiInterface/src/packFlask/__init__.pyc
-RestApiInterface/src/packFlask/api.pyc
-RestApiInterface/src/packORM/PasswordHash.pyc
-RestApiInterface/src/packORM/__init__.pyc
-RestApiInterface/src/packORM/post_orm.pyc
-RestApiInterface/src/packORM/tables.pyc
+DemoRestAPI/bin/
+DemoRestAPI/include/
+DemoRestAPI/lib/
+DemoRestAPI/pip-selfcheck.json
