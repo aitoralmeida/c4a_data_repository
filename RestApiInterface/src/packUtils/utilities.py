@@ -169,7 +169,7 @@ class Utilities(object):
                             "type": "string",
                             "minLength": 1,
                             "maxLength": 40
-                        },
+                        },                      # TODO limit only to Pilot cities and lowercase
                     },
                     "required": ["pilot"]
                 },
