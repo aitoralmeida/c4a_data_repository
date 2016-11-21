@@ -146,7 +146,7 @@ class UserInRole(Base):
     action = relationship("ExecutedAction")
     # one2many
     stake_holder_id = Column(String(25), ForeignKey('stake_holder.name'))
-    pilot_id = Column(Integer, ForeignKey('pilot.id'))
+    pilot_id = Column(Integer, ForeignKey('pilot.id'))          # TODO change this ID for name
 
     def __repr__(self):
         return "<User(id='%s', valid_from='%s'. valid_to='%s')>" % (self.id, self.valid_from, self.valid_to)
@@ -246,7 +246,7 @@ class Location(Base):
     location_name = Column(String(75))
     indoor = Column(Boolean)
     # One2Many
-    pilot_id = Column(Integer, ForeignKey('pilot.id'), nullable=True)
+    pilot_id = Column(Integer, ForeignKey('pilot.id'), nullable=True)           # TODO changes this Id for name
 
     activity = relationship("Activity")
 
@@ -294,7 +294,7 @@ class Pilot(Base):
 
     __tablename__ = 'pilot'
 
-    id = Column(Integer, Sequence('pilot_id_seq'), primary_key=True)
+    id = Column(Integer, Sequence('pilot_id_seq'), primary_key=True)        #  TODO DELETE this ID and use name has p_key
     name = Column(String(50), unique=True, nullable=False)
     population_size = Column(BigInteger)
     # One2Many
