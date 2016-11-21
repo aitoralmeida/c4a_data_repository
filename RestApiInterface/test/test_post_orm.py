@@ -82,7 +82,7 @@ class PostOrmTestCase(unittest.TestCase):
         list_of_dic_data.append(data2)
         list_of_dic_data.append(data3)
         # Insert data into database
-        # self.orm.add_new_user_in_system(list_of_dic_data)
+        #self.orm.add_new_user_in_system(list_of_dic_data)
         # Real insert by commiting
         # self.orm.commit()
         # Now we are going to select data
@@ -141,7 +141,7 @@ class PostOrmTestCase(unittest.TestCase):
             None --> Any user with this ID
             User Object --> User with this ID
         """
-        user = self.orm.query_get(tables.UserInSystem, p_id=7)
+        user = self.orm.query_get(tables.UserInSystem, p_id=1)
         self.assertTrue(user)
 
 

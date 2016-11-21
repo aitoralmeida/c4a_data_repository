@@ -526,8 +526,8 @@ def _check_add_action_data(p_data):
     for data in p_data:
         if all(k in data for k in ("action", "location", "payload", 'timestamp', 'rating', 'extra', 'secret')):
             if all(l in data['payload'] for l in ("user", "position")):
-                if "pilot" in data['extra']:
-                    # todo make sure if we need to ensure that variables ar not null
+                if "pilot" in data['extra'] and data['extra']['pilot'] in ("madrid", "lecce", "singapore",
+                                                                           "montpellier", "athens", "birmingham"):
                     res = True
 
     return res

@@ -171,7 +171,7 @@ class PilotGeriatricIndicatorRel(Base):
 
     __tablename__ = 'pilot_geriatric_indicator_rel'
 
-    pilot_id = Column(Integer, ForeignKey('pilot.id'), primary_key=True)
+    pilot_name = Column(String(50), ForeignKey('pilot.name'), primary_key=True)
     geriatric_indicator_id = Column(Integer, ForeignKey('geriatric_indicator.id'), primary_key=True)
     geriatric_indicator = relationship("GeriatricIndicator")
     # Extra Values
@@ -220,7 +220,7 @@ class UserInRole(Base):
     geriatric_indicator = relationship("UserInRoleGeriatricIndicatorRel")
     # one2many
     stake_holder_id = Column(String(25), ForeignKey('stake_holder.name'))
-    pilot_id = Column(Integer, ForeignKey('pilot.id'))
+    pilot_name = Column(String(50), ForeignKey('pilot.name'))
 
     def __repr__(self):
         return "<User(id='%s', valid_from='%s'. valid_to='%s')>" % (self.id, self.valid_from, self.valid_to)
@@ -319,7 +319,7 @@ class Location(Base):
     location_name = Column(String(75))
     indoor = Column(Boolean)
     # One2Many
-    pilot_id = Column(Integer, ForeignKey('pilot.id'))
+    pilot_name = Column(String(50), ForeignKey('pilot.name'))
 
     def __repr__(self):
         return "<Location(location_name='%s', indoor='%s')>" % (self.location_name, self.indoor)
@@ -377,8 +377,7 @@ class Pilot(Base):
 
     __tablename__ = 'pilot'
 
-    id = Column(Integer, Sequence('pilot_id_seq'), primary_key=True)
-    name = Column(String(50))
+    name = Column(String(50), primary_key=True)
     population_size = Column(BigInteger)
     # One2Many
     user_in_role = relationship('UserInRole')

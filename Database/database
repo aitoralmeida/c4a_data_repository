@@ -2,13 +2,14 @@
 -- PostgreSQL database dump
 --
 
--- Dumped from database version 9.5.4
--- Dumped by pg_dump version 9.5.4
+-- Dumped from database version 9.6.1
+-- Dumped by pg_dump version 9.6.1
 
--- Started on 2016-09-27 10:05:03 CEST
+-- Started on 2016-11-21 15:24:29 CET
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
+SET idle_in_transaction_session_timeout = 0;
 SET client_encoding = 'UTF8';
 SET standard_conforming_strings = on;
 SET check_function_bodies = false;
@@ -17,7 +18,7 @@ SET row_security = off;
 
 DROP DATABASE city4agedb;
 --
--- TOC entry 2343 (class 1262 OID 16385)
+-- TOC entry 2363 (class 1262 OID 16400)
 -- Name: city4agedb; Type: DATABASE; Schema: -; Owner: postgres
 --
 
@@ -30,6 +31,7 @@ ALTER DATABASE city4agedb OWNER TO postgres;
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
+SET idle_in_transaction_session_timeout = 0;
 SET client_encoding = 'UTF8';
 SET standard_conforming_strings = on;
 SET check_function_bodies = false;
@@ -37,7 +39,7 @@ SET client_min_messages = warning;
 SET row_security = off;
 
 --
--- TOC entry 1 (class 3079 OID 12362)
+-- TOC entry 1 (class 3079 OID 12394)
 -- Name: plpgsql; Type: EXTENSION; Schema: -; Owner: 
 --
 
@@ -45,7 +47,7 @@ CREATE EXTENSION IF NOT EXISTS plpgsql WITH SCHEMA pg_catalog;
 
 
 --
--- TOC entry 2346 (class 0 OID 0)
+-- TOC entry 2365 (class 0 OID 0)
 -- Dependencies: 1
 -- Name: EXTENSION plpgsql; Type: COMMENT; Schema: -; Owner: 
 --
@@ -60,7 +62,7 @@ SET default_tablespace = '';
 SET default_with_oids = false;
 
 --
--- TOC entry 199 (class 1259 OID 18138)
+-- TOC entry 202 (class 1259 OID 19896)
 -- Name: action; Type: TABLE; Schema: public; Owner: city4agedb
 --
 
@@ -74,7 +76,7 @@ CREATE TABLE action (
 ALTER TABLE action OWNER TO city4agedb;
 
 --
--- TOC entry 198 (class 1259 OID 18136)
+-- TOC entry 201 (class 1259 OID 19894)
 -- Name: action_id_seq; Type: SEQUENCE; Schema: public; Owner: city4agedb
 --
 
@@ -89,7 +91,7 @@ CREATE SEQUENCE action_id_seq
 ALTER TABLE action_id_seq OWNER TO city4agedb;
 
 --
--- TOC entry 189 (class 1259 OID 18101)
+-- TOC entry 193 (class 1259 OID 19861)
 -- Name: activity; Type: TABLE; Schema: public; Owner: city4agedb
 --
 
@@ -102,7 +104,7 @@ CREATE TABLE activity (
 ALTER TABLE activity OWNER TO city4agedb;
 
 --
--- TOC entry 188 (class 1259 OID 18099)
+-- TOC entry 192 (class 1259 OID 19859)
 -- Name: activity_id_seq; Type: SEQUENCE; Schema: public; Owner: city4agedb
 --
 
@@ -117,7 +119,7 @@ CREATE SEQUENCE activity_id_seq
 ALTER TABLE activity_id_seq OWNER TO city4agedb;
 
 --
--- TOC entry 209 (class 1259 OID 18226)
+-- TOC entry 212 (class 1259 OID 19984)
 -- Name: eam; Type: TABLE; Schema: public; Owner: city4agedb
 --
 
@@ -132,7 +134,7 @@ CREATE TABLE eam (
 ALTER TABLE eam OWNER TO city4agedb;
 
 --
--- TOC entry 208 (class 1259 OID 18224)
+-- TOC entry 211 (class 1259 OID 19982)
 -- Name: eam_seq; Type: SEQUENCE; Schema: public; Owner: city4agedb
 --
 
@@ -147,7 +149,7 @@ CREATE SEQUENCE eam_seq
 ALTER TABLE eam_seq OWNER TO city4agedb;
 
 --
--- TOC entry 217 (class 1259 OID 18346)
+-- TOC entry 220 (class 1259 OID 20104)
 -- Name: eam_simple_location_rel; Type: TABLE; Schema: public; Owner: city4agedb
 --
 
@@ -160,7 +162,7 @@ CREATE TABLE eam_simple_location_rel (
 ALTER TABLE eam_simple_location_rel OWNER TO city4agedb;
 
 --
--- TOC entry 214 (class 1259 OID 18301)
+-- TOC entry 217 (class 1259 OID 20059)
 -- Name: eam_start_range_rel; Type: TABLE; Schema: public; Owner: city4agedb
 --
 
@@ -173,7 +175,7 @@ CREATE TABLE eam_start_range_rel (
 ALTER TABLE eam_start_range_rel OWNER TO city4agedb;
 
 --
--- TOC entry 213 (class 1259 OID 18273)
+-- TOC entry 216 (class 1259 OID 20031)
 -- Name: executed_action; Type: TABLE; Schema: public; Owner: city4agedb
 --
 
@@ -194,7 +196,7 @@ CREATE TABLE executed_action (
 ALTER TABLE executed_action OWNER TO city4agedb;
 
 --
--- TOC entry 212 (class 1259 OID 18271)
+-- TOC entry 215 (class 1259 OID 20029)
 -- Name: executed_action_id_seq; Type: SEQUENCE; Schema: public; Owner: city4agedb
 --
 
@@ -209,7 +211,7 @@ CREATE SEQUENCE executed_action_id_seq
 ALTER TABLE executed_action_id_seq OWNER TO city4agedb;
 
 --
--- TOC entry 193 (class 1259 OID 18115)
+-- TOC entry 196 (class 1259 OID 19873)
 -- Name: geriatric_indicator; Type: TABLE; Schema: public; Owner: city4agedb
 --
 
@@ -223,7 +225,7 @@ CREATE TABLE geriatric_indicator (
 ALTER TABLE geriatric_indicator OWNER TO city4agedb;
 
 --
--- TOC entry 201 (class 1259 OID 18158)
+-- TOC entry 204 (class 1259 OID 19916)
 -- Name: geriatric_indicator_geriatric_sub_indicator_rel; Type: TABLE; Schema: public; Owner: city4agedb
 --
 
@@ -236,7 +238,7 @@ CREATE TABLE geriatric_indicator_geriatric_sub_indicator_rel (
 ALTER TABLE geriatric_indicator_geriatric_sub_indicator_rel OWNER TO city4agedb;
 
 --
--- TOC entry 192 (class 1259 OID 18113)
+-- TOC entry 195 (class 1259 OID 19871)
 -- Name: geriatric_indicator_seq; Type: SEQUENCE; Schema: public; Owner: city4agedb
 --
 
@@ -251,7 +253,7 @@ CREATE SEQUENCE geriatric_indicator_seq
 ALTER TABLE geriatric_indicator_seq OWNER TO city4agedb;
 
 --
--- TOC entry 195 (class 1259 OID 18122)
+-- TOC entry 198 (class 1259 OID 19880)
 -- Name: geriatric_sub_indicator; Type: TABLE; Schema: public; Owner: city4agedb
 --
 
@@ -265,7 +267,7 @@ CREATE TABLE geriatric_sub_indicator (
 ALTER TABLE geriatric_sub_indicator OWNER TO city4agedb;
 
 --
--- TOC entry 194 (class 1259 OID 18120)
+-- TOC entry 197 (class 1259 OID 19878)
 -- Name: geriatric_sub_indicator_seq; Type: SEQUENCE; Schema: public; Owner: city4agedb
 --
 
@@ -280,7 +282,7 @@ CREATE SEQUENCE geriatric_sub_indicator_seq
 ALTER TABLE geriatric_sub_indicator_seq OWNER TO city4agedb;
 
 --
--- TOC entry 207 (class 1259 OID 18204)
+-- TOC entry 210 (class 1259 OID 19962)
 -- Name: inter_behaviour; Type: TABLE; Schema: public; Owner: city4agedb
 --
 
@@ -296,7 +298,7 @@ CREATE TABLE inter_behaviour (
 ALTER TABLE inter_behaviour OWNER TO city4agedb;
 
 --
--- TOC entry 215 (class 1259 OID 18316)
+-- TOC entry 218 (class 1259 OID 20074)
 -- Name: inter_behaviour_risk_rel; Type: TABLE; Schema: public; Owner: city4agedb
 --
 
@@ -309,7 +311,7 @@ CREATE TABLE inter_behaviour_risk_rel (
 ALTER TABLE inter_behaviour_risk_rel OWNER TO city4agedb;
 
 --
--- TOC entry 206 (class 1259 OID 18202)
+-- TOC entry 209 (class 1259 OID 19960)
 -- Name: inter_behaviour_seq; Type: SEQUENCE; Schema: public; Owner: city4agedb
 --
 
@@ -324,7 +326,7 @@ CREATE SEQUENCE inter_behaviour_seq
 ALTER TABLE inter_behaviour_seq OWNER TO city4agedb;
 
 --
--- TOC entry 200 (class 1259 OID 18143)
+-- TOC entry 203 (class 1259 OID 19901)
 -- Name: intra_activity; Type: TABLE; Schema: public; Owner: city4agedb
 --
 
@@ -339,7 +341,7 @@ CREATE TABLE intra_activity (
 ALTER TABLE intra_activity OWNER TO city4agedb;
 
 --
--- TOC entry 183 (class 1259 OID 18080)
+-- TOC entry 187 (class 1259 OID 19840)
 -- Name: intra_behaviour; Type: TABLE; Schema: public; Owner: city4agedb
 --
 
@@ -354,7 +356,7 @@ CREATE TABLE intra_behaviour (
 ALTER TABLE intra_behaviour OWNER TO city4agedb;
 
 --
--- TOC entry 182 (class 1259 OID 18078)
+-- TOC entry 186 (class 1259 OID 19838)
 -- Name: intra_behaviour_seq; Type: SEQUENCE; Schema: public; Owner: city4agedb
 --
 
@@ -369,7 +371,7 @@ CREATE SEQUENCE intra_behaviour_seq
 ALTER TABLE intra_behaviour_seq OWNER TO city4agedb;
 
 --
--- TOC entry 203 (class 1259 OID 18175)
+-- TOC entry 206 (class 1259 OID 19933)
 -- Name: location; Type: TABLE; Schema: public; Owner: city4agedb
 --
 
@@ -377,14 +379,14 @@ CREATE TABLE location (
     id integer NOT NULL,
     location_name character varying(75),
     indoor boolean,
-    pilot_id integer
+    pilot_name character varying(50)
 );
 
 
 ALTER TABLE location OWNER TO city4agedb;
 
 --
--- TOC entry 202 (class 1259 OID 18173)
+-- TOC entry 205 (class 1259 OID 19931)
 -- Name: location_id_seq; Type: SEQUENCE; Schema: public; Owner: city4agedb
 --
 
@@ -399,13 +401,12 @@ CREATE SEQUENCE location_id_seq
 ALTER TABLE location_id_seq OWNER TO city4agedb;
 
 --
--- TOC entry 191 (class 1259 OID 18108)
+-- TOC entry 194 (class 1259 OID 19866)
 -- Name: pilot; Type: TABLE; Schema: public; Owner: city4agedb
 --
 
 CREATE TABLE pilot (
-    id integer NOT NULL,
-    name character varying(50),
+    name character varying(50) NOT NULL,
     population_size bigint
 );
 
@@ -413,12 +414,12 @@ CREATE TABLE pilot (
 ALTER TABLE pilot OWNER TO city4agedb;
 
 --
--- TOC entry 211 (class 1259 OID 18256)
+-- TOC entry 214 (class 1259 OID 20014)
 -- Name: pilot_geriatric_indicator_rel; Type: TABLE; Schema: public; Owner: city4agedb
 --
 
 CREATE TABLE pilot_geriatric_indicator_rel (
-    pilot_id integer NOT NULL,
+    pilot_name character varying(50) NOT NULL,
     geriatric_indicator_id integer NOT NULL,
     date timestamp without time zone NOT NULL
 );
@@ -427,22 +428,7 @@ CREATE TABLE pilot_geriatric_indicator_rel (
 ALTER TABLE pilot_geriatric_indicator_rel OWNER TO city4agedb;
 
 --
--- TOC entry 190 (class 1259 OID 18106)
--- Name: pilot_id_seq; Type: SEQUENCE; Schema: public; Owner: city4agedb
---
-
-CREATE SEQUENCE pilot_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
-ALTER TABLE pilot_id_seq OWNER TO city4agedb;
-
---
--- TOC entry 187 (class 1259 OID 18094)
+-- TOC entry 191 (class 1259 OID 19854)
 -- Name: risk; Type: TABLE; Schema: public; Owner: city4agedb
 --
 
@@ -457,7 +443,7 @@ CREATE TABLE risk (
 ALTER TABLE risk OWNER TO city4agedb;
 
 --
--- TOC entry 218 (class 1259 OID 18361)
+-- TOC entry 221 (class 1259 OID 20119)
 -- Name: risk_executed_action_rel; Type: TABLE; Schema: public; Owner: city4agedb
 --
 
@@ -470,7 +456,7 @@ CREATE TABLE risk_executed_action_rel (
 ALTER TABLE risk_executed_action_rel OWNER TO city4agedb;
 
 --
--- TOC entry 186 (class 1259 OID 18092)
+-- TOC entry 190 (class 1259 OID 19852)
 -- Name: risk_id_seq; Type: SEQUENCE; Schema: public; Owner: city4agedb
 --
 
@@ -485,7 +471,7 @@ CREATE SEQUENCE risk_id_seq
 ALTER TABLE risk_id_seq OWNER TO city4agedb;
 
 --
--- TOC entry 197 (class 1259 OID 18129)
+-- TOC entry 200 (class 1259 OID 19887)
 -- Name: simple_location; Type: TABLE; Schema: public; Owner: city4agedb
 --
 
@@ -498,7 +484,7 @@ CREATE TABLE simple_location (
 ALTER TABLE simple_location OWNER TO city4agedb;
 
 --
--- TOC entry 196 (class 1259 OID 18127)
+-- TOC entry 199 (class 1259 OID 19885)
 -- Name: simple_location_seq; Type: SEQUENCE; Schema: public; Owner: city4agedb
 --
 
@@ -513,7 +499,7 @@ CREATE SEQUENCE simple_location_seq
 ALTER TABLE simple_location_seq OWNER TO city4agedb;
 
 --
--- TOC entry 181 (class 1259 OID 18073)
+-- TOC entry 185 (class 1259 OID 19833)
 -- Name: stake_holder; Type: TABLE; Schema: public; Owner: city4agedb
 --
 
@@ -526,7 +512,7 @@ CREATE TABLE stake_holder (
 ALTER TABLE stake_holder OWNER TO city4agedb;
 
 --
--- TOC entry 185 (class 1259 OID 18087)
+-- TOC entry 189 (class 1259 OID 19847)
 -- Name: start_range; Type: TABLE; Schema: public; Owner: city4agedb
 --
 
@@ -540,7 +526,7 @@ CREATE TABLE start_range (
 ALTER TABLE start_range OWNER TO city4agedb;
 
 --
--- TOC entry 184 (class 1259 OID 18085)
+-- TOC entry 188 (class 1259 OID 19845)
 -- Name: start_range_seq; Type: SEQUENCE; Schema: public; Owner: city4agedb
 --
 
@@ -555,7 +541,7 @@ CREATE SEQUENCE start_range_seq
 ALTER TABLE start_range_seq OWNER TO city4agedb;
 
 --
--- TOC entry 210 (class 1259 OID 18241)
+-- TOC entry 213 (class 1259 OID 19999)
 -- Name: user_in_role; Type: TABLE; Schema: public; Owner: city4agedb
 --
 
@@ -564,14 +550,14 @@ CREATE TABLE user_in_role (
     valid_from timestamp without time zone,
     valid_to timestamp without time zone,
     stake_holder_id character varying(25),
-    pilot_id integer
+    pilot_name character varying(50)
 );
 
 
 ALTER TABLE user_in_role OWNER TO city4agedb;
 
 --
--- TOC entry 216 (class 1259 OID 18331)
+-- TOC entry 219 (class 1259 OID 20089)
 -- Name: user_in_role_geriatric_indicator_rel; Type: TABLE; Schema: public; Owner: city4agedb
 --
 
@@ -585,7 +571,7 @@ CREATE TABLE user_in_role_geriatric_indicator_rel (
 ALTER TABLE user_in_role_geriatric_indicator_rel OWNER TO city4agedb;
 
 --
--- TOC entry 204 (class 1259 OID 18185)
+-- TOC entry 207 (class 1259 OID 19943)
 -- Name: user_in_role_seq; Type: SEQUENCE; Schema: public; Owner: city4agedb
 --
 
@@ -600,7 +586,7 @@ CREATE SEQUENCE user_in_role_seq
 ALTER TABLE user_in_role_seq OWNER TO city4agedb;
 
 --
--- TOC entry 205 (class 1259 OID 18187)
+-- TOC entry 208 (class 1259 OID 19945)
 -- Name: user_in_system; Type: TABLE; Schema: public; Owner: city4agedb
 --
 
@@ -616,16 +602,16 @@ CREATE TABLE user_in_system (
 ALTER TABLE user_in_system OWNER TO city4agedb;
 
 --
--- TOC entry 2319 (class 0 OID 18138)
--- Dependencies: 199
+-- TOC entry 2339 (class 0 OID 19896)
+-- Dependencies: 202
 -- Data for Name: action; Type: TABLE DATA; Schema: public; Owner: city4agedb
 --
 
 
 
 --
--- TOC entry 2347 (class 0 OID 0)
--- Dependencies: 198
+-- TOC entry 2366 (class 0 OID 0)
+-- Dependencies: 201
 -- Name: action_id_seq; Type: SEQUENCE SET; Schema: public; Owner: city4agedb
 --
 
@@ -633,16 +619,16 @@ SELECT pg_catalog.setval('action_id_seq', 1, false);
 
 
 --
--- TOC entry 2309 (class 0 OID 18101)
--- Dependencies: 189
+-- TOC entry 2330 (class 0 OID 19861)
+-- Dependencies: 193
 -- Data for Name: activity; Type: TABLE DATA; Schema: public; Owner: city4agedb
 --
 
 
 
 --
--- TOC entry 2348 (class 0 OID 0)
--- Dependencies: 188
+-- TOC entry 2367 (class 0 OID 0)
+-- Dependencies: 192
 -- Name: activity_id_seq; Type: SEQUENCE SET; Schema: public; Owner: city4agedb
 --
 
@@ -650,16 +636,16 @@ SELECT pg_catalog.setval('activity_id_seq', 1, false);
 
 
 --
--- TOC entry 2329 (class 0 OID 18226)
--- Dependencies: 209
+-- TOC entry 2349 (class 0 OID 19984)
+-- Dependencies: 212
 -- Data for Name: eam; Type: TABLE DATA; Schema: public; Owner: city4agedb
 --
 
 
 
 --
--- TOC entry 2349 (class 0 OID 0)
--- Dependencies: 208
+-- TOC entry 2368 (class 0 OID 0)
+-- Dependencies: 211
 -- Name: eam_seq; Type: SEQUENCE SET; Schema: public; Owner: city4agedb
 --
 
@@ -667,32 +653,32 @@ SELECT pg_catalog.setval('eam_seq', 1, false);
 
 
 --
--- TOC entry 2337 (class 0 OID 18346)
--- Dependencies: 217
+-- TOC entry 2357 (class 0 OID 20104)
+-- Dependencies: 220
 -- Data for Name: eam_simple_location_rel; Type: TABLE DATA; Schema: public; Owner: city4agedb
 --
 
 
 
 --
--- TOC entry 2334 (class 0 OID 18301)
--- Dependencies: 214
+-- TOC entry 2354 (class 0 OID 20059)
+-- Dependencies: 217
 -- Data for Name: eam_start_range_rel; Type: TABLE DATA; Schema: public; Owner: city4agedb
 --
 
 
 
 --
--- TOC entry 2333 (class 0 OID 18273)
--- Dependencies: 213
+-- TOC entry 2353 (class 0 OID 20031)
+-- Dependencies: 216
 -- Data for Name: executed_action; Type: TABLE DATA; Schema: public; Owner: city4agedb
 --
 
 
 
 --
--- TOC entry 2350 (class 0 OID 0)
--- Dependencies: 212
+-- TOC entry 2369 (class 0 OID 0)
+-- Dependencies: 215
 -- Name: executed_action_id_seq; Type: SEQUENCE SET; Schema: public; Owner: city4agedb
 --
 
@@ -700,24 +686,24 @@ SELECT pg_catalog.setval('executed_action_id_seq', 1, false);
 
 
 --
--- TOC entry 2313 (class 0 OID 18115)
--- Dependencies: 193
+-- TOC entry 2333 (class 0 OID 19873)
+-- Dependencies: 196
 -- Data for Name: geriatric_indicator; Type: TABLE DATA; Schema: public; Owner: city4agedb
 --
 
 
 
 --
--- TOC entry 2321 (class 0 OID 18158)
--- Dependencies: 201
+-- TOC entry 2341 (class 0 OID 19916)
+-- Dependencies: 204
 -- Data for Name: geriatric_indicator_geriatric_sub_indicator_rel; Type: TABLE DATA; Schema: public; Owner: city4agedb
 --
 
 
 
 --
--- TOC entry 2351 (class 0 OID 0)
--- Dependencies: 192
+-- TOC entry 2370 (class 0 OID 0)
+-- Dependencies: 195
 -- Name: geriatric_indicator_seq; Type: SEQUENCE SET; Schema: public; Owner: city4agedb
 --
 
@@ -725,16 +711,16 @@ SELECT pg_catalog.setval('geriatric_indicator_seq', 1, false);
 
 
 --
--- TOC entry 2315 (class 0 OID 18122)
--- Dependencies: 195
+-- TOC entry 2335 (class 0 OID 19880)
+-- Dependencies: 198
 -- Data for Name: geriatric_sub_indicator; Type: TABLE DATA; Schema: public; Owner: city4agedb
 --
 
 
 
 --
--- TOC entry 2352 (class 0 OID 0)
--- Dependencies: 194
+-- TOC entry 2371 (class 0 OID 0)
+-- Dependencies: 197
 -- Name: geriatric_sub_indicator_seq; Type: SEQUENCE SET; Schema: public; Owner: city4agedb
 --
 
@@ -742,24 +728,24 @@ SELECT pg_catalog.setval('geriatric_sub_indicator_seq', 1, false);
 
 
 --
--- TOC entry 2327 (class 0 OID 18204)
--- Dependencies: 207
+-- TOC entry 2347 (class 0 OID 19962)
+-- Dependencies: 210
 -- Data for Name: inter_behaviour; Type: TABLE DATA; Schema: public; Owner: city4agedb
 --
 
 
 
 --
--- TOC entry 2335 (class 0 OID 18316)
--- Dependencies: 215
+-- TOC entry 2355 (class 0 OID 20074)
+-- Dependencies: 218
 -- Data for Name: inter_behaviour_risk_rel; Type: TABLE DATA; Schema: public; Owner: city4agedb
 --
 
 
 
 --
--- TOC entry 2353 (class 0 OID 0)
--- Dependencies: 206
+-- TOC entry 2372 (class 0 OID 0)
+-- Dependencies: 209
 -- Name: inter_behaviour_seq; Type: SEQUENCE SET; Schema: public; Owner: city4agedb
 --
 
@@ -767,24 +753,24 @@ SELECT pg_catalog.setval('inter_behaviour_seq', 1, false);
 
 
 --
--- TOC entry 2320 (class 0 OID 18143)
--- Dependencies: 200
+-- TOC entry 2340 (class 0 OID 19901)
+-- Dependencies: 203
 -- Data for Name: intra_activity; Type: TABLE DATA; Schema: public; Owner: city4agedb
 --
 
 
 
 --
--- TOC entry 2303 (class 0 OID 18080)
--- Dependencies: 183
+-- TOC entry 2324 (class 0 OID 19840)
+-- Dependencies: 187
 -- Data for Name: intra_behaviour; Type: TABLE DATA; Schema: public; Owner: city4agedb
 --
 
 
 
 --
--- TOC entry 2354 (class 0 OID 0)
--- Dependencies: 182
+-- TOC entry 2373 (class 0 OID 0)
+-- Dependencies: 186
 -- Name: intra_behaviour_seq; Type: SEQUENCE SET; Schema: public; Owner: city4agedb
 --
 
@@ -792,16 +778,16 @@ SELECT pg_catalog.setval('intra_behaviour_seq', 1, false);
 
 
 --
--- TOC entry 2323 (class 0 OID 18175)
--- Dependencies: 203
+-- TOC entry 2343 (class 0 OID 19933)
+-- Dependencies: 206
 -- Data for Name: location; Type: TABLE DATA; Schema: public; Owner: city4agedb
 --
 
 
 
 --
--- TOC entry 2355 (class 0 OID 0)
--- Dependencies: 202
+-- TOC entry 2374 (class 0 OID 0)
+-- Dependencies: 205
 -- Name: location_id_seq; Type: SEQUENCE SET; Schema: public; Owner: city4agedb
 --
 
@@ -809,49 +795,46 @@ SELECT pg_catalog.setval('location_id_seq', 1, false);
 
 
 --
--- TOC entry 2311 (class 0 OID 18108)
--- Dependencies: 191
+-- TOC entry 2331 (class 0 OID 19866)
+-- Dependencies: 194
 -- Data for Name: pilot; Type: TABLE DATA; Schema: public; Owner: city4agedb
 --
 
+INSERT INTO pilot (name, population_size) VALUES ('madrid', 3141991);
+INSERT INTO pilot (name, population_size) VALUES ('lecce', 89839);
+INSERT INTO pilot (name, population_size) VALUES ('singapore', 5610000);
+INSERT INTO pilot (name, population_size) VALUES ('montpellier', 268456);
+INSERT INTO pilot (name, population_size) VALUES ('athens', 3090508);
+INSERT INTO pilot (name, population_size) VALUES ('birmingham', 1101360);
 
 
 --
--- TOC entry 2331 (class 0 OID 18256)
--- Dependencies: 211
+-- TOC entry 2351 (class 0 OID 20014)
+-- Dependencies: 214
 -- Data for Name: pilot_geriatric_indicator_rel; Type: TABLE DATA; Schema: public; Owner: city4agedb
 --
 
 
 
 --
--- TOC entry 2356 (class 0 OID 0)
--- Dependencies: 190
--- Name: pilot_id_seq; Type: SEQUENCE SET; Schema: public; Owner: city4agedb
---
-
-SELECT pg_catalog.setval('pilot_id_seq', 1, false);
-
-
---
--- TOC entry 2307 (class 0 OID 18094)
--- Dependencies: 187
+-- TOC entry 2328 (class 0 OID 19854)
+-- Dependencies: 191
 -- Data for Name: risk; Type: TABLE DATA; Schema: public; Owner: city4agedb
 --
 
 
 
 --
--- TOC entry 2338 (class 0 OID 18361)
--- Dependencies: 218
+-- TOC entry 2358 (class 0 OID 20119)
+-- Dependencies: 221
 -- Data for Name: risk_executed_action_rel; Type: TABLE DATA; Schema: public; Owner: city4agedb
 --
 
 
 
 --
--- TOC entry 2357 (class 0 OID 0)
--- Dependencies: 186
+-- TOC entry 2375 (class 0 OID 0)
+-- Dependencies: 190
 -- Name: risk_id_seq; Type: SEQUENCE SET; Schema: public; Owner: city4agedb
 --
 
@@ -859,16 +842,16 @@ SELECT pg_catalog.setval('risk_id_seq', 1, false);
 
 
 --
--- TOC entry 2317 (class 0 OID 18129)
--- Dependencies: 197
+-- TOC entry 2337 (class 0 OID 19887)
+-- Dependencies: 200
 -- Data for Name: simple_location; Type: TABLE DATA; Schema: public; Owner: city4agedb
 --
 
 
 
 --
--- TOC entry 2358 (class 0 OID 0)
--- Dependencies: 196
+-- TOC entry 2376 (class 0 OID 0)
+-- Dependencies: 199
 -- Name: simple_location_seq; Type: SEQUENCE SET; Schema: public; Owner: city4agedb
 --
 
@@ -876,8 +859,8 @@ SELECT pg_catalog.setval('simple_location_seq', 1, false);
 
 
 --
--- TOC entry 2301 (class 0 OID 18073)
--- Dependencies: 181
+-- TOC entry 2322 (class 0 OID 19833)
+-- Dependencies: 185
 -- Data for Name: stake_holder; Type: TABLE DATA; Schema: public; Owner: city4agedb
 --
 
@@ -909,16 +892,16 @@ INSERT INTO stake_holder (name, type) VALUES ('behavioral_science', 'behavioral_
 
 
 --
--- TOC entry 2305 (class 0 OID 18087)
--- Dependencies: 185
+-- TOC entry 2326 (class 0 OID 19847)
+-- Dependencies: 189
 -- Data for Name: start_range; Type: TABLE DATA; Schema: public; Owner: city4agedb
 --
 
 
 
 --
--- TOC entry 2359 (class 0 OID 0)
--- Dependencies: 184
+-- TOC entry 2377 (class 0 OID 0)
+-- Dependencies: 188
 -- Name: start_range_seq; Type: SEQUENCE SET; Schema: public; Owner: city4agedb
 --
 
@@ -926,24 +909,24 @@ SELECT pg_catalog.setval('start_range_seq', 1, false);
 
 
 --
--- TOC entry 2330 (class 0 OID 18241)
--- Dependencies: 210
+-- TOC entry 2350 (class 0 OID 19999)
+-- Dependencies: 213
 -- Data for Name: user_in_role; Type: TABLE DATA; Schema: public; Owner: city4agedb
 --
 
 
 
 --
--- TOC entry 2336 (class 0 OID 18331)
--- Dependencies: 216
+-- TOC entry 2356 (class 0 OID 20089)
+-- Dependencies: 219
 -- Data for Name: user_in_role_geriatric_indicator_rel; Type: TABLE DATA; Schema: public; Owner: city4agedb
 --
 
 
 
 --
--- TOC entry 2360 (class 0 OID 0)
--- Dependencies: 204
+-- TOC entry 2378 (class 0 OID 0)
+-- Dependencies: 207
 -- Name: user_in_role_seq; Type: SEQUENCE SET; Schema: public; Owner: city4agedb
 --
 
@@ -951,17 +934,17 @@ SELECT pg_catalog.setval('user_in_role_seq', 1, true);
 
 
 --
--- TOC entry 2325 (class 0 OID 18187)
--- Dependencies: 205
+-- TOC entry 2345 (class 0 OID 19945)
+-- Dependencies: 208
 -- Data for Name: user_in_system; Type: TABLE DATA; Schema: public; Owner: city4agedb
 --
 
-INSERT INTO user_in_system (id, username, password, created_date, stake_holder_name) VALUES (1, 'admin', '$2a$13$IO.lZKhvIukk9Fud0aVj/ePXsTuz7Rtusdr9NCXGACVT02N8NKwFK', '2016-09-27 07:58:30.958488', 'admin');
+INSERT INTO user_in_system (id, username, password, created_date, stake_holder_name) VALUES (1, 'admin', '$2a$13$lKrO.88vfVxtjMdVjUZTHuG9IZuCFz/yMKDBz0sLH2OOq4.cxQ3Zq', '2016-11-21 14:21:52.946218', 'admin');
 
 
 --
--- TOC entry 2127 (class 2606 OID 18142)
--- Name: action_pkey; Type: CONSTRAINT; Schema: public; Owner: city4agedb
+-- TOC entry 2145 (class 2606 OID 19900)
+-- Name: action action_pkey; Type: CONSTRAINT; Schema: public; Owner: city4agedb
 --
 
 ALTER TABLE ONLY action
@@ -969,8 +952,8 @@ ALTER TABLE ONLY action
 
 
 --
--- TOC entry 2115 (class 2606 OID 18105)
--- Name: activity_pkey; Type: CONSTRAINT; Schema: public; Owner: city4agedb
+-- TOC entry 2133 (class 2606 OID 19865)
+-- Name: activity activity_pkey; Type: CONSTRAINT; Schema: public; Owner: city4agedb
 --
 
 ALTER TABLE ONLY activity
@@ -978,8 +961,8 @@ ALTER TABLE ONLY activity
 
 
 --
--- TOC entry 2141 (class 2606 OID 18230)
--- Name: eam_pkey; Type: CONSTRAINT; Schema: public; Owner: city4agedb
+-- TOC entry 2159 (class 2606 OID 19988)
+-- Name: eam eam_pkey; Type: CONSTRAINT; Schema: public; Owner: city4agedb
 --
 
 ALTER TABLE ONLY eam
@@ -987,8 +970,8 @@ ALTER TABLE ONLY eam
 
 
 --
--- TOC entry 2155 (class 2606 OID 18350)
--- Name: eam_simple_location_rel_pkey; Type: CONSTRAINT; Schema: public; Owner: city4agedb
+-- TOC entry 2173 (class 2606 OID 20108)
+-- Name: eam_simple_location_rel eam_simple_location_rel_pkey; Type: CONSTRAINT; Schema: public; Owner: city4agedb
 --
 
 ALTER TABLE ONLY eam_simple_location_rel
@@ -996,8 +979,8 @@ ALTER TABLE ONLY eam_simple_location_rel
 
 
 --
--- TOC entry 2149 (class 2606 OID 18305)
--- Name: eam_start_range_rel_pkey; Type: CONSTRAINT; Schema: public; Owner: city4agedb
+-- TOC entry 2167 (class 2606 OID 20063)
+-- Name: eam_start_range_rel eam_start_range_rel_pkey; Type: CONSTRAINT; Schema: public; Owner: city4agedb
 --
 
 ALTER TABLE ONLY eam_start_range_rel
@@ -1005,8 +988,8 @@ ALTER TABLE ONLY eam_start_range_rel
 
 
 --
--- TOC entry 2147 (class 2606 OID 18280)
--- Name: executed_action_pkey; Type: CONSTRAINT; Schema: public; Owner: city4agedb
+-- TOC entry 2165 (class 2606 OID 20038)
+-- Name: executed_action executed_action_pkey; Type: CONSTRAINT; Schema: public; Owner: city4agedb
 --
 
 ALTER TABLE ONLY executed_action
@@ -1014,8 +997,8 @@ ALTER TABLE ONLY executed_action
 
 
 --
--- TOC entry 2131 (class 2606 OID 18162)
--- Name: geriatric_indicator_geriatric_sub_indicator_rel_pkey; Type: CONSTRAINT; Schema: public; Owner: city4agedb
+-- TOC entry 2149 (class 2606 OID 19920)
+-- Name: geriatric_indicator_geriatric_sub_indicator_rel geriatric_indicator_geriatric_sub_indicator_rel_pkey; Type: CONSTRAINT; Schema: public; Owner: city4agedb
 --
 
 ALTER TABLE ONLY geriatric_indicator_geriatric_sub_indicator_rel
@@ -1023,8 +1006,8 @@ ALTER TABLE ONLY geriatric_indicator_geriatric_sub_indicator_rel
 
 
 --
--- TOC entry 2119 (class 2606 OID 18119)
--- Name: geriatric_indicator_pkey; Type: CONSTRAINT; Schema: public; Owner: city4agedb
+-- TOC entry 2137 (class 2606 OID 19877)
+-- Name: geriatric_indicator geriatric_indicator_pkey; Type: CONSTRAINT; Schema: public; Owner: city4agedb
 --
 
 ALTER TABLE ONLY geriatric_indicator
@@ -1032,8 +1015,8 @@ ALTER TABLE ONLY geriatric_indicator
 
 
 --
--- TOC entry 2121 (class 2606 OID 18126)
--- Name: geriatric_sub_indicator_pkey; Type: CONSTRAINT; Schema: public; Owner: city4agedb
+-- TOC entry 2139 (class 2606 OID 19884)
+-- Name: geriatric_sub_indicator geriatric_sub_indicator_pkey; Type: CONSTRAINT; Schema: public; Owner: city4agedb
 --
 
 ALTER TABLE ONLY geriatric_sub_indicator
@@ -1041,8 +1024,8 @@ ALTER TABLE ONLY geriatric_sub_indicator
 
 
 --
--- TOC entry 2139 (class 2606 OID 18208)
--- Name: inter_behaviour_pkey; Type: CONSTRAINT; Schema: public; Owner: city4agedb
+-- TOC entry 2157 (class 2606 OID 19966)
+-- Name: inter_behaviour inter_behaviour_pkey; Type: CONSTRAINT; Schema: public; Owner: city4agedb
 --
 
 ALTER TABLE ONLY inter_behaviour
@@ -1050,8 +1033,8 @@ ALTER TABLE ONLY inter_behaviour
 
 
 --
--- TOC entry 2151 (class 2606 OID 18320)
--- Name: inter_behaviour_risk_rel_pkey; Type: CONSTRAINT; Schema: public; Owner: city4agedb
+-- TOC entry 2169 (class 2606 OID 20078)
+-- Name: inter_behaviour_risk_rel inter_behaviour_risk_rel_pkey; Type: CONSTRAINT; Schema: public; Owner: city4agedb
 --
 
 ALTER TABLE ONLY inter_behaviour_risk_rel
@@ -1059,8 +1042,8 @@ ALTER TABLE ONLY inter_behaviour_risk_rel
 
 
 --
--- TOC entry 2129 (class 2606 OID 18147)
--- Name: intra_activity_pkey; Type: CONSTRAINT; Schema: public; Owner: city4agedb
+-- TOC entry 2147 (class 2606 OID 19905)
+-- Name: intra_activity intra_activity_pkey; Type: CONSTRAINT; Schema: public; Owner: city4agedb
 --
 
 ALTER TABLE ONLY intra_activity
@@ -1068,8 +1051,8 @@ ALTER TABLE ONLY intra_activity
 
 
 --
--- TOC entry 2109 (class 2606 OID 18084)
--- Name: intra_behaviour_pkey; Type: CONSTRAINT; Schema: public; Owner: city4agedb
+-- TOC entry 2127 (class 2606 OID 19844)
+-- Name: intra_behaviour intra_behaviour_pkey; Type: CONSTRAINT; Schema: public; Owner: city4agedb
 --
 
 ALTER TABLE ONLY intra_behaviour
@@ -1077,8 +1060,8 @@ ALTER TABLE ONLY intra_behaviour
 
 
 --
--- TOC entry 2133 (class 2606 OID 18179)
--- Name: location_pkey; Type: CONSTRAINT; Schema: public; Owner: city4agedb
+-- TOC entry 2151 (class 2606 OID 19937)
+-- Name: location location_pkey; Type: CONSTRAINT; Schema: public; Owner: city4agedb
 --
 
 ALTER TABLE ONLY location
@@ -1086,26 +1069,26 @@ ALTER TABLE ONLY location
 
 
 --
--- TOC entry 2145 (class 2606 OID 18260)
--- Name: pilot_geriatric_indicator_rel_pkey; Type: CONSTRAINT; Schema: public; Owner: city4agedb
+-- TOC entry 2163 (class 2606 OID 20018)
+-- Name: pilot_geriatric_indicator_rel pilot_geriatric_indicator_rel_pkey; Type: CONSTRAINT; Schema: public; Owner: city4agedb
 --
 
 ALTER TABLE ONLY pilot_geriatric_indicator_rel
-    ADD CONSTRAINT pilot_geriatric_indicator_rel_pkey PRIMARY KEY (pilot_id, geriatric_indicator_id, date);
+    ADD CONSTRAINT pilot_geriatric_indicator_rel_pkey PRIMARY KEY (pilot_name, geriatric_indicator_id, date);
 
 
 --
--- TOC entry 2117 (class 2606 OID 18112)
--- Name: pilot_pkey; Type: CONSTRAINT; Schema: public; Owner: city4agedb
+-- TOC entry 2135 (class 2606 OID 19870)
+-- Name: pilot pilot_pkey; Type: CONSTRAINT; Schema: public; Owner: city4agedb
 --
 
 ALTER TABLE ONLY pilot
-    ADD CONSTRAINT pilot_pkey PRIMARY KEY (id);
+    ADD CONSTRAINT pilot_pkey PRIMARY KEY (name);
 
 
 --
--- TOC entry 2157 (class 2606 OID 18365)
--- Name: risk_executed_action_rel_pkey; Type: CONSTRAINT; Schema: public; Owner: city4agedb
+-- TOC entry 2175 (class 2606 OID 20123)
+-- Name: risk_executed_action_rel risk_executed_action_rel_pkey; Type: CONSTRAINT; Schema: public; Owner: city4agedb
 --
 
 ALTER TABLE ONLY risk_executed_action_rel
@@ -1113,8 +1096,8 @@ ALTER TABLE ONLY risk_executed_action_rel
 
 
 --
--- TOC entry 2113 (class 2606 OID 18098)
--- Name: risk_pkey; Type: CONSTRAINT; Schema: public; Owner: city4agedb
+-- TOC entry 2131 (class 2606 OID 19858)
+-- Name: risk risk_pkey; Type: CONSTRAINT; Schema: public; Owner: city4agedb
 --
 
 ALTER TABLE ONLY risk
@@ -1122,8 +1105,8 @@ ALTER TABLE ONLY risk
 
 
 --
--- TOC entry 2123 (class 2606 OID 18133)
--- Name: simple_location_pkey; Type: CONSTRAINT; Schema: public; Owner: city4agedb
+-- TOC entry 2141 (class 2606 OID 19891)
+-- Name: simple_location simple_location_pkey; Type: CONSTRAINT; Schema: public; Owner: city4agedb
 --
 
 ALTER TABLE ONLY simple_location
@@ -1131,8 +1114,8 @@ ALTER TABLE ONLY simple_location
 
 
 --
--- TOC entry 2125 (class 2606 OID 18135)
--- Name: simple_location_simple_location_name_key; Type: CONSTRAINT; Schema: public; Owner: city4agedb
+-- TOC entry 2143 (class 2606 OID 19893)
+-- Name: simple_location simple_location_simple_location_name_key; Type: CONSTRAINT; Schema: public; Owner: city4agedb
 --
 
 ALTER TABLE ONLY simple_location
@@ -1140,8 +1123,8 @@ ALTER TABLE ONLY simple_location
 
 
 --
--- TOC entry 2107 (class 2606 OID 18077)
--- Name: stake_holder_pkey; Type: CONSTRAINT; Schema: public; Owner: city4agedb
+-- TOC entry 2125 (class 2606 OID 19837)
+-- Name: stake_holder stake_holder_pkey; Type: CONSTRAINT; Schema: public; Owner: city4agedb
 --
 
 ALTER TABLE ONLY stake_holder
@@ -1149,8 +1132,8 @@ ALTER TABLE ONLY stake_holder
 
 
 --
--- TOC entry 2111 (class 2606 OID 18091)
--- Name: start_range_pkey; Type: CONSTRAINT; Schema: public; Owner: city4agedb
+-- TOC entry 2129 (class 2606 OID 19851)
+-- Name: start_range start_range_pkey; Type: CONSTRAINT; Schema: public; Owner: city4agedb
 --
 
 ALTER TABLE ONLY start_range
@@ -1158,8 +1141,8 @@ ALTER TABLE ONLY start_range
 
 
 --
--- TOC entry 2153 (class 2606 OID 18335)
--- Name: user_in_role_geriatric_indicator_rel_pkey; Type: CONSTRAINT; Schema: public; Owner: city4agedb
+-- TOC entry 2171 (class 2606 OID 20093)
+-- Name: user_in_role_geriatric_indicator_rel user_in_role_geriatric_indicator_rel_pkey; Type: CONSTRAINT; Schema: public; Owner: city4agedb
 --
 
 ALTER TABLE ONLY user_in_role_geriatric_indicator_rel
@@ -1167,8 +1150,8 @@ ALTER TABLE ONLY user_in_role_geriatric_indicator_rel
 
 
 --
--- TOC entry 2143 (class 2606 OID 18245)
--- Name: user_in_role_pkey; Type: CONSTRAINT; Schema: public; Owner: city4agedb
+-- TOC entry 2161 (class 2606 OID 20003)
+-- Name: user_in_role user_in_role_pkey; Type: CONSTRAINT; Schema: public; Owner: city4agedb
 --
 
 ALTER TABLE ONLY user_in_role
@@ -1176,8 +1159,8 @@ ALTER TABLE ONLY user_in_role
 
 
 --
--- TOC entry 2135 (class 2606 OID 18194)
--- Name: user_in_system_pkey; Type: CONSTRAINT; Schema: public; Owner: city4agedb
+-- TOC entry 2153 (class 2606 OID 19952)
+-- Name: user_in_system user_in_system_pkey; Type: CONSTRAINT; Schema: public; Owner: city4agedb
 --
 
 ALTER TABLE ONLY user_in_system
@@ -1185,8 +1168,8 @@ ALTER TABLE ONLY user_in_system
 
 
 --
--- TOC entry 2137 (class 2606 OID 18196)
--- Name: user_in_system_username_key; Type: CONSTRAINT; Schema: public; Owner: city4agedb
+-- TOC entry 2155 (class 2606 OID 19954)
+-- Name: user_in_system user_in_system_username_key; Type: CONSTRAINT; Schema: public; Owner: city4agedb
 --
 
 ALTER TABLE ONLY user_in_system
@@ -1194,8 +1177,8 @@ ALTER TABLE ONLY user_in_system
 
 
 --
--- TOC entry 2168 (class 2606 OID 18236)
--- Name: eam_action_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: city4agedb
+-- TOC entry 2186 (class 2606 OID 19994)
+-- Name: eam eam_action_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: city4agedb
 --
 
 ALTER TABLE ONLY eam
@@ -1203,8 +1186,8 @@ ALTER TABLE ONLY eam
 
 
 --
--- TOC entry 2167 (class 2606 OID 18231)
--- Name: eam_activity_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: city4agedb
+-- TOC entry 2185 (class 2606 OID 19989)
+-- Name: eam eam_activity_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: city4agedb
 --
 
 ALTER TABLE ONLY eam
@@ -1212,8 +1195,8 @@ ALTER TABLE ONLY eam
 
 
 --
--- TOC entry 2183 (class 2606 OID 18351)
--- Name: eam_simple_location_rel_eam_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: city4agedb
+-- TOC entry 2201 (class 2606 OID 20109)
+-- Name: eam_simple_location_rel eam_simple_location_rel_eam_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: city4agedb
 --
 
 ALTER TABLE ONLY eam_simple_location_rel
@@ -1221,8 +1204,8 @@ ALTER TABLE ONLY eam_simple_location_rel
 
 
 --
--- TOC entry 2184 (class 2606 OID 18356)
--- Name: eam_simple_location_rel_simple_location_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: city4agedb
+-- TOC entry 2202 (class 2606 OID 20114)
+-- Name: eam_simple_location_rel eam_simple_location_rel_simple_location_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: city4agedb
 --
 
 ALTER TABLE ONLY eam_simple_location_rel
@@ -1230,8 +1213,8 @@ ALTER TABLE ONLY eam_simple_location_rel
 
 
 --
--- TOC entry 2177 (class 2606 OID 18306)
--- Name: eam_start_range_rel_eam_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: city4agedb
+-- TOC entry 2195 (class 2606 OID 20064)
+-- Name: eam_start_range_rel eam_start_range_rel_eam_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: city4agedb
 --
 
 ALTER TABLE ONLY eam_start_range_rel
@@ -1239,8 +1222,8 @@ ALTER TABLE ONLY eam_start_range_rel
 
 
 --
--- TOC entry 2178 (class 2606 OID 18311)
--- Name: eam_start_range_rel_start_range_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: city4agedb
+-- TOC entry 2196 (class 2606 OID 20069)
+-- Name: eam_start_range_rel eam_start_range_rel_start_range_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: city4agedb
 --
 
 ALTER TABLE ONLY eam_start_range_rel
@@ -1248,8 +1231,8 @@ ALTER TABLE ONLY eam_start_range_rel
 
 
 --
--- TOC entry 2174 (class 2606 OID 18286)
--- Name: executed_action_action_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: city4agedb
+-- TOC entry 2192 (class 2606 OID 20044)
+-- Name: executed_action executed_action_action_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: city4agedb
 --
 
 ALTER TABLE ONLY executed_action
@@ -1257,8 +1240,8 @@ ALTER TABLE ONLY executed_action
 
 
 --
--- TOC entry 2175 (class 2606 OID 18291)
--- Name: executed_action_activity_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: city4agedb
+-- TOC entry 2193 (class 2606 OID 20049)
+-- Name: executed_action executed_action_activity_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: city4agedb
 --
 
 ALTER TABLE ONLY executed_action
@@ -1266,8 +1249,8 @@ ALTER TABLE ONLY executed_action
 
 
 --
--- TOC entry 2176 (class 2606 OID 18296)
--- Name: executed_action_location_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: city4agedb
+-- TOC entry 2194 (class 2606 OID 20054)
+-- Name: executed_action executed_action_location_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: city4agedb
 --
 
 ALTER TABLE ONLY executed_action
@@ -1275,8 +1258,8 @@ ALTER TABLE ONLY executed_action
 
 
 --
--- TOC entry 2173 (class 2606 OID 18281)
--- Name: executed_action_user_in_role_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: city4agedb
+-- TOC entry 2191 (class 2606 OID 20039)
+-- Name: executed_action executed_action_user_in_role_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: city4agedb
 --
 
 ALTER TABLE ONLY executed_action
@@ -1284,8 +1267,8 @@ ALTER TABLE ONLY executed_action
 
 
 --
--- TOC entry 2161 (class 2606 OID 18168)
--- Name: geriatric_indicator_geriatric_s_geriatric_sub_indicator_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: city4agedb
+-- TOC entry 2179 (class 2606 OID 19926)
+-- Name: geriatric_indicator_geriatric_sub_indicator_rel geriatric_indicator_geriatric_s_geriatric_sub_indicator_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: city4agedb
 --
 
 ALTER TABLE ONLY geriatric_indicator_geriatric_sub_indicator_rel
@@ -1293,8 +1276,8 @@ ALTER TABLE ONLY geriatric_indicator_geriatric_sub_indicator_rel
 
 
 --
--- TOC entry 2160 (class 2606 OID 18163)
--- Name: geriatric_indicator_geriatric_sub_i_geriatric_indicator_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: city4agedb
+-- TOC entry 2178 (class 2606 OID 19921)
+-- Name: geriatric_indicator_geriatric_sub_indicator_rel geriatric_indicator_geriatric_sub_i_geriatric_indicator_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: city4agedb
 --
 
 ALTER TABLE ONLY geriatric_indicator_geriatric_sub_indicator_rel
@@ -1302,8 +1285,8 @@ ALTER TABLE ONLY geriatric_indicator_geriatric_sub_indicator_rel
 
 
 --
--- TOC entry 2164 (class 2606 OID 18209)
--- Name: inter_behaviour_expected_activity_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: city4agedb
+-- TOC entry 2182 (class 2606 OID 19967)
+-- Name: inter_behaviour inter_behaviour_expected_activity_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: city4agedb
 --
 
 ALTER TABLE ONLY inter_behaviour
@@ -1311,8 +1294,8 @@ ALTER TABLE ONLY inter_behaviour
 
 
 --
--- TOC entry 2166 (class 2606 OID 18219)
--- Name: inter_behaviour_intra_behaviour_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: city4agedb
+-- TOC entry 2184 (class 2606 OID 19977)
+-- Name: inter_behaviour inter_behaviour_intra_behaviour_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: city4agedb
 --
 
 ALTER TABLE ONLY inter_behaviour
@@ -1320,8 +1303,8 @@ ALTER TABLE ONLY inter_behaviour
 
 
 --
--- TOC entry 2165 (class 2606 OID 18214)
--- Name: inter_behaviour_real_activity_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: city4agedb
+-- TOC entry 2183 (class 2606 OID 19972)
+-- Name: inter_behaviour inter_behaviour_real_activity_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: city4agedb
 --
 
 ALTER TABLE ONLY inter_behaviour
@@ -1329,8 +1312,8 @@ ALTER TABLE ONLY inter_behaviour
 
 
 --
--- TOC entry 2179 (class 2606 OID 18321)
--- Name: inter_behaviour_risk_rel_inter_behaviour_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: city4agedb
+-- TOC entry 2197 (class 2606 OID 20079)
+-- Name: inter_behaviour_risk_rel inter_behaviour_risk_rel_inter_behaviour_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: city4agedb
 --
 
 ALTER TABLE ONLY inter_behaviour_risk_rel
@@ -1338,8 +1321,8 @@ ALTER TABLE ONLY inter_behaviour_risk_rel
 
 
 --
--- TOC entry 2180 (class 2606 OID 18326)
--- Name: inter_behaviour_risk_rel_risk_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: city4agedb
+-- TOC entry 2198 (class 2606 OID 20084)
+-- Name: inter_behaviour_risk_rel inter_behaviour_risk_rel_risk_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: city4agedb
 --
 
 ALTER TABLE ONLY inter_behaviour_risk_rel
@@ -1347,8 +1330,8 @@ ALTER TABLE ONLY inter_behaviour_risk_rel
 
 
 --
--- TOC entry 2158 (class 2606 OID 18148)
--- Name: intra_activity_activity_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: city4agedb
+-- TOC entry 2176 (class 2606 OID 19906)
+-- Name: intra_activity intra_activity_activity_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: city4agedb
 --
 
 ALTER TABLE ONLY intra_activity
@@ -1356,8 +1339,8 @@ ALTER TABLE ONLY intra_activity
 
 
 --
--- TOC entry 2159 (class 2606 OID 18153)
--- Name: intra_activity_intra_behaviour_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: city4agedb
+-- TOC entry 2177 (class 2606 OID 19911)
+-- Name: intra_activity intra_activity_intra_behaviour_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: city4agedb
 --
 
 ALTER TABLE ONLY intra_activity
@@ -1365,17 +1348,17 @@ ALTER TABLE ONLY intra_activity
 
 
 --
--- TOC entry 2162 (class 2606 OID 18180)
--- Name: location_pilot_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: city4agedb
+-- TOC entry 2180 (class 2606 OID 19938)
+-- Name: location location_pilot_name_fkey; Type: FK CONSTRAINT; Schema: public; Owner: city4agedb
 --
 
 ALTER TABLE ONLY location
-    ADD CONSTRAINT location_pilot_id_fkey FOREIGN KEY (pilot_id) REFERENCES pilot(id);
+    ADD CONSTRAINT location_pilot_name_fkey FOREIGN KEY (pilot_name) REFERENCES pilot(name);
 
 
 --
--- TOC entry 2172 (class 2606 OID 18266)
--- Name: pilot_geriatric_indicator_rel_geriatric_indicator_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: city4agedb
+-- TOC entry 2190 (class 2606 OID 20024)
+-- Name: pilot_geriatric_indicator_rel pilot_geriatric_indicator_rel_geriatric_indicator_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: city4agedb
 --
 
 ALTER TABLE ONLY pilot_geriatric_indicator_rel
@@ -1383,17 +1366,17 @@ ALTER TABLE ONLY pilot_geriatric_indicator_rel
 
 
 --
--- TOC entry 2171 (class 2606 OID 18261)
--- Name: pilot_geriatric_indicator_rel_pilot_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: city4agedb
+-- TOC entry 2189 (class 2606 OID 20019)
+-- Name: pilot_geriatric_indicator_rel pilot_geriatric_indicator_rel_pilot_name_fkey; Type: FK CONSTRAINT; Schema: public; Owner: city4agedb
 --
 
 ALTER TABLE ONLY pilot_geriatric_indicator_rel
-    ADD CONSTRAINT pilot_geriatric_indicator_rel_pilot_id_fkey FOREIGN KEY (pilot_id) REFERENCES pilot(id);
+    ADD CONSTRAINT pilot_geriatric_indicator_rel_pilot_name_fkey FOREIGN KEY (pilot_name) REFERENCES pilot(name);
 
 
 --
--- TOC entry 2185 (class 2606 OID 18366)
--- Name: risk_executed_action_rel_executed_action_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: city4agedb
+-- TOC entry 2203 (class 2606 OID 20124)
+-- Name: risk_executed_action_rel risk_executed_action_rel_executed_action_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: city4agedb
 --
 
 ALTER TABLE ONLY risk_executed_action_rel
@@ -1401,8 +1384,8 @@ ALTER TABLE ONLY risk_executed_action_rel
 
 
 --
--- TOC entry 2186 (class 2606 OID 18371)
--- Name: risk_executed_action_rel_risk_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: city4agedb
+-- TOC entry 2204 (class 2606 OID 20129)
+-- Name: risk_executed_action_rel risk_executed_action_rel_risk_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: city4agedb
 --
 
 ALTER TABLE ONLY risk_executed_action_rel
@@ -1410,8 +1393,8 @@ ALTER TABLE ONLY risk_executed_action_rel
 
 
 --
--- TOC entry 2182 (class 2606 OID 18341)
--- Name: user_in_role_geriatric_indicator_re_geriatric_indicator_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: city4agedb
+-- TOC entry 2200 (class 2606 OID 20099)
+-- Name: user_in_role_geriatric_indicator_rel user_in_role_geriatric_indicator_re_geriatric_indicator_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: city4agedb
 --
 
 ALTER TABLE ONLY user_in_role_geriatric_indicator_rel
@@ -1419,8 +1402,8 @@ ALTER TABLE ONLY user_in_role_geriatric_indicator_rel
 
 
 --
--- TOC entry 2181 (class 2606 OID 18336)
--- Name: user_in_role_geriatric_indicator_rel_user_in_role_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: city4agedb
+-- TOC entry 2199 (class 2606 OID 20094)
+-- Name: user_in_role_geriatric_indicator_rel user_in_role_geriatric_indicator_rel_user_in_role_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: city4agedb
 --
 
 ALTER TABLE ONLY user_in_role_geriatric_indicator_rel
@@ -1428,17 +1411,17 @@ ALTER TABLE ONLY user_in_role_geriatric_indicator_rel
 
 
 --
--- TOC entry 2170 (class 2606 OID 18251)
--- Name: user_in_role_pilot_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: city4agedb
+-- TOC entry 2188 (class 2606 OID 20009)
+-- Name: user_in_role user_in_role_pilot_name_fkey; Type: FK CONSTRAINT; Schema: public; Owner: city4agedb
 --
 
 ALTER TABLE ONLY user_in_role
-    ADD CONSTRAINT user_in_role_pilot_id_fkey FOREIGN KEY (pilot_id) REFERENCES pilot(id);
+    ADD CONSTRAINT user_in_role_pilot_name_fkey FOREIGN KEY (pilot_name) REFERENCES pilot(name);
 
 
 --
--- TOC entry 2169 (class 2606 OID 18246)
--- Name: user_in_role_stake_holder_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: city4agedb
+-- TOC entry 2187 (class 2606 OID 20004)
+-- Name: user_in_role user_in_role_stake_holder_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: city4agedb
 --
 
 ALTER TABLE ONLY user_in_role
@@ -1446,27 +1429,15 @@ ALTER TABLE ONLY user_in_role
 
 
 --
--- TOC entry 2163 (class 2606 OID 18197)
--- Name: user_in_system_stake_holder_name_fkey; Type: FK CONSTRAINT; Schema: public; Owner: city4agedb
+-- TOC entry 2181 (class 2606 OID 19955)
+-- Name: user_in_system user_in_system_stake_holder_name_fkey; Type: FK CONSTRAINT; Schema: public; Owner: city4agedb
 --
 
 ALTER TABLE ONLY user_in_system
     ADD CONSTRAINT user_in_system_stake_holder_name_fkey FOREIGN KEY (stake_holder_name) REFERENCES stake_holder(name);
 
 
---
--- TOC entry 2345 (class 0 OID 0)
--- Dependencies: 6
--- Name: public; Type: ACL; Schema: -; Owner: postgres
---
-
-REVOKE ALL ON SCHEMA public FROM PUBLIC;
-REVOKE ALL ON SCHEMA public FROM postgres;
-GRANT ALL ON SCHEMA public TO postgres;
-GRANT ALL ON SCHEMA public TO PUBLIC;
-
-
--- Completed on 2016-09-27 10:05:03 CEST
+-- Completed on 2016-11-21 15:24:29 CET
 
 --
 -- PostgreSQL database dump complete

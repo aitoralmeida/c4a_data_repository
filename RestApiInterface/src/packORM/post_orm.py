@@ -269,9 +269,9 @@ class PostgORM(object):
             action = self._get_or_create(tables.Action, action_name=data['action'])
             date = datetime.datetime.strptime(data['timestamp'], '%Y-%m-%d %H:%M:%S.%f')
             pilot = self._get_or_create(tables.Pilot, name=data['extra']['pilot'])
-            user = self._get_or_create(tables.UserInRole, id=data['payload']['user'], pilot_id=pilot.id)
+            user = self._get_or_create(tables.UserInRole, id=data['payload']['user'], pilot_name=pilot.name)
             location = self._get_or_create(tables.Location, location_name=data['location'], indoor=True,
-                                           pilot_id=pilot.id)
+                                           pilot_name=pilot.name)
             # We insert all related data to executed_action
             executed_action = tables.ExecutedAction(date=date, rating=data['rating'],
                                                     location_id=location.id,
@@ -426,9 +426,6 @@ class PostgORM(object):
 
 
 
-
-
-
 # todo for testing purposes, we need to delete later.
 
 if __name__ == '__main__':
@@ -443,4 +440,14 @@ if __name__ == '__main__':
     # Creating a simple admin user
     admin = john = tables.UserInSystem(username='admin', password='admin', stake_holder_name='admin')
     orm.session.add(admin)
+    # Creating pilots names
+    list_of_pilots = list()
+    madrid = tables.Pilot(name='madrid', population_size=3141991)
+    lecce = tables.Pilot(name='lecce', population_size=89839)
+    singapore = tables.Pilot(name='singapore', population_size=5610000)
+    montpellier = tables.Pilot(name='montpellier', population_size=268456)
+    athens = tables.Pilot(name='athens', population_size=3090508)
+    birmingham = tables.Pilot(name='birmingham', population_size=1101360)
+    list_of_pilots.extend([madrid, lecce, singapore, montpellier, athens, birmingham])
+    orm.session.add_all(list_of_pilots)
     orm.commit()

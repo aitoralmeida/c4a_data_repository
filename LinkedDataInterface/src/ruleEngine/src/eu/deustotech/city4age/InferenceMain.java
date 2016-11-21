@@ -51,10 +51,11 @@ public class InferenceMain {
             // Decide if the program uses user defined time or system default.
             if (args.length >= 3 && args[2].length() > 0 && isLong(args[2])) {
                 LOGGER.log( Level.FINE, "User entered a defined time interval. The value is --> {}", args[2]);
-                System.out.println("BLEBLLEL");
+                System.out.print("Executing a time-defined TimerTask");
                 timer.scheduleAtFixedRate(timerTask, 0, Long.parseLong(args[2])); // Setting user defined time.
             }else {
                 LOGGER.log( Level.FINE, "Using default time interval");
+                System.out.print("Executing default TimerTask");
                 timer.scheduleAtFixedRate(timerTask, 0, 10000);                   // Setting default time.
             }
         }else{
