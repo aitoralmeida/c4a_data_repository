@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import print_function
+
 """
 City4Age test demo application
 =================================
@@ -48,8 +50,10 @@ PASSWORD = "DOE"
 #######
 
 
-SERVER = 'https://dev_c4a.morelab.deusto.es/api'
-FUSEKI = 'https://dev_c4a.morelab.deusto.es/fuseki/city4age/query'
+#SERVER = 'https://dev_c4a.morelab.deusto.es/api'
+#FUSEKI = 'https://dev_c4a.morelab.deusto.es/fuseki/city4age/query'
+SERVER = 'https://10.48.1.115/api/0.1'
+FUSEKI = 'https://10.48.1.115:8443/fuseki/'
 
 
 def start_demo():
@@ -62,7 +66,7 @@ def start_demo():
     print("--> TEST 1: Simple query to API to know if it works \n")
     time.sleep(2)
     #
-    r = requests.get(SERVER)
+    r = requests.get(SERVER, verify=False)
     if r.status_code == 200:
         print(r.text, "\n")
     else:
@@ -80,7 +84,7 @@ def start_demo():
     print("Data sent to the api ", data, "\n")
     time.sleep(1)
     #
-    r = requests.post(SERVER + '/search', json=data)
+    r = requests.post(SERVER + '/search', json=data, verify=False)
     if r.status_code != 200:
         print(r.text, "status code: ", r.status_code, "\n")
     else:
@@ -100,7 +104,7 @@ def start_demo():
     print("Data sent to the api: ", data, "\n")
     time.sleep(1)
     #
-    r = requests.post(SERVER + '/login', json=data)
+    r = requests.post(SERVER + '/login', json=data, verify=False)
     if r.status_code == 401:
         print(r.text, "status code: ", r.status_code, "\n")
     else:
@@ -119,7 +123,7 @@ def start_demo():
     print("Data sent to the api ", data, "\n")
     time.sleep(1)
     #
-    r = requests.post(SERVER + '/login', json=data)
+    r = requests.post(SERVER + '/login', json=data, verify=False)
     if r.status_code == 200:
         cookies = r.cookies.get_dict()
         print(r.text, "status code: ", r.status_code, "\n")
@@ -139,7 +143,7 @@ def start_demo():
     print("Data sent to the api ", data, "\n")
     time.sleep(1)
     #
-    r = requests.post(SERVER + '/search', cookies=cookies, json=data)
+    r = requests.post(SERVER + '/search', cookies=cookies, json=data, verify=False)
     if r.status_code == 200:
         print(r.text, "status code: ", r.status_code, "\n")
     else:
@@ -158,7 +162,7 @@ def start_demo():
     print("Data sent to the api ", data, "\n")
     time.sleep(1)
     #
-    r = requests.post(SERVER + '/add_action', cookies=cookies, json=data)
+    r = requests.post(SERVER + '/add_action', cookies=cookies, json=data, verify=False)
     if r.status_code != 200:
         print(r.text, "status code: ", r.status_code, "\n")
     else:
@@ -177,12 +181,12 @@ def start_demo():
     print("Data sent to the api ", data, "\n")
     time.sleep(1)
     #
-    r = requests.post(SERVER + '/add_action', cookies=cookies, json=data)
+    r = requests.post(SERVER + '/add_action', cookies=cookies, json=data, verify=False)
     if r.status_code == 200:
         print(r.text, "status code: ", r.status_code, "\n")
     else:
         raise TestException("Server returned an invalid status code \n"
-                            ": " + r.status_code)
+                            ": " + str(r.status_code))
     time.sleep(3)
     #
     # Step 8: Query again to know if the data is stored into DB
@@ -196,7 +200,7 @@ def start_demo():
     print("Data sent to the api ", data, "\n")
     time.sleep(1)
     #
-    r = requests.post(SERVER + '/search', cookies=cookies, json=data)
+    r = requests.post(SERVER + '/search', cookies=cookies, json=data, verify=False)
     if r.status_code == 200:
         print(r.text, "status code: ", r.status_code, "\n")
     else:

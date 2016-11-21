@@ -1,4 +1,4 @@
-#!/home/elektro/PycharmProjects/c4a_data_repository/DemoRestAPI/bin/python3
+#!/home/elektro/PycharmProjects/c4a_data_repository/DemoRestAPI/bin/python2
 
 # -*- coding: utf-8 -*-
 import re
