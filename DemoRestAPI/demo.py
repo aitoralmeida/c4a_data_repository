@@ -25,10 +25,13 @@ The script makes the following actions:
 """
 
 import time
+import ssl
+import urllib
 from datetime import datetime
 import json
 import requests
 from SPARQLWrapper import SPARQLWrapper
+import os
 
 __author__ = 'Rubén Mulero'
 __copyright__ = "Copyright 2016, City4Age project"
@@ -49,15 +52,16 @@ PASSWORD = "DOE"
 # Configuring request with sample data
 #######
 
+# Configuring actual file PATH
+__location__ = os.path.realpath(
+    os.path.join(os.getcwd(), os.path.dirname(__file__)))
 
-#SERVER = 'https://dev_c4a.morelab.deusto.es/api'
-#FUSEKI = 'https://dev_c4a.morelab.deusto.es/fuseki/city4age/query'
-SERVER = 'https://10.48.1.115/api/0.1'
-FUSEKI = 'https://10.48.1.115:8443/fuseki/'
+SERVER = 'https://dev_c4a.morelab.deusto.es/api'
+FUSEKI = 'https://dev_c4a.morelab.deusto.es/fuseki/city4age/query'
+CERT = __location__ + '/morelab.crt'
 
 
 def start_demo():
-
     #### Start Time
     start_time = datetime.now()
     #
@@ -66,7 +70,7 @@ def start_demo():
     print("--> TEST 1: Simple query to API to know if it works \n")
     time.sleep(2)
     #
-    r = requests.get(SERVER, verify=False)
+    r = requests.get(SERVER, verify=CERT)
     if r.status_code == 200:
         print(r.text, "\n")
     else:
@@ -84,7 +88,7 @@ def start_demo():
     print("Data sent to the api ", data, "\n")
     time.sleep(1)
     #
-    r = requests.post(SERVER + '/search', json=data, verify=False)
+    r = requests.post(SERVER + '/search', json=data, verify=CERT)
     if r.status_code != 200:
         print(r.text, "status code: ", r.status_code, "\n")
     else:
@@ -104,7 +108,7 @@ def start_demo():
     print("Data sent to the api: ", data, "\n")
     time.sleep(1)
     #
-    r = requests.post(SERVER + '/login', json=data, verify=False)
+    r = requests.post(SERVER + '/login', json=data, verify=CERT)
     if r.status_code == 401:
         print(r.text, "status code: ", r.status_code, "\n")
     else:
@@ -123,7 +127,7 @@ def start_demo():
     print("Data sent to the api ", data, "\n")
     time.sleep(1)
     #
-    r = requests.post(SERVER + '/login', json=data, verify=False)
+    r = requests.post(SERVER + '/login', json=data, verify=CERT)
     if r.status_code == 200:
         cookies = r.cookies.get_dict()
         print(r.text, "status code: ", r.status_code, "\n")
@@ -143,7 +147,7 @@ def start_demo():
     print("Data sent to the api ", data, "\n")
     time.sleep(1)
     #
-    r = requests.post(SERVER + '/search', cookies=cookies, json=data, verify=False)
+    r = requests.post(SERVER + '/search', cookies=cookies, json=data, verify=CERT)
     if r.status_code == 200:
         print(r.text, "status code: ", r.status_code, "\n")
     else:
@@ -162,7 +166,7 @@ def start_demo():
     print("Data sent to the api ", data, "\n")
     time.sleep(1)
     #
-    r = requests.post(SERVER + '/add_action', cookies=cookies, json=data, verify=False)
+    r = requests.post(SERVER + '/add_action', cookies=cookies, json=data, verify=CERT)
     if r.status_code != 200:
         print(r.text, "status code: ", r.status_code, "\n")
     else:
@@ -181,7 +185,7 @@ def start_demo():
     print("Data sent to the api ", data, "\n")
     time.sleep(1)
     #
-    r = requests.post(SERVER + '/add_action', cookies=cookies, json=data, verify=False)
+    r = requests.post(SERVER + '/add_action', cookies=cookies, json=data, verify=CERT)
     if r.status_code == 200:
         print(r.text, "status code: ", r.status_code, "\n")
     else:
@@ -200,7 +204,7 @@ def start_demo():
     print("Data sent to the api ", data, "\n")
     time.sleep(1)
     #
-    r = requests.post(SERVER + '/search', cookies=cookies, json=data, verify=False)
+    r = requests.post(SERVER + '/search', cookies=cookies, json=data, verify=CERT)
     if r.status_code == 200:
         print(r.text, "status code: ", r.status_code, "\n")
     else:
@@ -208,14 +212,14 @@ def start_demo():
                             ": " + r.status_code)
     time.sleep(3)
     #
-    #   Step 9: Send SPARQL query to retrieve information
+    # Step 9: Send SPARQL query to retrieve information
     #
     print("--> TEST 9: Sending a SPARQL query to Fuseki server to show knowledge", "\n")
     #
     time.sleep(2)
     #
     query_string = "SELECT ?subject ?predicate ?object WHERE { ?subject " \
-                  "<file:///opt/c4a_data_repository/LinkedDataInterface/conf/vocab/location_location_name> ?object }"
+                   "<file:///opt/c4a_data_repository/LinkedDataInterface/conf/vocab/location_location_name> ?object }"
     print("SPARQL query to be sent to FUSEKI endpoint: ", query_string, "\n")
     time.sleep(1)
     #
@@ -224,7 +228,7 @@ def start_demo():
     sparql.setQuery(query_string)
     sparql.setReturnFormat('json')
     res = sparql.query()
-    if res.response.status == 200:
+    if res.response.code == 200:
         res_dict = res.convert()
         print(res_dict, "\n")
     else:
@@ -236,6 +240,7 @@ def start_demo():
     #
     end_time = datetime.now()
     print("Script succeeded in: ", (end_time - start_time).seconds, " seconds", "\n")
+
 
 # Exception
 class TestException(Exception):
