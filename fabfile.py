@@ -8,14 +8,15 @@ import random
 # Server Hosts
 env.hosts = [
     #'10.48.1.115:5800',
-    'odin.deusto.es:5800',
+    #'odin.deusto.es:5800',
+    '10.48.1.197'
     # third.server.es,
     # and.so.on ......
 ]
 
 # Set the username
-#env.user = "city4age"
-env.user = "elektro"
+env.user = "city4age"
+#env.user = "elektro"
 
 # Set database creation parameters (Remember to change your mapping.ttl file)
 DB_USER = 'city4agedb'      # User login
