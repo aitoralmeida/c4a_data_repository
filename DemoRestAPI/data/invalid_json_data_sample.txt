@@ -1,14 +1,30 @@
-{
-    "actionSS": "eu:c4a:usermotility:enter_bus",
-    "locationes": "it:puglia:lecce:bus:39",
-    "payloading": {
-        "user": "eu:c4a:pilot:madrid:user:12346",
-        "positison": "urn:ogc:def:crs:EPSG:6.6:4326"
+[
+    {
+        "action": "eu:c4a:usermotility:enter_bus",
+        "location": "es:emt:madrid:bus:125",
+        "payload": {
+            "user": "eu:c4a:pilot:madrid:user:9854854",
+            "position": "urn:ogc:def:crs:EPSG:6.6:4326"
+        },
+        "timestamp": "2014-05-22 07:08:41.22222",
+        "rating": 0.1,
+        "extras": {
+            "pilot": "madrid"
+        },
+        "secret": "jwt_token"
     },
-    "timestamp": "2014-05-20 07:08:41.22222",
-    "ratinsg": 0.1,
-    "extras": {
-        "pillot": "lecce"
-    },
-    "secret": "jwt_token"
-}
+    {
+        "action": "eu:c4a:usermotility:leave_bus",
+        "location": "es:emt:lecce:bus:122",
+        "payloads": {
+            "user": "eu:c4a:pilot:lecce:user:3544614",
+            "position": "urn:ogc:def:crs:EPSG:6.6:4323"
+        },
+        "timestamp": "2016-05-25 07:08:41.22222",
+        "ratingg": 0.5,
+        "extra": {
+            "pilot": "lecce"
+        },
+        "secretse": "jwt_token"
+    }
+]

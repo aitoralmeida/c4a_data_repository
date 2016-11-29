@@ -42,11 +42,6 @@ __maintainer__ = "Rubén Mulero"
 __email__ = "ruben.mulero@deusto.es"
 __status__ = "Demo"
 
-# Configuration
-REST_API_URL = "nowhere"
-USERNAME = "jonh"
-PASSWORD = "DOE"
-
 ##################################################
 #######
 # Configuring request with sample data
@@ -62,7 +57,7 @@ CERT = __location__ + '/morelab.crt'
 
 
 def start_demo():
-    #### Start Time
+    # Start Time
     start_time = datetime.now()
     #
     # Step 1: Making some GET actions into RA
@@ -80,6 +75,7 @@ def start_demo():
     #
     # Step 2: Basic query failure
     #
+    print("#############################################################\n")
     print("--> TEST 2: A search without login into the API \n")
     time.sleep(2)
     #
@@ -99,6 +95,7 @@ def start_demo():
     #
     # Step 3: Performing an invalid user login into Rest
     #
+    print("#############################################################\n")
     print("--> TEST 3: Log into the system with INVALID user", "\n")
     #
     time.sleep(2)
@@ -106,7 +103,7 @@ def start_demo():
     file = open("./data/invalid_json_login.txt", "r")
     data = json.load(file)
     print("Data sent to the api: ", data, "\n")
-    time.sleep(1)
+    time.sleep(2)
     #
     r = requests.post(SERVER + '/login', json=data, verify=CERT)
     if r.status_code == 401:
@@ -118,6 +115,7 @@ def start_demo():
     #
     # Step 4: Valid log into the system
     #
+    print("#############################################################\n")
     print("--> TEST 4: Log into the system with VALID user", "\n")
     #
     time.sleep(2)
@@ -125,7 +123,7 @@ def start_demo():
     file = open("./data/json_login.txt", "r")
     data = json.load(file)
     print("Data sent to the api ", data, "\n")
-    time.sleep(1)
+    time.sleep(2)
     #
     r = requests.post(SERVER + '/login', json=data, verify=CERT)
     if r.status_code == 200:
@@ -138,6 +136,7 @@ def start_demo():
     #
     # Step 5: Search into DB from sample DATA
     #
+    print("#############################################################\n")
     print("--> TEST 5: Query to API to know if there is previously data into database", "\n")
     #
     time.sleep(2)
@@ -145,7 +144,7 @@ def start_demo():
     file = open("./data/json_search.txt", "r")
     data = json.load(file)
     print("Data sent to the api ", data, "\n")
-    time.sleep(1)
+    time.sleep(2)
     #
     r = requests.post(SERVER + '/search', cookies=cookies, json=data, verify=CERT)
     if r.status_code == 200:
@@ -157,6 +156,7 @@ def start_demo():
     #
     # Step 6: Sending execution error sample INVALID DATA
     #
+    print("#############################################################\n")
     print("--> TEST 6: Send INVALID executed action data ", "\n")
     #
     time.sleep(2)
@@ -164,7 +164,7 @@ def start_demo():
     file = open('./data/invalid_json_data_sample.txt', 'r')
     data = json.load(file)
     print("Data sent to the api ", data, "\n")
-    time.sleep(1)
+    time.sleep(2)
     #
     r = requests.post(SERVER + '/add_action', cookies=cookies, json=data, verify=CERT)
     if r.status_code != 200:
@@ -176,6 +176,7 @@ def start_demo():
     #
     # Step 7: Send Valid JSON DATA
     #
+    print("#############################################################\n")
     print("--> TEST 7: Send VALID executed action data ", "\n")
     #
     time.sleep(2)
@@ -183,7 +184,7 @@ def start_demo():
     file = open('./data/json_data_sample.txt', 'r')
     data = json.load(file)
     print("Data sent to the api ", data, "\n")
-    time.sleep(1)
+    time.sleep(2)
     #
     r = requests.post(SERVER + '/add_action', cookies=cookies, json=data, verify=CERT)
     if r.status_code == 200:
@@ -195,6 +196,7 @@ def start_demo():
     #
     # Step 8: Query again to know if the data is stored into DB
     #
+    print("#############################################################\n")
     print("--> TEST 8: 2º Query To API to know if data is inserted into DB", "\n")
     #
     time.sleep(2)
@@ -202,7 +204,7 @@ def start_demo():
     file = open("./data/json_search.txt", "r")
     data = json.load(file)
     print("Data sent to the api ", data, "\n")
-    time.sleep(1)
+    time.sleep(2)
     #
     r = requests.post(SERVER + '/search', cookies=cookies, json=data, verify=CERT)
     if r.status_code == 200:
@@ -214,6 +216,7 @@ def start_demo():
     #
     # Step 9: Send SPARQL query to retrieve information
     #
+    print("#############################################################\n")
     print("--> TEST 9: Sending a SPARQL query to Fuseki server to show knowledge", "\n")
     #
     time.sleep(2)
@@ -221,7 +224,7 @@ def start_demo():
     query_string = "SELECT ?subject ?predicate ?object WHERE { ?subject " \
                    "<file:///opt/c4a_data_repository/LinkedDataInterface/conf/vocab/location_location_name> ?object }"
     print("SPARQL query to be sent to FUSEKI endpoint: ", query_string, "\n")
-    time.sleep(1)
+    time.sleep(2)
     #
     sparql = SPARQLWrapper(FUSEKI)
     sparql.method = 'GET'
@@ -239,6 +242,8 @@ def start_demo():
     # End time
     #
     end_time = datetime.now()
+    print("#############################################################\n")
+    print("#############################################################\n")
     print("Script succeeded in: ", (end_time - start_time).seconds, " seconds", "\n")
 
 
