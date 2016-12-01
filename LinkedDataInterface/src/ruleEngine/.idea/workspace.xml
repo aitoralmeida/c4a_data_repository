@@ -38,8 +38,8 @@
       <file leaf-file-name="InferenceMain.java" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/eu/deustotech/city4age/InferenceMain.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="605">
-              <caret line="57" column="64" lean-forward="true" selection-start-line="57" selection-start-column="64" selection-end-line="57" selection-end-column="64" />
+            <state relative-caret-position="620">
+              <caret line="58" column="61" lean-forward="false" selection-start-line="58" selection-start-column="56" selection-end-line="58" selection-end-column="61" />
               <folding>
                 <element signature="imports" expanded="true" />
               </folding>
@@ -750,7 +750,7 @@
       <workItem from="1479721971114" duration="836000" />
       <workItem from="1479738631587" duration="98000" />
       <workItem from="1479744873832" duration="174000" />
-      <workItem from="1480600524346" duration="853000" />
+      <workItem from="1480600524346" duration="919000" />
     </task>
     <servers />
   </component>
@@ -787,7 +787,7 @@
     </history-entry>
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="73138000" />
+    <option name="totallyTimeSpent" value="73204000" />
   </component>
   <component name="TodoView">
     <todo-panel id="selected-file">
@@ -1263,8 +1263,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/src/eu/deustotech/city4age/InferenceMain.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="605">
-          <caret line="57" column="64" lean-forward="true" selection-start-line="57" selection-start-column="64" selection-end-line="57" selection-end-column="64" />
+        <state relative-caret-position="620">
+          <caret line="58" column="61" lean-forward="false" selection-start-line="58" selection-start-column="56" selection-end-line="58" selection-end-column="61" />
           <folding>
             <element signature="imports" expanded="true" />
           </folding>

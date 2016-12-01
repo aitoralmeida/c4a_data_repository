@@ -21,6 +21,7 @@ The script makes the following actions:
 --> Send VALID data to insert data into DB
 --> Perform a second search into DB to demonstrate that data is inserted OK.
 --> Send a SPARQL query to Fuseki to request data from DB and inference support.
+--> Open browser to see results into Fuseki.
 
 """
 
@@ -86,7 +87,7 @@ def start_demo():
     #
     file = open("./data/json_search.txt", "r")
     data = json.load(file)
-    print("Data sent to the api ", data, "\n")
+    print("Data sent to the api: \n\n", json.dumps(data, indent=1), "\n")
     time.sleep(1)
     #
     r = requests.post(SERVER + '/search', json=data, verify=CERT)
@@ -109,7 +110,7 @@ def start_demo():
     #
     file = open("./data/invalid_json_login.txt", "r")
     data = json.load(file)
-    print("Data sent to the api: ", data, "\n")
+    print("Data sent to the api: \n\n", json.dumps(data, indent=1), "\n")
     time.sleep(2)
     #
     r = requests.post(SERVER + '/login', json=data, verify=CERT)
@@ -131,7 +132,7 @@ def start_demo():
     #
     file = open("./data/json_login.txt", "r")
     data = json.load(file)
-    print("Data sent to the api ", data, "\n")
+    print("Data sent to the api: \n\n", json.dumps(data, indent=1), "\n")
     time.sleep(2)
     #
     r = requests.post(SERVER + '/login', json=data, verify=CERT)
@@ -154,12 +155,16 @@ def start_demo():
     #
     file = open("./data/json_search.txt", "r")
     data = json.load(file)
-    print("Data sent to the api ", data, "\n")
+    print("Data sent to the api: \n\n", json.dumps(data, indent=1), "\n")
     time.sleep(2)
     #
     r = requests.post(SERVER + '/search', cookies=cookies, json=data, verify=CERT)
     if r.status_code == 200:
-        print(r.text, "status code: ", r.status_code, "\n")
+        try:
+            r_data = json.loads(r.text)
+            print(json.dumps(r_data, indent=1), "status code: ", r.status_code, "\n")
+        except ValueError:
+            print (r.text, "\n")
     else:
         raise TestException("Server returned an invalid status code \n"
                             ": " + r.status_code)
@@ -176,7 +181,7 @@ def start_demo():
     #
     file = open('./data/invalid_json_data_sample.txt', 'r')
     data = json.load(file)
-    print("Data sent to the api ", data, "\n")
+    print("Data sent to the api: \n\n", json.dumps(data, indent=1), "\n")
     time.sleep(2)
     #
     r = requests.post(SERVER + '/add_action', cookies=cookies, json=data, verify=CERT)
@@ -198,7 +203,7 @@ def start_demo():
     #
     file = open('./data/json_data_sample.txt', 'r')
     data = json.load(file)
-    print("Data sent to the api ", data, "\n")
+    print("Data sent to the api: \n\n", json.dumps(data, indent=1), "\n")
     time.sleep(2)
     #
     r = requests.post(SERVER + '/add_action', cookies=cookies, json=data, verify=CERT)
@@ -220,12 +225,16 @@ def start_demo():
     #
     file = open("./data/json_search.txt", "r")
     data = json.load(file)
-    print("Data sent to the api ", data, "\n")
+    print("Data sent to the api: \n\n", json.dumps(data, indent=1), "\n")
     time.sleep(2)
     #
     r = requests.post(SERVER + '/search', cookies=cookies, json=data, verify=CERT)
     if r.status_code == 200:
-        print(r.text, "status code: ", r.status_code, "\n")
+        try:
+            r_data = json.loads(r.text)
+            print(json.dumps(r_data, indent=1), "status code: ", r.status_code, "\n")
+        except ValueError:
+            print (r.text, "\n")
     else:
         raise TestException("Server returned an invalid status code \n"
                             ": " + r.status_code)
@@ -242,7 +251,7 @@ def start_demo():
     #
     query_string = "SELECT ?subject ?predicate ?object WHERE { ?subject " \
                    "<file:///opt/c4a_data_repository/LinkedDataInterface/conf/vocab/location_location_name> ?object }"
-    print("SPARQL query to be sent to FUSEKI endpoint: ", query_string, "\n")
+    print("SPARQL query to be sent to FUSEKI endpoint: \n\n", query_string, "\n\n")
     time.sleep(2)
     #
     sparql = SPARQLWrapper(FUSEKI)
@@ -252,7 +261,7 @@ def start_demo():
     res = sparql.query()
     if res.response.code == 200:
         res_dict = res.convert()
-        print(res_dict, "\n")
+        print(json.dumps(res_dict, indent=1), "\n")
     else:
         raise TestException("Server returned an invalid status code \n"
                             ": " + res.response.status)

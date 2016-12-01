@@ -56,7 +56,7 @@ public class InferenceMain {
             }else {
                 LOGGER.log( Level.FINE, "Using default time interval");
                 System.out.print("Executing default TimerTask");
-                timer.scheduleAtFixedRate(timerTask, 0, 600000);                   // Setting default time.
+                timer.scheduleAtFixedRate(timerTask, 0, 60000);                   // Setting default time.
             }
         }else{
             System.err.println("You need to provide a valid mapping.ttl file or rules.txt file");
