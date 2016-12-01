@@ -27,6 +27,7 @@ The script makes the following actions:
 import time
 import ssl
 import urllib
+import webbrowser
 from datetime import datetime
 import json
 import requests
@@ -57,6 +58,8 @@ CERT = __location__ + '/morelab.crt'
 
 
 def start_demo():
+
+    raw_input(" > Press Enter to continue...\n")
     # Start Time
     start_time = datetime.now()
     #
@@ -71,6 +74,8 @@ def start_demo():
     else:
         raise TestException("Server returned an error status code: " + r.status_code)
 
+    #
+    raw_input(" > Press Enter to continue...\n")
     time.sleep(3)
     #
     # Step 2: Basic query failure
@@ -91,6 +96,8 @@ def start_demo():
         raise TestException("Server returned a valid status code when it needs to return an error status code \n"
                             ": " + r.status_code)
     file.close()
+    #
+    raw_input(" > Press Enter to continue...\n")
     time.sleep(3)
     #
     # Step 3: Performing an invalid user login into Rest
@@ -111,6 +118,8 @@ def start_demo():
     else:
         raise TestException("Server returned an invalid status code \n"
                             ": " + r.status_code)
+    #
+    raw_input(" > Press Enter to continue...\n")
     time.sleep(3)
     #
     # Step 4: Valid log into the system
@@ -132,6 +141,8 @@ def start_demo():
     else:
         raise TestException("Server returned an invalid status code \n"
                             ": " + r.status_code)
+    #
+    raw_input(" > Press Enter to continue...\n")
     time.sleep(3)
     #
     # Step 5: Search into DB from sample DATA
@@ -152,6 +163,8 @@ def start_demo():
     else:
         raise TestException("Server returned an invalid status code \n"
                             ": " + r.status_code)
+    #
+    raw_input(" > Press Enter to continue...\n")
     time.sleep(3)
     #
     # Step 6: Sending execution error sample INVALID DATA
@@ -172,6 +185,8 @@ def start_demo():
     else:
         raise TestException("Server returned an valid status code \n"
                             ": " + r.status_code)
+    #
+    raw_input(" > Press Enter to continue...\n")
     time.sleep(3)
     #
     # Step 7: Send Valid JSON DATA
@@ -192,6 +207,8 @@ def start_demo():
     else:
         raise TestException("Server returned an invalid status code \n"
                             ": " + str(r.status_code))
+    #
+    raw_input(" > Press Enter to continue...\n")
     time.sleep(3)
     #
     # Step 8: Query again to know if the data is stored into DB
@@ -212,6 +229,8 @@ def start_demo():
     else:
         raise TestException("Server returned an invalid status code \n"
                             ": " + r.status_code)
+    #
+    raw_input(" > Press Enter to continue...\n")
     time.sleep(3)
     #
     # Step 9: Send SPARQL query to retrieve information
@@ -237,7 +256,20 @@ def start_demo():
     else:
         raise TestException("Server returned an invalid status code \n"
                             ": " + res.response.status)
+    #
+    raw_input(" > Press Enter to continue...\n")
     time.sleep(3)
+    #
+    print("#############################################################\n")
+    print("--> Opening browser to see data\n")
+    #
+    #
+    time.sleep(2)
+    #
+    print("Opening browser......\n")
+    #
+    time.sleep(2)
+    webbrowser.open('https://dev_c4a.morelab.deusto.es/fuseki')
     #
     # End time
     #
