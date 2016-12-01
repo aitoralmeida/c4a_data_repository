@@ -168,8 +168,16 @@ class Utilities(object):
                             "description": "the name of the city where is the location",
                             "type": "string",
                             "minLength": 1,
-                            "maxLength": 40
-                        },                      # TODO limit only to Pilot cities and lowercase
+                            "maxLength": 40,
+                            "enum": [
+                                "madrid",
+                                "lecce",
+                                "singapore",
+                                "montpellier",
+                                "athens",
+                                "birmingham"
+                            ]
+                        },
                     },
                     "required": ["pilot"]
                 },
@@ -178,7 +186,8 @@ class Utilities(object):
                     "type": "string",
                 },
             },
-            "required": ["action", "location", "payload", "timestamp", "rating", "extra", "secret"]
+            "required": ["action", "location", "payload", "timestamp", "rating", "extra", "secret"],
+            "additionalProperties": False
         }
 
         try:
@@ -248,12 +257,21 @@ class Utilities(object):
                     "description": "the name of the city where is the location",
                     "type": "string",
                     "minLength": 1,
-                    "maxLength": 40
+                    "maxLength": 40,
+                    "enum": [
+                        "madrid",
+                        "lecce",
+                        "singapore",
+                        "montpellier",
+                        "athens",
+                        "birmingham"
+                      ]
                 }
             },
             "required": ["activity_name", "activity_start_date", "activity_end_date", "since", "house_number",
                          "location",
-                         "pilot"]
+                         "pilot"],
+            "additionalProperties": False
         }
 
         try:
@@ -306,7 +324,55 @@ class Utilities(object):
                 "username",
                 "password",
                 "type"
-            ]
+            ],
+            "additionalProperties": False
+        }
+
+        try:
+            if type(p_data) is list:
+                # We have a list of dicts
+                for data in p_data:
+                    validate(data, schema)
+            else:
+                validate(p_data, schema)
+            res = True
+        except ValidationError:
+            logging.error("The schema entered by the user is invalid")
+
+        return res
+
+    @staticmethod
+    def check_clear_user(p_data):
+        """
+        Check if data is ok
+
+        :param p_data: User sent data
+
+        :return:  True or False if data is ok
+        """
+        res = False
+        schema = {
+              "title": "Clear all data related to user in the system",
+              "type": "object",
+              "properties": {
+                "id": {
+                  "description": "The id of the user in role in system",
+                  "type": "string",
+                  "minLength": 10,
+                  "maxLength": 75
+                },
+                "type": {
+                  "description": "The stakeholder needed by the system",
+                  "type": "string",
+                  "minLength": 3,
+                  "maxLength": 20
+                }
+              },
+              "required": [
+                "id",
+                "type"
+              ],
+              "additionalProperties": False
         }
 
         try:
@@ -367,7 +433,8 @@ class Utilities(object):
             "required": [
                 "table",
                 "criteria"
-            ]
+            ],
+            "additionalProperties": False
         }
 
         try:

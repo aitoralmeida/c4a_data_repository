@@ -145,8 +145,8 @@ class UserInRole(Base):
     # m2m
     action = relationship("ExecutedAction")
     # one2many
-    stake_holder_id = Column(String(25), ForeignKey('stake_holder.name'))
-    pilot_id = Column(Integer, ForeignKey('pilot.id'))          # TODO change this ID for name
+    stake_holder_name = Column(String(25), ForeignKey('stake_holder.name'))
+    pilot_name = Column(String(50), ForeignKey('pilot.name'))
 
     def __repr__(self):
         return "<User(id='%s', valid_from='%s'. valid_to='%s')>" % (self.id, self.valid_from, self.valid_to)
@@ -246,7 +246,7 @@ class Location(Base):
     location_name = Column(String(75))
     indoor = Column(Boolean)
     # One2Many
-    pilot_id = Column(Integer, ForeignKey('pilot.id'), nullable=True)           # TODO changes this Id for name
+    pilot_name = Column(String(50), ForeignKey('pilot.name'), nullable=True)
 
     activity = relationship("Activity")
 
@@ -254,6 +254,7 @@ class Location(Base):
         return "<Location(location_name='%s', indoor='%s')>" % (self.location_name, self.indoor)
 
 
+#TODO  Activity - Location is now a N:M relationship you need to condigfure it
 class Activity(Base):
     """
     Activity is a collection of different actions. For example "Make breakfast is an activity and could have some actions
@@ -294,8 +295,7 @@ class Pilot(Base):
 
     __tablename__ = 'pilot'
 
-    id = Column(Integer, Sequence('pilot_id_seq'), primary_key=True)        #  TODO DELETE this ID and use name has p_key
-    name = Column(String(50), unique=True, nullable=False)
+    name = Column(String(50), primary_key=True)
     population_size = Column(BigInteger)
     # One2Many
     user_in_role = relationship('UserInRole')

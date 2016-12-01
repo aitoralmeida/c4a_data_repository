@@ -256,9 +256,9 @@ class PostgORM(object):
             action = self._get_or_create(tables.Action, action_name=data['action'])
             executed_action_date = datetime.datetime.strptime(data['timestamp'], '%Y-%m-%d %H:%M:%S.%f')
             pilot = self._get_or_create(tables.Pilot, name=data['extra']['pilot'])
-            user = self._get_or_create(tables.UserInRole, id=data['payload']['user'], pilot_id=pilot.id)        # TODO changes this ide for NAME
+            user = self._get_or_create(tables.UserInRole, id=data['payload']['user'], pilot_name=pilot.name)        # TODO changes this ide for NAME
             location = self._get_or_create(tables.Location, location_name=data['location'], indoor=True,    # Default indoor value
-                                           pilot_id=pilot.id)
+                                           pilot_name=pilot.name)
             # We insert all related data to executed_action
             executed_action = tables.ExecutedAction(executed_action_date=executed_action_date, rating=data['rating'],
                                                     location_id=location.id,
@@ -282,7 +282,7 @@ class PostgORM(object):
             # We are going to find if location is inside DB
             pilot = self._get_or_create(tables.Pilot, name=data['pilot'])
             location = self._get_or_create(tables.Location, location_name=data['location']['name'],
-                                           indoor=data['location']['indoor'], pilot_id=pilot.id)
+                                           indoor=data['location']['indoor'], pilot_name=pilot.name)
             # Creating new Activity.......
             activity = tables.Activity(activity_name=data['activity_name'],
                                        activity_start_date=data['activity_start_date'],
@@ -352,6 +352,35 @@ class PostgORM(object):
                 logging.error("There isn't a stakeholder inside JSON or data is invalid, value is: ", data['type'] or
                               None)
                 break
+        return res
+
+    def clear_user_data_in_system(self, p_data):
+        """
+        This method allows to administrative system users, delete all user related data.
+
+        The administrative users needs to send a list containing usernames and its stakeholders to
+        perform a clean of their stored data.
+
+        If the clean action is successful the system will return a True state, otherise it will returns an False state
+        and write into logging what is the error.
+
+        :param p_data: A list containing users to be cleaned from system
+        :return: True if everything goes well.
+                False if there are any problem.
+        """
+        res = False
+        # check if list of users are OK
+        for data in p_data:
+            # Data entered is OK
+            instance = self.session.query(tables.UserInRole).filter_by(id=data['id'],
+                                                                       stake_holder_name=data['type']).first()
+            if instance:
+                self.session.delete(instance)
+                res = True
+            else:
+                res = False
+        # Commit changes
+        self.commit()
         return res
 
     def add_historical(self, p_user_id, p_route, p_ip, p_agent, p_data, p_status_code):

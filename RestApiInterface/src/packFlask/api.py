@@ -406,7 +406,7 @@ def add_new_user(version=app.config['ACTUAL_API']):
         # Verifying the user
         user_data = Utilities.check_session(app, DATABASE)
         # Validate new user data
-        if data and Utilities.check_add_new_user(data) and user_data.stake_holder.name == "admin":
+        if data and Utilities.check_add_new_user(data) and user_data.stake_holder_name == "admin":
             # Data entered is ok
             res = DATABASE.add_new_user_in_system(data)
             if res and isinstance(res, list):
@@ -425,6 +425,41 @@ def add_new_user(version=app.config['ACTUAL_API']):
 
 
 # TODO insert new endpoitns called "add_measure" and "clear_user"
+
+
+@app.route('/api/<version>/clear_user', methods=['POST'])
+@limit_content_length(MAX_LENGHT)
+def clear_user(version=app.config['ACTUAL_API']):
+    """
+    Clear all data related to a list of defined users. This is only can be performed by an administration
+    level role. The administrator needs to define the username and its role.
+
+    An example in JSON could be:
+
+    {
+        "id": "rubennS",
+        "type": "admin"              # Safeguard delete
+    }
+
+    :param version: Api version
+    :return: A message containing the res of the operation
+    """
+
+    if Utilities.check_connection(app, version):
+        data = _convert_to_dict(request.json)
+        # Verifying the user
+        user_data = Utilities.check_session(app, DATABASE)
+        # Validate new user data
+        if data and Utilities.check_clear_user(data) and user_data.stake_holder_name == "admin":
+            # Data entered is ok
+            res = DATABASE.clear_user_data_in_system(data)
+            if res:
+                return Response('User data deleted\n'), 200
+            else:
+                return Response("There isn't data from this entered user", 412)
+        else:
+            abort(500)
+
 
 
 ###################################################################################################
