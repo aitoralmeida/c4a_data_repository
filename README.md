@@ -31,7 +31,7 @@ To install the entire project please follow this steps.
 2. Edit _env.hosts_ and _env.user_ in **fabfile.py** with your favourite editor:
     1. _env.host_ : Array of server hosts. Put here your destination(s) server(s)
     2. _env.user_ : User to login in.
-3. Save and exist
+3. Save and exit
 4. Run:
     ```bash
         fab fabfile.py
