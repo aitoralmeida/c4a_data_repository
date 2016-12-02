@@ -115,6 +115,7 @@ def when_request_finished(sender, response, **extra):
 ###################################################################################################
 ###################################################################################################
 
+
 @app.route('/')
 def index():
     """
@@ -192,7 +193,7 @@ def login(version=app.config['ACTUAL_API']):
             res = DATABASE.verify_user_login(data, app)
             if res:
                 # Username and password are OK
-                logging.info("login: User login successfully with %s username", data['username'])
+                Utilities.write_log_info(app, ("login: User login successfully with username: %s" % data['username']))
                 # Saving session cookie.
                 # session['username'] = data['username']
                 # session['id'] = res
@@ -200,7 +201,7 @@ def login(version=app.config['ACTUAL_API']):
                 # return redirect(url_for('api', version=app.config['ACTUAL_API']))
                 return "You were logged in", 200
             else:
-                logging.error("User entered an invalid username or password")
+                Utilities.write_log_error(app, "login: User entered an invalid username or password. 401")
                 abort(401)
         else:
             abort(500)
@@ -218,10 +219,11 @@ def logout(version=app.config['ACTUAL_API']):
         user_data = Utilities.check_session(app, DATABASE)
         if user_data:
             session.pop('token', None)
+            Utilities.write_log_info(app, ("logout: User logout successfully with username: %s" % user_data.username))
             flash('You were logged out')
             return redirect(url_for('api', version=app.config['ACTUAL_API']))
     else:
-        logging.error("check_version: User entered an invalid api version, 404")
+        Utilities.write_log_error(app, "logout: User entered an invalid api version, 404")
         return "You have entered an invalid api version", 404
 
 
@@ -268,13 +270,19 @@ def search(version=app.config['ACTUAL_API']):
                 res = DATABASE.query(table_class, data['criteria'], limit=limit, offset=offset, order_by=order_by)
                 serialized_labels = [serialize(label) for label in res]
                 if len(serialized_labels) == 0:
+                    Utilities.write_log_warning(app, ("search: the username: %s performs a valid search "
+                                                      "with no results" % user_data.username))
                     res = Response("No data found with this filters.\n")
                 else:
+                    Utilities.write_log_info(app, ("search: the username: %s performs a valid search" %
+                                                   user_data.username))
                     res = Response(dumps(serialized_labels, default=date_handler), mimetype='application/json')
             except AttributeError:
                 abort(500)
         else:
             # Some user data is not well
+            Utilities.write_log_error(app, ("search: the username: %s performs an INVALID search. 413" %
+                                      user_data.username))
             res = Response(
                 "You have entered incorrect JSON format Data, check if your JSON is OK. Here there are current database"
                 "tables, check if you type one of the following tables: %s" % DATABASE.get_tables()
@@ -305,7 +313,6 @@ def add_action(version=app.config['ACTUAL_API']):
         "secret": "jwt_token"
     }
 
-
     :param version: Api version
     :return:
     """
@@ -319,10 +326,12 @@ def add_action(version=app.config['ACTUAL_API']):
             # User and data are OK. save data into DB
             res = DATABASE.add_action(data)
             if res:
-                logging.info("add_action: Stored in database ok")
+                Utilities.write_log_info(app, ("add_action: the username: %s adds new action into database" %
+                                         user_data.username))
                 return Response('Data stored in database OK\n'), 200
             else:
-                logging.error("add_action: Stored in database failed")
+                Utilities.write_log_error(app, ("add_action: the username: %s failed to store data into database. 500" %
+                                          user_data.username))
                 return "There is an error in DB", 500
         else:
             abort(500)
@@ -361,7 +370,6 @@ def add_activity(version=app.config['ACTUAL_API']):
         "pilot": "madrid"
     }]
 
-
     :param version: Api version
     :return:
     """
@@ -374,10 +382,12 @@ def add_activity(version=app.config['ACTUAL_API']):
             # User and data are OK. save data into DB
             res = DATABASE.add_activity(data)
             if res:
-                logging.info("add_activity: Stored in database ok")
+                Utilities.write_log_info(app, ("add_activity: the username: %s adds new action into database" %
+                                         user_data.username))
                 return Response('Data stored in database OK\n'), 200
             else:
-                logging.error("add_activity: Stored in database failed")
+                Utilities.write_log_error(app, ("add_activity: the username: %s failed to store "
+                                                "data into database. 500" % user_data.username))
                 return Response("There is an error in DB"), 500
         else:
             abort(500)
@@ -411,18 +421,19 @@ def add_new_user(version=app.config['ACTUAL_API']):
             res = DATABASE.add_new_user_in_system(data)
             if res and isinstance(res, list):
                 # The user entered a bad state holder. Return something
+                Utilities.write_log_warning(app, ("add_new_user: the username: %s entered an invalid stakeholder. 412" %
+                                            user_data.username))
                 msg = "Your request is not 100% finished because you have entered an invalid stakeholder, please, " \
                       "review your JSON request and set 'type' value to one of the following " \
                       "list to decide what is the best choice for you: \n \n %s" % res
                 return Response(msg, 412)
             if res and res is True:
                 # Data entered ok
+                Utilities.write_log_info(app, ("add_new_user: the username: %s inserts new user into database" %
+                                         user_data.username))
                 return Response('Data stored in database OK\n'), 200
         else:
             abort(500)
-
-
-
 
 # TODO insert new endpoitns called "add_measure" and "clear_user"
 
@@ -459,7 +470,6 @@ def clear_user(version=app.config['ACTUAL_API']):
                 return Response("There isn't data from this entered user", 412)
         else:
             abort(500)
-
 
 
 ###################################################################################################

@@ -478,3 +478,36 @@ class Utilities(object):
             if table in current_tables:
                 res = True
         return res
+
+    @staticmethod
+    def write_log_info(app, p_message):
+        """
+        Write info log into a file
+
+        :param app: Flask application
+        :param p_message: Message to send to log file
+
+        """
+        app.logger.info(p_message)
+
+    @staticmethod
+    def write_log_warning(app, p_message):
+        """
+        Write info log into a file
+
+        :param app: Flask application
+        :param p_message: Message to send to log file
+
+        """
+        app.logger.warning(p_message)
+
+    @staticmethod
+    def write_log_error(app, p_message):
+        """
+        Write info log into a file
+
+        :param app: Flask application
+        :param p_message: Message to send to log file
+
+        """
+        app.logger.error(p_message)

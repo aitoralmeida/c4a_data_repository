@@ -10,11 +10,11 @@ import inspect
 import ConfigParser
 import logging
 import datetime
+import tables
 from sqlalchemy import create_engine, desc, MetaData
 from sqlalchemy.engine.url import URL
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import sessionmaker
-import tables
 
 
 __author__ = 'Rubén Mulero'

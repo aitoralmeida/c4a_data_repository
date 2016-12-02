@@ -2,8 +2,8 @@
 
 import sys
 import os
-
-
+import logging
+from logging.handlers import RotatingFileHandler
 from src.packFlask.api import app as application
 
 __author__ = 'Rubén Mulero'
@@ -19,4 +19,18 @@ sys.path.insert(0, basedir)
 
 # main execution
 if __name__ == '__main__':
+    # Create the log folder if not exists
+    if not os.path.exists('./log'):
+        os.makedirs('./log')
+    # Setting logging handlers
+    logHandler = RotatingFileHandler('./log/info.log', maxBytes=1024 * 1024 * 100, backupCount=20)
+    # set the log handler level
+    logHandler.setLevel(logging.INFO)
+    # set the formatter
+    formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+    logHandler.setFormatter(formatter)
+    # set the app logger level
+    application.logger.setLevel(logging.INFO)
+    application.logger.addHandler(logHandler)
+    # Run the application
     application.run(debug=True, host='0.0.0.0')
