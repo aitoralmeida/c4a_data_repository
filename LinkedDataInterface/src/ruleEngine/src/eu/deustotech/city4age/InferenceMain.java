@@ -45,18 +45,18 @@ public class InferenceMain {
                         timer.purge();
                         LOGGER.log(Level.SEVERE, "The timer is forced to stop, there is problem in the code");
                         System.err.println("The timer stops due to some erros");
-                        // Todo send a mail to server admin to warm about this issuse (maybe we need to set up PostFix into the server
                     }
                 }
             };
             // Decide if the program uses user defined time or system default.
             if (args.length >= 3 && args[2].length() > 0 && isLong(args[2])) {
                 LOGGER.log( Level.FINE, "User entered a defined time interval. The value is --> {}", args[2]);
-                System.out.println("BLEBLLEL");
+                System.out.print("Executing a time-defined TimerTask");
                 timer.scheduleAtFixedRate(timerTask, 0, Long.parseLong(args[2])); // Setting user defined time.
             }else {
                 LOGGER.log( Level.FINE, "Using default time interval");
-                timer.scheduleAtFixedRate(timerTask, 0, 10000);                   // Setting default time.
+                System.out.print("Executing default TimerTask");
+                timer.scheduleAtFixedRate(timerTask, 0, 60000);                   // Setting default time 1 min.
             }
         }else{
             System.err.println("You need to provide a valid mapping.ttl file or rules.txt file");
