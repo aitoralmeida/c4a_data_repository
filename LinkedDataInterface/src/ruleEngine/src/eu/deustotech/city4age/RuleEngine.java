@@ -35,7 +35,6 @@ public class RuleEngine {
 
     private static final Logger LOGGER = Logger.getLogger( RuleEngine.class.getName() );
 
-    private Model instances;
     private Integer execution = 0;
     private String rulesFile;
     private String mapFile;
@@ -62,40 +61,46 @@ public class RuleEngine {
 
     public boolean inference() {
         boolean res = false;
+        Model instances = null;
         // Loading mapModelFile from Path
         Model mapModel = FileManager.get().loadModel(this.mapFile);
         // Load rules defined by the user.
         List <Rule> listRules = Rule.rulesFromURL("file:" + this.rulesFile);
         // We check if we have usefull data
         if (!mapModel.isEmpty() && !listRules.isEmpty()) {
-            this.instances = new ModelD2RQ(mapModel, "http://www.morelab.deusto.es/ontologies/sorelcom#");
+            instances = new ModelD2RQ(mapModel, "http://www.morelab.deusto.es/ontologies/sorelcom#");
             // Create a new ontoloyModel
             final OntModel finalResult = ModelFactory.createOntologyModel();
             // Creating the reasoner based on previously loaded rules
             Reasoner myReasoner = new GenericRuleReasoner(listRules);
             myReasoner.setDerivationLogging(true);        // Allow to getDerivation: return useful information.
             // Infer new instances using rules and our instances
-            InfModel inf = ModelFactory.createInfModel(myReasoner, this.instances);
+            InfModel inf = ModelFactory.createInfModel(myReasoner, instances);
             if (!inf.isEmpty()) {
                 // Check if new Model is consistent
                 ValidityReport validity = inf.validate();
                 if (validity.isValid()) {
                     // Add new knowledge to the model.
-                    finalResult.add(this.instances);
+                    finalResult.add(instances);
                     finalResult.add(inf.getDeductionsModel());
                     // Set prefix map
-                    finalResult.setNsPrefixes(this.instances.getNsPrefixMap());
+                    finalResult.setNsPrefixes(instances.getNsPrefixMap());
                     finalResult.setNsPrefixes(inf.getDeductionsModel().getNsPrefixMap());
                     // updated instances
-                    this.instances = finalResult.getBaseModel();            // todo check for the next version if this global variable is needed.
-                    this.printResults(finalResult, inf);
+                    instances = finalResult.getBaseModel();
+                    this.printResults(finalResult, inf, instances);
                     //Upload into Fuseki
                     if (this.oldOntModel == null || !this.checkAreEquals(this.oldOntModel, finalResult)) {
                         // If the base model is different (new data into DB) or if the inference model is different (new inference throught new rules
                         // Then we will upload all data to Fuseki
                         LOGGER.log(Level.FINE, "Uploading new data into Fuseki Server");
+                        if (this.oldOntModel != null) {
+                            this.oldOntModel.close();
+                        }
                         this.oldOntModel = finalResult;
                         this.serve(finalResult);
+                    }else {
+                        finalResult.close();
                     }
                     // The function works well, so we return a True state
                     res = true;
@@ -111,7 +116,15 @@ public class RuleEngine {
                 System.err.println("Problems in the inference model, it returns a empty state");
                 LOGGER.log(Level.SEVERE, "The inference returns a empty state. May the rule reasoner is not working well or instances model is bad formed.");
             }
+            // Closing Files.
+            inf.close();
+        }else {
+            System.err.println(" The mapping file or the rules file are empty. Please check if they are OK.");
+            LOGGER.log(Level.SEVERE, "mapping file or rules file are empty. Check if they are valid.");
         }
+        // Closing files
+        mapModel.close();
+        listRules.clear();
         return res;
     }
 
@@ -185,13 +198,12 @@ public class RuleEngine {
      * @param pOntology The actual knowledge ( Base + inferred)
      * @param pInf: The list containing the inferred elements.
      */
-    private void printResults(OntModel pOntology, InfModel pInf) {
+    private void printResults(OntModel pOntology, InfModel pInf, Model pInstances) {
         this.execution++;
         pOntology.write(System.out, "N-TRIPLES");
         System.out.println("========================================");
-        System.out.println("Number of elements: "+ this.instances.size());
+        System.out.println("Number of elements: "+ pInstances.size());
         System.out.println("Execution number :"+this.execution);
-
         System.out.println("Infered count list "+pInf.getDeductionsModel().size());
     }
 
