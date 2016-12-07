@@ -6,11 +6,9 @@ import com.hp.hpl.jena.reasoner.Reasoner;
 import com.hp.hpl.jena.reasoner.ValidityReport;
 import com.hp.hpl.jena.reasoner.rulesys.GenericRuleReasoner;
 import com.hp.hpl.jena.reasoner.rulesys.Rule;
-import com.hp.hpl.jena.shared.RulesetNotFoundException;
 import com.hp.hpl.jena.util.FileManager;
-import com.hp.hpl.jena.vocabulary.RDF;
-import com.sun.javafx.util.Logging;
 import de.fuberlin.wiwiss.d2rq.jena.ModelD2RQ;
+import sun.rmi.runtime.Log;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -18,8 +16,10 @@ import java.io.InputStreamReader;
 import java.io.StringWriter;
 import java.util.Iterator;
 import java.util.List;
+import java.util.logging.FileHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.logging.SimpleFormatter;
 
 
 /**
@@ -33,16 +33,20 @@ import java.util.logging.Logger;
 
 public class RuleEngine {
 
-    private static final Logger LOGGER = Logger.getLogger( RuleEngine.class.getName() );
 
     private Integer execution = 0;
     private String rulesFile;
     private String mapFile;
     private OntModel oldOntModel = null;
+    private String newLine;
+    private Logger LOGGER;
 
-    public RuleEngine(String pMapFile, String pRulesFiles) {
+    public RuleEngine(String pMapFile, String pRulesFiles, Logger pLogger) {
         this.mapFile = pMapFile;
         this.rulesFile = pRulesFiles;
+        this.LOGGER = pLogger;
+        // Separation printing service
+        this.newLine = System.getProperty("line.separator");
     }
 
     /**
@@ -93,7 +97,6 @@ public class RuleEngine {
                     if (this.oldOntModel == null || !this.checkAreEquals(this.oldOntModel, finalResult)) {
                         // If the base model is different (new data into DB) or if the inference model is different (new inference throught new rules
                         // Then we will upload all data to Fuseki
-                        LOGGER.log(Level.FINE, "Uploading new data into Fuseki Server");
                         if (this.oldOntModel != null) {
                             this.oldOntModel.close();
                         }
@@ -110,17 +113,19 @@ public class RuleEngine {
                     for (Iterator i = validity.getReports(); i.hasNext(); ) {
                         System.err.println(" - " + i.next());
                     }
+                    LOGGER.severe("There are conflicts with infered values. Check system err output");
                 }
             }else {
                 // There is a problem in the inference model
                 System.err.println("Problems in the inference model, it returns a empty state");
-                LOGGER.log(Level.SEVERE, "The inference returns a empty state. May the rule reasoner is not working well or instances model is bad formed.");
+                LOGGER.severe("The inference returns a empty state. May the rule reasoner is not working well " +
+                        "or instances model is bad formed.");
             }
             // Closing Files.
             inf.close();
         }else {
             System.err.println(" The mapping file or the rules file are empty. Please check if they are OK.");
-            LOGGER.log(Level.SEVERE, "mapping file or rules file are empty. Check if they are valid.");
+            LOGGER.severe("Mapping file or Rules file are empty. Check if they are valid.");
         }
         // Closing files
         mapModel.close();
@@ -160,8 +165,13 @@ public class RuleEngine {
             if (output.length() > 0 && output.contains("count")) {
                 // We have good response from the server
                 System.out.println("Ok");
+                // Logging sucesfull uploading
+                LOGGER.info("New data uploaded to Fuseki." + newLine + "Number of instances: " + pModel.size()
+                        + newLine +"Graph data uploaded is: " + pModel.write(System.out, "N-TRIPLES"));
+
             }else {
                 System.err.println("Some error happened. Is Fuseki activated?");
+                LOGGER.severe("Data can not upload to Fuseki, check if Fuseki is activated: " +output);
             }
         }catch (IOException e) {
             e.printStackTrace();

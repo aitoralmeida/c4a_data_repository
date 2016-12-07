@@ -71,6 +71,47 @@ map:activity_activity_name a d2rq:PropertyBridge;
 	d2rq:propertyDefinitionLabel "activity activity_name";
 	d2rq:column "activity.activity_name";
 	.
+map:activity_activity_start_date a d2rq:PropertyBridge;
+	d2rq:belongsToClassMap map:activity;
+	d2rq:property vocab:activity_activity_start_date;
+	d2rq:propertyDefinitionLabel "activity activity_start_date";
+	d2rq:column "activity.activity_start_date";
+	d2rq:datatype xsd:dateTime;
+	.
+map:activity_activity_end_date a d2rq:PropertyBridge;
+	d2rq:belongsToClassMap map:activity;
+	d2rq:property vocab:activity_activity_end_date;
+	d2rq:propertyDefinitionLabel "activity activity_end_date";
+	d2rq:column "activity.activity_end_date";
+	d2rq:datatype xsd:dateTime;
+	.
+map:activity_creation_date a d2rq:PropertyBridge;
+	d2rq:belongsToClassMap map:activity;
+	d2rq:property vocab:activity_creation_date;
+	d2rq:propertyDefinitionLabel "activity creation_date";
+	d2rq:column "activity.creation_date";
+	d2rq:datatype xsd:dateTime;
+	.
+map:activity_since a d2rq:PropertyBridge;
+	d2rq:belongsToClassMap map:activity;
+	d2rq:property vocab:activity_since;
+	d2rq:propertyDefinitionLabel "activity since";
+	d2rq:column "activity.since";
+	d2rq:datatype xsd:dateTime;
+	.
+map:activity_house_number a d2rq:PropertyBridge;
+	d2rq:belongsToClassMap map:activity;
+	d2rq:property vocab:activity_house_number;
+	d2rq:propertyDefinitionLabel "activity house_number";
+	d2rq:column "activity.house_number";
+	d2rq:datatype xsd:integer;
+	.
+map:activity_location_id__ref a d2rq:PropertyBridge;
+	d2rq:belongsToClassMap map:activity;
+	d2rq:property vocab:activity_location_id;
+	d2rq:refersToClassMap map:location;
+	d2rq:join "activity.location_id => location.id";
+	.
 
 # Table eam
 map:eam a d2rq:ClassMap;
@@ -155,6 +196,13 @@ map:executed_action_date a d2rq:PropertyBridge;
 	d2rq:column "executed_action.date";
 	d2rq:datatype xsd:dateTime;
 	.
+map:executed_action_executed_action_date a d2rq:PropertyBridge;
+	d2rq:belongsToClassMap map:executed_action;
+	d2rq:property vocab:executed_action_executed_action_date;
+	d2rq:propertyDefinitionLabel "executed_action executed_action_date";
+	d2rq:column "executed_action.executed_action_date";
+	d2rq:datatype xsd:dateTime;
+	.
 map:executed_action_rating a d2rq:PropertyBridge;
 	d2rq:belongsToClassMap map:executed_action;
 	d2rq:property vocab:executed_action_rating;
@@ -206,79 +254,68 @@ map:executed_action_location_id__ref a d2rq:PropertyBridge;
 	d2rq:join "executed_action.location_id => location.id";
 	.
 
-# Table geriatric_indicator
-map:geriatric_indicator a d2rq:ClassMap;
+# Table historical
+map:historical a d2rq:ClassMap;
 	d2rq:dataStorage map:database;
-	d2rq:uriPattern "geriatric_indicator/@@geriatric_indicator.id@@";
-	d2rq:class vocab:geriatric_indicator;
-	d2rq:classDefinitionLabel "geriatric_indicator";
+	d2rq:uriPattern "historical/@@historical.id@@";
+	d2rq:class vocab:historical;
+	d2rq:classDefinitionLabel "historical";
 	.
-map:geriatric_indicator__label a d2rq:PropertyBridge;
-	d2rq:belongsToClassMap map:geriatric_indicator;
+map:historical__label a d2rq:PropertyBridge;
+	d2rq:belongsToClassMap map:historical;
 	d2rq:property rdfs:label;
-	d2rq:pattern "geriatric_indicator #@@geriatric_indicator.id@@";
+	d2rq:pattern "historical #@@historical.id@@";
 	.
-map:geriatric_indicator_id a d2rq:PropertyBridge;
-	d2rq:belongsToClassMap map:geriatric_indicator;
-	d2rq:property vocab:geriatric_indicator_id;
-	d2rq:propertyDefinitionLabel "geriatric_indicator id";
-	d2rq:column "geriatric_indicator.id";
+map:historical_id a d2rq:PropertyBridge;
+	d2rq:belongsToClassMap map:historical;
+	d2rq:property vocab:historical_id;
+	d2rq:propertyDefinitionLabel "historical id";
+	d2rq:column "historical.id";
 	d2rq:datatype xsd:integer;
 	.
-map:geriatric_indicator_name a d2rq:PropertyBridge;
-	d2rq:belongsToClassMap map:geriatric_indicator;
-	d2rq:property vocab:geriatric_indicator_name;
-	d2rq:propertyDefinitionLabel "geriatric_indicator name";
-	d2rq:column "geriatric_indicator.name";
+map:historical_route a d2rq:PropertyBridge;
+	d2rq:belongsToClassMap map:historical;
+	d2rq:property vocab:historical_route;
+	d2rq:propertyDefinitionLabel "historical route";
+	d2rq:column "historical.route";
 	.
-map:geriatric_indicator_score a d2rq:PropertyBridge;
-	d2rq:belongsToClassMap map:geriatric_indicator;
-	d2rq:property vocab:geriatric_indicator_score;
-	d2rq:propertyDefinitionLabel "geriatric_indicator score";
-	d2rq:column "geriatric_indicator.score";
+map:historical_data a d2rq:PropertyBridge;
+	d2rq:belongsToClassMap map:historical;
+	d2rq:property vocab:historical_data;
+	d2rq:propertyDefinitionLabel "historical data";
+	d2rq:column "historical.data";
+	.
+map:historical_ip a d2rq:PropertyBridge;
+	d2rq:belongsToClassMap map:historical;
+	d2rq:property vocab:historical_ip;
+	d2rq:propertyDefinitionLabel "historical ip";
+	d2rq:column "historical.ip";
+	.
+map:historical_agent a d2rq:PropertyBridge;
+	d2rq:belongsToClassMap map:historical;
+	d2rq:property vocab:historical_agent;
+	d2rq:propertyDefinitionLabel "historical agent";
+	d2rq:column "historical.agent";
+	.
+map:historical_date a d2rq:PropertyBridge;
+	d2rq:belongsToClassMap map:historical;
+	d2rq:property vocab:historical_date;
+	d2rq:propertyDefinitionLabel "historical date";
+	d2rq:column "historical.date";
+	d2rq:datatype xsd:dateTime;
+	.
+map:historical_status_code a d2rq:PropertyBridge;
+	d2rq:belongsToClassMap map:historical;
+	d2rq:property vocab:historical_status_code;
+	d2rq:propertyDefinitionLabel "historical status_code";
+	d2rq:column "historical.status_code";
 	d2rq:datatype xsd:integer;
 	.
-
-# Table geriatric_indicator_geriatric_sub_indicator_rel (n:m)
-map:geriatric_indicator_geriatric_sub_indicator_rel__link a d2rq:PropertyBridge;
-	d2rq:belongsToClassMap map:geriatric_sub_indicator;
-	d2rq:property vocab:geriatric_indicator_geriatric_sub_indicator_rel;
-	d2rq:refersToClassMap map:geriatric_indicator;
-	d2rq:join "geriatric_indicator_geriatric_sub_indicator_rel.geriatric_sub_indicator_id => geriatric_sub_indicator.id";
-	d2rq:join "geriatric_indicator_geriatric_sub_indicator_rel.geriatric_indicator_id => geriatric_indicator.id";
-	.
-
-# Table geriatric_sub_indicator
-map:geriatric_sub_indicator a d2rq:ClassMap;
-	d2rq:dataStorage map:database;
-	d2rq:uriPattern "geriatric_sub_indicator/@@geriatric_sub_indicator.id@@";
-	d2rq:class vocab:geriatric_sub_indicator;
-	d2rq:classDefinitionLabel "geriatric_sub_indicator";
-	.
-map:geriatric_sub_indicator__label a d2rq:PropertyBridge;
-	d2rq:belongsToClassMap map:geriatric_sub_indicator;
-	d2rq:property rdfs:label;
-	d2rq:pattern "geriatric_sub_indicator #@@geriatric_sub_indicator.id@@";
-	.
-map:geriatric_sub_indicator_id a d2rq:PropertyBridge;
-	d2rq:belongsToClassMap map:geriatric_sub_indicator;
-	d2rq:property vocab:geriatric_sub_indicator_id;
-	d2rq:propertyDefinitionLabel "geriatric_sub_indicator id";
-	d2rq:column "geriatric_sub_indicator.id";
-	d2rq:datatype xsd:integer;
-	.
-map:geriatric_sub_indicator_name a d2rq:PropertyBridge;
-	d2rq:belongsToClassMap map:geriatric_sub_indicator;
-	d2rq:property vocab:geriatric_sub_indicator_name;
-	d2rq:propertyDefinitionLabel "geriatric_sub_indicator name";
-	d2rq:column "geriatric_sub_indicator.name";
-	.
-map:geriatric_sub_indicator_score a d2rq:PropertyBridge;
-	d2rq:belongsToClassMap map:geriatric_sub_indicator;
-	d2rq:property vocab:geriatric_sub_indicator_score;
-	d2rq:propertyDefinitionLabel "geriatric_sub_indicator score";
-	d2rq:column "geriatric_sub_indicator.score";
-	d2rq:datatype xsd:integer;
+map:historical_user_in_system_id__ref a d2rq:PropertyBridge;
+	d2rq:belongsToClassMap map:historical;
+	d2rq:property vocab:historical_user_in_system_id;
+	d2rq:refersToClassMap map:user_in_system;
+	d2rq:join "historical.user_in_system_id => user_in_system.id";
 	.
 
 # Table inter_behaviour
@@ -307,12 +344,6 @@ map:inter_behaviour_deviation a d2rq:PropertyBridge;
 	d2rq:column "inter_behaviour.deviation";
 	d2rq:datatype xsd:double;
 	.
-map:inter_behaviour_intra_behaviour_id__ref a d2rq:PropertyBridge;
-	d2rq:belongsToClassMap map:inter_behaviour;
-	d2rq:property vocab:inter_behaviour_intra_behaviour_id;
-	d2rq:refersToClassMap map:intra_behaviour;
-	d2rq:join "inter_behaviour.intra_behaviour_id => intra_behaviour.id";
-	.
 map:inter_behaviour_real_activity_id__ref a d2rq:PropertyBridge;
 	d2rq:belongsToClassMap map:inter_behaviour;
 	d2rq:property vocab:inter_behaviour_real_activity_id;
@@ -324,95 +355,6 @@ map:inter_behaviour_expected_activity_id__ref a d2rq:PropertyBridge;
 	d2rq:property vocab:inter_behaviour_expected_activity_id;
 	d2rq:refersToClassMap map:activity;
 	d2rq:join "inter_behaviour.expected_activity_id => activity.id";
-	.
-
-# Table inter_behaviour_risk_rel (n:m)
-map:inter_behaviour_risk_rel__link a d2rq:PropertyBridge;
-	d2rq:belongsToClassMap map:risk;
-	d2rq:property vocab:inter_behaviour_risk_rel;
-	d2rq:refersToClassMap map:inter_behaviour;
-	d2rq:join "inter_behaviour_risk_rel.risk_id => risk.id";
-	d2rq:join "inter_behaviour_risk_rel.inter_behaviour_id => inter_behaviour.id";
-	.
-
-# Table intra_activity
-map:intra_activity a d2rq:ClassMap;
-	d2rq:dataStorage map:database;
-	d2rq:uriPattern "intra_activity/@@intra_activity.activity_id@@/@@intra_activity.intra_behaviour_id@@/@@intra_activity.start_interval@@/@@intra_activity.end_interval@@";
-	d2rq:class vocab:intra_activity;
-	d2rq:classDefinitionLabel "intra_activity";
-	.
-map:intra_activity__label a d2rq:PropertyBridge;
-	d2rq:belongsToClassMap map:intra_activity;
-	d2rq:property rdfs:label;
-	d2rq:pattern "intra_activity #@@intra_activity.activity_id@@/@@intra_activity.intra_behaviour_id@@/@@intra_activity.start_interval@@/@@intra_activity.end_interval@@";
-	.
-map:intra_activity_start_interval a d2rq:PropertyBridge;
-	d2rq:belongsToClassMap map:intra_activity;
-	d2rq:property vocab:intra_activity_start_interval;
-	d2rq:propertyDefinitionLabel "intra_activity start_interval";
-	d2rq:column "intra_activity.start_interval";
-	d2rq:datatype xsd:dateTime;
-	.
-map:intra_activity_end_interval a d2rq:PropertyBridge;
-	d2rq:belongsToClassMap map:intra_activity;
-	d2rq:property vocab:intra_activity_end_interval;
-	d2rq:propertyDefinitionLabel "intra_activity end_interval";
-	d2rq:column "intra_activity.end_interval";
-	d2rq:datatype xsd:dateTime;
-	.
-map:intra_activity_activity_id__ref a d2rq:PropertyBridge;
-	d2rq:belongsToClassMap map:intra_activity;
-	d2rq:property vocab:intra_activity_activity_id;
-	d2rq:refersToClassMap map:activity;
-	d2rq:join "intra_activity.activity_id => activity.id";
-	.
-map:intra_activity_intra_behaviour_id__ref a d2rq:PropertyBridge;
-	d2rq:belongsToClassMap map:intra_activity;
-	d2rq:property vocab:intra_activity_intra_behaviour_id;
-	d2rq:refersToClassMap map:intra_behaviour;
-	d2rq:join "intra_activity.intra_behaviour_id => intra_behaviour.id";
-	.
-
-# Table intra_behaviour
-map:intra_behaviour a d2rq:ClassMap;
-	d2rq:dataStorage map:database;
-	d2rq:uriPattern "intra_behaviour/@@intra_behaviour.id@@";
-	d2rq:class vocab:intra_behaviour;
-	d2rq:classDefinitionLabel "intra_behaviour";
-	.
-map:intra_behaviour__label a d2rq:PropertyBridge;
-	d2rq:belongsToClassMap map:intra_behaviour;
-	d2rq:property rdfs:label;
-	d2rq:pattern "intra_behaviour #@@intra_behaviour.id@@";
-	.
-map:intra_behaviour_id a d2rq:PropertyBridge;
-	d2rq:belongsToClassMap map:intra_behaviour;
-	d2rq:property vocab:intra_behaviour_id;
-	d2rq:propertyDefinitionLabel "intra_behaviour id";
-	d2rq:column "intra_behaviour.id";
-	d2rq:datatype xsd:integer;
-	.
-map:intra_behaviour_mean a d2rq:PropertyBridge;
-	d2rq:belongsToClassMap map:intra_behaviour;
-	d2rq:property vocab:intra_behaviour_mean;
-	d2rq:propertyDefinitionLabel "intra_behaviour mean";
-	d2rq:column "intra_behaviour.mean";
-	d2rq:datatype xsd:double;
-	.
-map:intra_behaviour_period a d2rq:PropertyBridge;
-	d2rq:belongsToClassMap map:intra_behaviour;
-	d2rq:property vocab:intra_behaviour_period;
-	d2rq:propertyDefinitionLabel "intra_behaviour period";
-	d2rq:column "intra_behaviour.period";
-	d2rq:datatype xsd:double;
-	.
-map:intra_behaviour_deviation a d2rq:PropertyBridge;
-	d2rq:belongsToClassMap map:intra_behaviour;
-	d2rq:property vocab:intra_behaviour_deviation;
-	d2rq:propertyDefinitionLabel "intra_behaviour deviation";
-	d2rq:column "intra_behaviour.deviation";
-	d2rq:datatype xsd:double;
 	.
 
 # Table location
@@ -447,31 +389,24 @@ map:location_indoor a d2rq:PropertyBridge;
 	d2rq:column "location.indoor";
 	d2rq:valueRegex "^[01]*$";
 	.
-map:location_pilot_id__ref a d2rq:PropertyBridge;
+map:location_pilot_name__ref a d2rq:PropertyBridge;
 	d2rq:belongsToClassMap map:location;
-	d2rq:property vocab:location_pilot_id;
+	d2rq:property vocab:location_pilot_name;
 	d2rq:refersToClassMap map:pilot;
-	d2rq:join "location.pilot_id => pilot.id";
+	d2rq:join "location.pilot_name => pilot.name";
 	.
 
 # Table pilot
 map:pilot a d2rq:ClassMap;
 	d2rq:dataStorage map:database;
-	d2rq:uriPattern "pilot/@@pilot.id@@";
+	d2rq:uriPattern "pilot/@@pilot.name|urlify@@";
 	d2rq:class vocab:pilot;
 	d2rq:classDefinitionLabel "pilot";
 	.
 map:pilot__label a d2rq:PropertyBridge;
 	d2rq:belongsToClassMap map:pilot;
 	d2rq:property rdfs:label;
-	d2rq:pattern "pilot #@@pilot.id@@";
-	.
-map:pilot_id a d2rq:PropertyBridge;
-	d2rq:belongsToClassMap map:pilot;
-	d2rq:property vocab:pilot_id;
-	d2rq:propertyDefinitionLabel "pilot id";
-	d2rq:column "pilot.id";
-	d2rq:datatype xsd:integer;
+	d2rq:pattern "pilot #@@pilot.name@@";
 	.
 map:pilot_name a d2rq:PropertyBridge;
 	d2rq:belongsToClassMap map:pilot;
@@ -485,86 +420,6 @@ map:pilot_population_size a d2rq:PropertyBridge;
 	d2rq:propertyDefinitionLabel "pilot population_size";
 	d2rq:column "pilot.population_size";
 	d2rq:datatype xsd:integer;
-	.
-
-# Table pilot_geriatric_indicator_rel
-map:pilot_geriatric_indicator_rel a d2rq:ClassMap;
-	d2rq:dataStorage map:database;
-	d2rq:uriPattern "pilot_geriatric_indicator_rel/@@pilot_geriatric_indicator_rel.pilot_id@@/@@pilot_geriatric_indicator_rel.geriatric_indicator_id@@/@@pilot_geriatric_indicator_rel.date@@";
-	d2rq:class vocab:pilot_geriatric_indicator_rel;
-	d2rq:classDefinitionLabel "pilot_geriatric_indicator_rel";
-	.
-map:pilot_geriatric_indicator_rel__label a d2rq:PropertyBridge;
-	d2rq:belongsToClassMap map:pilot_geriatric_indicator_rel;
-	d2rq:property rdfs:label;
-	d2rq:pattern "pilot_geriatric_indicator_rel #@@pilot_geriatric_indicator_rel.pilot_id@@/@@pilot_geriatric_indicator_rel.geriatric_indicator_id@@/@@pilot_geriatric_indicator_rel.date@@";
-	.
-map:pilot_geriatric_indicator_rel_date a d2rq:PropertyBridge;
-	d2rq:belongsToClassMap map:pilot_geriatric_indicator_rel;
-	d2rq:property vocab:pilot_geriatric_indicator_rel_date;
-	d2rq:propertyDefinitionLabel "pilot_geriatric_indicator_rel date";
-	d2rq:column "pilot_geriatric_indicator_rel.date";
-	d2rq:datatype xsd:dateTime;
-	.
-map:pilot_geriatric_indicator_rel_pilot_id__ref a d2rq:PropertyBridge;
-	d2rq:belongsToClassMap map:pilot_geriatric_indicator_rel;
-	d2rq:property vocab:pilot_geriatric_indicator_rel_pilot_id;
-	d2rq:refersToClassMap map:pilot;
-	d2rq:join "pilot_geriatric_indicator_rel.pilot_id => pilot.id";
-	.
-map:pilot_geriatric_indicator_rel_geriatric_indicator_id__ref a d2rq:PropertyBridge;
-	d2rq:belongsToClassMap map:pilot_geriatric_indicator_rel;
-	d2rq:property vocab:pilot_geriatric_indicator_rel_geriatric_indicator_id;
-	d2rq:refersToClassMap map:geriatric_indicator;
-	d2rq:join "pilot_geriatric_indicator_rel.geriatric_indicator_id => geriatric_indicator.id";
-	.
-
-# Table risk
-map:risk a d2rq:ClassMap;
-	d2rq:dataStorage map:database;
-	d2rq:uriPattern "risk/@@risk.id@@";
-	d2rq:class vocab:risk;
-	d2rq:classDefinitionLabel "risk";
-	.
-map:risk__label a d2rq:PropertyBridge;
-	d2rq:belongsToClassMap map:risk;
-	d2rq:property rdfs:label;
-	d2rq:pattern "risk #@@risk.id@@";
-	.
-map:risk_id a d2rq:PropertyBridge;
-	d2rq:belongsToClassMap map:risk;
-	d2rq:property vocab:risk_id;
-	d2rq:propertyDefinitionLabel "risk id";
-	d2rq:column "risk.id";
-	d2rq:datatype xsd:integer;
-	.
-map:risk_risk_name a d2rq:PropertyBridge;
-	d2rq:belongsToClassMap map:risk;
-	d2rq:property vocab:risk_risk_name;
-	d2rq:propertyDefinitionLabel "risk risk_name";
-	d2rq:column "risk.risk_name";
-	.
-map:risk_ratio a d2rq:PropertyBridge;
-	d2rq:belongsToClassMap map:risk;
-	d2rq:property vocab:risk_ratio;
-	d2rq:propertyDefinitionLabel "risk ratio";
-	d2rq:column "risk.ratio";
-	d2rq:datatype xsd:double;
-	.
-map:risk_description a d2rq:PropertyBridge;
-	d2rq:belongsToClassMap map:risk;
-	d2rq:property vocab:risk_description;
-	d2rq:propertyDefinitionLabel "risk description";
-	d2rq:column "risk.description";
-	.
-
-# Table risk_executed_action_rel (n:m)
-map:risk_executed_action_rel__link a d2rq:PropertyBridge;
-	d2rq:belongsToClassMap map:executed_action;
-	d2rq:property vocab:risk_executed_action_rel;
-	d2rq:refersToClassMap map:risk;
-	d2rq:join "risk_executed_action_rel.executed_action_id => executed_action.id";
-	d2rq:join "risk_executed_action_rel.risk_id => risk.id";
 	.
 
 # Table simple_location
@@ -684,49 +539,17 @@ map:user_in_role_valid_to a d2rq:PropertyBridge;
 	d2rq:column "user_in_role.valid_to";
 	d2rq:datatype xsd:dateTime;
 	.
-map:user_in_role_pilot_id__ref a d2rq:PropertyBridge;
+map:user_in_role_pilot_name__ref a d2rq:PropertyBridge;
 	d2rq:belongsToClassMap map:user_in_role;
-	d2rq:property vocab:user_in_role_pilot_id;
+	d2rq:property vocab:user_in_role_pilot_name;
 	d2rq:refersToClassMap map:pilot;
-	d2rq:join "user_in_role.pilot_id => pilot.id";
+	d2rq:join "user_in_role.pilot_name => pilot.name";
 	.
-map:user_in_role_stake_holder_id__ref a d2rq:PropertyBridge;
+map:user_in_role_stake_holder_name__ref a d2rq:PropertyBridge;
 	d2rq:belongsToClassMap map:user_in_role;
-	d2rq:property vocab:user_in_role_stake_holder_id;
+	d2rq:property vocab:user_in_role_stake_holder_name;
 	d2rq:refersToClassMap map:stake_holder;
-	d2rq:join "user_in_role.stake_holder_id => stake_holder.name";
-	.
-
-# Table user_in_role_geriatric_indicator_rel
-map:user_in_role_geriatric_indicator_rel a d2rq:ClassMap;
-	d2rq:dataStorage map:database;
-	d2rq:uriPattern "user_in_role_geriatric_indicator_rel/@@user_in_role_geriatric_indicator_rel.user_in_role_id|urlify@@/@@user_in_role_geriatric_indicator_rel.geriatric_indicator_id@@";
-	d2rq:class vocab:user_in_role_geriatric_indicator_rel;
-	d2rq:classDefinitionLabel "user_in_role_geriatric_indicator_rel";
-	.
-map:user_in_role_geriatric_indicator_rel__label a d2rq:PropertyBridge;
-	d2rq:belongsToClassMap map:user_in_role_geriatric_indicator_rel;
-	d2rq:property rdfs:label;
-	d2rq:pattern "user_in_role_geriatric_indicator_rel #@@user_in_role_geriatric_indicator_rel.user_in_role_id@@/@@user_in_role_geriatric_indicator_rel.geriatric_indicator_id@@";
-	.
-map:user_in_role_geriatric_indicator_rel_date a d2rq:PropertyBridge;
-	d2rq:belongsToClassMap map:user_in_role_geriatric_indicator_rel;
-	d2rq:property vocab:user_in_role_geriatric_indicator_rel_date;
-	d2rq:propertyDefinitionLabel "user_in_role_geriatric_indicator_rel date";
-	d2rq:column "user_in_role_geriatric_indicator_rel.date";
-	d2rq:datatype xsd:dateTime;
-	.
-map:user_in_role_geriatric_indicator_rel_geriatric_indicator_id__ref a d2rq:PropertyBridge;
-	d2rq:belongsToClassMap map:user_in_role_geriatric_indicator_rel;
-	d2rq:property vocab:user_in_role_geriatric_indicator_rel_geriatric_indicator_id;
-	d2rq:refersToClassMap map:geriatric_indicator;
-	d2rq:join "user_in_role_geriatric_indicator_rel.geriatric_indicator_id => geriatric_indicator.id";
-	.
-map:user_in_role_geriatric_indicator_rel_user_in_role_id__ref a d2rq:PropertyBridge;
-	d2rq:belongsToClassMap map:user_in_role_geriatric_indicator_rel;
-	d2rq:property vocab:user_in_role_geriatric_indicator_rel_user_in_role_id;
-	d2rq:refersToClassMap map:user_in_role;
-	d2rq:join "user_in_role_geriatric_indicator_rel.user_in_role_id => user_in_role.id";
+	d2rq:join "user_in_role.stake_holder_name => stake_holder.name";
 	.
 
 # Table user_in_system

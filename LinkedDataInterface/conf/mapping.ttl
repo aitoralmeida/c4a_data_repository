@@ -545,11 +545,11 @@ map:user_in_role_pilot_name__ref a d2rq:PropertyBridge;
 	d2rq:refersToClassMap map:pilot;
 	d2rq:join "user_in_role.pilot_name => pilot.name";
 	.
-map:user_in_role_stake_holder_id__ref a d2rq:PropertyBridge;
+map:user_in_role_stake_holder_name__ref a d2rq:PropertyBridge;
 	d2rq:belongsToClassMap map:user_in_role;
-	d2rq:property vocab:user_in_role_stake_holder_id;
+	d2rq:property vocab:user_in_role_stake_holder_name;
 	d2rq:refersToClassMap map:stake_holder;
-	d2rq:join "user_in_role.stake_holder_id => stake_holder.name";
+	d2rq:join "user_in_role.stake_holder_name => stake_holder.name";
 	.
 
 # Table user_in_system
@@ -596,3 +596,4 @@ map:user_in_system_stake_holder_name__ref a d2rq:PropertyBridge;
 	d2rq:refersToClassMap map:stake_holder;
 	d2rq:join "user_in_system.stake_holder_name => stake_holder.name";
 	.
+
