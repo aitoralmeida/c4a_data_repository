@@ -16,7 +16,6 @@ from sqlalchemy.engine.url import URL
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import sessionmaker
 
-
 __author__ = 'Rubén Mulero'
 __copyright__ = "Copyright 2016, City4Age project"
 __credits__ = ["Rubén Mulero", "Aitor Almeida", "Gorka Azkune", "David Buján"]
@@ -91,8 +90,6 @@ stakeholders = [
     "expert_consultancie",
     "behavioral_science",
 ]
-
-
 
 
 class PostgORM(object):
@@ -256,8 +253,8 @@ class PostgORM(object):
             action = self._get_or_create(tables.Action, action_name=data['action'])
             executed_action_date = datetime.datetime.strptime(data['timestamp'], '%Y-%m-%d %H:%M:%S.%f')
             pilot = self._get_or_create(tables.Pilot, name=data['extra']['pilot'])
-            user = self._get_or_create(tables.UserInRole, id=data['payload']['user'], pilot_name=pilot.name)        # TODO changes this ide for NAME
-            location = self._get_or_create(tables.Location, location_name=data['location'], indoor=True,    # Default indoor value
+            user = self._get_or_create(tables.UserInRole, id=data['payload']['user'], pilot_name=pilot.name)
+            location = self._get_or_create(tables.Location, location_name=data['location'], indoor=True,
                                            pilot_name=pilot.name)
             # We insert all related data to executed_action
             executed_action = tables.ExecutedAction(executed_action_date=executed_action_date, rating=data['rating'],
@@ -358,10 +355,10 @@ class PostgORM(object):
         """
         This method allows to administrative system users, delete all user related data.
 
-        The administrative users needs to send a list containing usernames and its stakeholders to
+        The administrative users needs to send a list containing username and its stakeholders to
         perform a clean of their stored data.
 
-        If the clean action is successful the system will return a True state, otherise it will returns an False state
+        If the clean action is successful the system will return a True state, otherwise it will returns an False state
         and write into logging what is the error.
 
         :param p_data: A list containing users to be cleaned from system
@@ -369,9 +366,7 @@ class PostgORM(object):
                 False if there are any problem.
         """
         res = False
-        # check if list of users are OK
         for data in p_data:
-            # Data entered is OK
             instance = self.session.query(tables.UserInRole).filter_by(id=data['id'],
                                                                        stake_holder_name=data['type']).first()
             if instance:
@@ -379,6 +374,7 @@ class PostgORM(object):
                 res = True
             else:
                 res = False
+                break
         # Commit changes
         self.commit()
         return res

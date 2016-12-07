@@ -69,6 +69,7 @@ def limit_content_length(max_length):
 ###################################################################################################
 ###################################################################################################
 
+
 @app.before_request
 def before_request():
     global DATABASE
@@ -85,6 +86,7 @@ def teardown_request(exception):
     if DATABASE is not None:
         # Close database active session
         DATABASE.close()
+
 
 @request_finished.connect_via(app)
 def when_request_finished(sender, response, **extra):
@@ -177,6 +179,7 @@ def get_my_ip():
 ######                              POST functions
 ###################################################################################################
 ###################################################################################################
+
 
 @app.route('/api/<version>/login', methods=['POST'])
 @limit_content_length(MAX_LENGHT)
@@ -435,8 +438,6 @@ def add_new_user(version=app.config['ACTUAL_API']):
         else:
             abort(500)
 
-# TODO insert new endpoitns called "add_measure" and "clear_user"
-
 
 @app.route('/api/<version>/clear_user', methods=['POST'])
 @limit_content_length(MAX_LENGHT)
@@ -465,6 +466,7 @@ def clear_user(version=app.config['ACTUAL_API']):
             # Data entered is ok
             res = DATABASE.clear_user_data_in_system(data)
             if res:
+                Utilities.write_log_info(app, ("clean_user: the username: %s cleans user data" % user_data.username))
                 return Response('User data deleted\n'), 200
             else:
                 return Response("There isn't data from this entered user", 412)
@@ -472,11 +474,24 @@ def clear_user(version=app.config['ACTUAL_API']):
             abort(500)
 
 
+@app.route('/api/<version>/add_measure', methods=['POST'])
+@limit_content_length(MAX_LENGHT)
+def add_measure(version=app.config['ACTUAL_API']):
+    """
+    <Enter here a description of this endpoint>
+
+    :param version: Api version
+    :return:
+    """
+    # TODO this method must be developed with measure information from Vladimir
+    pass
+
 ###################################################################################################
 ###################################################################################################
 ######                              Error handlers
 ###################################################################################################
 ###################################################################################################
+
 
 @app.errorhandler(400)
 def not_found(error):

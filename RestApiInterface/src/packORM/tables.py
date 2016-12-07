@@ -143,7 +143,7 @@ class UserInRole(Base):
     valid_from = Column(TIMESTAMP, default=datetime.datetime.utcnow)
     valid_to = Column(TIMESTAMP)
     # m2m
-    action = relationship("ExecutedAction")
+    action = relationship("ExecutedAction", cascade="all, delete-orphan")
     # one2many
     stake_holder_name = Column(String(25), ForeignKey('stake_holder.name'))
     pilot_name = Column(String(50), ForeignKey('pilot.name'))
