@@ -12,8 +12,10 @@ from itsdangerous import (TimedJSONWebSignatureSerializer
                           as Serializer, BadSignature, SignatureExpired)
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, validates
+from sqlalchemy.sql import exists, select
+from sqlalchemy.schema import CreateSchema
 from sqlalchemy import Column, Integer, String, Boolean, Sequence, Float, BigInteger, ForeignKey, TIMESTAMP, \
-    Text, TypeDecorator
+    Text, TypeDecorator, event, MetaData
 from PasswordHash import PasswordHash
 
 
@@ -28,7 +30,7 @@ __status__ = "Prototype"
 
 
 # Global variable declarative base
-Base = declarative_base()
+Base = declarative_base(metadata=MetaData(schema='city4age_ar'))
 
 
 class Password(TypeDecorator):
@@ -75,6 +77,10 @@ def create_tables(p_engine):
     :param p_engine: Conex engine
     :return: None
     """
+    # Create schema if it is necessary
+    q = p_engine.execute("SELECT schema_name FROM information_schema.schemata WHERE schema_name = 'city4age_ar';")
+    if q.rowcount == 0:
+        event.listen(Base.metadata, 'before_create', CreateSchema('city4age_ar'))
     return Base.metadata.create_all(p_engine)
 
 
@@ -296,6 +302,7 @@ class Pilot(Base):
     __tablename__ = 'pilot'
 
     name = Column(String(50), primary_key=True)
+    pilot_code = Column(String(4), unique=True, nullable=False)
     population_size = Column(BigInteger)
     # One2Many
     user_in_role = relationship('UserInRole')
