@@ -8,15 +8,19 @@ Here we define tables, relationships between tables and so on.
 """
 
 import datetime
+import binascii
+import ConfigParser
+import os, inspect
+import uuid
 from itsdangerous import (TimedJSONWebSignatureSerializer
                           as Serializer, BadSignature, SignatureExpired)
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, validates
-from sqlalchemy.sql import exists, select
 from sqlalchemy.schema import CreateSchema
 from sqlalchemy import Column, Integer, String, Boolean, Sequence, Float, BigInteger, ForeignKey, TIMESTAMP, \
     Text, TypeDecorator, event, MetaData
 from PasswordHash import PasswordHash
+from Crypto.Cipher import AES
 
 
 __author__ = 'Rubén Mulero'
@@ -29,8 +33,58 @@ __email__ = "ruben.mulero@deusto.es"
 __status__ = "Prototype"
 
 
+# Key encryption configuration
+config = ConfigParser.ConfigParser()
+# Checks actual path of the file and sets config file.
+current_dir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+config_dir = os.path.abspath(current_dir + '../../../conf/rest_api.cfg')
+config.read(config_dir)
+
+# Loading saved key or defaulting to one
+if 'security' in config.sections():
+    key = config.get('security', 'encryption_key') or '\xc2O\xd1\xbb\xd6\xb2\xc2pxRS\x12l\xee8X\xcb\xc3(\xeer\xc5\x08s'
+else:
+    # Random generated key (Not recommended)
+    key = '\xc2O\xd1\xbb\xd6\xb2\xc2pxRS\x12l\xee8X\xcb\xc3(\xeer\xc5\x08s'
+
+
+# Defining hybrid encryption global methods
+def aes_encrypt(data):
+    cipher = AES.new(key)
+    data += " " * (16 - (len(data) % 16))
+    return binascii.hexlify(cipher.encrypt(data))
+
+
+def aes_decrypt(data):
+    cipher = AES.new(key)
+    return cipher.decrypt(binascii.unhexlify(data)).rstrip()
+
 # Global variable declarative base
 Base = declarative_base(metadata=MetaData(schema='city4age_ar'))
+
+
+class EncryptedValue(TypeDecorator):
+    """
+    Allows storing sensible data into database in an hybrid encrypted environment
+
+    This definition is used as following:
+
+    table_column = Column("encrypted_value", EncryptedValue(40), nullable=False)
+
+    Where:  --> "encryped_value" is the name of the column.
+            --> EncryptedValue(40) is the type of the column. In this case is a EncryptedValue type with length 40.
+
+
+    The impl variable defines the type of column. In this case is a String column.
+
+    """
+    impl = String           # Implemented for String columns.
+
+    def process_bind_param(self, value, dialect):
+        return aes_encrypt(value)
+
+    def process_result_value(self, value, dialect):
+        return aes_decrypt(value)
 
 
 class Password(TypeDecorator):
@@ -309,7 +363,7 @@ class Pilot(Base):
     location = relationship('Location')
 
     def __repr__(self):
-        return "<Pilot(name='%s', population_size='%s')>" % (self.name, self.population_size)
+        return "<Pilot(name='%s', pilot_code='%s', population_size='%s')>" % (self.name, self.pilot_code, self.population_size)
 
 
 class StakeHolder(Base):

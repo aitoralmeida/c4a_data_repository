@@ -23,14 +23,19 @@ __email__ = "ruben.mulero@deusto.es"
 __status__ = "Prototype"
 
 
-# TODO decied a list of access levels.
-# Here there is defined a list with tables access level definition
-TABLE_ACCESS_0 = None
-TABLE_ACCESS_1 = None
-TABLE_ACCESS_2 = None
-TABLE_ACCESS_3 = None
-TABLE_ACCESS_4 = None
-TABLE_ACCESS_5 = None
+# TODO the code below is candidates to be Role access level security
+
+
+# Role access dictionary. 0 is no access and 5 is super access.
+roles = {
+    "care_receiver": 0,
+    "care_giver": 1,
+    "geriatrician": 2,
+    "municipality_representative": 3,
+    "researcher": 3,
+    "application_developer": 4,
+    "administrator": 5
+}
 
 
 class Utilities(object):
