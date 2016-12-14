@@ -7,21 +7,21 @@ Here we define tables, relationships between tables and so on.
 
 """
 
-import datetime
-import binascii
 import ConfigParser
-import os, inspect
-import uuid
+import datetime
+import inspect
+import os
+
 from itsdangerous import (TimedJSONWebSignatureSerializer
                           as Serializer, BadSignature, SignatureExpired)
+from sqlalchemy import Column, Integer, String, Boolean, Sequence, Float, BigInteger, ForeignKey, TIMESTAMP, \
+    Text, TypeDecorator, event, MetaData
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, validates
 from sqlalchemy.schema import CreateSchema
-from sqlalchemy import Column, Integer, String, Boolean, Sequence, Float, BigInteger, ForeignKey, TIMESTAMP, \
-    Text, TypeDecorator, event, MetaData
-from PasswordHash import PasswordHash
-from Crypto.Cipher import AES
 
+from PasswordHash import PasswordHash
+from Encryption import Encryption
 
 __author__ = 'Rubén Mulero'
 __copyright__ = "Copyright 2016, City4Age project"
@@ -33,6 +33,8 @@ __email__ = "ruben.mulero@deusto.es"
 __status__ = "Prototype"
 
 
+DEFAULT_KEY = '2070711C879178C93CD3DB09FC4EADC6'
+
 # Key encryption configuration
 config = ConfigParser.ConfigParser()
 # Checks actual path of the file and sets config file.
@@ -42,22 +44,10 @@ config.read(config_dir)
 
 # Loading saved key or defaulting to one
 if 'security' in config.sections():
-    key = config.get('security', 'encryption_key') or '\xc2O\xd1\xbb\xd6\xb2\xc2pxRS\x12l\xee8X\xcb\xc3(\xeer\xc5\x08s'
+    cipher_key = config.get('security', 'encryption_key') or DEFAULT_KEY
 else:
-    # Random generated key (Not recommended)
-    key = '\xc2O\xd1\xbb\xd6\xb2\xc2pxRS\x12l\xee8X\xcb\xc3(\xeer\xc5\x08s'
-
-
-# Defining hybrid encryption global methods
-def aes_encrypt(data):
-    cipher = AES.new(key)
-    data += " " * (16 - (len(data) % 16))
-    return binascii.hexlify(cipher.encrypt(data))
-
-
-def aes_decrypt(data):
-    cipher = AES.new(key)
-    return cipher.decrypt(binascii.unhexlify(data)).rstrip()
+    # Using a default code key
+    cipher_key = DEFAULT_KEY
 
 # Global variable declarative base
 Base = declarative_base(metadata=MetaData(schema='city4age_ar'))
@@ -69,22 +59,48 @@ class EncryptedValue(TypeDecorator):
 
     This definition is used as following:
 
-    table_column = Column("encrypted_value", EncryptedValue(40), nullable=False)
-
-    Where:  --> "encryped_value" is the name of the column.
-            --> EncryptedValue(40) is the type of the column. In this case is a EncryptedValue type with length 40.
-
-
-    The impl variable defines the type of column. In this case is a String column.
+    table_column = Column(EncryptedValue(key), nullable=False, unique=True)
 
     """
-    impl = String           # Implemented for String columns.
+    impl = Text
+
+    def __init__(self, p_cipher_key, **kwds):
+        self.cipher_key = p_cipher_key
+        super(EncryptedValue, self).__init__(**kwds)
 
     def process_bind_param(self, value, dialect):
-        return aes_encrypt(value)
+        return self._convert(value).value
 
     def process_result_value(self, value, dialect):
-        return aes_decrypt(value)
+        if value is not None:
+            return Encryption(value, cipher_key)
+
+    def validator(self, value):
+        """Provides a validator/converter for @validates usage.
+
+        For example, once you defined the values to be encrypted:
+
+        @validates('password')
+        def _validate_password(self, cipher_key, password):
+            return getattr(type(self), cipher_key).type.validator(password)
+
+        """
+        return self._convert(value)
+
+    def _convert(self, value):
+        """Returns a Encryption from the given string.
+
+        PasswordHash instances or None values will return unchanged.
+        Strings will be hashed and the resulting PasswordHash returned.
+        Any other input will result in a TypeError.
+        """
+        if isinstance(value, Encryption):
+            return value
+        elif isinstance(value, basestring):
+            return Encryption.new(value, self.cipher_key)
+        elif value is not None:
+            raise TypeError(
+                'Cannot convert {} to a EncryptedValue'.format(type(value)))
 
 
 class Password(TypeDecorator):
