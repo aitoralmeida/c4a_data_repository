@@ -59,6 +59,14 @@ public class InferenceMain {
                 System.out.print("Executing default TimerTask");
                 timer.scheduleAtFixedRate(timerTask, 0, 60000);                   // Setting default time 1 min.
             }
+        }else if (args.length == 1 && args[0].equals("-h")) {
+            // The user entered a HELP VALUES
+            System.out.println("To use this program you need to run the following command: \n\n" +
+                    " $>  java -jar ruleEngine.jar <validMappedFile.ttl> <rules.txt> <OPTINAL time in miliseconds> \n\n" +
+                    "Where: \n" +
+                    "      * validMappedFile: is a valid D2RQ mapping file to map data from database \n" +
+                    "      * rules: is a valid file with Jena generic rules \n" +
+                    "      * optional time: is a user defined time in miliseconds \n");
         }else{
             System.err.println("You need to provide a valid mapping.ttl file or rules.txt file");
             System.err.println("usage: java -jar ruleEngine.jar <validMappedFile.ttl> <rules.txt>");

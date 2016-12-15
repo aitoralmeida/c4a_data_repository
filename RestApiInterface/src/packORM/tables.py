@@ -78,17 +78,19 @@ class EncryptedValue(TypeDecorator):
     def validator(self, value):
         """Provides a validator/converter for @validates usage.
 
-        For example, once you defined the values to be encrypted:
+        For example, once you defined the values to be encrypted in your Table use:
 
         @validates('password')
         def _validate_password(self, cipher_key, password):
             return getattr(type(self), cipher_key).type.validator(password)
 
+        It is strongly recommended to use this validator to know exactly
+        if data is creating well into database.
         """
         return self._convert(value)
 
     def _convert(self, value):
-        """Returns a Encryption from the given string.
+        """Returns a Encryption object from the given string.
 
         PasswordHash instances or None values will return unchanged.
         Strings will be hashed and the resulting PasswordHash returned.
