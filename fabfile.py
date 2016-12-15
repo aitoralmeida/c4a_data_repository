@@ -7,9 +7,9 @@ import random
 
 # Server Hosts
 env.hosts = [
-    #'10.48.1.115:5800',
-    'odin.deusto.es:5800',
-    # third.server.es,
+    '10.48.1.115:5800',
+    #'odin.deusto.es:5800',
+    '10.48.1.142:22',
     # and.so.on ......
 ]
 
@@ -30,9 +30,18 @@ def _install_deps():
 
     :return:
     """
-    sudo('apt-get update && apt-get -y install python-dev postgresql-9.5 postgresql-server-dev-9.5 virtualenv '
-         'build-essential nginx openjdk-8-jre tomcat8 openjdk-8-jdk')
-
+    # Determining GNU/Linux distribution
+    distribution = run('lsb_release -i | cut -f 2-')
+    if distribution == 'Ubuntu':
+        # Ubuntu based distro
+        run("echo Installing dependencies for UBUNTU GNU/Linux Distribution")
+        sudo('apt-get update && apt-get -y install python-dev postgresql-9.5 postgresql-server-dev-9.5 virtualenv '
+             'build-essential nginx openjdk-8-jre tomcat8 openjdk-8-jdk')
+    else:
+        # Debian based distro
+        run("echo Installing dependencies for UBUNTU GNU/Linux Distribution")
+        sudo('apt-get update && apt-get -y install python-dev postgresql-9.4 postgresql-server-dev-9.4 virtualenv '
+             'build-essential nginx openjdk-8-jre tomcat8 openjdk-8-jdk')
 
 def _deploy():
     """
