@@ -394,6 +394,31 @@ class Utilities(object):
         return res
 
     @staticmethod
+    def check_add_measure(p_data):
+        """
+
+        Check if add_measure data is entered ok with required values
+
+        :param p_data: User data
+        :return:
+        """
+        res = False
+        schema = "Enter JSON schema HERE"
+
+        try:
+            if type(p_data) is list:
+                # We have a list of dicts
+                for data in p_data:
+                    validate(data, schema)
+            else:
+                validate(p_data, schema)
+            res = True
+        except ValidationError:
+            logging.error("The schema entered by the user is invalid")
+
+        return res
+
+    @staticmethod
     def check_search(p_database, p_data):
         """
         Check if search data is ok and evaluates what is the best table that fits with search criteria

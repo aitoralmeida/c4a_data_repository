@@ -1,9 +1,6 @@
 blinker==1.4
-elasticsearch==5.0.1
 Flask==0.10.1
-Flask-Elasticsearch==0.2.5
 Flask-SQLAlchemy==2.1
-Flask-WhooshAlchemy==0.56
 functools32==3.2.3.post2
 itsdangerous==0.24
 Jinja2==2.8
@@ -18,4 +15,3 @@ testfixtures==4.9.1
 urllib3==1.19
 uWSGI==2.0.12
 Werkzeug==0.11.5
-Whoosh==2.7.4

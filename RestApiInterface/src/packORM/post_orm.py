@@ -292,6 +292,22 @@ class PostgORM(object):
             self.insert_one(activity)
         return self.commit()
 
+    def add_measure(self, p_data):
+        """
+        Adds new measures into the database.
+
+
+        :param p_data:
+        :return: Tue if data is inserted into database.
+                False if there is an error during operation
+        """
+
+        for data in p_data:
+            # Iterate the user data to extract required information and process it
+            pass
+
+        return self.commit()
+
     def _get_or_create(self, model, **kwargs):
         # type: (object, object) -> object
         """

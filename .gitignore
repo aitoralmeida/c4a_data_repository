@@ -114,3 +114,6 @@ RestApiInterface/src/packORM/PasswordHash.pyc
 RestApiInterface/src/packORM/__init__.pyc
 RestApiInterface/src/packORM/post_orm.pyc
 RestApiInterface/src/packORM/tables.pyc
+
+# Pycharm realted data
+.idea

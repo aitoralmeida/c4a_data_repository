@@ -76,7 +76,7 @@ def before_request():
     DATABASE = post_orm.PostgORM()
     # Make sessions permament with some time
     session.permanent = True
-    app.permanent_session_lifetime = timedelta(seconds=600)  # minutes=30 days=232323 years=2312321 and so on.
+    app.permanent_session_lifetime = timedelta(days=30)  # minutes=30 days=232323 years=2312321 and so on.
     session.modified = True  # To force seesion expiration
 
 
@@ -161,7 +161,7 @@ def api(version=app.config['ACTUAL_API']):
             <li><b>login</b>: Login into API.</li>
             <li><b>logout</b>: Disconnect current user from the API.</li>
             <li><b>search</b>: Search some datasets.</li>
-        </ul
+        </ul>
 
         """
     else:
@@ -484,7 +484,23 @@ def add_measure(version=app.config['ACTUAL_API']):
     :return:
     """
     # TODO this method must be developed with measure information from Vladimir
-    pass
+    if Utilities.check_connection(app, version):
+        data = _convert_to_dict(request.json)
+        # Verifiying the user
+        user_data = Utilities.check_session(app, DATABASE)
+        # Validate the entered measure data
+        if data and Utilities.check_clear_user(data) and user_data.stake_holder_name == "admin":
+            res = DATABASE.add_measure(data)
+            if res:
+                # Utilities.write_log_info(app, ("add_action: the username: %s adds new action into database" %
+                #                          user_data.username))
+                return Response('Data stored in database OK\n'), 200
+            else:
+                # Utilities.write_log_error(app, ("add_action: the username: %s failed to store data into database. 500" %
+                #                            user_data.username))
+                return "There is an error in DB", 500
+        else:
+            abort(500)
 
 ###################################################################################################
 ###################################################################################################
