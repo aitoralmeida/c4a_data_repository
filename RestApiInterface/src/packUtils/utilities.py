@@ -10,8 +10,6 @@ This class has all utilities of the project. The idea is to store all checkers, 
 import logging
 from flask import abort, session, request
 from jsonschema import validate, ValidationError
-from src.packORM import tables
-
 
 __author__ = 'Rubén Mulero'
 __copyright__ = "Copyright 2016, City4Age project"
@@ -21,21 +19,6 @@ __version__ = "0.2"
 __maintainer__ = "Rubén Mulero"
 __email__ = "ruben.mulero@deusto.es"
 __status__ = "Prototype"
-
-
-# TODO the code below is candidates to be Role access level security
-
-
-# Role access dictionary. 0 is no access and 5 is super access.
-roles = {
-    "care_receiver": 0,
-    "care_giver": 1,
-    "geriatrician": 2,
-    "municipality_representative": 3,
-    "researcher": 3,
-    "application_developer": 4,
-    "administrator": 5
-}
 
 
 class Utilities(object):
@@ -76,13 +59,6 @@ class Utilities(object):
         :return: User Token if auth is OK. Abort is something is Wrong.
         """
         if session and session.get('token', False):
-            # Todo This piece of code will be used to check if the logged user has access to current data
-            """
-            user_id = p_database.verify_auth_token(session.get('token'), app)
-            stakeholder = p_database.query.query_ge(tables.UserInSystem, user_id).stake_holder_name
-            # Using users stakeholder we detect level of access
-            """
-
             return p_database.verify_auth_token(session.get('token'), app)
         else:
             logging.error("check_connection: User session cookie is not OK, 401")
@@ -430,6 +406,9 @@ class Utilities(object):
                     False if there is a problem
         """
         res = False
+
+
+
         schema = {
             "title": "Search datasets schema validator",
             "type": "object",
@@ -473,13 +452,13 @@ class Utilities(object):
                     validate(data, schema)
                     # Once data is validated, we are going to check if tables ARE OK
                     if not Utilities.validate_search_tables(p_database, data):
-                        logging.error("User entered an invalid table name: %s" % tables)
+                        logging.error("User entered an invalid table name: %s" % p_database.get_tables)
                         raise ValidationError
             else:
                 validate(p_data, schema)
                 # Once data is validated, we are going to check if tables ARE OK
                 if not Utilities.validate_search_tables(p_database, p_data):
-                    logging.error("User entered an invalid table name: %s" % tables)
+                    logging.error("User entered an invalid table name: %s" % p_database.get_tables)
                     raise ValidationError
 
             res = True

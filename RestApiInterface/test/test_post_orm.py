@@ -13,17 +13,15 @@ This file is divided into the following TESTS:
 
 """
 
-
 import unittest
-from testfixtures import should_raise
-from sqlalchemy import create_engine, desc, inspect
-from sqlalchemy.engine.url import URL
-from sqlalchemy.exc import OperationalError
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.exc import IntegrityError, DataError
-from packORM import tables, post_orm
-from packFlask.api import app
 
+from sqlalchemy import inspect
+from sqlalchemy.exc import IntegrityError, DataError
+from testfixtures import should_raise
+
+from packControllers import post_orm
+from packFlask.api import app
+from packORM import ar_tables
 
 __author__ = 'Rubén Mulero'
 __copyright__ = "Copyright 2016, City4Age project"
@@ -49,7 +47,7 @@ class PostOrmTestCase(unittest.TestCase):
 
     def test_insert_one_user(self):
         """ Test pending insert  of one user works well"""
-        data = tables.UserInSystem(username='rmulero', password='rmulero')
+        data = ar_tables.UserInSystem(username='rmulero', password='rmulero')
         self.orm.insert_one(data)
         ins = inspect(data)
         self.assertTrue(ins.pending)
@@ -58,9 +56,9 @@ class PostOrmTestCase(unittest.TestCase):
         """ Test multiple pending insert of various users"""
         list_of_users = []
         res = False
-        list_of_users.append(tables.UserInSystem(username='rub', password='mul'))
-        list_of_users.append(tables.UserInSystem(username='smith', password='1234'))
-        list_of_users.append(tables.UserInSystem(username='neon22', password='white'))
+        list_of_users.append(ar_tables.UserInSystem(username='rub', password='mul'))
+        list_of_users.append(ar_tables.UserInSystem(username='smith', password='1234'))
+        list_of_users.append(ar_tables.UserInSystem(username='neon22', password='white'))
         self.orm.insert_all(list_of_users)
         for user in list_of_users:
             ins = inspect(user)
@@ -86,7 +84,7 @@ class PostOrmTestCase(unittest.TestCase):
         list_of_dic_data.append(user1)
         self.orm.add_new_user_in_system(list_of_dic_data)
         # check if exists.
-        q = self.orm.query(tables.UserInSystem, {'username': 'rub'})
+        q = self.orm.query(ar_tables.UserInSystem, {'username': 'rub'})
         self.assertTrue(q.count() > 0)
 
     ###################################################
@@ -96,7 +94,7 @@ class PostOrmTestCase(unittest.TestCase):
     def test_basic_query_not_found(self):
         """ Test if there isn't any result from DB """
         filters = {'username': 'pakorz'}
-        t_class = tables.UserInSystem
+        t_class = ar_tables.UserInSystem
         q = self.orm.query(t_class, filters)
         # No matches found
         self.assertTrue(q.count() == 0)
@@ -104,7 +102,7 @@ class PostOrmTestCase(unittest.TestCase):
     def test_basic_query_found(self):
         """ Test if there is a result"""
         filters = {'username': 'admin'}
-        t_class = tables.UserInSystem
+        t_class = ar_tables.UserInSystem
         q = self.orm.query(t_class, filters)
         # No matches found
         self.assertTrue(q.count() > 0 and q[0].username == 'admin')
@@ -112,7 +110,7 @@ class PostOrmTestCase(unittest.TestCase):
     def test_offset_query(self):
         """ Test if the offset is working well by giving some user in system"""
         filters = {'username': 'admin'}
-        t_class = tables.UserInSystem
+        t_class = ar_tables.UserInSystem
         q = self.orm.query(t_class, filters, offset=3)
         w = self.orm.query(t_class, filters, offset=0)
         # We know that there isn't 3 admins in system so with offset there isn't any results
@@ -145,7 +143,7 @@ class PostOrmTestCase(unittest.TestCase):
         self.orm.add_new_user_in_system(list_of_dic_data)
         # Calling into DB
         filters = {'username': 'elementaltester'}
-        q = self.orm.query(tables.UserInSystem, filters, limit=2)
+        q = self.orm.query(ar_tables.UserInSystem, filters, limit=2)
         # If we receive two elements the tests is OK
         self.assertTrue(q.count() == 2)
 
@@ -154,7 +152,7 @@ class PostOrmTestCase(unittest.TestCase):
             None --> Any user with this ID
             User Object --> User with this ID
         """
-        user = self.orm.query_get(tables.UserInSystem, p_id=1)
+        user = self.orm.query_get(ar_tables.UserInSystem, p_id=1)
         self.assertTrue(user)
 
     ###################################################
@@ -218,7 +216,7 @@ class PostOrmTestCase(unittest.TestCase):
 
     @should_raise(IntegrityError)
     def test_insert_an_existing_user(self):
-        p_data = tables.UserInSystem(id=3, username='admin', password='admin')
+        p_data = ar_tables.UserInSystem(id=3, username='admin', password='admin')
         self.orm.session.add(p_data)
         self.orm.session.commit()
 
@@ -226,14 +224,14 @@ class PostOrmTestCase(unittest.TestCase):
     def test_basic_query_bad_column(self):
         """ Test when the user make a query with bad columns"""
         filters = {'ages': 32}
-        t_class = tables.UserInSystem
+        t_class = ar_tables.UserInSystem
         self.orm.query(t_class, filters)
 
     @should_raise(DataError)
     def test_bad_limit_query(self):
         """ Test if limit is negative """
         filters = {'username': 'admin'}
-        t_class = tables.UserInSystem
+        t_class = ar_tables.UserInSystem
         q = self.orm.query(t_class, filters, limit=-1)
         # No matches found
         self.assertTrue(q.count() > 0)
@@ -242,7 +240,7 @@ class PostOrmTestCase(unittest.TestCase):
     def test_bad_offset(self):
         """ Test if offset is negative"""
         filters = {'username': 'admin'}
-        t_class = tables.UserInSystem
+        t_class = ar_tables.UserInSystem
         q = self.orm.query(t_class, filters, offset=-1)
         # No matches found
         self.assertTrue(q.count() > 0)
@@ -250,7 +248,7 @@ class PostOrmTestCase(unittest.TestCase):
     def test_bad_order_by(self):
         """ Test if orderby have a diferent arg"""
         filters = {'username': 'admin'}
-        t_class = tables.UserInSystem
+        t_class = ar_tables.UserInSystem
         q = self.orm.query(t_class, filters, order_by=-1)
         # No matches found
         self.assertTrue(q.count() > 0)

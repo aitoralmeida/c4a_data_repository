@@ -7,16 +7,18 @@ for Flask and manage error codes.
 """
 
 from __future__ import print_function
-import logging
-from json import dumps, loads
-from functools import wraps
-from datetime import timedelta
-from flask import Flask, request, make_response, Response, abort, redirect, url_for, session, flash, jsonify, \
-    current_app, request_finished
-from sqlalchemy.orm import class_mapper
-from src.packORM import post_orm
-from src.packUtils.utilities import Utilities
 
+import logging
+from datetime import timedelta
+from functools import wraps
+from json import dumps, loads
+
+from flask import Flask, request, make_response, Response, abort, redirect, url_for, session, flash, jsonify, \
+    request_finished
+from sqlalchemy.orm import class_mapper
+from packUtils.utilities import Utilities
+
+from packControllers import post_orm, ar_post_orm, sr_post_orm
 
 __author__ = 'Rubén Mulero'
 __copyright__ = "Copyright 2016, City4Age project"
@@ -32,7 +34,8 @@ __status__ = "Prototype"
 ACTUAL_API = '0.1'
 AVAILABLE_API = '0.1', '0.2', '0.3'
 SECRET_KEY = '\xc2O\xd1\xbb\xd6\xb2\xc2pxRS\x12l\xee8X\xcb\xc3(\xeer\xc5\x08s'
-DATABASE = 'Database'
+AR_DATABASE = 'Database'
+SR_DATABASE = 'Database'
 MAX_LENGHT = 8 * 1024 * 1024  # in bytes
 
 # Create application and load config.
@@ -72,8 +75,11 @@ def limit_content_length(max_length):
 
 @app.before_request
 def before_request():
-    global DATABASE
-    DATABASE = post_orm.PostgORM()
+    # Connection
+    global AR_DATABASE
+    AR_DATABASE = ar_post_orm.ARPostORM()
+    global SR_DATABASE
+    SR_DATABASE = sr_post_orm.SRPostORM()
     # Make sessions permament with some time
     session.permanent = True
     app.permanent_session_lifetime = timedelta(days=30)  # minutes=30 days=232323 years=2312321 and so on.
@@ -82,26 +88,31 @@ def before_request():
 
 @app.teardown_request
 def teardown_request(exception):
-    global DATABASE
-    if DATABASE is not None:
+    global AR_DATABASE
+    if AR_DATABASE is not None:
         # Close database active session
-        DATABASE.close()
+        AR_DATABASE.close()
+    global SR_DATABASE
+    if SR_DATABASE is not None:
+        # Close database active session
+        SR_DATABASE.close()
 
 
 @request_finished.connect_via(app)
 def when_request_finished(sender, response, **extra):
     # We want to check if it is a registered user POST call.
-    if response.status_code != 401 and request.method == 'POST' and session.get('token', False):
+    if request.url_rule.rule != '/api/<version>/login' \
+            and request.method == 'POST' and session.get('token', False):
         # There is a registered user sending DATA
         # ALL is ok we register the event
-        user_id = Utilities.check_session(app, DATABASE).id
+        user_id = Utilities.check_session(app, AR_DATABASE).id
         route = request.url_rule and request.url_rule.endpoint or "Bad route or method"
         ip = request.remote_addr or "Can read user Ip Address"
         agent = request.user_agent.string or "User is not sending its agent"
         data = "User entered an JSON with length of: %s" % request.content_length or "No data found"
         status_code = response.status_code or "No status code. Check estrange behavior"
 
-        res = DATABASE.add_historical(user_id, route, ip, agent, data, status_code)
+        res = AR_DATABASE.add_historical(user_id, route, ip, agent, data, status_code)
         if not res:
             logging.error("Historical data is not storing well into DB. The sent data is the following:"
                           "\n User id: %s"
@@ -193,7 +204,7 @@ def login(version=app.config['ACTUAL_API']):
     if Utilities.check_connection(app, version):
         data = _convert_to_dict(request.json)[0]
         if 'username' in data and 'password' in data:
-            res = DATABASE.verify_user_login(data, app)
+            res = SR_DATABASE.verify_user_login(data, app)
             if res:
                 # Username and password are OK
                 Utilities.write_log_info(app, ("login: User login successfully with username: %s" % data['username']))
@@ -218,8 +229,8 @@ def logout(version=app.config['ACTUAL_API']):
     :param version: APi version
     :return:
     """
-    if Utilities.check_version(version):
-        user_data = Utilities.check_session(app, DATABASE)
+    if Utilities.check_version(app, version):
+        user_data = Utilities.check_session(app, SR_DATABASE)
         if user_data:
             session.pop('token', None)
             Utilities.write_log_info(app, ("logout: User logout successfully with username: %s" % user_data.username))
@@ -260,17 +271,17 @@ def search(version=app.config['ACTUAL_API']):
     if Utilities.check_connection(app, version):
         data = _convert_to_dict(request.json)[0]
         # Verifying the user
-        user_data = Utilities.check_session(app, DATABASE)
-        if Utilities.check_search(DATABASE, data) and user_data:
+        user_data = Utilities.check_session(app, AR_DATABASE)
+        if Utilities.check_search(AR_DATABASE, data) and user_data:
             # data Entered by the user is OK
             limit = data.get('limit', 10) if data and data.get('limit', 10) >= 0 else 10
             offset = data.get('offset', 0) if data and data.get('offset', 0) >= 0 else 0
             order_by = data.get('order_by', 'asc') if data and data.get('order_by', 'asc') in ['asc', 'desc'] else 'asc'
             # Obtain table class using the name of the desired table
-            table_class = DATABASE.get_table_object_by_name(data['table'])
+            table_class = AR_DATABASE.get_table_object_by_name(data['table'])
             # Query database and select needed elements
             try:
-                res = DATABASE.query(table_class, data['criteria'], limit=limit, offset=offset, order_by=order_by)
+                res = AR_DATABASE.query(table_class, data['criteria'], limit=limit, offset=offset, order_by=order_by)
                 serialized_labels = [serialize(label) for label in res]
                 if len(serialized_labels) == 0:
                     Utilities.write_log_warning(app, ("search: the username: %s performs a valid search "
@@ -288,7 +299,7 @@ def search(version=app.config['ACTUAL_API']):
                                       user_data.username))
             res = Response(
                 "You have entered incorrect JSON format Data, check if your JSON is OK. Here there are current database"
-                "tables, check if you type one of the following tables: %s" % DATABASE.get_tables()
+                "tables, check if you type one of the following tables: %s" % AR_DATABASE.get_tables()
             ), 413
     return res
 
@@ -323,11 +334,11 @@ def add_action(version=app.config['ACTUAL_API']):
         # We created a list of Python dics.
         data = _convert_to_dict(request.json)
         # Verifying the user
-        user_data = Utilities.check_session(app, DATABASE)
+        user_data = Utilities.check_session(app, AR_DATABASE)
         # validate users data
         if data and Utilities.check_add_action_data(data) and user_data:
             # User and data are OK. save data into DB
-            res = DATABASE.add_action(data)
+            res = AR_DATABASE.add_action(data)
             if res:
                 Utilities.write_log_info(app, ("add_action: the username: %s adds new action into database" %
                                          user_data.username))
@@ -379,11 +390,11 @@ def add_activity(version=app.config['ACTUAL_API']):
     if Utilities.check_connection(app, version):
         data = _convert_to_dict(request.json)
         # Verifying the user
-        user_data = Utilities.check_session(app, DATABASE)
+        user_data = Utilities.check_session(app, AR_DATABASE)
         # validate users data
         if data and Utilities.check_add_activity_data(data) and user_data:
             # User and data are OK. save data into DB
-            res = DATABASE.add_activity(data)
+            res = AR_DATABASE.add_activity(data)
             if res:
                 Utilities.write_log_info(app, ("add_activity: the username: %s adds new action into database" %
                                          user_data.username))
@@ -414,6 +425,7 @@ def add_new_user(version=app.config['ACTUAL_API']):
     :param version: Api version
     :return:
     """
+    """
     if Utilities.check_connection(app, version):
         data = _convert_to_dict(request.json)
         # Verifying the user
@@ -437,6 +449,8 @@ def add_new_user(version=app.config['ACTUAL_API']):
                 return Response('Data stored in database OK\n'), 200
         else:
             abort(500)
+    """
+    return Response('Not available\n'), 200
 
 
 @app.route('/api/<version>/clear_user', methods=['POST'])
@@ -460,11 +474,11 @@ def clear_user(version=app.config['ACTUAL_API']):
     if Utilities.check_connection(app, version):
         data = _convert_to_dict(request.json)
         # Verifying the user
-        user_data = Utilities.check_session(app, DATABASE)
+        user_data = Utilities.check_session(app, AR_DATABASE)
         # Validate new user data
         if data and Utilities.check_clear_user(data) and user_data.stake_holder_name == "admin":
             # Data entered is ok
-            res = DATABASE.clear_user_data_in_system(data)
+            res = AR_DATABASE.clear_user_data_in_system(data)
             if res:
                 Utilities.write_log_info(app, ("clean_user: the username: %s cleans user data" % user_data.username))
                 return Response('User data deleted\n'), 200
@@ -487,10 +501,10 @@ def add_measure(version=app.config['ACTUAL_API']):
     if Utilities.check_connection(app, version):
         data = _convert_to_dict(request.json)
         # Verifiying the user
-        user_data = Utilities.check_session(app, DATABASE)
+        user_data = Utilities.check_session(app, AR_DATABASE)
         # Validate the entered measure data
         if data and Utilities.check_clear_user(data) and user_data.stake_holder_name == "admin":
-            res = DATABASE.add_measure(data)
+            res = AR_DATABASE.add_measure(data)
             if res:
                 # Utilities.write_log_info(app, ("add_action: the username: %s adds new action into database" %
                 #                          user_data.username))

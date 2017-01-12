@@ -167,7 +167,6 @@ class ExecutedAction(Base):
     __tablename__ = 'executed_action'
 
     id = Column(Integer, Sequence('executed_action_id_seq'), primary_key=True)
-    # user_in_role_id = Column(Integer, ForeignKey('user_in_role.id'))
     user_in_role_id = Column(String(75), ForeignKey('user_in_role.id'))
     action_id = Column(Integer, ForeignKey('action.id'))
     activity_id = Column(Integer, ForeignKey('activity.id'), nullable=True)
@@ -209,6 +208,19 @@ class EAMSimpleLocationRel(Base):
     simple_location = relationship("SimpleLocation")
 
 
+class LocationActivityRel(Base):
+    """
+    Activity < -- > Location
+    """
+
+    __tablename__ = 'location_activity_rel'
+
+    location_id = Column(Integer, ForeignKey('location.id'), primary_key=True)
+    activity_id = Column(Integer, ForeignKey('activity.id'), primary_key=True)
+    house_number = Column(Integer)
+    activity = relationship("Activity")
+
+
 # Tables
 class UserInRole(Base):
     """
@@ -223,20 +235,22 @@ class UserInRole(Base):
     # m2m
     action = relationship("ExecutedAction", cascade="all, delete-orphan")
     # one2many
-    stake_holder_name = Column(String(25), ForeignKey('stake_holder.name'))
+    #stake_holder_name = Column(String(25), ForeignKey('stake_holder.name'))
+    user_authenticated_id = Column(Integer, ForeignKey('user_authenticated.id'))
+    cd_role_id = Column(Integer, ForeignKey('cd_role.id'))
     pilot_name = Column(String(50), ForeignKey('pilot.name'))
 
     def __repr__(self):
         return "<User(id='%s', valid_from='%s'. valid_to='%s')>" % (self.id, self.valid_from, self.valid_to)
 
 
-class UserInSystem(Base):
+class UserAuthenticated(Base):
     """
     Base data of the users
     """
-    __tablename__ = 'user_in_system'
+    __tablename__ = 'user_authenticated'
 
-    id = Column(Integer, Sequence('user_in_role_seq'), primary_key=True)
+    id = Column(Integer, Sequence('user_authenticated_seq'), primary_key=True)
     username = Column(Text, nullable=False, unique=True)
     password = Column(Password(rounds=13), nullable=False)
     # Or specify a cost factor other than the default 13
@@ -244,10 +258,9 @@ class UserInSystem(Base):
     # Without rounds System will use 13 rounds by default
     created_date = Column(TIMESTAMP, default=datetime.datetime.utcnow)
 
+    # one2many
     historical = relationship('Historical')
-
-    # One2Many
-    stake_holder_name = Column(String(25), ForeignKey('stake_holder.name'))
+    user_in_role = relationship('UserInRole')
 
     def __repr__(self):
         return "<UserInRole(username='%s', password='%s', created_date='%s')>" % (
@@ -326,13 +339,13 @@ class Location(Base):
     # One2Many
     pilot_name = Column(String(50), ForeignKey('pilot.name'), nullable=True)
 
-    activity = relationship("Activity")
+    # many2many
+    activity = relationship("LocationActivityRel")
 
     def __repr__(self):
         return "<Location(location_name='%s', indoor='%s')>" % (self.location_name, self.indoor)
 
 
-#TODO  Activity - Location is now a N:M relationship you need to condigfure it
 class Activity(Base):
     """
     Activity is a collection of different actions. For example "Make breakfast is an activity and could have some actions
@@ -350,10 +363,6 @@ class Activity(Base):
     activity_end_date = Column(TIMESTAMP)
     creation_date = Column(TIMESTAMP, default=datetime.datetime.utcnow)         # get current date
     since = Column(TIMESTAMP, nullable=True)
-
-    # From Location class
-    house_number = Column(Integer)                                              # Associative class to this Activity
-    location_id = Column(Integer, ForeignKey('location.id'))
 
     # One2one
     eam = relationship("EAM", uselist=False, back_populates="activity")
@@ -381,24 +390,40 @@ class Pilot(Base):
     location = relationship('Location')
 
     def __repr__(self):
-        return "<Pilot(name='%s', pilot_code='%s', population_size='%s')>" % (self.name, self.pilot_code, self.population_size)
+        return "<Pilot(name='%s', pilot_code='%s', population_size='%s')>" % (self.name, self.pilot_code,
+                                                                              self.population_size)
 
 
-class StakeHolder(Base):
+# class StakeHolder(Base):
+#     """
+#     This table stores all related data of project stakeholders to identify each user with his role in the system
+#     """
+#
+#     __tablename__ = 'stake_holder'
+#
+#     name = Column(String(25), primary_key=True)
+#     type = Column(String(25))
+#     # one2many
+#     user_authenticated = relationship('UserAuthenticated')
+#     user_in_role = relationship('UserInRole')
+#
+#     def __repr__(self):
+#         return "<StakeHolder(name='%s', type='%s')>" % (self.name, self.type)
+
+class CDRole(Base):
     """
-    This table stores all related data of project stakeholders to identify each user with his role in the system
+    This table stores all data related to the roles for users in the system. The idea is to stablish a role-access
+    level entry points to limit user iterations int he system.
     """
 
-    __tablename__ = 'stake_holder'
+    __tablename__ = 'cd_role'
+    id = Column(Integer, Sequence('cd_role_seq'), primary_key=True)
+    role_name = Column(String(50))
+    role_abbreviation = Column(String(3))
+    role_description = Column(String(350))
 
-    name = Column(String(25), primary_key=True)
-    type = Column(String(25))
     # one2many
-    user_in_system = relationship('UserInSystem')
     user_in_role = relationship('UserInRole')
-
-    def __repr__(self):
-        return "<StakeHolder(name='%s', type='%s')>" % (self.name, self.type)
 
 
 class InterBehaviour(Base):
@@ -492,4 +517,4 @@ class Historical(Base):
     status_code = Column(Integer)
 
     # One2Many
-    user_in_system_id = Column(Integer, ForeignKey('user_in_system.id'))
+    user_authenticated_id = Column(Integer, ForeignKey('user_authenticated.id'))

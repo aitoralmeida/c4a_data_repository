@@ -13,14 +13,10 @@ This file is divided into the following TESTS:
 
 import json
 import unittest
-from jsonschema import ValidationError
-from testfixtures import should_raise
 
+from packControllers import post_orm
 from packFlask.api import app
-from packFlask import api
-from packORM import post_orm
 from packUtils.utilities import Utilities
-
 
 __author__ = 'Rubén Mulero'
 __copyright__ = "Copyright 2016, City4Age project"

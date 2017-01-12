@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="WebServers">
+    <option name="servers">
+      <webServer id="3f294cb4-5b72-4c5e-bf55-f034c863611b" name="Ubuntu server 16.04 VirtualBox" url="http://10.48.1.115">
+        <fileTransfer host="10.48.1.115" port="5800" rootFolder="/home/city4age" accessType="SFTP">
+          <advancedOptions>
+            <advancedOptions dataProtectionLevel="Private" />
+          </advancedOptions>
+          <option name="port" value="5800" />
+        </fileTransfer>
+      </webServer>
+    </option>
+  </component>
+</project>
