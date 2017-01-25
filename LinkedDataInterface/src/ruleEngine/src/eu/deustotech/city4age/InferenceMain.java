@@ -27,13 +27,14 @@ public class InferenceMain {
 
     public static void main(String[] args) {
         if (args.length > 0 && args[0].length() > 0 && args[0].contains(".ttl") &&
-                args[1].length() > 0 && args[1].contains("rules")) {
+                args[1].length() > 0 && args[1].contains(".ttl") &&
+                args[2].length() > 0 && args[2].contains("rules")) {
 
             // Initializing logging service
             Logger LOGGER = initLoginService();
 
             // Loading RuleEngine
-            RuleEngine rEngine = new RuleEngine(args[0], args[1], LOGGER);
+            RuleEngine rEngine = new RuleEngine(args[0], args[1], args[2], LOGGER);
             // Defining the default timerTask
             Timer timer = new Timer();
 
@@ -50,10 +51,10 @@ public class InferenceMain {
                 }
             };
             // Decide if the program uses user defined time or system default.
-            if (args.length >= 3 && args[2].length() > 0 && isLong(args[2])) {
-                LOGGER.info("User entered a defined time interval. The value is --> {}" + args[2]);
+            if (args.length >= 4 && args[3].length() > 0 && isLong(args[3])) {
+                LOGGER.info("User entered a defined time interval. The value is --> {}" + args[3]);
                 System.out.print("Executing a time-defined TimerTask");
-                timer.scheduleAtFixedRate(timerTask, 0, Long.parseLong(args[2])); // Setting user defined time.
+                timer.scheduleAtFixedRate(timerTask, 0, Long.parseLong(args[3])); // Setting user defined time.
             }else {
                 LOGGER.info("Using default time interval");
                 System.out.print("Executing default TimerTask");
@@ -62,7 +63,7 @@ public class InferenceMain {
         }else if (args.length == 1 && args[0].equals("-h")) {
             // The user entered a HELP VALUES
             System.out.println("To use this program you need to run the following command: \n\n" +
-                    " $>  java -jar ruleEngine.jar <validMappedFile.ttl> <rules.txt> <OPTINAL time in miliseconds> \n\n" +
+                    " $>  java -jar ruleEngine.jar <validMappedFile.ttl> <rules.txt> <OPTIONAL time in miliseconds> \n\n" +
                     "Where: \n" +
                     "      * validMappedFile: is a valid D2RQ mapping file to map data from database \n" +
                     "      * rules: is a valid file with Jena generic rules \n" +

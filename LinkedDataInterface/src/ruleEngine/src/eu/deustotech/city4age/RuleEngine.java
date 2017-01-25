@@ -37,12 +37,26 @@ public class RuleEngine {
     private Integer execution = 0;
     private String rulesFile;
     private String mapFile;
+    private String mapFile2;
     private OntModel oldOntModel = null;
     private String newLine;
     private Logger LOGGER;
+    private static final String dbpedia = "http://dbpedia.org/sparql";
 
-    public RuleEngine(String pMapFile, String pRulesFiles, Logger pLogger) {
+
+    /**
+     * The constructor of the class. Here is defined the parameters of this class.
+     * There are two mapFiles to attach. It is important to use this two files for each schema of database
+     *
+     *
+     * @param pMapFile The first mapFile of D2RQ generated map file.
+     * @param pMapFile2 The second maFile of D2RQ generated map file
+     * @param pRulesFiles The rules file containig all needed rules
+     * @param pLogger A looger instance to log actions of this class.
+     */
+    public RuleEngine(String pMapFile, String pMapFile2, String pRulesFiles, Logger pLogger) {
         this.mapFile = pMapFile;
+        this.mapFile2 = pMapFile2;
         this.rulesFile = pRulesFiles;
         this.LOGGER = pLogger;
         // Separation printing service
@@ -66,13 +80,18 @@ public class RuleEngine {
     public boolean inference() {
         boolean res = false;
         Model instances = null;
+        Model instances2 = null;
         // Loading mapModelFile from Path
         Model mapModel = FileManager.get().loadModel(this.mapFile);
+        Model mapModel2 = FileManager.get().loadModel(this.mapFile2);
         // Load rules defined by the user.
         List <Rule> listRules = Rule.rulesFromURL("file:" + this.rulesFile);
         // We check if we have usefull data
-        if (!mapModel.isEmpty() && !listRules.isEmpty()) {
+        if (!mapModel.isEmpty() && !mapModel2.isEmpty() && !listRules.isEmpty()) {
             instances = new ModelD2RQ(mapModel, "http://www.morelab.deusto.es/ontologies/sorelcom#");
+            instances2 = new ModelD2RQ(mapModel2, "http://www.morelab.deusto.es/ontologies/sorelcom#");
+            //Todo: Check if this work well and instances are not merging
+            //instances.add(instances2);
             // Create a new ontoloyModel
             final OntModel finalResult = ModelFactory.createOntologyModel();
             // Creating the reasoner based on previously loaded rules
@@ -80,19 +99,29 @@ public class RuleEngine {
             myReasoner.setDerivationLogging(true);        // Allow to getDerivation: return useful information.
             // Infer new instances using rules and our instances
             InfModel inf = ModelFactory.createInfModel(myReasoner, instances);
-            if (!inf.isEmpty()) {
+            InfModel inf2 = ModelFactory.createInfModel(myReasoner, instances2);
+            if (!inf.isEmpty() && !inf2.isEmpty()) {
                 // Check if new Model is consistent
                 ValidityReport validity = inf.validate();
-                if (validity.isValid()) {
+                ValidityReport validity2 = inf2.validate();
+                if (validity.isValid() && validity2.isValid()) {
+
+                    // Create a funcitonal method to iterate over each statement and see if there are cities inside to add from db pedia
+
+
                     // Add new knowledge to the model.
+                    // Todo your need to ensure to test carefully this part. Use a debugger.
                     finalResult.add(instances);
                     finalResult.add(inf.getDeductionsModel());
+                    finalResult.add(instances2);
+                    finalResult.add(inf2.getDeductionsModel());
                     // Set prefix map
                     finalResult.setNsPrefixes(instances.getNsPrefixMap());
                     finalResult.setNsPrefixes(inf.getDeductionsModel().getNsPrefixMap());
+                    finalResult.setNsPrefixes(instances2.getNsPrefixMap());
+                    finalResult.setNsPrefixes(inf2.getDeductionsModel().getNsPrefixMap());
                     // updated instances
-                    instances = finalResult.getBaseModel();
-                    this.printResults(finalResult, inf, instances);
+                    this.printResults(finalResult, inf, inf2, finalResult.getBaseModel());
                     //Upload into Fuseki
                     if (this.oldOntModel == null || !this.checkAreEquals(this.oldOntModel, finalResult)) {
                         // If the base model is different (new data into DB) or if the inference model is different (new inference throught new rules
@@ -123,12 +152,14 @@ public class RuleEngine {
             }
             // Closing Files.
             inf.close();
+            inf2.close();
         }else {
             System.err.println(" The mapping file or the rules file are empty. Please check if they are OK.");
             LOGGER.severe("Mapping file or Rules file are empty. Check if they are valid.");
         }
         // Closing files
         mapModel.close();
+        mapModel2.close();
         listRules.clear();
         return res;
     }
@@ -148,8 +179,8 @@ public class RuleEngine {
         ProcessBuilder p = new ProcessBuilder("curl", "-k", "-X", "POST", "--header", "Content-Type: application/rdf+xml",
                 "-d", result, "http://localhost:8080/fuseki/city4age/data");
         try {
-            System.out.println("Uploading new Knowledge to Fuseki......................");
-            System.out.println("");
+            System.out.println("Uploading new Knowledge to Fuseki......................\n");
+            LOGGER.info("Uploading data to Fuseki server");
             // Execute our command
             final Process shell = p.start();
             // catch output and see if all is ok
@@ -174,8 +205,63 @@ public class RuleEngine {
                 LOGGER.severe("Data can not upload to Fuseki, check if Fuseki is activated: " +output);
             }
         }catch (IOException e) {
+            LOGGER.severe("Fatal IO error detected in ProcessBuilder call");
             e.printStackTrace();
         }
+    }
+
+
+    /**
+     *
+     * This method makes a query to DB pedia to obtain relevant information.
+     *
+     * Currently the first approach of this method is to queri DB pedia about Pilot's cities information, but this
+     * method can be expaned to other areas.
+     *
+     * @param pCity The name of the city
+     *
+     */
+    private void queryDBPedia(String pCity) {
+
+
+        // Defining the structure of the quey
+        String query = "PREFIX dcterms: <http://dbpedia.org/resource/>\n" +
+                "\n" +
+                "SELECT ?place WHERE{\n" +
+                "  ?place owl:sameAs dcterms:"+ pCity + " .\n" +
+                "  \n" +
+                "}";
+
+
+        ProcessBuilder p = new ProcessBuilder("curl", "-G", dbpedia, "--data-urlencode", "query='", query, "'");
+        try{
+            System.out.println("Requesting information from DBPedia\n");
+            LOGGER.info("Making a call to DBPedia requesting information for " +pCity);
+            // Execute our command
+            final Process shell = p.start();
+            // catch output and see if all is ok
+            BufferedReader reader =
+                    new BufferedReader(new InputStreamReader(shell.getInputStream()));
+            StringBuilder builder = new StringBuilder();
+            String line = null;
+            while ( (line = reader.readLine()) != null) {
+                builder.append(line);
+                builder.append(System.getProperty("line.separator"));
+            }
+            String output = builder.toString();
+            // TODO Output has the resulted data I need exactly how to convert it into triple and return to data
+            Model bla = new ModelFactory.createOntologyModel();
+            
+
+
+
+
+
+        }catch (IOException e) {
+            LOGGER.severe("Fatal IO error detected in ProcessBuilder call");
+            e.printStackTrace();
+        }
+
     }
 
     /**
@@ -208,13 +294,13 @@ public class RuleEngine {
      * @param pOntology The actual knowledge ( Base + inferred)
      * @param pInf: The list containing the inferred elements.
      */
-    private void printResults(OntModel pOntology, InfModel pInf, Model pInstances) {
+    private void printResults(OntModel pOntology, InfModel pInf, InfModel pInf2, Model pInstances) {
         this.execution++;
         pOntology.write(System.out, "N-TRIPLES");
         System.out.println("========================================");
         System.out.println("Number of elements: "+ pInstances.size());
         System.out.println("Execution number :"+this.execution);
-        System.out.println("Infered count list "+pInf.getDeductionsModel().size());
+        System.out.println("Infered count list "+pInf.getDeductionsModel().size() + pInf2.getDeductionsModel().size());
     }
 
 }
