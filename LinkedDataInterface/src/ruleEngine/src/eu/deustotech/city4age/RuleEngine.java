@@ -1,5 +1,6 @@
 package eu.deustotech.city4age;
 
+import com.hp.hpl.jena.graph.Graph;
 import com.hp.hpl.jena.ontology.OntModel;
 import com.hp.hpl.jena.rdf.model.*;
 import com.hp.hpl.jena.reasoner.Reasoner;
@@ -91,7 +92,8 @@ public class RuleEngine {
             instances = new ModelD2RQ(mapModel, "http://www.morelab.deusto.es/ontologies/sorelcom#");
             instances2 = new ModelD2RQ(mapModel2, "http://www.morelab.deusto.es/ontologies/sorelcom#");
             //Todo: Check if this work well and instances are not merging
-            //instances.add(instances2);
+            //Merge all instances in a single value
+            instances.add(instances2);
             // Create a new ontoloyModel
             final OntModel finalResult = ModelFactory.createOntologyModel();
             // Creating the reasoner based on previously loaded rules
@@ -99,29 +101,31 @@ public class RuleEngine {
             myReasoner.setDerivationLogging(true);        // Allow to getDerivation: return useful information.
             // Infer new instances using rules and our instances
             InfModel inf = ModelFactory.createInfModel(myReasoner, instances);
-            InfModel inf2 = ModelFactory.createInfModel(myReasoner, instances2);
-            if (!inf.isEmpty() && !inf2.isEmpty()) {
+            if (!inf.isEmpty()) {
                 // Check if new Model is consistent
                 ValidityReport validity = inf.validate();
-                ValidityReport validity2 = inf2.validate();
-                if (validity.isValid() && validity2.isValid()) {
-
-                    // Create a funcitonal method to iterate over each statement and see if there are cities inside to add from db pedia
-
-
+                if (validity.isValid()) {
                     // Add new knowledge to the model.
                     // Todo your need to ensure to test carefully this part. Use a debugger.
                     finalResult.add(instances);
                     finalResult.add(inf.getDeductionsModel());
-                    finalResult.add(instances2);
-                    finalResult.add(inf2.getDeductionsModel());
                     // Set prefix map
                     finalResult.setNsPrefixes(instances.getNsPrefixMap());
                     finalResult.setNsPrefixes(inf.getDeductionsModel().getNsPrefixMap());
+
+                    // TODO check if we can obtain all prefixes from 2º instances
                     finalResult.setNsPrefixes(instances2.getNsPrefixMap());
-                    finalResult.setNsPrefixes(inf2.getDeductionsModel().getNsPrefixMap());
+
+
+
+                    // TODO in this part, we are goingi to user our approach to obtain city data
+                    this.obtainCityInformation(finalResult);
+
+
+
+
                     // updated instances
-                    this.printResults(finalResult, inf, inf2, finalResult.getBaseModel());
+                    this.printResults(finalResult, inf, finalResult.getBaseModel());
                     //Upload into Fuseki
                     if (this.oldOntModel == null || !this.checkAreEquals(this.oldOntModel, finalResult)) {
                         // If the base model is different (new data into DB) or if the inference model is different (new inference throught new rules
@@ -152,7 +156,6 @@ public class RuleEngine {
             }
             // Closing Files.
             inf.close();
-            inf2.close();
         }else {
             System.err.println(" The mapping file or the rules file are empty. Please check if they are OK.");
             LOGGER.severe("Mapping file or Rules file are empty. Check if they are valid.");
@@ -211,17 +214,21 @@ public class RuleEngine {
     }
 
 
-    /**
-     *
-     * This method makes a query to DB pedia to obtain relevant information.
-     *
-     * Currently the first approach of this method is to queri DB pedia about Pilot's cities information, but this
-     * method can be expaned to other areas.
-     *
-     * @param pCity The name of the city
-     *
-     */
-    private void queryDBPedia(String pCity) {
+
+
+    // TODO use this to add new contents of city based on information of final results.
+
+
+    private void obtainCityInformation(OntModel pFinalResult) {
+        // TODO We need to iterate data and request to DBpedia city information
+        // Alternative use Spotlight to discover data
+
+
+
+        // Iterate over the data to extract city name
+
+        String pCity = new String();
+
 
 
         // Defining the structure of the quey
@@ -248,10 +255,9 @@ public class RuleEngine {
                 builder.append(line);
                 builder.append(System.getProperty("line.separator"));
             }
-            String output = builder.toString();
-            // TODO Output has the resulted data I need exactly how to convert it into triple and return to data
-            Model bla = new ModelFactory.createOntologyModel();
-            
+            String output = builder.toString(); // We rexeive the URI of the town
+
+            // Decide here if append or not data
 
 
 
@@ -294,13 +300,13 @@ public class RuleEngine {
      * @param pOntology The actual knowledge ( Base + inferred)
      * @param pInf: The list containing the inferred elements.
      */
-    private void printResults(OntModel pOntology, InfModel pInf, InfModel pInf2, Model pInstances) {
+    private void printResults(OntModel pOntology, InfModel pInf, Model pInstances) {
         this.execution++;
         pOntology.write(System.out, "N-TRIPLES");
         System.out.println("========================================");
         System.out.println("Number of elements: "+ pInstances.size());
         System.out.println("Execution number :"+this.execution);
-        System.out.println("Infered count list "+pInf.getDeductionsModel().size() + pInf2.getDeductionsModel().size());
+        System.out.println("Infered count list "+pInf.getDeductionsModel().size());
     }
 
 }

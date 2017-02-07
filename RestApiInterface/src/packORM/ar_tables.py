@@ -178,6 +178,7 @@ class ExecutedAction(Base):
     sensor_id = Column(Integer)
     payload = Column(String(50))
     extra_information = Column(Text)
+
     # Relationship with other TABLES
     action = relationship("Action")
     activity = relationship("Activity")
@@ -232,25 +233,27 @@ class UserInRole(Base):
     id = Column(String(75), primary_key=True)
     valid_from = Column(TIMESTAMP, default=datetime.datetime.utcnow)
     valid_to = Column(TIMESTAMP)
-    # m2m
-    action = relationship("ExecutedAction", cascade="all, delete-orphan")
+
     # one2many
     #stake_holder_name = Column(String(25), ForeignKey('stake_holder.name'))
-    user_authenticated_id = Column(Integer, ForeignKey('user_authenticated.id'))
+    user_registered_id = Column(Integer, ForeignKey('user_registered.id'))
     cd_role_id = Column(Integer, ForeignKey('cd_role.id'))
     pilot_name = Column(String(50), ForeignKey('pilot.name'))
+
+    # m2m
+    action = relationship("ExecutedAction", cascade="all, delete-orphan")
 
     def __repr__(self):
         return "<User(id='%s', valid_from='%s'. valid_to='%s')>" % (self.id, self.valid_from, self.valid_to)
 
 
-class UserAuthenticated(Base):
+class UserRegistered(Base):
     """
     Base data of the users
     """
-    __tablename__ = 'user_authenticated'
+    __tablename__ = 'user_registered'
 
-    id = Column(Integer, Sequence('user_authenticated_seq'), primary_key=True)
+    id = Column(Integer, Sequence('user_registered_seq'), primary_key=True)
     username = Column(Text, nullable=False, unique=True)
     password = Column(Password(rounds=13), nullable=False)
     # Or specify a cost factor other than the default 13
@@ -263,7 +266,7 @@ class UserAuthenticated(Base):
     user_in_role = relationship('UserInRole')
 
     def __repr__(self):
-        return "<UserInRole(username='%s', password='%s', created_date='%s')>" % (
+        return "<UserRegistered(username='%s', password='%s', created_date='%s')>" % (
             self.username, self.password, self.created_date)
 
     def to_json(self):
@@ -394,22 +397,6 @@ class Pilot(Base):
                                                                               self.population_size)
 
 
-# class StakeHolder(Base):
-#     """
-#     This table stores all related data of project stakeholders to identify each user with his role in the system
-#     """
-#
-#     __tablename__ = 'stake_holder'
-#
-#     name = Column(String(25), primary_key=True)
-#     type = Column(String(25))
-#     # one2many
-#     user_authenticated = relationship('UserAuthenticated')
-#     user_in_role = relationship('UserInRole')
-#
-#     def __repr__(self):
-#         return "<StakeHolder(name='%s', type='%s')>" % (self.name, self.type)
-
 class CDRole(Base):
     """
     This table stores all data related to the roles for users in the system. The idea is to stablish a role-access
@@ -424,6 +411,11 @@ class CDRole(Base):
 
     # one2many
     user_in_role = relationship('UserInRole')
+
+    def __repr__(self):
+        return "<CDRole(role_name='%s', role_abbreviation='%s', role_abbreviation='%s')>" % (self.role_name,
+                                                                                             self.role_abbreviation,
+                                                                                             self.role_description)
 
 
 class InterBehaviour(Base):
@@ -517,4 +509,4 @@ class Historical(Base):
     status_code = Column(Integer)
 
     # One2Many
-    user_authenticated_id = Column(Integer, ForeignKey('user_authenticated.id'))
+    user_registered_id = Column(Integer, ForeignKey('user_registered.id'))

@@ -28,29 +28,44 @@ class ARPostORM(PostORM):
         """
         return ar_tables.create_tables(self.engine)
 
-    def verify_user_login(self, p_data, app, expiration=600):
+    def get_auth_token(self, p_user, app, expiration=600):
         """
-        This method generates a new auth token to the user when username and password are OK
-    
-        :param p_data: A Python dic with username and password.
-        :param app: Flask application Object.
-        :param expiration: Expiration time of the token.
-    
-        :return: A string with token data or Error String.
+        Giving a registered user ID creates a new token to be authenticated
+
+        :param p_user: The ID o a registered user
+        :param app:  The Flask APP
+        :param expiration:  Cookie expiration time
+        :return: A token to be sent to the final user
         """
-        res = False
-        if 'username' in p_data and 'password' in p_data and app:
-            user_data = self.query(ar_tables.UserAuthenticated, {'username': p_data['username']})
-            if user_data and user_data.count() == 1 and user_data[0].password == p_data['password'] \
-                    and user_data[0].username == p_data['username']:
+        token = None
+        if p_user and app:
+            # Generation of a new user Toke containing user ID
+            token = p_user.generate_auth_token(app, expiration)
+        return token
+
+    def verify_user_login(self, p_username, p_password, p_app):
+        """
+        This methods verifies the user credentials
+    
+        :param p_username: The user's username
+        :param p_password: The user's password
+        :param p_app: Flask application Object.
+
+    
+        :return: An user information if the credentials are correct or none in other case
+        """
+        user_data = None
+        if p_username and p_password and p_app:
+            res = self.query(ar_tables.UserRegistered, {'username': p_username})
+            if res and res.count() == 1 and res[0].password == p_password \
+                    and res[0].username == p_username:
                 logging.info("verify_user_login: Login ok.")
-                # Generation of a new user Toke containing user ID
-                res = user_data[0].generate_auth_token(app, expiration)
+                user_data = res[0]
             else:
                 logging.error("verify_user_login: User entered invalid username/password")
         else:
             logging.error("verify_user_login: Rare error detected")
-        return res
+        return user_data
 
     def verify_auth_token(self, token, app):
         """
@@ -63,9 +78,9 @@ class ARPostORM(PostORM):
         """
         user_data = None
         if app and token:
-            res = ar_tables.UserAuthenticated.verify_auth_token(token, app)
+            res = ar_tables.UserRegistered.verify_auth_token(token, app)
             if res and res.get('id', False):
-                user_data = self.session.query(ar_tables.UserAuthenticated).get(res.get('id', 0))
+                user_data = self.session.query(ar_tables.UserRegistered).get(res.get('id', 0))
         return user_data
 
     def add_action(self, p_data):
@@ -259,7 +274,7 @@ class ARPostORM(PostORM):
         """
         new_historical = ar_tables.Historical(route=p_route, data=p_data, ip=p_ip, agent=p_agent,
                                               status_code=p_status_code,
-                                              user_authenticated_id=p_user_id)
+                                              user_registered_id=p_user_id)
         self.insert_one(new_historical)
         return self.commit()
 
@@ -291,7 +306,7 @@ class ARPostORM(PostORM):
             'pilot': ar_tables.Pilot,
             'simple_location': ar_tables.SimpleLocation,
             'user_in_role': ar_tables.UserInRole,
-            'user_authenticated': ar_tables.UserAuthenticated
+            'user_registered': ar_tables.UserRegistered
         }
         # We instantiate desired table
         return all_tables[p_table_name]

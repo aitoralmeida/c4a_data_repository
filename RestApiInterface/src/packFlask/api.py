@@ -12,9 +12,9 @@ import logging
 from datetime import timedelta
 from functools import wraps
 from json import dumps, loads
-
 from flask import Flask, request, make_response, Response, abort, redirect, url_for, session, flash, jsonify, \
     request_finished
+from flask_httpauth import HTTPBasicAuth
 from sqlalchemy.orm import class_mapper
 from packUtils.utilities import Utilities
 
@@ -36,11 +36,13 @@ AVAILABLE_API = '0.1', '0.2', '0.3'
 SECRET_KEY = '\xc2O\xd1\xbb\xd6\xb2\xc2pxRS\x12l\xee8X\xcb\xc3(\xeer\xc5\x08s'
 AR_DATABASE = 'Database'
 SR_DATABASE = 'Database'
+USER = None
 MAX_LENGHT = 8 * 1024 * 1024  # in bytes
 
 # Create application and load config.
 app = Flask(__name__)
 app.config.from_object(__name__)
+auth = HTTPBasicAuth()
 
 
 def limit_content_length(max_length):
@@ -63,7 +65,6 @@ def limit_content_length(max_length):
             return f(*args, **kwargs)
 
         return wrapper
-
     return decorator
 
 ###################################################################################################
@@ -98,6 +99,9 @@ def teardown_request(exception):
         SR_DATABASE.close()
 
 
+# TODO uncoment this when you finish to make all changes
+"""
+
 @request_finished.connect_via(app)
 def when_request_finished(sender, response, **extra):
     # We want to check if it is a registered user POST call.
@@ -122,12 +126,94 @@ def when_request_finished(sender, response, **extra):
                           "\n Data: %s"
                           "\n Status code?: %s", user_id, route, ip, agent, data, status_code)
 
+"""
+
+
+###################################################################################################
+###################################################################################################
+######                              AUTH METHODS
+###################################################################################################
+###################################################################################################
+
+
+@auth.verify_password
+def verify_password(username_or_token, password):
+    """
+    This decorator is used by Flask-HTTPauth to stablish the user's password verification process.
+
+    The method is defined to validate user when it sends either its username/password or token.
+
+    :param username_or_token: The username or validation token
+    :param password: The user password
+
+    :return: True if the user credentials are ok
+            False if the user credentials are ko
+
+    """
+
+    # Validating user with auth Token
+    user = AR_DATABASE.verify_auth_token(username_or_token, app)
+    if not user:
+        # try to authenticate with username/password
+        user = AR_DATABASE.verify_user_login(username_or_token, password, app)
+        if not user:
+            Utilities.write_log_error(app, "login: User entered an invalid username or password. 401")
+            return False
+    # Put the user id in a global stage
+    global USER
+    USER = user
+    # Writing the log
+    Utilities.write_log_info(app, ("login: User login successfully with username or token: %s" % username_or_token))
+    return True
+
+
+@app.route('/api/<version>/login', methods=['GET'])
+@auth.login_required
+@limit_content_length(MAX_LENGHT)
+def login(version=app.config['ACTUAL_API']):
+    """
+    Gives the ability to login into API. It returns an encrypted cookie with the token information and a JSON containing
+    the string of the token to use in the validation process.
+
+    :param version: Api version
+    :return: A token with user ID information in two formats: 1) in a cookie encrypted; 2) in a JSON decoded.
+    """
+    if Utilities.check_version(app, version):
+        # We retieve the actual loggin user information
+        if USER:
+            token = AR_DATABASE.get_auth_token(USER, app, expiration=600)
+            session['token'] = token
+            return jsonify({'token': token.decode('ascii')})
+
+
+@app.route('/api/<version>/logout', methods=['GET'])
+@auth.login_required
+def logout(version=app.config['ACTUAL_API']):
+    """
+    Logout from the system and removes session mark
+
+    :param version: APi version
+    :return:
+    """
+    if Utilities.check_version(app, version):
+        global USER
+        if USER:
+            session.pop('token', None)
+            USER = None
+            Utilities.write_log_info(app, ("logout: User logout successfully"))
+            flash('You were logged out')
+            return redirect(url_for('api', version=app.config['ACTUAL_API']))
+    else:
+        Utilities.write_log_error(app, "logout: User entered an invalid api version, 404")
+        return "You have entered an invalid api version", 404
+
+
+
 ###################################################################################################
 ###################################################################################################
 ######                              GET FUNCTIONS
 ###################################################################################################
 ###################################################################################################
-
 
 @app.route('/')
 def index():
@@ -192,56 +278,8 @@ def get_my_ip():
 ###################################################################################################
 
 
-@app.route('/api/<version>/login', methods=['POST'])
-@limit_content_length(MAX_LENGHT)
-def login(version=app.config['ACTUAL_API']):
-    """
-    Gives the ability to login into API
-
-    :param version: Api version
-    :return:
-    """
-    if Utilities.check_connection(app, version):
-        data = _convert_to_dict(request.json)[0]
-        if 'username' in data and 'password' in data:
-            res = SR_DATABASE.verify_user_login(data, app)
-            if res:
-                # Username and password are OK
-                Utilities.write_log_info(app, ("login: User login successfully with username: %s" % data['username']))
-                # Saving session cookie.
-                # session['username'] = data['username']
-                # session['id'] = res
-                session['token'] = res
-                # return redirect(url_for('api', version=app.config['ACTUAL_API']))
-                return "You were logged in", 200
-            else:
-                Utilities.write_log_error(app, "login: User entered an invalid username or password. 401")
-                abort(401)
-        else:
-            abort(500)
-
-
-@app.route('/api/<version>/logout', methods=['POST'])
-def logout(version=app.config['ACTUAL_API']):
-    """
-    Logout from the system and removes session mark
-
-    :param version: APi version
-    :return:
-    """
-    if Utilities.check_version(app, version):
-        user_data = Utilities.check_session(app, SR_DATABASE)
-        if user_data:
-            session.pop('token', None)
-            Utilities.write_log_info(app, ("logout: User logout successfully with username: %s" % user_data.username))
-            flash('You were logged out')
-            return redirect(url_for('api', version=app.config['ACTUAL_API']))
-    else:
-        Utilities.write_log_error(app, "logout: User entered an invalid api version, 404")
-        return "You have entered an invalid api version", 404
-
-
 @app.route('/api/<version>/search', methods=['POST'])
+@auth.login_required
 @limit_content_length(MAX_LENGHT)
 def search(version=app.config['ACTUAL_API']):
     """
@@ -270,9 +308,7 @@ def search(version=app.config['ACTUAL_API']):
     res = None
     if Utilities.check_connection(app, version):
         data = _convert_to_dict(request.json)[0]
-        # Verifying the user
-        user_data = Utilities.check_session(app, AR_DATABASE)
-        if Utilities.check_search(AR_DATABASE, data) and user_data:
+        if Utilities.check_search(AR_DATABASE, data) and USER:
             # data Entered by the user is OK
             limit = data.get('limit', 10) if data and data.get('limit', 10) >= 0 else 10
             offset = data.get('offset', 0) if data and data.get('offset', 0) >= 0 else 0
@@ -285,18 +321,18 @@ def search(version=app.config['ACTUAL_API']):
                 serialized_labels = [serialize(label) for label in res]
                 if len(serialized_labels) == 0:
                     Utilities.write_log_warning(app, ("search: the username: %s performs a valid search "
-                                                      "with no results" % user_data.username))
+                                                      "with no results" % USER.username))
                     res = Response("No data found with this filters.\n")
                 else:
                     Utilities.write_log_info(app, ("search: the username: %s performs a valid search" %
-                                                   user_data.username))
+                                                   USER.username))
                     res = Response(dumps(serialized_labels, default=date_handler), mimetype='application/json')
             except AttributeError:
                 abort(500)
         else:
             # Some user data is not well
             Utilities.write_log_error(app, ("search: the username: %s performs an INVALID search. 413" %
-                                      user_data.username))
+                                      USER.username))
             res = Response(
                 "You have entered incorrect JSON format Data, check if your JSON is OK. Here there are current database"
                 "tables, check if you type one of the following tables: %s" % AR_DATABASE.get_tables()
@@ -305,6 +341,7 @@ def search(version=app.config['ACTUAL_API']):
 
 
 @app.route('/api/<version>/add_action', methods=['POST'])
+@auth.login_required
 @limit_content_length(MAX_LENGHT)
 def add_action(version=app.config['ACTUAL_API']):
     """
@@ -331,21 +368,18 @@ def add_action(version=app.config['ACTUAL_API']):
     :return:
     """
     if Utilities.check_connection(app, version):
-        # We created a list of Python dics.
+        # We created a list of Python dict.
         data = _convert_to_dict(request.json)
-        # Verifying the user
-        user_data = Utilities.check_session(app, AR_DATABASE)
-        # validate users data
-        if data and Utilities.check_add_action_data(data) and user_data:
+        if data and Utilities.check_add_action_data(data) and USER:
             # User and data are OK. save data into DB
             res = AR_DATABASE.add_action(data)
             if res:
                 Utilities.write_log_info(app, ("add_action: the username: %s adds new action into database" %
-                                         user_data.username))
+                                         USER.username))
                 return Response('Data stored in database OK\n'), 200
             else:
                 Utilities.write_log_error(app, ("add_action: the username: %s failed to store data into database. 500" %
-                                          user_data.username))
+                                          USER.username))
                 return "There is an error in DB", 500
         else:
             abort(500)
@@ -389,19 +423,16 @@ def add_activity(version=app.config['ACTUAL_API']):
     """
     if Utilities.check_connection(app, version):
         data = _convert_to_dict(request.json)
-        # Verifying the user
-        user_data = Utilities.check_session(app, AR_DATABASE)
-        # validate users data
-        if data and Utilities.check_add_activity_data(data) and user_data:
+        if data and Utilities.check_add_activity_data(data) and USER:
             # User and data are OK. save data into DB
             res = AR_DATABASE.add_activity(data)
             if res:
                 Utilities.write_log_info(app, ("add_activity: the username: %s adds new action into database" %
-                                         user_data.username))
+                                         USER.username))
                 return Response('Data stored in database OK\n'), 200
             else:
                 Utilities.write_log_error(app, ("add_activity: the username: %s failed to store "
-                                                "data into database. 500" % user_data.username))
+                                                "data into database. 500" % USER.username))
                 return Response("There is an error in DB"), 500
         else:
             abort(500)
@@ -473,10 +504,10 @@ def clear_user(version=app.config['ACTUAL_API']):
 
     if Utilities.check_connection(app, version):
         data = _convert_to_dict(request.json)
-        # Verifying the user
-        user_data = Utilities.check_session(app, AR_DATABASE)
-        # Validate new user data
-        if data and Utilities.check_clear_user(data) and user_data.stake_holder_name == "admin":
+        # TODO call to user in role to know the CD_ROLE OF THIS USER
+
+        """
+        if data and Utilities.check_clear_user(data) and USER.stake_holder_name == "admin":
             # Data entered is ok
             res = AR_DATABASE.clear_user_data_in_system(data)
             if res:
@@ -486,6 +517,7 @@ def clear_user(version=app.config['ACTUAL_API']):
                 return Response("There isn't data from this entered user", 412)
         else:
             abort(500)
+        """
 
 
 @app.route('/api/<version>/add_measure', methods=['POST'])
@@ -500,9 +532,10 @@ def add_measure(version=app.config['ACTUAL_API']):
     # TODO this method must be developed with measure information from Vladimir
     if Utilities.check_connection(app, version):
         data = _convert_to_dict(request.json)
-        # Verifiying the user
-        user_data = Utilities.check_session(app, AR_DATABASE)
-        # Validate the entered measure data
+
+        # TODO call to user in role to know the CD_ROLE OF THIS USER
+
+        """
         if data and Utilities.check_clear_user(data) and user_data.stake_holder_name == "admin":
             res = AR_DATABASE.add_measure(data)
             if res:
@@ -515,6 +548,8 @@ def add_measure(version=app.config['ACTUAL_API']):
                 return "There is an error in DB", 500
         else:
             abort(500)
+
+         """
 
 ###################################################################################################
 ###################################################################################################

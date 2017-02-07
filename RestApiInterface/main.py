@@ -87,16 +87,16 @@ def generate_database():
                               application_developer, administrador])
         orm.insert_all(list_of_roles)
         # Creating a simple admin user
-        admin_authenticated = ar_tables.UserAuthenticated(username='admin', password='admin')
+        admin_authenticated = ar_tables.UserRegistered(username='admin', password='admin')
         orm.insert_one(admin_authenticated)
         # Committing changes
         orm.commit()
         # Getting new admin ID
-        admin_authenticated_id = orm.session.query(ar_tables.UserAuthenticated).filter_by(username='admin').first().id
+        admin_authenticated_id = orm.session.query(ar_tables.UserRegistered).filter_by(username='admin').first().id
         admin_cd_role_id = orm.session.query(ar_tables.CDRole).filter_by(role_name='administrator').first().id
         # Creating admin user_in_role in the system
         admin = ar_tables.UserInRole(id='general admin of system',
-                                     valid_from=None, valid_to=None, user_authenticated_id=admin_authenticated_id,
+                                     valid_from=None, valid_to=None, user_registered_id=admin_authenticated_id,
                                      cd_role_id=admin_cd_role_id)
         orm.session.add(admin)
         # Creating pilots names

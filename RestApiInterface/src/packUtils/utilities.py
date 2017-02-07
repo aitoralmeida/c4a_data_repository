@@ -48,23 +48,6 @@ class Utilities(object):
             abort(404)
 
     @staticmethod
-    def check_session(app, p_database):
-        """
-        Checks if the actual user has a session cookie registered
-
-
-        :param app: Flask application
-        :param p_database: The database instantiation of SQL Alchemy
-
-        :return: User Token if auth is OK. Abort is something is Wrong.
-        """
-        if session and session.get('token', False):
-            return p_database.verify_auth_token(session.get('token'), app)
-        else:
-            logging.error("check_connection: User session cookie is not OK, 401")
-            abort(401)
-
-    @staticmethod
     def check_content_type():
         """
         Checks if actual content_type is OK

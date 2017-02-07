@@ -2,6 +2,7 @@
 
 from packORM import sr_tables
 from post_orm import PostORM
+from sqlalchemy import MetaData
 
 
 __author__ = 'Rubén Mulero'
@@ -26,3 +27,12 @@ class SRPostORM(PostORM):
         """
         return sr_tables.create_tables(self.engine)
 
+    def get_tables(self):
+        """
+        List current database tables in DATABASE active connection (Current installed system).
+
+        :return: A list containing current tables.
+        """
+        m = MetaData()
+        m.reflect(self.engine, schema='city4age_sr')
+        return m.tables.keys()
