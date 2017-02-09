@@ -151,10 +151,14 @@ def verify_password(username_or_token, password):
 
     """
 
-    # Validating user with auth Token
-    user = AR_DATABASE.verify_auth_token(username_or_token, app)
+    if session and session.get('token', False):
+        # Validating user using the encrypted cookie.
+        user = AR_DATABASE.verify_auth_token(session['token'], app)
+    else:
+        # Validating user using the auth Token.
+        user = AR_DATABASE.verify_auth_token(username_or_token, app)
     if not user:
-        # try to authenticate with username/password
+        # Validating user with username/password.
         user = AR_DATABASE.verify_user_login(username_or_token, password, app)
         if not user:
             Utilities.write_log_error(app, "login: User entered an invalid username or password. 401")
@@ -214,6 +218,7 @@ def logout(version=app.config['ACTUAL_API']):
 ######                              GET FUNCTIONS
 ###################################################################################################
 ###################################################################################################
+
 
 @app.route('/')
 def index():
@@ -367,6 +372,7 @@ def add_action(version=app.config['ACTUAL_API']):
     :param version: Api version
     :return:
     """
+
     if Utilities.check_connection(app, version):
         # We created a list of Python dict.
         data = _convert_to_dict(request.json)
