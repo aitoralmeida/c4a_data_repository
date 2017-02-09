@@ -527,19 +527,39 @@ def clear_user(version=app.config['ACTUAL_API']):
 
 
 @app.route('/api/<version>/add_measure', methods=['POST'])
+@auth.login_required
 @limit_content_length(MAX_LENGHT)
 def add_measure(version=app.config['ACTUAL_API']):
     """
-    <Enter here a description of this endpoint>
+    Adds a new measure into the system. This endpoint is sensible to different combinations of GEF/GES
+
+
+    An example in JSON could be:
+
+    {
+         "gef": "motility",
+         "ges": "still_moving",
+         "payload": {
+             "user": "eu:c4a:pilot:lecce:user:12345",
+             "date": "2016-05-19"
+             "tm_secs": "9000"
+         },
+         "timestamp": "2016-05-20 00:08:41.013329",
+         "extra": {
+             "pilot": "lecce"
+         }
+    }
+
 
     :param version: Api version
     :return:
+
     """
     # TODO this method must be developed with measure information from Vladimir
     if Utilities.check_connection(app, version):
         data = _convert_to_dict(request.json)
 
-        # TODO call to user in role to know the CD_ROLE OF THIS USER
+
 
         """
         if data and Utilities.check_clear_user(data) and user_data.stake_holder_name == "admin":

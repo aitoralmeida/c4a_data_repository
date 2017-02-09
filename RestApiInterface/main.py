@@ -5,7 +5,7 @@ import os
 import sys
 from logging.handlers import RotatingFileHandler
 
-from packControllers import ar_post_orm
+from packControllers import ar_post_orm, sr_post_orm
 from src.packFlask.api import app as application
 from src.packORM import ar_tables
 
@@ -111,6 +111,16 @@ def generate_database():
         orm.session.add_all(list_of_pilots)
         orm.commit()
         orm.close()
+
+    sr_orm = sr_post_orm.SRPostORM()
+    if len(sr_orm.get_tables()) == 0:
+        # We need to create tables in database
+        logging.info("Database is empty. Creating new tables in database and adding basic data")
+        # Creating base tables
+        sr_orm.create_tables()
+
+        # Add basic data to SR schema
+
 
 # main execution
 if __name__ == '__main__':

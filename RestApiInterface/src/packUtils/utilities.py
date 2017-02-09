@@ -362,7 +362,74 @@ class Utilities(object):
         :return:
         """
         res = False
-        schema = "Enter JSON schema HERE"
+
+        schema = {
+            "title": "Add measure schema",
+            "type": "object",
+            "properties": {
+                "gef": {
+                    "description": "The name of the type of measure to enter",
+                    "type": "string",
+                    "minLength": 3,
+                    "maxLength": 50
+                },
+                "ges": {
+                    "description": "The sub-type of measure to enter",
+                    "type": "string",
+                    "minLength": 3,
+                    "maxLength": 50
+                },
+                "payload": {
+                    "description": "contains relative information about the entered GEF/GES into the system",
+                    "type": "object",
+                    "properties": {
+                        # Required parameters for all combinations of GEF/GES
+                        "user": {
+                            "type": "string",
+                            "minLength": 3,
+                            "maxLength": 50
+                        },
+                        "date": {
+                            "type": "string",
+                            # "format": "date-time",   # ASK To know if sended data is in RFC 3339, section 5.6. to use this format
+                            "minLength": 3,
+                            "maxLength": 50
+                        },
+                    },
+                    "required": ["user", "date"],
+                },
+                "timestamp": {
+                    "description": "The time when de action was performed",
+                    "type": "string",
+                    # "format": "date-time",   # ASK To know if sended data is in RFC 3339, section 5.6. to use this format
+                    "minLength": 3,
+                    "maxLength": 50
+                },
+                "extra": {
+                    "description": "contains the information about what pilot performs the action",
+                    "type": "object",
+                    "properties": {
+                        "pilot": {
+                            "description": "the name of the city when the measure is performed",
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 40,
+                            "enum": [
+                                "madrid",
+                                "lecce",
+                                "singapore",
+                                "montpellier",
+                                "athens",
+                                "birmingham"
+                            ]
+                        }
+                    },
+                    "required": ["pilot"]
+                }
+            },
+            "required": ["gef", "ges", "payload", "timestamp", "extra"],
+            "additionalProperties": False
+        }
 
         try:
             if type(p_data) is list:
@@ -374,7 +441,6 @@ class Utilities(object):
             res = True
         except ValidationError:
             logging.error("The schema entered by the user is invalid")
-
         return res
 
     @staticmethod

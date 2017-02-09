@@ -188,11 +188,11 @@ class FrailtyStatusTimeline(Base):                                              
     __tablename__ = 'frailty_status_timeline'
 
     changed = Column(TIMESTAMP, primary_key=True)
-    user_in_role_id = Column(Integer, primary_key=True)     # TODO ensure that this class is OK
+    user_in_role_id = Column(String(75), primary_key=True)     # TODO ensure that this class is OK
 
-    # user_in_role_id = Column(Integer, ForeignKey('user_in_role.id'), primary_key=True)
+    # user_in_role_id = Column(String(75), ForeignKey('user_in_role.id'), primary_key=True)
     time_interval_id = Column(Integer, ForeignKey('time_interval.id'), primary_key=True)
-    changed_by = Column(Integer, ForeignKey('user_in_role.id'))
+    changed_by = Column(String(75), ForeignKey('user_in_role.id'))
     frailty_notice = Column(String(200))
 
     # Many2One
@@ -240,10 +240,10 @@ class AssessmentAudienceRole(Base):                                             
 
     assessment_id = Column(Integer, ForeignKey('assessment.id'), primary_key=True)
     role_id = Column(Integer, ForeignKey('cd_role.id'), primary_key=True)
-    assigned = Column(TIMESTAMP, default=datetime.datetime.utcnow)
+    assigned = Column(TIMESTAMP, default=datetime.datetime.utcnow, nullable=True)
 
     # Relationship with other Tables
-    cd_role = relationship('Assessment')
+    assessment = relationship('Assessment')
 
 
 class ExecutedAction(Base):                                                                 # OK
@@ -320,7 +320,7 @@ class UserInRole(Base):                                                         
     # Many2One
     user_registered_id = Column(Integer, ForeignKey('user_registered.id'))
     cd_role_id = Column(Integer, ForeignKey('cd_role.id'))
-    pilot_id = Column(String(50), ForeignKey('pilot.id')) #             TODO ID OR NAME?
+    pilot_id = Column(Integer, ForeignKey('pilot.id')) #             TODO ID OR NAME?
 
     # M2M relationships
     action = relationship("ExecutedAction", cascade="all, delete-orphan")
@@ -425,7 +425,7 @@ class CRProfile(Base):                                                          
     gender = Column(Boolean)
 
     # Many2One
-    user_in_role_id = Column(Integer, ForeignKey('user_in_role.id'))
+    user_in_role_id = Column(String(75), ForeignKey('user_in_role.id'))
 
     def __repr__(self):
         return "<CRProfile(id='%s', ref_height='%s', ref_weight='%s', ref_mean_blood_pressure='%s', date='%s'," \
@@ -468,7 +468,7 @@ class Location(Base):                                                           
     location_name = Column(String(75))
     indoor = Column(Boolean)
     # One2Many
-    pilot_id = Column(String(50), ForeignKey('pilot.id'), nullable=True)  # TODO name or id?
+    pilot_id = Column(Integer, ForeignKey('pilot.id'), nullable=True)  # TODO name or id?
 
     # many2many
     # activity = relationship("LocationActivityRel") # TODO ask for intermediate TABLE multiple locations
@@ -496,7 +496,7 @@ class Activity(Base):                                                           
     since = Column(TIMESTAMP, nullable=True)
 
     # FK
-    user_in_role_id = Column(Integer, ForeignKey('user_in_role.id'), nullable=False)
+    user_in_role_id = Column(String(75), ForeignKey('user_in_role.id'), nullable=False)
     time_interval_id = Column(Integer, ForeignKey('time_interval.id'), nullable=False)
     data_source_type = Column(String(3), ForeignKey('cd_data_source_type.data_source_type'))
 
@@ -510,8 +510,6 @@ class Activity(Base):                                                           
                                         foreign_keys='InterActivityBehaviourVariation.real_activity_id')
 
     variation_measure_value = relationship('VariationMeasureValue')
-
-
 
     def __repr__(self):
         return "<Activity(activity_name='%s', activity_start_date='%s', activity_end_date='%s', creation_date='%s')>"  \
@@ -560,7 +558,7 @@ class EAM(Base):                                                                
         return "<EAM(duration='%s')>" % self.duration
 
 
-class TimeInterval(Base):                                                                   # Ok
+class TimeInterval(Base):                                                                       # Ok
     """
     Defines some different interval times to calculate the variation measures over an action.
     """
@@ -617,7 +615,7 @@ class VariationMeasureValue(Base):                                              
     measure_value = Column(Float(4))
     # Many2One
     activity_id = Column(Integer, ForeignKey('activity.id'))
-    user_in_role_id = Column(Integer, ForeignKey('user_in_role.id'), nullable=False)
+    user_in_role_id = Column(String(75), ForeignKey('user_in_role.id'), nullable=False)
     measure_type_id = Column(Integer, ForeignKey('cd_detection_variable.id'), nullable=False)
     time_interval_id = Column(Integer, ForeignKey('time_interval.id'), nullable=False)
     data_source_type = Column(String(3), ForeignKey('cd_data_source_type.data_source_type'))
@@ -627,7 +625,7 @@ class VariationMeasureValue(Base):                                              
                (self.id, self.measure_value)
 
 
-class NumericIndicatorValue(Base):
+class NumericIndicatorValue(Base):                                                          # Ok
     """
     Entity intended to store the values of Numeric Indicators (NUI), for time intervals.
     The type of the value record is determined from the DetectionVariable entity, which also has a reflexive
@@ -642,8 +640,8 @@ class NumericIndicatorValue(Base):
 
     # Many 2 one tables
     nui_type_id = Column(Integer, ForeignKey('cd_detection_variable.id'))
-    time_interval_id = Column(Integer, ForeignKey('time_interval.id'))
-    user_in_role_id = Column(Integer, ForeignKey('user_in_role.id'))
+    time_interval_id = Column(Integer, ForeignKey('time_interval.id'), nullable=False)
+    user_in_role_id = Column(String(75), ForeignKey('user_in_role.id'))
     data_source_type = Column(String(3), ForeignKey('cd_data_source_type.data_source_type'))
 
     def __repr__(self):
@@ -651,7 +649,7 @@ class NumericIndicatorValue(Base):
                (self.id, self.nui_value)
 
 
-class CDDataSourceType(Base):
+class CDDataSourceType(Base):                                                                 # Ok
     """
     Give some information about what is the data source, and its descriptions
     """
@@ -674,27 +672,28 @@ class CDDataSourceType(Base):
                 self.obtrusive)
 
 
-class SourceEvidence(Base):
+class SourceEvidence(Base):                                                             # Ok
     """
     Saves data from geriatric to show evidences using texts and images uploaded to the API
     """
 
     __tablename__ = 'source_evidence'
 
+    id = Column(Integer, Sequence('source_evidence_seq'), primary_key=True)
     geriatric_factor_id = Column(Integer, ForeignKey('geriatric_factor_value.id'), primary_key=True)
     text_evidence = Column(Text)
     multimedia_evidence = Column(LargeBinary)
-    uploaded = Column(TIMESTAMP, default=datetime.datetime.utcnow)
+    uploaded = Column(TIMESTAMP, default=datetime.datetime.utcnow, nullable=False)
 
     # Many2One
-    author_id = Column(Integer, ForeignKey('user_in_role.id'))
+    author_id = Column(String(75), ForeignKey('user_in_role.id'))
 
     def __repr__(self):
         return "<SourceEvidence(geriatric_factor_id='%s', text_evidence='%s', uploaded='%s', author_id='%s')>" % \
                (self.geriatric_factor_id, self.text_evidence, self.uploaded, self.author_id)
 
 
-class GeriatricFactorValue(Base):
+class GeriatricFactorValue(Base):                                                       # Ok
     """
     Hierarchic entity intended to store the values of Geriatric Factors (GEF), Sub-Factors(GES), and GEF groups
     (Behavioural, Contextual, Overall).The type of the value record is determined from the DetectionVariable entity,
@@ -705,12 +704,12 @@ class GeriatricFactorValue(Base):
     __tablename__ = 'geriatric_factor_value'
 
     id = Column(Integer, Sequence('geriatric_factor_value_seq'), primary_key=True)
-    gef_value = Column(Float(3), nullable=False)           # TODO research how to solve precission
-    derivation_weight = Column(Float(5))           # TODO research how to solve precission
+    gef_value = Column(Float(3), nullable=False)            # TODO research how to solve precission
+    derivation_weight = Column(Float(5))                    # TODO research how to solve precission
 
     # Many2One relationships
     time_interval_id = Column(Integer, ForeignKey('time_interval.id'), nullable=False)
-    user_in_role_id = Column(Integer, ForeignKey('user_in_role.id'), nullable=False)
+    user_in_role_id = Column(String(75), ForeignKey('user_in_role.id'), nullable=False)
     data_source_type = Column(String(3), ForeignKey('cd_data_source_type.data_source_type'))
     gef_type_id = Column(Integer, ForeignKey('cd_detection_variable.id'))
 
@@ -723,7 +722,7 @@ class GeriatricFactorValue(Base):
                 self.derivation_weight)
 
 
-class Assessment(Base):
+class Assessment(Base):                                                                      # Ok
     """
     Assessments are input by geriatric/medical/caregiver staff (author_id) on specific geriatric factor or detection
     variable values (GES,GEF,GFG) represented as data points on interactive dashboards. An assessment can consist of a
@@ -735,21 +734,19 @@ class Assessment(Base):
     id = Column(Integer, Sequence('assessment_seq'), primary_key=True)
     assessment_comment = Column(String)
     data_validity_status = Column(String(1))
-    created = Column(TIMESTAMP, default=datetime.datetime.utcnow)
+    created = Column(TIMESTAMP, default=datetime.datetime.utcnow, nullable=False)
     updated = Column(TIMESTAMP)
 
     # Many2One
-    risk_status = Column(String(1), ForeignKey('cd_risk_status.risk_status'))
-    author_id = Column(Integer, ForeignKey('user_in_role.id'))
-
-
+    risk_status = Column(String(1), ForeignKey('cd_risk_status.risk_status'), nullable=False)
+    author_id = Column(String(75), ForeignKey('user_in_role.id'))
 
     def __repr__(self):
         return "<Assessment(assessment_comment='%s', data_validity_status='%s')>" % (self.activity_name,
                                                                                      self.data_validity_status)
 
 
-class CareProfile(Base):
+class CareProfile(Base):                                                                # Ok
     """
     Care profile stores individuals related data about interventions, attentions and the summary
     of their personal information.
@@ -757,17 +754,17 @@ class CareProfile(Base):
 
     __tablename__ = 'care_profile'
 
-    user_in_role_id = Column(Integer, ForeignKey('user_in_role.id'), primary_key=True)
-    individual_summary = Column(String)
+    user_in_role_id = Column(String(75), ForeignKey('user_in_role.id'), primary_key=True)
+    individual_summary = Column(String, nullable=False)
     attention_status = Column(String(1))
     intervention_status = Column(String(1))
     last_intervention_date = Column(TIMESTAMP)
-    created = Column(TIMESTAMP, default=datetime.datetime.utcnow)
+    created = Column(TIMESTAMP, default=datetime.datetime.utcnow, nullable=False)
     last_updated = Column(TIMESTAMP)
 
     # Many 2 one Relationships
-    created_by = Column(Integer, ForeignKey('user_in_role.id'), nullable=False)
-    last_updated_by = Column(Integer, ForeignKey('user_in_role.id'))
+    created_by = Column(String(75), ForeignKey('user_in_role.id'), nullable=False)
+    last_updated_by = Column(String(75), ForeignKey('user_in_role.id'))
 
     def __repr__(self):
         return "<CareProfile(user_in_role_id='%s', individual_summary='%s', attention_status='%s', " \
@@ -776,7 +773,7 @@ class CareProfile(Base):
                 self.intervention_status, self.last_intervention_date)
 
 
-class CDFrailtyStatus(Base):
+class CDFrailtyStatus(Base):                                                            # Ok
     """
     Contains the information about the frailty status and its description
     """
@@ -786,13 +783,15 @@ class CDFrailtyStatus(Base):
     frailty_status = Column(String(9), primary_key=True)
     frailty_status_description = Column(String(255))
 
+    # This is connected through M2M relationship
+
     def __repr__(self):
         return "<CDFrailtyStatus(frailty_status='%s', frailty_status_description='%s')>" % \
                (self.frailty_status,
                 self.frailty_status_description)
 
 
-class CDRiskStatus(Base):
+class CDRiskStatus(Base):                                                                       # OK
     """
     Classification of risk statuses, initially "W" (risk Warning, moderate or suspect risk), and "A"
     (risk Alert, evident risk). Null is presumed low or no risk (when this status is foreign key).
@@ -870,7 +869,7 @@ class CDDetectionVariableType(Base):                                            
 
 
 # In AR database this class is called InterBehaviour
-class InterActivityBehaviourVariation(Base):
+class InterActivityBehaviourVariation(Base):                                                    # ok
     """
     Contains the variations of the behaviours in the intra activity.
     """
