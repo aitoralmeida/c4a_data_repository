@@ -153,3 +153,25 @@ class PostORM(object):
         """
         if self.session:
             self.session.close()
+
+    def _get_or_create(self, model, **kwargs):
+        # type: (object, object) -> object
+        """
+        This method creates a new entry in db if this isn't exist yet or retrieve the instance information based on
+        some arguments.
+
+        :param model: The Table name defined in Tables class
+        :param kwargs: The needed arguments to create the table for example
+
+                (id=23, name='pako', lastname='rodriguez')
+
+        :return: An instance of  the Table.
+        """
+        instance = self.session.query(model).filter_by(**kwargs).first()
+        if instance:
+            return instance
+        else:
+            instance = model(**kwargs)
+            self.insert_one(instance)
+            self.commit()
+            return instance

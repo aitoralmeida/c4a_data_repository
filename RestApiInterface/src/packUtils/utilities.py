@@ -252,7 +252,7 @@ class Utilities(object):
         return res
 
     @staticmethod
-    def check_add_new_user(p_data):
+    def check_add_new_user_data(p_data):
         """
         Check if data is ok and if the not nullable values are filled.
 
@@ -306,7 +306,7 @@ class Utilities(object):
         return res
 
     @staticmethod
-    def check_clear_user(p_data):
+    def check_clear_user_data(p_data):
         """
         Check if data is ok
 
@@ -353,7 +353,7 @@ class Utilities(object):
         return res
 
     @staticmethod
-    def check_add_measure(p_data):
+    def check_add_measure_data(p_data):
         """
 
         Check if add_measure data is entered ok with required values
@@ -444,7 +444,7 @@ class Utilities(object):
         return res
 
     @staticmethod
-    def check_search(p_database, p_data):
+    def check_search_data(p_database, p_data):
         """
         Check if search data is ok and evaluates what is the best table that fits with search criteria
 

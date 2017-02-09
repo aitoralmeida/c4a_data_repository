@@ -170,6 +170,8 @@ def verify_password(username_or_token, password):
     Utilities.write_log_info(app, ("login: User login successfully with username or token: %s" % username_or_token))
     return True
 
+    # TODO research here to stablish user role permissions
+
 
 @app.route('/api/<version>/login', methods=['GET'])
 @auth.login_required
@@ -382,7 +384,7 @@ def add_action(version=app.config['ACTUAL_API']):
             if res:
                 Utilities.write_log_info(app, ("add_action: the username: %s adds new action into database" %
                                          USER.username))
-                return Response('Data stored in database OK\n'), 200
+                return Response('add_action: data stored in database OK\n'), 200
             else:
                 Utilities.write_log_error(app, ("add_action: the username: %s failed to store data into database. 500" %
                                           USER.username))
@@ -392,6 +394,7 @@ def add_action(version=app.config['ACTUAL_API']):
 
 
 @app.route('/api/<version>/add_activity', methods=['POST'])
+@auth.login_required
 @limit_content_length(MAX_LENGHT)
 def add_activity(version=app.config['ACTUAL_API']):
     """
@@ -468,7 +471,7 @@ def add_new_user(version=app.config['ACTUAL_API']):
         # Verifying the user
         user_data = Utilities.check_session(app, DATABASE)
         # Validate new user data
-        if data and Utilities.check_add_new_user(data) and user_data.stake_holder_name == "admin":
+        if data and Utilities.check_add_new_user_data(data) and user_data.stake_holder_name == "admin":
             # Data entered is ok
             res = DATABASE.add_new_user_in_system(data)
             if res and isinstance(res, list):
@@ -513,7 +516,7 @@ def clear_user(version=app.config['ACTUAL_API']):
         # TODO call to user in role to know the CD_ROLE OF THIS USER
 
         """
-        if data and Utilities.check_clear_user(data) and USER.stake_holder_name == "admin":
+        if data and Utilities.check_clear_user_data(data) and USER.stake_holder_name == "admin":
             # Data entered is ok
             res = AR_DATABASE.clear_user_data_in_system(data)
             if res:
@@ -555,27 +558,23 @@ def add_measure(version=app.config['ACTUAL_API']):
     :return:
 
     """
-    # TODO this method must be developed with measure information from Vladimir
     if Utilities.check_connection(app, version):
+        # We created a list of Python dict.
         data = _convert_to_dict(request.json)
-
-
-
-        """
-        if data and Utilities.check_clear_user(data) and user_data.stake_holder_name == "admin":
-            res = AR_DATABASE.add_measure(data)
+        if data and Utilities.check_add_measure_data(data) and USER:
+            # User and data are OK. save data into DB
+            res = SR_DATABASE.add_measure(data)
             if res:
-                # Utilities.write_log_info(app, ("add_action: the username: %s adds new action into database" %
-                #                          user_data.username))
-                return Response('Data stored in database OK\n'), 200
+                Utilities.write_log_info(app, ("add_measure: the username: %s adds new action into database" %
+                                         USER.username))
+                return Response('add_measure: data stored in database OK\n'), 200
             else:
-                # Utilities.write_log_error(app, ("add_action: the username: %s failed to store data into database. 500" %
-                #                            user_data.username))
+                Utilities.write_log_error(app, ("add_measure: the username: %s failed to store data into database. 500" %
+                                          USER.username))
                 return "There is an error in DB", 500
         else:
             abort(500)
 
-         """
 
 ###################################################################################################
 ###################################################################################################
@@ -663,11 +662,19 @@ def _convert_to_dict(p_requested_data):
 
 
 """
+Different curl examples:
+
+
+
+curl -u rubuser:testingpassw -i -X GET http://0.0.0.1:5000/api/login
+
+
 
 curl -X POST -d @filename.txt http://127.0.0.1:5000/add_action --header "Content-Type:application/json"
 
-
 curl -X POST -k -b cookie.txt -d @json_data.txt -w @curl-format.txt http://0.0.0.0:5000/api/0.1/add_action --header "Content-Type:application/json"
+
+
 
 
 curl -X POST -d '{"name1":"Rodolfo","name2":"Pakorro"}' http://127.0.0.1:5000/add_action --header "Content-Type:application/json"
