@@ -887,3 +887,23 @@ class InterActivityBehaviourVariation(Base):                                    
     def __repr__(self):
         return "<InterActivityBehaviourVariation(id='%s', deviation='%s')>" % \
                (self.id, self.deviation)
+
+
+class UserAction(Base):
+    """
+    This table stores all user actions in DB. Each user has its historical data stored to study its actions in the
+    system. The idea is to have some reference in case of security breach.
+    """
+
+    __tablename__ = 'user_action'
+
+    id = Column(Integer, Sequence('user_action_seq'), primary_key=True)
+    route = Column(String(25))
+    data = Column(String(255))
+    ip = Column(String(60))
+    agent = Column(String(255))
+    date = Column(TIMESTAMP, default=datetime.datetime.utcnow)
+    status_code = Column(Integer)
+
+    # One2Many
+    user_registered_id = Column(Integer, ForeignKey('user_registered.id'))

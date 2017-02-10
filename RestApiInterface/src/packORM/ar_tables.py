@@ -262,7 +262,7 @@ class UserRegistered(Base):
     created_date = Column(TIMESTAMP, default=datetime.datetime.utcnow)
 
     # one2many
-    historical = relationship('Historical')
+    user_action = relationship('UserAction')
     user_in_role = relationship('UserInRole')
 
     def __repr__(self):
@@ -492,15 +492,15 @@ class StartRange(Base):
         return "<SimpleLocation(start_hour='%s', end_hour='%s')>" % (self.start_hour, self.end_hour)
 
 
-class Historical(Base):
+class UserAction(Base):
     """
     This table stores all user actions in DB. Each user has its historical data stored to study its actions in the
     system. The idea is to have some reference in case of security breach.
     """
 
-    __tablename__ = 'historical'
+    __tablename__ = 'user_action'
 
-    id = Column(Integer, Sequence('historical_seq'), primary_key=True)
+    id = Column(Integer, Sequence('user_action_seq'), primary_key=True)
     route = Column(String(25))
     data = Column(String(255))
     ip = Column(String(60))

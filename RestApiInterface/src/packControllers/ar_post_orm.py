@@ -164,7 +164,6 @@ class ARPostORM(PostORM):
 
         return self.commit()
 
-
     """
     # TODO this class will change with v.2 stakeholder
     def add_new_user_in_system(self, p_data):
@@ -236,7 +235,7 @@ class ARPostORM(PostORM):
         self.commit()
         return res
 
-    def add_historical(self, p_user_id, p_route, p_ip, p_agent, p_data, p_status_code):
+    def add_user_action(self, p_user_id, p_route, p_ip, p_agent, p_data, p_status_code):
         """
     
         Adds a new entry in the historical database to record user action performed in the API.
@@ -251,10 +250,10 @@ class ARPostORM(PostORM):
         :return: True if data is stored in database
                 False if there are some problems
         """
-        new_historical = ar_tables.Historical(route=p_route, data=p_data, ip=p_ip, agent=p_agent,
-                                              status_code=p_status_code,
-                                              user_registered_id=p_user_id)
-        self.insert_one(new_historical)
+        new_user_action = ar_tables.UserAction(route=p_route, data=p_data, ip=p_ip, agent=p_agent,
+                                               status_code=p_status_code,
+                                               user_registered_id=p_user_id)
+        self.insert_one(new_user_action)
         return self.commit()
 
     def get_tables(self):
@@ -266,6 +265,21 @@ class ARPostORM(PostORM):
         m = MetaData()
         m.reflect(self.engine, schema='city4age_ar')
         return m.tables.keys()
+
+    def get_user_role(self, p_user_id):
+        """
+        Giving user id, this method retrieves the user role in the system.
+
+        :param p_user_id: The user_registered id in the system
+        :return: The name of the role attached to this user
+        """
+        res = None
+        user_in_role = self.session.query(ar_tables.UserInRole).filter_by(user_registered_id=p_user_id)[0].cd_role_id \
+                       or None
+        if user_in_role is not None:
+            # We obtain the role name based on FK key obtained in the above filter
+            res = self.session.query(ar_tables.CDRole).get(user_in_role).role_name or None
+        return res
 
     # TODO find a solution to this workaround
     def get_table_object_by_name(self, p_table_name):
@@ -285,7 +299,8 @@ class ARPostORM(PostORM):
             'pilot': ar_tables.Pilot,
             'simple_location': ar_tables.SimpleLocation,
             'user_in_role': ar_tables.UserInRole,
-            'user_registered': ar_tables.UserRegistered
+            'user_registered': ar_tables.UserRegistered,
+            'user_action': ar_tables.UserAction
         }
         # We instantiate desired table
         return all_tables[p_table_name]

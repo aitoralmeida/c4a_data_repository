@@ -45,6 +45,12 @@ app.config.from_object(__name__)
 auth = HTTPBasicAuth()
 
 
+###################################################################################################
+###################################################################################################
+######                              WRAPPERS
+###################################################################################################
+###################################################################################################
+
 def limit_content_length(max_length):
     """
     This is a decorator method that checks if the user is sending too long data. The idea is to have some control
@@ -66,6 +72,27 @@ def limit_content_length(max_length):
 
         return wrapper
     return decorator
+
+
+def required_roles(*roles):
+    """
+    This decorator method checks the current user role into the system and alows to execute certain endpoints in the
+    API.
+
+    :param roles: A list containing required roles
+    :return:
+    """
+
+    def wrapper(f):
+        @wraps(f)
+        def wrapped(*args, **kwargs):
+            user_role = AR_DATABASE.get_user_role(USER.id) or None
+            if user_role not in roles:
+                return "Your access level is not enough to use this endpoint."
+            return f(*args, **kwargs)
+        return wrapped
+    return wrapper
+
 
 ###################################################################################################
 ###################################################################################################
@@ -99,24 +126,20 @@ def teardown_request(exception):
         SR_DATABASE.close()
 
 
-# TODO uncoment this when you finish to make all changes
-"""
-
 @request_finished.connect_via(app)
 def when_request_finished(sender, response, **extra):
     # We want to check if it is a registered user POST call.
-    if request.url_rule.rule != '/api/<version>/login' \
-            and request.method == 'POST' and session.get('token', False):
-        # There is a registered user sending DATA
-        # ALL is ok we register the event
-        user_id = Utilities.check_session(app, AR_DATABASE).id
+    if USER:
+        # There is a registered user sending DATA so we will register the event
         route = request.url_rule and request.url_rule.endpoint or "Bad route or method"
         ip = request.remote_addr or "Can read user Ip Address"
         agent = request.user_agent.string or "User is not sending its agent"
         data = "User entered an JSON with length of: %s" % request.content_length or "No data found"
         status_code = response.status_code or "No status code. Check estrange behavior"
 
-        res = AR_DATABASE.add_historical(user_id, route, ip, agent, data, status_code)
+        # TODO we will consider to insert into different historical places . (Users endpoints as a list to decide)
+        # Inserting data into database
+        res = AR_DATABASE.add_user_action(USER.id, route, ip, agent, data, status_code)
         if not res:
             logging.error("Historical data is not storing well into DB. The sent data is the following:"
                           "\n User id: %s"
@@ -124,9 +147,7 @@ def when_request_finished(sender, response, **extra):
                           "\n Ip Address: %s"
                           "\n User Agent: %s"
                           "\n Data: %s"
-                          "\n Status code?: %s", user_id, route, ip, agent, data, status_code)
-
-"""
+                          "\n Status code?: %s", USER.id, route, ip, agent, data, status_code)
 
 
 ###################################################################################################
@@ -174,8 +195,9 @@ def verify_password(username_or_token, password):
 
 
 @app.route('/api/<version>/login', methods=['GET'])
-@auth.login_required
 @limit_content_length(MAX_LENGHT)
+@auth.login_required
+@required_roles('administrator', 'geriatrician')
 def login(version=app.config['ACTUAL_API']):
     """
     Gives the ability to login into API. It returns an encrypted cookie with the token information and a JSON containing
@@ -253,18 +275,22 @@ def api(version=app.config['ACTUAL_API']):
     :return:
     """
     if Utilities.check_version(app, version):
-        return """<h1>Welcome to City4Age Rest API</h1>
+        return """
+
+        <h1>Welcome to City4Age Rest API</h1>
 
         Here you have a list of available commands to use:
 
         This API is designed to be used with curl and JSON request.
 
         <ul>
-            <li><b>add_action</b>: Adds new ExecutedAction into database.</li>
+            <li><b>add_action</b>: Adds new Action into database.</li>
             <li><b>add_activity</b>: Adds new Activity into database.</li>
-            <li><b>login</b>: Login into API.</li>
-            <li><b>logout</b>: Disconnect current user from the API.</li>
-            <li><b>search</b>: Search some datasets.</li>
+            <li><b>add_measure</b>: Adds a new Measure into database.</li>
+            <li><b>login</b>: Obtain an identification user token.</li>
+            <li><b>logout</b>: Remove the actual user token from the system.</li>
+            <li><b>search</b>: Search datasets in database due to some search criteria.</li>
+            <li><b>get_my_ip</b>: Returns user information about the actual client.</li>
         </ul>
 
         """
@@ -286,8 +312,9 @@ def get_my_ip():
 
 
 @app.route('/api/<version>/search', methods=['POST'])
-@auth.login_required
 @limit_content_length(MAX_LENGHT)
+@auth.login_required
+@required_roles('administrator', 'geriatrician', 'researcher')
 def search(version=app.config['ACTUAL_API']):
     """
     Return data based on specified search filters:
@@ -348,8 +375,9 @@ def search(version=app.config['ACTUAL_API']):
 
 
 @app.route('/api/<version>/add_action', methods=['POST'])
-@auth.login_required
 @limit_content_length(MAX_LENGHT)
+@auth.login_required
+@required_roles('administrator', 'geriatrician', 'care_giver')
 def add_action(version=app.config['ACTUAL_API']):
     """
     Add a new action in DB
@@ -394,8 +422,9 @@ def add_action(version=app.config['ACTUAL_API']):
 
 
 @app.route('/api/<version>/add_activity', methods=['POST'])
-@auth.login_required
 @limit_content_length(MAX_LENGHT)
+@auth.login_required
+@required_roles('administrator', 'geriatrician', 'researcher')
 def add_activity(version=app.config['ACTUAL_API']):
     """
     Adds a new activity into the system
@@ -449,6 +478,8 @@ def add_activity(version=app.config['ACTUAL_API']):
 
 @app.route('/api/<version>/add_new_user', methods=['POST'])
 @limit_content_length(MAX_LENGHT)
+@auth.login_required
+@required_roles('administrator')
 def add_new_user(version=app.config['ACTUAL_API']):
     """
     Adds a new system user into the system. The idea is to add a user with a stakeholder.
@@ -495,6 +526,8 @@ def add_new_user(version=app.config['ACTUAL_API']):
 
 @app.route('/api/<version>/clear_user', methods=['POST'])
 @limit_content_length(MAX_LENGHT)
+@auth.login_required
+@required_roles('administrator')
 def clear_user(version=app.config['ACTUAL_API']):
     """
     Clear all data related to a list of defined users. This is only can be performed by an administration
@@ -530,8 +563,9 @@ def clear_user(version=app.config['ACTUAL_API']):
 
 
 @app.route('/api/<version>/add_measure', methods=['POST'])
-@auth.login_required
 @limit_content_length(MAX_LENGHT)
+@auth.login_required
+@required_roles('administrator', 'geriatrician')
 def add_measure(version=app.config['ACTUAL_API']):
     """
     Adds a new measure into the system. This endpoint is sensible to different combinations of GEF/GES
@@ -665,9 +699,7 @@ def _convert_to_dict(p_requested_data):
 Different curl examples:
 
 
-
 curl -u rubuser:testingpassw -i -X GET http://0.0.0.1:5000/api/login
-
 
 
 curl -X POST -d @filename.txt http://127.0.0.1:5000/add_action --header "Content-Type:application/json"
@@ -683,13 +715,14 @@ curl -X POST -k -c cookie.txt -d '{"username":"admin","password":"admin"}' https
 
 -c cookie.txt --> Save the actual cookie
 -b cookie.txt --> Loads actual cookie
+-u username:password --> HTTP auth method login
 
 Sample curl to store new actions
+===================================
 
+# Using cookie
 curl -X POST -b cookie.txt -k -d @json_data.txt http://0.0.0.0:5000/api/0.1/add_action --header "Content-Type:application/json"
-
-
-
-todo we need to add support to role-based system user actions. Some actions can only be performed by certain roles.
+# Using token
+curl -u eyJhbGciOiJIUzI1NiIsImV4cCI6MTQ4NjcyMjU5OSwiaWF0IjoxNDg2NzIxOTk5fQ.eyJpZCI6M30.op_1X9YUqFgKqXorO73JT6bw36jm_ttqAbDnJtcaKA8 -X POST -k -d @json_data_sample.txt http://0.0.0.0:5000/api/0.1/add_action --header "Content-Type:application/json"
 
 """
