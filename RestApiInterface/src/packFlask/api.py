@@ -67,6 +67,7 @@ def limit_content_length(max_length):
         def wrapper(*args, **kwargs):
             cl = request.content_length
             if cl is not None and cl > max_length:
+                Utilities.write_log_error(app, "The users sends a too large request data to the server")
                 abort(413)
             return f(*args, **kwargs)
 
@@ -76,11 +77,11 @@ def limit_content_length(max_length):
 
 def required_roles(*roles):
     """
-    This decorator method checks the current user role into the system and alows to execute certain endpoints in the
-    API.
+    This decorator method checks the current user role into the system and allows the execution of certain endpoints in
+     the API.
 
     :param roles: A list containing required roles
-    :return:
+    :return: decorator if all is ok or an
     """
 
     def wrapper(f):
@@ -88,7 +89,8 @@ def required_roles(*roles):
         def wrapped(*args, **kwargs):
             user_role = AR_DATABASE.get_user_role(USER.id) or None
             if user_role not in roles:
-                return "Your access level is not enough to use this endpoint."
+                Utilities.write_log_error(app, "The uses doesn't have permissions to enter to this resource")
+                abort(403)
             return f(*args, **kwargs)
         return wrapped
     return wrapper
