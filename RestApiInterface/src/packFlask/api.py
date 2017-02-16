@@ -538,30 +538,57 @@ def clear_user(version=app.config['ACTUAL_API']):
     An example in JSON could be:
 
     {
-        "id": "rubennS",
-        "type": "admin"              # Safeguard delete
+        "id": "eu:c4a:pilot:lecce:user:12345",
     }
 
     :param version: Api version
     :return: A message containing the res of the operation
     """
 
+
+    """
+
+        res = False
+        for data in p_data:
+            # Check if the data is signed or not
+            try:
+                username = s.unsign(data['id'])
+
+                instance = self.session.query(ar_tables.UserInRole).filter_by(id=data['id'],
+                                                                              stake_holder_name=data[
+                                                                                  'type']).first()
+
+                if instance:
+                    self.session.delete(instance)
+                    res = True
+                else:
+                    # RAISE HERE A PERSONAL ERROR CODE
+                    res = False
+                    break
+
+            except BadSignature:
+                # The signature is not created, return a list signed to verification
+                s.sign('my string')
+
+        # Commit changes
+        self.commit()
+        return res
+
+
+    """
+
+    # TODO develop this part
+
     if Utilities.check_connection(app, version):
         data = _convert_to_dict(request.json)
-        # TODO call to user in role to know the CD_ROLE OF THIS USER
-
-        """
-        if data and Utilities.check_clear_user_data(data) and USER.stake_holder_name == "admin":
-            # Data entered is ok
+        if data and Utilities.check_add_activity_data(data) and USER:
+            # User and data are OK. save data into DB
             res = AR_DATABASE.clear_user_data_in_system(data)
             if res:
-                Utilities.write_log_info(app, ("clean_user: the username: %s cleans user data" % user_data.username))
-                return Response('User data deleted\n'), 200
-            else:
-                return Response("There isn't data from this entered user", 412)
+                Utilities.write_log_info(app, ("clean_user: the administrator deletes the user : %s " % data['id']))
+                return Response('User data deleted from system\n'), 200
         else:
             abort(500)
-        """
 
 
 @app.route('/api/<version>/add_measure', methods=['POST'])
@@ -704,16 +731,8 @@ Different curl examples:
 curl -u rubuser:testingpassw -i -X GET http://0.0.0.1:5000/api/login
 
 
-curl -X POST -d @filename.txt http://127.0.0.1:5000/add_action --header "Content-Type:application/json"
-
 curl -X POST -k -b cookie.txt -d @json_data.txt -w @curl-format.txt http://0.0.0.0:5000/api/0.1/add_action --header "Content-Type:application/json"
 
-
-
-
-curl -X POST -d '{"name1":"Rodolfo","name2":"Pakorro"}' http://127.0.0.1:5000/add_action --header "Content-Type:application/json"
-
-curl -X POST -k -c cookie.txt -d '{"username":"admin","password":"admin"}' https://10.48.1.49/api/0.1/login --header "Content-Type:application/json"
 
 -c cookie.txt --> Save the actual cookie
 -b cookie.txt --> Loads actual cookie
@@ -726,5 +745,12 @@ Sample curl to store new actions
 curl -X POST -b cookie.txt -k -d @json_data.txt http://0.0.0.0:5000/api/0.1/add_action --header "Content-Type:application/json"
 # Using token
 curl -u eyJhbGciOiJIUzI1NiIsImV4cCI6MTQ4NjcyMjU5OSwiaWF0IjoxNDg2NzIxOTk5fQ.eyJpZCI6M30.op_1X9YUqFgKqXorO73JT6bw36jm_ttqAbDnJtcaKA8 -X POST -k -d @json_data_sample.txt http://0.0.0.0:5000/api/0.1/add_action --header "Content-Type:application/json"
+
+
+Sample curl to store new measures
+====================================
+
+# Using username and password
+curl -u admin:admin -i -X POST  -d @json_add_measure.txt  http://0.0.0.0:5000/api/0.1/add_measure --header "Content-Type:application/json"
 
 """

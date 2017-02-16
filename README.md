@@ -56,17 +56,17 @@ All needed dependencies for the project are installed automatically. The user do
 * Virtualenv  for Python 2.7
 * Build-essential (gc++ compiler, fakeroot.....)
 * Nginx
-* Python-Celery (Executes python code in a period of time)
-* Rabbitmq Server
 * OpenJDK-8 (JRE and JDK
 * Tomcat 8
-* Apache Ant
+* uWSGI
 
 You must provide a ssh password to establish connection to the server and run some
 _sudo_ commands.
 
 In some steps, application may ask some things such as ssl keys generation, d2rq mapping.tll
 file verification or rules verification.
+
+The installation scripts installs the projects under __*/opt*__ path.
 
 License
 ----------

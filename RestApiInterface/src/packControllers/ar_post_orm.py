@@ -8,12 +8,12 @@ calls into the AR database. This class is directly inherited from PostORM superc
 """
 
 
-
 import datetime
 import logging
 from sqlalchemy import MetaData
 from packORM import ar_tables
 from post_orm import PostORM
+
 
 __author__ = 'Rubén Mulero'
 __copyright__ = "Copyright 2016, City4Age project"
@@ -213,35 +213,6 @@ class ARPostORM(PostORM):
                 break
         return res
     """
-
-    def clear_user_data_in_system(self, p_data):
-        """
-        This method allows to administrative system users, delete all user related data.
-    
-        The administrative users needs to send a list containing username and its stakeholders to
-        perform a clean of their stored data.
-    
-        If the clean action is successful the system will return a True state, otherwise it will returns an False state
-        and write into logging what is the error.
-    
-        :param p_data: A list containing users to be cleaned from system
-        :return: True if everything goes well.
-                False if there are any problem.
-        """
-        res = False
-        for data in p_data:
-            instance = self.session.query(ar_tables.UserInRole).filter_by(id=data['id'],
-                                                                          stake_holder_name=data[
-                                                                              'type']).first()
-            if instance:
-                self.session.delete(instance)
-                res = True
-            else:
-                res = False
-                break
-        # Commit changes
-        self.commit()
-        return res
 
     def add_user_action(self, p_user_id, p_route, p_ip, p_agent, p_data, p_status_code):
         """
