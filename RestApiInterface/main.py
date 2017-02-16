@@ -7,7 +7,7 @@ from logging.handlers import RotatingFileHandler
 
 from packControllers import ar_post_orm, sr_post_orm
 from src.packFlask.api import app as application
-from src.packORM import ar_tables
+from src.packORM import ar_tables, sr_tables
 
 __author__ = 'Rubén Mulero'
 __copyright__ = "Copyright 2016, City4Age project"
@@ -108,7 +108,8 @@ def generate_database():
         athens = ar_tables.Pilot(name='athens', pilot_code='ATH', population_size=3090508)
         birmingham = ar_tables.Pilot(name='birmingham', pilot_code='BHX', population_size=1101360)
         list_of_pilots.extend([madrid, lecce, singapore, montpellier, athens, birmingham])
-        orm.session.add_all(list_of_pilots)
+        orm.insert_all(list_of_pilots)
+        # Commiting and closing
         orm.commit()
         orm.close()
 
@@ -118,9 +119,39 @@ def generate_database():
         logging.info("Database is empty. Creating new tables in database and adding basic data")
         # Creating base tables
         sr_orm.create_tables()
-
-        # Add basic data to SR schema
-
+        # Adding cd detection variable types
+        list_of_detection_variable_type = []
+        gef = sr_tables.CDDetectionVariableType(detection_variable_type='gef',
+                                                detection_variable_type_description="The Geriatric Factor values "
+                                                "contains the descriptions of primary actions. An example could be "
+                                                "'mobility' which represent all actions related with the movement of "
+                                                "the measured user.")
+        ges = sr_tables.CDDetectionVariableType(detection_variable_type='ges',
+                                                detection_variable_type_description="The Geriatric Sub-Factor "
+                                                "values contains the description of what values are performed "
+                                                "inside a global Geriatic Factor. An example of a geriatric subfactor "
+                                                "value inside 'mobility' geriatric factor, could be "
+                                                "'phone_usage' or 'walking'.")
+        mea = sr_tables.CDDetectionVariableType(detection_variable_type='mea',
+                                                detection_variable_type_description="Each factor has it own measures "
+                                                "inside it. The measures are different in terms of values and "
+                                                "represent the data acquisition registered to the user.")
+        # Adding data
+        list_of_detection_variable_type.extend([gef, ges, mea])
+        sr_orm.insert_all(list_of_detection_variable_type)
+        # adding Pilots
+        list_of_pilots = list()
+        madrid = sr_tables.Pilot(name='madrid', pilot_code='MAD', population_size=3141991)
+        lecce = sr_tables.Pilot(name='lecce', pilot_code='LCC', population_size=89839)
+        singapore = sr_tables.Pilot(name='singapore', pilot_code='SIN', population_size=5610000)
+        montpellier = sr_tables.Pilot(name='montpellier', pilot_code='MLP', population_size=268456)
+        athens = sr_tables.Pilot(name='athens', pilot_code='ATH', population_size=3090508)
+        birmingham = sr_tables.Pilot(name='birmingham', pilot_code='BHX', population_size=1101360)
+        list_of_pilots.extend([madrid, lecce, singapore, montpellier, athens, birmingham])
+        sr_orm.insert_all(list_of_pilots)
+        # Commiting and closing connection
+        sr_orm.commit()
+        sr_orm.close()
 
 # main execution
 if __name__ == '__main__':

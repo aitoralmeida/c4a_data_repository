@@ -1,10 +1,18 @@
 # -*- coding: utf-8 -*-
 
+"""
+
+This is the Shared Repository controller class. It handles request from the API class to build the needed
+calls into the SR database. This class is directly inherited from PostORM superclass.
+
+"""
+
+
+
 from packORM import sr_tables
 from post_orm import PostORM
 from sqlalchemy import MetaData
 import datetime
-
 
 __author__ = 'Rubén Mulero'
 __copyright__ = "Copyright 2016, City4Age project"
@@ -17,7 +25,6 @@ __status__ = "Prototype"
 
 
 class SRPostORM(PostORM):
-
     def __init__(self):
         PostORM.__init__(self)
 
@@ -44,35 +51,42 @@ class SRPostORM(PostORM):
 
         :return:
         """
-
-        # TODO sample code here to modify
+        res = False
 
         for data in p_data:
-            insert_data_list = []
+            # Registering GEF value if it is not in DB
+            gef_cd_detection_variable = self._get_or_create(sr_tables.CDDetectionVariable,
+                                                            detection_variable_name=data['gef'],
+                                                            detection_variable_type='gef')
+            # Creating the sub-factor and attach it to GEF
+            ges_cd_detection_variable = self._get_or_create(sr_tables.CDDetectionVariable,
+                                                            detection_variable_name=data['ges'],
+                                                            detection_variable_type='ges',
+                                                            derived_detection_variable_id=gef_cd_detection_variable.id)
+            # Adding the user information
+            user_in_role = self._get_or_create(sr_tables.UserInRole, id=data['payload']['user'],
+                                               pilot_name=data['extra']['pilot'])
+            # Adding time interval information
+            time_interval = self._get_or_create(sr_tables.TimeInterval, interval_start=data['payload']['date'])
+            # Adding measure values
+            for key, value in data['payload'].items():
+                if key not in ['user', 'date']:
+                    # We are filtering user an data. Adding values.....
+                    # Adding measure information in detection variable.
+                    measure_cd_detection_variable = self._get_or_create(sr_tables.CDDetectionVariable,
+                                                                        detection_variable_name=key,
+                                                                        detection_variable_type='mea',
+                                                                        derived_detection_variable_id=ges_cd_detection_variable.id)
+                                                                        # TODO we need to put as derived from GES?
 
+                    # Addmin measures values
+                    self._get_or_create(sr_tables.VariationMeasureValue, user_in_role_id=user_in_role.id,
+                                        measure_value=value, measure_type_id=measure_cd_detection_variable.id,
+                                        time_interval_id=time_interval.id)
 
-            # Need to define the tables that needs this method in shared repo database
-            """
-            # Basic tables
-            # We are going to check if basic data exist in DB and insert it in case that is the first time.
-            action = self._get_or_create(ar_tables.Action, action_name=data['action'])
-            executed_action_date = datetime.datetime.strptime(data['timestamp'], '%Y-%m-%d %H:%M:%S.%f')
-            pilot = self._get_or_create(ar_tables.Pilot, name=data['extra']['pilot'])
-            user = self._get_or_create(ar_tables.UserInRole, id=data['payload']['user'], pilot_name=pilot.name)
-            location = self._get_or_create(ar_tables.Location, location_name=data['location'], indoor=True,
-                                           pilot_name=pilot.name)
-            # We insert all related data to executed_action
-            executed_action = ar_tables.ExecutedAction(executed_action_date=executed_action_date,
-                                                       rating=data['rating'],
-                                                       location_id=location.id,
-                                                       action_id=action.id,
-                                                       user_in_role_id=user.id)
-
-
-
-            # Append data to the list and insert it.
-            insert_data_list.append(executed_action)
-            self.insert_all(insert_data_list)
-            """
-        # Whe prepared all data, now we are going to commit it into DB.
-        return self.commit()
+            # If all works as intended we return a true state
+            # TODO catch possible errors in a try catch block to trace the error inside a log.
+            res = True
+        # Committing and exit
+        self.commit()
+        return res

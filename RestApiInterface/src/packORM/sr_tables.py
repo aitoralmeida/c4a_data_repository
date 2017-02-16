@@ -210,7 +210,7 @@ class CDPilotDetectionVariable(Base):                                           
 
     __tablename__ = 'cd_pilot_detection_variable'
 
-    pilot_id = Column(Integer, ForeignKey('pilot.id'), primary_key=True) # TODO name or ID?
+    pilot_name = Column(String(50), ForeignKey('pilot.name'), primary_key=True) # TODO name or ID?
     detection_variable_id = Column(Integer, ForeignKey('cd_detection_variable.id'), primary_key=True)
 
     # Relationship with other Tables
@@ -319,8 +319,9 @@ class UserInRole(Base):                                                         
 
     # Many2One
     user_registered_id = Column(Integer, ForeignKey('user_registered.id'))
+    # TODO think to configure database to add a "default" cd_role"
     cd_role_id = Column(Integer, ForeignKey('cd_role.id'))
-    pilot_id = Column(Integer, ForeignKey('pilot.id')) #             TODO ID OR NAME?
+    pilot_name = Column(String(50), ForeignKey('pilot.name')) #             TODO ID OR NAME?
 
     # M2M relationships
     action = relationship("ExecutedAction", cascade="all, delete-orphan")
@@ -441,8 +442,7 @@ class Pilot(Base):                                                              
 
     __tablename__ = 'pilot'
 
-    id = Column(Integer, primary_key=True)  # TODO ask if this table can use name as PK?
-    name = Column(String(50))
+    name = Column(String(50), primary_key=True)
     pilot_code = Column(String(4), unique=True, nullable=False)
     population_size = Column(BigInteger)
     # One2Many
@@ -468,7 +468,7 @@ class Location(Base):                                                           
     location_name = Column(String(75))
     indoor = Column(Boolean)
     # One2Many
-    pilot_id = Column(Integer, ForeignKey('pilot.id'), nullable=True)  # TODO name or id?
+    pilot_name = Column(String(50), ForeignKey('pilot.name'), nullable=True)  # TODO name or id?
 
     # many2many
     # activity = relationship("LocationActivityRel") # TODO ask for intermediate TABLE multiple locations
@@ -566,7 +566,7 @@ class TimeInterval(Base):                                                       
     __tablename__ = 'time_interval'
 
     id = Column(Integer, Sequence('time_interval_seq'), primary_key=True)
-    interval_start = Column(TIMESTAMP, default=datetime.datetime.utcnow)
+    interval_start = Column(TIMESTAMP, nullable=False)
     interval_end = Column(TIMESTAMP)
 
     # Many2One
@@ -606,7 +606,7 @@ class CDTypicalPeriod(Base):                                                    
 
 class VariationMeasureValue(Base):                                                          # oK
     """
-    Stores different varion measures values over the time.
+    Stores different variation measures values over the time.
     """
 
     __tablename__ = 'variation_measure_value'
@@ -857,7 +857,7 @@ class CDDetectionVariableType(Base):                                            
     __tablename__ = 'cd_detection_variable_type'
 
     detection_variable_type = Column(String(3), primary_key=True)
-    detection_variable_type_description = Column(String(50), nullable=False)
+    detection_variable_type_description = Column(String(300), nullable=False)
 
     # Relationships
     cd_detection_variable = relationship('CDDetectionVariable')

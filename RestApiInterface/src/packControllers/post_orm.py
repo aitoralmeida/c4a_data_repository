@@ -1,11 +1,14 @@
 # -*- coding: utf-8 -*-
 
+"""
+
+The main controller class of the REST API. This class contains the common actions to manage general request
+from the API.
+
+"""
+
+
 from __future__ import print_function
-
-"""
-This file is used to connect to the database using SQL Alchemy ORM
-
-"""
 
 import os
 import inspect

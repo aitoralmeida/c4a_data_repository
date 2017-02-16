@@ -1,5 +1,13 @@
 # -*- coding: utf-8 -*-
 
+"""
+
+This is the Activity Recognition controller class. It handles request from the API class to build the needed
+calls into the AR database. This class is directly inherited from PostORM superclass.
+
+"""
+
+
 
 import datetime
 import logging
