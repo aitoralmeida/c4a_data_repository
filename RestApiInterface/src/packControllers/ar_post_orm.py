@@ -260,6 +260,21 @@ class ARPostORM(PostORM):
             res = self.session.query(ar_tables.CDRole).get(user_in_role).role_name or None
         return res
 
+    def check_user_in_role(self, p_user_id):
+        """
+        Giving user id, this method checks if the user exist or no in the system.
+
+        :param p_user_id: The user_in_role id in the system
+        :return: True if the user_in_role exist in the system
+                False if it not exist in the system
+        """
+        res = False
+        user_in_role = self.session.query(ar_tables.UserInRole).filter_by(id=p_user_id) or None
+        if user_in_role and user_in_role.count() == 1 and user_in_role[0].id == p_user_id:
+            # The user exist in the system
+            res = True
+        return res
+
     # TODO find a solution to this workaround
     def get_table_object_by_name(self, p_table_name):
         """

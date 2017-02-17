@@ -8,6 +8,7 @@ for Flask and manage error codes.
 
 from __future__ import print_function
 
+import os
 import logging
 from datetime import timedelta
 from functools import wraps
@@ -17,6 +18,7 @@ from flask import Flask, request, make_response, Response, abort, redirect, url_
 from flask_httpauth import HTTPBasicAuth
 from sqlalchemy.orm import class_mapper
 from packUtils.utilities import Utilities
+from itsdangerous import Signer, BadSignature
 
 from packControllers import post_orm, ar_post_orm, sr_post_orm
 
@@ -43,6 +45,9 @@ MAX_LENGHT = 8 * 1024 * 1024  # in bytes
 app = Flask(__name__)
 app.config.from_object(__name__)
 auth = HTTPBasicAuth()
+
+# Signatura verification configuration
+s = Signer(os.urandom(24))
 
 
 ###################################################################################################
@@ -292,6 +297,7 @@ def api(version=app.config['ACTUAL_API']):
             <li><b>login</b>: Obtain an identification user token.</li>
             <li><b>logout</b>: Remove the actual user token from the system.</li>
             <li><b>search</b>: Search datasets in database due to some search criteria.</li>
+            <li><b>clear_user</b>: Delete a user and all its related data from the system (Administrator only).</li>
             <li><b>get_my_ip</b>: Returns user information about the actual client.</li>
         </ul>
 
@@ -545,48 +551,39 @@ def clear_user(version=app.config['ACTUAL_API']):
     :return: A message containing the res of the operation
     """
 
-
-    """
-
-        res = False
-        for data in p_data:
-            # Check if the data is signed or not
-            try:
-                username = s.unsign(data['id'])
-
-                instance = self.session.query(ar_tables.UserInRole).filter_by(id=data['id'],
-                                                                              stake_holder_name=data[
-                                                                                  'type']).first()
-
-                if instance:
-                    self.session.delete(instance)
-                    res = True
-                else:
-                    # RAISE HERE A PERSONAL ERROR CODE
-                    res = False
-                    break
-
-            except BadSignature:
-                # The signature is not created, return a list signed to verification
-                s.sign('my string')
-
-        # Commit changes
-        self.commit()
-        return res
-
-
-    """
-
-    # TODO develop this part
-
     if Utilities.check_connection(app, version):
         data = _convert_to_dict(request.json)
-        if data and Utilities.check_add_activity_data(data) and USER:
-            # User and data are OK. save data into DB
-            res = AR_DATABASE.clear_user_data_in_system(data)
-            if res:
-                Utilities.write_log_info(app, ("clean_user: the administrator deletes the user : %s " % data['id']))
-                return Response('User data deleted from system\n'), 200
+        if data and Utilities.check_clear_user_data(data) and USER:
+            # We are going to check if data has a self-signed certificate
+            try:
+                id = s.unsign(data[0]['id'])
+                # Clearing user data
+                Utilities.write_log_warning(app, "clean_user: deleting all user data from the system")
+                # TODO call to AR and SR datanase to delete ALL user data from the system
+
+                #ar_res = AR_DATABASE.clear_user_data_in_system(data)
+                #sr_res = SR_DATABASE.cls  # More cleaning here
+
+
+                # @@@@@@@@@@@@@@@@@@@
+                res = True
+                if res:
+                    Utilities.write_log_info(app, ("clean_user: the administrator deletes the user : %s " % data[0]['id']))
+                    return Response('User data deleted from system\n'), 200
+            except BadSignature:
+                # Admin sends an invalid signed signature. We are going to check if user exist and create a signed user
+                # to validate its intentions.
+                exist = AR_DATABASE.check_user_in_role(data[0]['id'])
+                if exist:
+                    # User exist in database, we signed its username.
+                    id_signed = s.sign(data[0]['id'])
+                    Utilities.write_log_info(app, "clean_user: generating a self-signed user to ensure deletion")
+                    return jsonify(summary="Send again the deletion useranme using the 'id' value of dis json",
+                                   id=id_signed), 200
+                else:
+                    # User not exist in database
+                    return "The entered user do not exist in the system", 418
+
         else:
             abort(500)
 

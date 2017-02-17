@@ -324,17 +324,10 @@ class Utilities(object):
                   "type": "string",
                   "minLength": 10,
                   "maxLength": 75
-                },
-                "type": {
-                  "description": "The stakeholder needed by the system",
-                  "type": "string",
-                  "minLength": 3,
-                  "maxLength": 20
                 }
               },
               "required": [
-                "id",
-                "type"
+                "id"
               ],
               "additionalProperties": False
         }
@@ -516,7 +509,8 @@ class Utilities(object):
 
         return res
 
-    # TODO, here, we are going to DEFINE some filter of users tables. Define tables with some access level.
+
+    # TODO review this search method
     @staticmethod
     def validate_search_tables(p_database, p_data):
         """
@@ -531,8 +525,6 @@ class Utilities(object):
         if p_data and p_data.get('table', False):
             table = p_data['table'].lower() or None  # lowering string cases
             current_tables = p_database.get_tables()
-            # We are going to validate user search based on its access level
-            # TODO set a list of access level in a global variable
             if table in current_tables:
                 res = True
         return res
