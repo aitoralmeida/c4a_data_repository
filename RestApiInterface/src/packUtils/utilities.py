@@ -100,17 +100,41 @@ class Utilities(object):
                 },
                 "location": {
                     "description": "location of the performed action",
-                    "type": "string",
-                    "minLength": 3,
-                    "maxLength": 50
+                    "anyOf": [
+                        {
+                            "type": "object",
+                            "properties": {
+                                "lat": {
+                                    "type": "string",
+                                    "minLength": 1,
+                                },
+                                "long": {
+                                    "type": "string",
+                                    "minLength": 1,
+                                }
+                            },
+                            "required": ["lat", "long"]
+                        },
+                        {
+                            "type": "string",
+                            "minLength": 3,
+                            "maxLength": 50
+                        }
+                    ]
                 },
                 "payload": {
                     "type": "object",
                     "properties": {
                         "user": {"type": "string"},
-                        "position": {"type": "string"}
+                        "instanceID": {
+                            "description": "an ID required to associate correlated LEA records, such as 'start-stop' "
+                                           "LEA instances",
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 4
+                        }
                     },
-                    "required": ["user", "position"]
+                    "required": ["user", "instanceID"]
                 },
                 "timestamp": {
                     "description": "The time when de action was performed",
@@ -150,7 +174,7 @@ class Utilities(object):
                     "type": "string",
                 },
             },
-            "required": ["action", "location", "payload", "timestamp", "rating", "extra", "secret"],
+            "required": ["action", "payload", "timestamp", "rating", "extra", "secret"],
             "additionalProperties": False
         }
 

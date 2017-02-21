@@ -176,7 +176,7 @@ class ExecutedAction(Base):
     # Asociated information
     rating = Column(Integer)
     sensor_id = Column(Integer)
-    payload = Column(String(50))
+    instance_id = Column(String(4))
     extra_information = Column(Text)
 
     # Relationship with other TABLES
@@ -221,6 +221,19 @@ class LocationActivityRel(Base):
     house_number = Column(Integer)
     activity = relationship("Activity")
 
+
+class ActionValue(Base):
+    """
+    Metric < -- > Action
+    """
+
+    __tablename__ = 'action_value'
+
+    metric_id = Column(Integer, ForeignKey('metric.id'), primary_key=True)
+    action_id = Column(Integer, ForeignKey('action.id'), primary_key=True)
+    date = Column(TIMESTAMP, primary_key=True)
+    value = Column(String(10), nullable=False)
+    action = relationship('Action')
 
 # Tables
 class UserInRole(Base):
@@ -337,7 +350,10 @@ class Location(Base):
     __tablename__ = 'location'
 
     id = Column(Integer, Sequence('location_id_seq'), primary_key=True)
-    location_name = Column(String(75))
+    # The location could be a URN based location or a combination of latitude and longitude
+    urn = Column(String(75))
+    latitude = Column(String(15))
+    longitude = Column(String(15))
     indoor = Column(Boolean)
     # One2Many
     pilot_name = Column(String(50), ForeignKey('pilot.name'), nullable=True)
@@ -346,7 +362,8 @@ class Location(Base):
     activity = relationship("LocationActivityRel")
 
     def __repr__(self):
-        return "<Location(location_name='%s', indoor='%s')>" % (self.location_name, self.indoor)
+        return "<Location(location_name='%s', indoor='%s', urn='%s', latitude='%s', longitude='%s')>" % (
+            self.location_name, self.indoor, self.urn, self.latitude, self.longitude)
 
 
 class Activity(Base):
@@ -510,3 +527,19 @@ class UserAction(Base):
 
     # One2Many
     user_registered_id = Column(Integer, ForeignKey('user_registered.id'))
+
+
+class Metric(Base):
+    """
+    Some actions has a random valued metrics. This metrics are an extra information that can be used for different
+    purposes. This table record each different metric in the sytem.
+
+    """
+
+    __tablename__ = 'metric'
+
+    id = Column(Integer, Sequence('metric_seq'), primary_key=True)
+    name = Column(String(10))
+    description = Column(String(255), nullable=True)
+    # M2M relationship
+    action_value = relationship('ActionValue')

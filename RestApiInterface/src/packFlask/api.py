@@ -190,6 +190,10 @@ def verify_password(username_or_token, password):
         user = AR_DATABASE.verify_user_login(username_or_token, password, app)
         if not user:
             Utilities.write_log_error(app, "login: User entered an invalid username or password. 401")
+            # If there are some user session, the system will clear all data to force user to make a successful login.
+            session.pop('token', None)
+            global USER
+            USER = None
             return False
     # Put the user id in a global stage
     global USER
@@ -393,19 +397,42 @@ def add_action(version=app.config['ACTUAL_API']):
     An example of add action is described by POLIMI in the following code:
 
     {
-        "action": "eu:c4a:usermotility:enter_bus",
-        "location": "it:puglia:lecce:bus:39",
-        "payload": {
-            "user": "eu:c4a:pilot:madrid:user:12346",
-            "position": "urn:ogc:def:crs:EPSG:6.6:4326"
-        },
-        "timestamp": "2014-05-20 07:08:41.22222",
-        "rating": 0.1,
-        "extra": {
-            "pilot": "lecce"
-        },
-        "secret": "jwt_token"
-    }
+         "action": "eu:c4a:usermotility:still_start",
+         "location": "it:puglia:lecce:address:roomID",
+         "payload": {
+             "user": "eu:c4a:pilot:lecce:user:12345",
+             "instanceID": "2"
+         },
+         "timestamp": "2016-05-19 07:08:41.013329",
+         "rating": 0.4,
+         "extra": {
+             "pilot": "lecce"
+         },
+         "secret": "jwt_token"
+    },
+
+    OR
+
+    {
+         "action": "eu:c4a:usermotility:walking_start",
+         "location": {
+             "lat": "41",
+             "long": "18"
+         },
+         "payload": {
+             "user": "eu:c4a:pilot:lecce:user:12345",
+             "instanceID": "2",
+             "speed": "3.1",
+             "info_id": "4"
+         },
+         "timestamp": "2016-05-19 07:08:41.013329",
+         "rating": 0.4,
+         "extra": {
+             "pilot": "lecce"
+         },
+         "secret": "jwt_token"
+    },
+
 
     :param version: Api version
     :return:
@@ -749,5 +776,11 @@ Sample curl to store new measures
 
 # Using username and password
 curl -u admin:admin -i -X POST  -d @json_add_measure.txt  http://0.0.0.0:5000/api/0.1/add_measure --header "Content-Type:application/json"
+
+
+Sample curl to store an action
+====================================
+
+
 
 """

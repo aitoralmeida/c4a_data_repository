@@ -7,13 +7,11 @@ calls into the AR database. This class is directly inherited from PostORM superc
 
 """
 
-
 import datetime
 import logging
 from sqlalchemy import MetaData
 from packORM import ar_tables
 from post_orm import PostORM
-
 
 __author__ = 'Rubén Mulero'
 __copyright__ = "Copyright 2016, City4Age project"
@@ -96,29 +94,41 @@ class ARPostORM(PostORM):
         Adds a new action into the database.
     
         This method divided all data in p_data parameter to create needed data and store it into database
-    
+
     
         :param p_data: a Python d
         :return: True if everything is OK or False if there is a problem.
         """
         for data in p_data:
-            insert_data_list = []
             # Basic tables
             # We are going to check if basic data exist in DB and insert it in case that is the first time.
             action = self._get_or_create(ar_tables.Action, action_name=data['action'])
             executed_action_date = datetime.datetime.strptime(data['timestamp'], '%Y-%m-%d %H:%M:%S.%f')
             pilot = self._get_or_create(ar_tables.Pilot, name=data['extra']['pilot'])
             user = self._get_or_create(ar_tables.UserInRole, id=data['payload']['user'], pilot_name=pilot.name)
-            location = self._get_or_create(ar_tables.Location, location_name=data['location'], indoor=True,
-                                           pilot_name=pilot.name)
+            if data.get('location', False) and isinstance(data['location'], dict):
+                # The sent location is a latitude and longitude based location
+                location = self._get_or_create(ar_tables.Location, latitude=data['location']['lat'],
+                                               longitude=data['location']['long'], indoor=True, pilot_name=pilot.name)
+            else:
+                # The sent location is an URN based location
+                location = self._get_or_create(ar_tables.Location, urn=data['location'], indoor=True,
+                                               pilot_name=pilot.name)
+            # Inserting the values attached with this action into database
+            for key, value in data['payload'].items():
+                if key not in ['user', 'instanceID']:
+                    metric = self._get_or_create(ar_tables.Metric, name=key)
+                    self._get_or_create(ar_tables.ActionValue, metric_id=metric.id, action_id=action.id, value=value,
+                                        date=executed_action_date)
+
             # We insert all related data to executed_action
-            executed_action = ar_tables.ExecutedAction(executed_action_date=executed_action_date,
-                                                       rating=data['rating'],
-                                                       location_id=location.id,
-                                                       action_id=action.id,
-                                                       user_in_role_id=user.id)
-            insert_data_list.append(executed_action)
-            self.insert_all(insert_data_list)
+            self._get_or_create(ar_tables.ExecutedAction, executed_action_date=executed_action_date,
+                                rating=data['rating'],
+                                instance_id=data['payload']['instanceID'],
+                                location_id=location.id,
+                                action_id=action.id,
+                                user_in_role_id=user.id)
+
         # Whe prepared all data, now we are going to commit it into DB.
         return self.commit()
 
@@ -131,8 +141,6 @@ class ARPostORM(PostORM):
                 False if there are any problem
     
         """
-        # TODO check when the user sen'ds a multiple locationpackORM
-        res = False
         for data in p_data:
             # We are going to find if location is inside DB
             pilot = self._get_or_create(ar_tables.Pilot, name=data['pilot'])
@@ -144,31 +152,9 @@ class ARPostORM(PostORM):
                                            activity_end_date=data['activity_end_date'],
                                            since=data['since'])
 
-            location_activity_rel = self._get_or_create(ar_tables.LocationActivityRel,
-                                                        activity_id=activity.id,
-                                                        location_id=location.id,
-                                                        house_number=data['house_number'])
-            # TODO check if this is a good way to check this
-            if isinstance(location_activity_rel, ar_tables.LocationActivityRel):
-                res = True
-            else:
-                res = False
-                break
-        return res
-
-    def add_measure(self, p_data):
-        """
-        Adds new measures into the database.
-    
-    
-        :param p_data:
-        :return: Tue if data is inserted into database.
-                False if there is an error during operation
-        """
-
-        for data in p_data:
-            # Iterate the user data to extract required information and process it
-            pass
+            # Adding location_activity_rel
+            self._get_or_create(ar_tables.LocationActivityRel, activity_id=activity.id, location_id=location.id,
+                                house_number=data['house_number'])
 
         return self.commit()
 
@@ -294,7 +280,9 @@ class ARPostORM(PostORM):
             'simple_location': ar_tables.SimpleLocation,
             'user_in_role': ar_tables.UserInRole,
             'user_registered': ar_tables.UserRegistered,
-            'user_action': ar_tables.UserAction
+            'user_action': ar_tables.UserAction,
+            'metric': ar_tables.Metric,
+            'action_value': ar_tables.ActionValue,
         }
         # We instantiate desired table
         return all_tables[p_table_name]
