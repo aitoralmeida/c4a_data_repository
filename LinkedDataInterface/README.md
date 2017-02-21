@@ -13,14 +13,13 @@ A Fuseki server installation will be the gate to extract this data using SPARQL 
 
 
 
-
 Installation requirements
 --------------------------
 
 LinkedDataInterface need some requisites:
 
-* Your own "mapping.ttl" file previously created with D2RQ.
-* Your own "rules.txt" with several rules prepared to be inferred.
+* Your own *"mapping.ttl"* file previously created with D2RQ.
+* Your own *"rules.txt"* with several rules prepared to be inferred.
 * Some knowledge of GNU/Linux.
 * tomcat 8
 * OpenJDK 8

@@ -5,7 +5,7 @@ City4Age Project's (H2020 grant agreement number 689731) LinkedData and RestAPI 
 This repository contains two projects. 
 
 1. LinkedDataInterface: An interface to infer new statements using a RuleEngine Reasoner and to serve it with SPARQL, Linked Data client or HTML endpoints.
-2. RestApiInterface: A REST API interface to manage some user personal information in a POSTGRESQL relational database.
+2. RestApiInterface: A REST API interface to manage some user personal information in a PostgreSQL relational database.
 
 For more information, please read each project README.
 
@@ -56,14 +56,20 @@ All needed dependencies for the project are installed automatically. The user do
 * Virtualenv  for Python 2.7
 * Build-essential (gc++ compiler, fakeroot.....)
 * Nginx
-* Python-Celery (Executes python code in a period of time)
-* Rabbitmq Server
 * OpenJDK-8 (JRE and JDK
 * Tomcat 8
-* Apache Ant
+* uWSGI
 
 You must provide a ssh password to establish connection to the server and run some
 _sudo_ commands.
 
 In some steps, application may ask some things such as ssl keys generation, d2rq mapping.tll
 file verification or rules verification.
+
+The installation scripts installs the projects under __*/opt*__ path.
+
+License
+----------
+
+This project is licensed under the terms of the GPL v3 license.
+

@@ -1,10 +1,32 @@
 # -*- coding: utf-8 -*-
 
+"""
+This file emulates an user to test api.py file.
+
+This file is divided into the following TESTS:
+
+-> Get Test:        Containing various tests of GET calls.
+-> Post Test:       Containing various test of POST calls.
+-> Internal test:   Containing various test of internal functions (checks json by using JSON SCHEMA)
+
+"""
+
 import json
 import unittest
+from base64 import b64encode
 
+from packControllers import post_orm, ar_post_orm, sr_post_orm
 from packFlask.api import app
-from packFlask import api
+from packUtils.utilities import Utilities
+
+__author__ = 'Rubén Mulero'
+__copyright__ = "Copyright 2016, City4Age project"
+__credits__ = ["Rubén Mulero", "Aitor Almeida", "Gorka Azkune", "David Buján"]
+__license__ = "GPL"
+__version__ = "0.2"
+__maintainer__ = "Rubén Mulero"
+__email__ = "ruben.mulero@deusto.es"
+__status__ = "Prototype"
 
 
 class FlaskTestCase(unittest.TestCase):
@@ -14,6 +36,19 @@ class FlaskTestCase(unittest.TestCase):
         app.config['TESTING'] = True
         # app.config['SESSION_COOKIE_DOMAIN'] = None
         self.app = app.test_client()
+        self.ar_database = ar_post_orm.ARPostORM()
+        self.sr_database = sr_post_orm.SRPostORM()
+        self.headers_good = {
+            'Authorization': 'Basic ' + b64encode("{0}:{1}".format('admin', 'admin'))
+        }
+        self.headers_bad = {
+            'Authorization': 'Basic ' + b64encode("{0}:{1}".format('admin', 'admun'))
+        }
+
+    def tearDown(self):
+        # Closing database
+        self.ar_database.close()
+        self.sr_database.close()
 
     ###################################################
     ########   GET Tests
@@ -39,50 +74,47 @@ class FlaskTestCase(unittest.TestCase):
     ###################################################
 
     def test_no_header(self):
-        """ Test status code 400: when there isn't any content_type header"""
-        response = self.app.post('/api/0.1/login',
-                                 data="Not a json data format, and not header type json",
-                                 follow_redirects=True)
-        self.assertEqual(response.status_code, 400)
+        """ Test status code 401: when there isn't any content_type header and we are not authorized"""
+        response = self.app.get('/api/0.1/login', data="Not a json data format, and not header type json",
+                                follow_redirects=True, headers=None)
+        self.assertEqual(response.status_code, 401)
 
     def test_invalid_json(self):
         """ Test status code 400: when header is correct but data is not correct"""
-        response = self.app.post('/api/0.1/login',
+        response = self.app.post('/api/0.1/add_action',
                                  data="Not a json data format, but we have good content type header",
                                  content_type='application/json',
+                                 headers=self.headers_good,
                                  follow_redirects=True)
         self.assertEqual(response.status_code, 400)
 
     def test_invalid_login(self):
-        """ Test if the user send invalid JSON fields for login into the system """
-        response = self.app.post('/api/0.1/login',
-                                 data=json.dumps(dict(username='admin', password11='admin')),
-                                 content_type='application/json',
-                                 follow_redirects=True)
-        self.assertEqual(response.status_code, 500)
+        """ Test if the user sends no header with the credentials """
+        response = self.app.get('/api/0.1/login', content_type='application/json', follow_redirects=True)
+        self.assertEqual(response.status_code, 401)
 
     def test_wrong_login(self):
         """ Test if the system return error 401 unauthorized"""
-        response = self.app.post('/api/0.1/login',
-                                 data=json.dumps(dict(username='admin', password='admin12')),
-                                 content_type='application/json',
-                                 follow_redirects=True)
+        response = self.app.get('/api/0.1/login',
+                                data=json.dumps(dict(username='admin', password='admin12')),
+                                content_type='application/json', follow_redirects=True, headers=self.headers_bad)
         self.assertEqual(response.status_code, 401)
 
     def test_ok_login(self):
         """ Test if the system returns 200 code login ok"""
-        response = self.app.post('/api/0.1/login',
-                                 data=json.dumps(dict(username='admin', password='admin')),
-                                 content_type='application/json',
-                                 follow_redirects=True)
+        response = self.app.get('/api/0.1/login', content_type='application/json', follow_redirects=True,
+                                headers=self.headers_good)
         self.assertEqual(response.status_code, 200)
 
+    """
     def test_basic_search(self):
-        """ Test if we got any results """
+        # Test if we got any results
         with self.app as c:
             with c.session_transaction() as sess:
-                sess['username'] = 'admin'  # This simulates and encrypted cookie with username "admin"
-                sess['id'] = 6              # and user id = 6
+                database = post_orm.PostgORM()
+                sess['token'] = database.verify_user_login({
+                    'username': 'admin', 'password': 'admin'}, app)
+
         response = c.post('/api/0.1/search',
                           data=json.dumps(dict(table='user_in_system',
                                                criteria={'username': 'admin'},
@@ -93,13 +125,16 @@ class FlaskTestCase(unittest.TestCase):
                           follow_redirects=True)
 
         assert "No data found with this filters" not in response.data and response.status_code == 200
+      """
 
+    """
     def test_search_limit(self):
-        """ Test if a search has a limit"""
+        # Test if a search has a limit
         with self.app as c:
             with c.session_transaction() as sess:
-                sess['username'] = 'admin'
-                sess['id'] = 6
+                database = post_orm.PostgORM()
+                sess['token'] = database.verify_user_login({
+                    'username': 'admin', 'password': 'admin'}, app)
         response = c.post('/api/0.1/search',
                           data=json.dumps(dict(table='user_in_system',
                                                criteria={'username': 'admin'},
@@ -110,14 +145,21 @@ class FlaskTestCase(unittest.TestCase):
                           follow_redirects=True)
 
         # todo we need to add more data
-        assert response.data.count('admin') == 1 and response.status_code == 200
+        # If the size of the response is equal 1 them OK
+        response_size = len(list(response.response))
+        assert response_size == 1 and response.status_code == 200 and \
+               'No data found with this filters' not in response.data
 
+    """
+
+    """
     def test_search_offset(self):
-        """ Test if a search has a offset"""
+        # Test if a search has a offset
         with self.app as c:
             with c.session_transaction() as sess:
-                sess['username'] = 'admin'
-                sess['id'] = 6
+                database = post_orm.PostgORM()
+                sess['token'] = database.verify_user_login({
+                    'username': 'admin', 'password': 'admin'}, app)
         response = c.post('/api/0.1/search',
                           data=json.dumps(dict(table='user_in_system',
                                                criteria={'username': 'admin'},
@@ -129,6 +171,7 @@ class FlaskTestCase(unittest.TestCase):
                           follow_redirects=True)
 
         assert response.data.count('ruben') == 0 and response.status_code == 200
+    """
 
     ###################################################
     ########   INTERNAl Tests
@@ -136,58 +179,118 @@ class FlaskTestCase(unittest.TestCase):
 
     def test_check_add_action_data(self):
         """ Test if action data check is working well"""
-        json_example_action = [{
-            "action": "eu:c4a:usermotility:enter_bus",
-            "location": "it:puglia:lecce:bus:39",
-            "payload": {
-                "user": "eu:c4a:pilot:madrid:user:12346",
-                "position": "urn:ogc:def:crs:EPSG:6.6:4326"
+        json_example_action = {
+             "action": "eu:c4a:usermotility:still_start",
+             "location": "it:puglia:lecce:address:roomID",
+             "payload": {
+                 "user": "eu:c4a:pilot:lecce:user:12345",
+                 "instanceID": "2"
+             },
+             "timestamp": "2016-05-19 07:08:41.013329",
+             "rating": 0.4,
+             "extra": {
+                 "pilot": "lecce"
+             },
+             "secret": "jwt_token"
+        }
+
+        json_example_action_list = [
+            {
+                "action": "eu:c4a:usermotility:still_start",
+                "location": "it:puglia:lecce:address:roomID",
+                "payload": {
+                    "user": "eu:c4a:pilot:lecce:user:12345",
+                    "instanceID": "2"
+                },
+                "timestamp": "2016-05-19 07:08:41.013329",
+                "rating": 0.4,
+                "extra": {
+                    "pilot": "lecce"
+                },
+                "secret": "jwt_token"
             },
-            "timestamp": "2014-05-20 07:08:41.22222",
-            "rating": 0.1,
-            "extra": {
-                "pilot": "lecce"
-            },
-            "secret": "jwt_token"
-        }]
+            {
+                "action": "eu:c4a:usermotility:walking_start",
+                "location": {
+                    "lat": "41",
+                    "long": "18"
+                },
+                "payload": {
+                    "user": "eu:c4a:pilot:lecce:user:12345",
+                    "instanceID": "2",
+                    "speed": "3.1",
+                    "info_id": "4"
+                },
+                "timestamp": "2016-05-19 07:08:41.013329",
+                "rating": 0.4,
+                "extra": {
+                    "pilot": "lecce"
+                },
+                "secret": "jwt_token"
+            }
+        ]
 
-        self.assertTrue(api._check_add_action_data(json_example_action))
-
-    def test_check_add_risk_data(self):
-        """ Test if risk data check is working well"""
-        json_example_risk = [{
-            "risk_name": "Lose your head",
-            "ratio": 0.3,
-            "description": "This is a risk description"
-        }]
-
-        self.assertTrue(api._check_add_risk_data(json_example_risk))
+        self.assertTrue(Utilities.check_add_action_data(json_example_action) and
+                        Utilities.check_add_action_data(json_example_action_list))
 
     def test_check_add_activity_data(self):
         """ Test if activity data check is working well"""
-        json_example_activity = [{
-            "activity_name": "Make breakfast"
+        json_example_activity = {
+            "activity_name": "kitchenActivity",
+            "activity_start_date": "2014-05-20 06:08:41.22222",
+            "activity_end_date": "2014-05-20 07:08:41.22222",
+            "since": "2014-05-20 01:08:41.22222",
+            "house_number": 0,
+            "location": {
+                "name": "it:puglia:lecce:bus:39",
+                "indoor": False
+            },
+            "pilot": "lecce"
+        }
+
+        json_example_activity_list = [{
+            "activity_name": "kitchenActivity",
+            "activity_start_date": "2014-05-20 06:08:41.22222",
+            "activity_end_date": "2014-05-20 07:08:41.22222",
+            "since": "2014-05-20 01:08:41.22222",
+            "house_number": 0,
+            "location": {
+                "name": "it:puglia:lecce:bus:39",
+                "indoor": False
+            },
+            "pilot": "lecce"
         }]
 
-        self.assertTrue(api._check_add_activity_data(json_example_activity))
+        self.assertTrue(Utilities.check_add_activity_data(json_example_activity) and
+                        Utilities.check_add_activity_data(json_example_activity_list))
 
+    """
     def test_check_add_new_user(self):
-        """ Test if the add new user check is working well"""
-        json_example_user = [{
+        # Test if the add new user check is working well
+        json_example_user = {
+            "username": "rmulero",
+            "password": "heyPassWord1212323@@@#@3!!",
+            "type": "admin"
+        }
+
+        json_example_user_list = [{
             "username": "rmulero",
             "password": "heyPassWord1212323@@@#@3!!",
             "type": "admin"
         }]
 
-        self.assertTrue(api._check_add_new_user(json_example_user))
+        self.assertTrue(Utilities.check_add_new_user(json_example_user) and
+                        Utilities.check_add_new_user(json_example_user_list))
+    """
+
 
     def test_check_search(self):
         """ Test if search check is working well"""
         json_example_search = {
             'table': 'user_in_system',
             'criteria': {
-                "col1": "value",
-                "col2": "value"
+                'col1': 'value',
+                'col2': 'value'
             },
             ###### Optional parameters
             'limit': 2323,
@@ -195,10 +298,21 @@ class FlaskTestCase(unittest.TestCase):
             'order_by': 'desc'
         }
 
-        self.assertTrue(api._check_search(json_example_search))
+        json_example_search_list = [{
+            'table': 'user_in_system',
+            'criteria': {
+                'col1': 'value',
+                'col2': 'value'
+            },
+            ###### Optional parameters
+            'limit': 2323,
+            'offset': 2,
+            'order_by': 'desc'
+        }]
 
+        self.assertTrue(Utilities.check_search(self.database, json_example_search) and
+                        Utilities.check_search(self.database, json_example_search_list))
 
-# todo add data test when we have Datbase logic finished
 
 if __name__ == '__main__':
     unittest.main()

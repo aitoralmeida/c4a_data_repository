@@ -6,29 +6,55 @@ for Flask and manage error codes.
 
 """
 
-from json import dumps, loads
+from __future__ import print_function
 
-from src.packORM import post_orm
-from src.packORM import tables
-from flask import Flask, request, make_response, Response, abort, redirect, url_for, session, flash
-from sqlalchemy.orm import class_mapper
-from functools import wraps
+import os
 import logging
+from datetime import timedelta
+from functools import wraps
+from json import dumps, loads
+from flask import Flask, request, make_response, Response, abort, redirect, url_for, session, flash, jsonify, \
+    request_finished
+from flask_httpauth import HTTPBasicAuth
+from sqlalchemy.orm import class_mapper
+from packUtils.utilities import Utilities
+from itsdangerous import Signer, BadSignature
+
+from packControllers import post_orm, ar_post_orm, sr_post_orm
 
 __author__ = 'Rubén Mulero'
-__copyright__ = "foo"  # we need?¿
+__copyright__ = "Copyright 2016, City4Age project"
+__credits__ = ["Rubén Mulero", "Aitor Almeida", "Gorka Azkune", "David Buján"]
+__license__ = "GPL"
+__version__ = "0.2"
+__maintainer__ = "Rubén Mulero"
+__email__ = "ruben.mulero@deusto.es"
+__status__ = "Prototype"
+
 
 # Configuration
 ACTUAL_API = '0.1'
 AVAILABLE_API = '0.1', '0.2', '0.3'
 SECRET_KEY = '\xc2O\xd1\xbb\xd6\xb2\xc2pxRS\x12l\xee8X\xcb\xc3(\xeer\xc5\x08s'
-DATABASE = 'Database'
+AR_DATABASE = 'Database'
+SR_DATABASE = 'Database'
+USER = None
 MAX_LENGHT = 8 * 1024 * 1024  # in bytes
 
 # Create application and load config.
 app = Flask(__name__)
 app.config.from_object(__name__)
+auth = HTTPBasicAuth()
 
+# Signatura verification configuration
+s = Signer(os.urandom(24))
+
+
+###################################################################################################
+###################################################################################################
+######                              WRAPPERS
+###################################################################################################
+###################################################################################################
 
 def limit_content_length(max_length):
     """
@@ -46,12 +72,180 @@ def limit_content_length(max_length):
         def wrapper(*args, **kwargs):
             cl = request.content_length
             if cl is not None and cl > max_length:
+                Utilities.write_log_error(app, "The users sends a too large request data to the server")
                 abort(413)
             return f(*args, **kwargs)
 
         return wrapper
-
     return decorator
+
+
+def required_roles(*roles):
+    """
+    This decorator method checks the current user role into the system and allows the execution of certain endpoints in
+     the API.
+
+    :param roles: A list containing required roles
+    :return: decorator if all is ok or an
+    """
+
+    def wrapper(f):
+        @wraps(f)
+        def wrapped(*args, **kwargs):
+            user_role = AR_DATABASE.get_user_role(USER.id) or None
+            if user_role not in roles:
+                Utilities.write_log_error(app, "The uses doesn't have permissions to enter to this resource")
+                abort(403)
+            return f(*args, **kwargs)
+        return wrapped
+    return wrapper
+
+
+###################################################################################################
+###################################################################################################
+######                              SIGNALS
+###################################################################################################
+###################################################################################################
+
+
+@app.before_request
+def before_request():
+    # Connection
+    global AR_DATABASE
+    AR_DATABASE = ar_post_orm.ARPostORM()
+    global SR_DATABASE
+    SR_DATABASE = sr_post_orm.SRPostORM()
+    # Make sessions permament with some time
+    session.permanent = True
+    app.permanent_session_lifetime = timedelta(days=30)  # minutes=30 days=232323 years=2312321 and so on.
+    session.modified = True  # To force seesion expiration
+
+
+@app.teardown_request
+def teardown_request(exception):
+    global AR_DATABASE
+    if AR_DATABASE is not None:
+        # Close database active session
+        AR_DATABASE.close()
+    global SR_DATABASE
+    if SR_DATABASE is not None:
+        # Close database active session
+        SR_DATABASE.close()
+
+
+@request_finished.connect_via(app)
+def when_request_finished(sender, response, **extra):
+    # We want to check if it is a registered user POST call.
+    if USER:
+        # There is a registered user sending DATA so we will register the event
+        route = request.url_rule and request.url_rule.endpoint or "Bad route or method"
+        ip = request.remote_addr or "Can read user Ip Address"
+        agent = request.user_agent.string or "User is not sending its agent"
+        data = "User entered an JSON with length of: %s" % request.content_length or "No data found"
+        status_code = response.status_code or "No status code. Check estrange behavior"
+
+        # TODO we will consider to insert into different historical places . (Users endpoints as a list to decide)
+        # Inserting data into database
+        res = AR_DATABASE.add_user_action(USER.id, route, ip, agent, data, status_code)
+        if not res:
+            logging.error("Historical data is not storing well into DB. The sent data is the following:"
+                          "\n User id: %s"
+                          "\n Route: %s"
+                          "\n Ip Address: %s"
+                          "\n User Agent: %s"
+                          "\n Data: %s"
+                          "\n Status code?: %s", USER.id, route, ip, agent, data, status_code)
+
+
+###################################################################################################
+###################################################################################################
+######                              AUTH METHODS
+###################################################################################################
+###################################################################################################
+
+
+@auth.verify_password
+def verify_password(username_or_token, password):
+    """
+    This decorator is used by Flask-HTTPauth to stablish the user's password verification process.
+
+    The method is defined to validate user when it sends either its username/password or token.
+
+    :param username_or_token: The username or validation token
+    :param password: The user password
+
+    :return: True if the user credentials are ok
+            False if the user credentials are ko
+
+    """
+
+    if session and session.get('token', False):
+        # Validating user using the encrypted cookie.
+        user = AR_DATABASE.verify_auth_token(session['token'], app)
+    else:
+        # Validating user using the auth Token.
+        user = AR_DATABASE.verify_auth_token(username_or_token, app)
+    if not user:
+        # Validating user with username/password.
+        user = AR_DATABASE.verify_user_login(username_or_token, password, app)
+        if not user:
+            Utilities.write_log_error(app, "login: User entered an invalid username or password. 401")
+            # If there are some user session, the system will clear all data to force user to make a successful login.
+            session.pop('token', None)
+            global USER
+            USER = None
+            return False
+    # Put the user id in a global stage
+    global USER
+    USER = user
+    # Writing the log
+    Utilities.write_log_info(app, ("login: User login successfully with username or token: %s" % username_or_token))
+    return True
+
+    # TODO research here to stablish user role permissions
+
+
+@app.route('/api/<version>/login', methods=['GET'])
+@limit_content_length(MAX_LENGHT)
+@auth.login_required
+@required_roles('administrator', 'geriatrician')
+def login(version=app.config['ACTUAL_API']):
+    """
+    Gives the ability to login into API. It returns an encrypted cookie with the token information and a JSON containing
+    the string of the token to use in the validation process.
+
+    :param version: Api version
+    :return: A token with user ID information in two formats: 1) in a cookie encrypted; 2) in a JSON decoded.
+    """
+    if Utilities.check_version(app, version):
+        # We retieve the actual loggin user information
+        if USER:
+            token = AR_DATABASE.get_auth_token(USER, app, expiration=600)
+            session['token'] = token
+            return jsonify({'token': token.decode('ascii')})
+
+
+@app.route('/api/<version>/logout', methods=['GET'])
+@auth.login_required
+def logout(version=app.config['ACTUAL_API']):
+    """
+    Logout from the system and removes session mark
+
+    :param version: APi version
+    :return:
+    """
+    if Utilities.check_version(app, version):
+        global USER
+        if USER:
+            session.pop('token', None)
+            USER = None
+            Utilities.write_log_info(app, ("logout: User logout successfully"))
+            flash('You were logged out')
+            return redirect(url_for('api', version=app.config['ACTUAL_API']))
+    else:
+        Utilities.write_log_error(app, "logout: User entered an invalid api version, 404")
+        return "You have entered an invalid api version", 404
+
 
 
 ###################################################################################################
@@ -59,24 +253,6 @@ def limit_content_length(max_length):
 ######                              GET FUNCTIONS
 ###################################################################################################
 ###################################################################################################
-
-
-@app.before_request
-def before_request():
-    global DATABASE
-    DATABASE = post_orm.PostgORM()
-    # Make sessions permament with some time
-    # session.permanent = True
-    # todo uncoment session lifetime when you have finished this part of application.
-    # app.permanent_session_lifetime = timedelta(minutes=5) # days=232323 years=2312321 blablabla
-
-
-@app.teardown_request
-def teardown_request(exception):
-    global DATABASE
-    if DATABASE is not None:
-        # Close database active session
-        DATABASE.close()
 
 
 @app.route('/')
@@ -109,27 +285,36 @@ def api(version=app.config['ACTUAL_API']):
     :param version: Api version
     :return:
     """
-    if _check_version(version):
-        return """<h1>Welcome to City4Age Rest API</h1>
+    if Utilities.check_version(app, version):
+        return """
+
+        <h1>Welcome to City4Age Rest API</h1>
 
         Here you have a list of available commands to use:
 
         This API is designed to be used with curl and JSON request.
 
         <ul>
-            <li><b>add_action</b>: Adds new ExecutedAction into databse.</li>
-            <li><b>add_activity</b>: Adds new Activity into DB.</li>
-            <li><b>add_behavior</b>: Adds new behaviour into DB.</li>
-            <li><b>add_risk</b>: Adds new risk into DB.</li>
-            <li><b>login</b>: Login into API.</li>
-            <li><b>logout</b>: Disconnect current user from the API.</li>
-            <li><b>search</b>: Search some datasets.</li>
-        </ul
+            <li><b>add_action</b>: Adds new Action into database.</li>
+            <li><b>add_activity</b>: Adds new Activity into database.</li>
+            <li><b>add_measure</b>: Adds a new Measure into database.</li>
+            <li><b>login</b>: Obtain an identification user token.</li>
+            <li><b>logout</b>: Remove the actual user token from the system.</li>
+            <li><b>search</b>: Search datasets in database due to some search criteria.</li>
+            <li><b>clear_user</b>: Delete a user and all its related data from the system (Administrator only).</li>
+            <li><b>get_my_ip</b>: Returns user information about the actual client.</li>
+        </ul>
 
         """
     else:
         return "You have entered an invalid api version", 404
 
+
+@app.route("/get_my_info", methods=["GET"])
+def get_my_ip():
+    return jsonify({'ip': request.remote_addr,
+                    'platform': request.user_agent.string,
+                    }), 200
 
 ###################################################################################################
 ###################################################################################################
@@ -138,64 +323,10 @@ def api(version=app.config['ACTUAL_API']):
 ###################################################################################################
 
 
-@app.route('/api/<version>/login', methods=['POST'])
-@limit_content_length(MAX_LENGHT)
-def login(version=app.config['ACTUAL_API']):
-    """
-    Gives the ability to login into API
-
-    :param version: Api version
-    :return:
-    """
-    if _check_version(version):
-        if request.headers['content-type'] == 'application/json':
-            data = _convert_to_dict(request.json)[0]
-            if 'username' in data and 'password' in data:
-                res = DATABASE.verify_user_login(data)
-                if res:
-                    # Username and password are OK
-                    logging.info("login: User loggin sucesfully with %s username", data['username'])
-                    # Saving session cookie.
-                    session['username'] = data['username']
-                    session['id'] = res
-                    # return redirect(url_for('api', version=app.config['ACTUAL_API']))
-                    return "You were logged in", 200
-                else:
-                    abort(401)
-            else:
-                abort(500)
-        else:
-            abort(400)
-    else:
-        return "You have entered an invalid api version", 404
-
-
-@app.route('/api/<version>/logout', methods=['POST'])
-def logout(version=app.config['ACTUAL_API']):
-    """
-    Logout from the system and removes session mark
-
-    :param version: APi version
-    :return:
-    """
-    if _check_version(version):
-        if _check_session():
-            session.pop('username', None)
-            session.pop('id', None)
-            flash('You were logged out')
-            return redirect(url_for('api', version=app.config['ACTUAL_API']))
-        else:
-            logging.error("check_connection: User session cookie is not OK, 401")
-            abort(401)
-    else:
-        logging.error("check_version: User entered an invalid api version, 404")
-        return "You have entered an invalid api version", 404
-
-
-## Todo this parts needs to be re-evaluated an re-implemented
-
 @app.route('/api/<version>/search', methods=['POST'])
 @limit_content_length(MAX_LENGHT)
+@auth.login_required
+@required_roles('administrator', 'geriatrician', 'researcher')
 def search(version=app.config['ACTUAL_API']):
     """
     Return data based on specified search filters:
@@ -221,58 +352,105 @@ def search(version=app.config['ACTUAL_API']):
     :return:
     """
     res = None
-    if _check_connection(version):
+    if Utilities.check_connection(app, version):
         data = _convert_to_dict(request.json)[0]
-        # check if data is OK
-        # ENTER HERE A CHECK TABLES FUNCTION
-        if _check_search(data):
+        if Utilities.check_search(AR_DATABASE, data) and USER:
             # data Entered by the user is OK
             limit = data.get('limit', 10) if data and data.get('limit', 10) >= 0 else 10
             offset = data.get('offset', 0) if data and data.get('offset', 0) >= 0 else 0
             order_by = data.get('order_by', 'asc') if data and data.get('order_by', 'asc') in ['asc', 'desc'] else 'asc'
-            # Todo insert a filter to avoid to user search in ceratin tables
             # Obtain table class using the name of the desired table
-            table_class = DATABASE.get_table_by_name(data['table'])
+            table_class = AR_DATABASE.get_table_object_by_name(data['table'])
             # Query database and select needed elements
             try:
-                res = DATABASE.query(table_class, data['criteria'], limit=limit, offset=offset, order_by=order_by)
+                res = AR_DATABASE.query(table_class, data['criteria'], limit=limit, offset=offset, order_by=order_by)
                 serialized_labels = [serialize(label) for label in res]
                 if len(serialized_labels) == 0:
+                    Utilities.write_log_warning(app, ("search: the username: %s performs a valid search "
+                                                      "with no results" % USER.username))
                     res = Response("No data found with this filters.\n")
                 else:
+                    Utilities.write_log_info(app, ("search: the username: %s performs a valid search" %
+                                                   USER.username))
                     res = Response(dumps(serialized_labels, default=date_handler), mimetype='application/json')
             except AttributeError:
                 abort(500)
         else:
             # Some user data is not well
+            Utilities.write_log_error(app, ("search: the username: %s performs an INVALID search. 413" %
+                                      USER.username))
             res = Response(
                 "You have entered incorrect JSON format Data, check if your JSON is OK. Here there are current database"
-                "tables, check if you type one of the following tables: %s" % DATABASE.get_tables()
+                "tables, check if you type one of the following tables: %s" % AR_DATABASE.get_tables()
             ), 413
     return res
 
 
 @app.route('/api/<version>/add_action', methods=['POST'])
 @limit_content_length(MAX_LENGHT)
+@auth.login_required
+@required_roles('administrator', 'geriatrician', 'care_giver')
 def add_action(version=app.config['ACTUAL_API']):
     """
     Add a new action in DB
 
+    An example of add action is described by POLIMI in the following code:
+
+    {
+         "action": "eu:c4a:usermotility:still_start",
+         "location": "it:puglia:lecce:address:roomID",
+         "payload": {
+             "user": "eu:c4a:pilot:lecce:user:12345",
+             "instanceID": "2"
+         },
+         "timestamp": "2016-05-19 07:08:41.013329",
+         "rating": 0.4,
+         "extra": {
+             "pilot": "lecce"
+         },
+         "secret": "jwt_token"
+    },
+
+    OR
+
+    {
+         "action": "eu:c4a:usermotility:walking_start",
+         "location": {
+             "lat": "41",
+             "long": "18"
+         },
+         "payload": {
+             "user": "eu:c4a:pilot:lecce:user:12345",
+             "instanceID": "2",
+             "speed": "3.1",
+             "info_id": "4"
+         },
+         "timestamp": "2016-05-19 07:08:41.013329",
+         "rating": 0.4,
+         "extra": {
+             "pilot": "lecce"
+         },
+         "secret": "jwt_token"
+    },
+
+
     :param version: Api version
     :return:
     """
-    if _check_connection(version):
-        # We created a list of Python dics.
+
+    if Utilities.check_connection(app, version):
+        # We created a list of Python dict.
         data = _convert_to_dict(request.json)
-        # validate users data
-        if data and _check_add_action_data(data):
+        if data and Utilities.check_add_action_data(data) and USER:
             # User and data are OK. save data into DB
-            res = DATABASE.add_action(data)
+            res = AR_DATABASE.add_action(data)
             if res:
-                logging.info("add_action: Stored in database ok")
-                return Response('Data stored in database OK\n'), 200
+                Utilities.write_log_info(app, ("add_action: the username: %s adds new action into database" %
+                                         USER.username))
+                return Response('add_action: data stored in database OK\n'), 200
             else:
-                logging.error("add_action: Stored in database failed")
+                Utilities.write_log_error(app, ("add_action: the username: %s failed to store data into database. 500" %
+                                          USER.username))
                 return "There is an error in DB", 500
         else:
             abort(500)
@@ -280,109 +458,207 @@ def add_action(version=app.config['ACTUAL_API']):
 
 @app.route('/api/<version>/add_activity', methods=['POST'])
 @limit_content_length(MAX_LENGHT)
+@auth.login_required
+@required_roles('administrator', 'geriatrician', 'researcher')
 def add_activity(version=app.config['ACTUAL_API']):
     """
     Adds a new activity into the system
 
+
+    An example in JSON could be:
+
+    [{
+        "activity_name": "kitchenActivity",
+        "activity_start_date": "2014-05-20 06:08:41.22222",
+        "activity_end_date": "2014-05-20 07:08:41.22222",
+        "since": "2014-05-20 01:08:41.22222",
+        "house_number": 0,
+        "location": {
+            "name": "it:puglia:lecce:bus:39",
+            "indoor": false
+        },
+        "pilot": "lecce"
+    }, {
+        "activity_name": "doBreakFast",
+        "activity_start_date": "2015-05-20 06:18:41.22222",
+        "activity_end_date": "2015-05-20 07:08:41.22222",
+        "since": "2011-05-20 01:08:41.22222",
+        "house_number": 2,
+        "location": {
+            "name": "it:puglia:madrid:house:2",
+            "indoor": true
+        },
+        "pilot": "madrid"
+    }]
+
     :param version: Api version
     :return:
     """
-    if _check_connection(version):
+    if Utilities.check_connection(app, version):
         data = _convert_to_dict(request.json)
-        username = session['username']
-        id = session['id']
-        # validate users data
-        if data and _check_add_activity_data(data):
+        if data and Utilities.check_add_activity_data(data) and USER:
             # User and data are OK. save data into DB
-            res = DATABASE.add_activity(data)
+            res = AR_DATABASE.add_activity(data)
             if res:
-                logging.info("add_activity: Stored in database ok")
+                Utilities.write_log_info(app, ("add_activity: the username: %s adds new action into database" %
+                                         USER.username))
                 return Response('Data stored in database OK\n'), 200
             else:
-                logging.error("add_activity: Stored in database failed")
+                Utilities.write_log_error(app, ("add_activity: the username: %s failed to store "
+                                                "data into database. 500" % USER.username))
                 return Response("There is an error in DB"), 500
-        else:
-            abort(500)
-
-
-@app.route('/api/<version>/add_behavior', methods=['POST'])
-@limit_content_length(MAX_LENGHT)
-def add_behavior(version=app.config['ACTUAL_API']):
-    """
-    Adds a new behavior into the system
-
-    :param version: Api version
-    :return:
-    """
-    if _check_connection(version):
-        data = _convert_to_dict(request.json)
-        username = session['username']
-        id = session['id']
-        # validate users data
-        if data and _check_add_behavior_data(data):
-            # User and data are OK. save data into DB
-            res = DATABASE.add_behavior(data)
-            if res:
-                logging.info("add_behavior: Stored in database ok")
-                return Response('Data stored in database OK\n'), 200
-            else:
-                logging.error("add_behavior: Stored in database failed")
-                return "There is an error in DB", 500
-        else:
-            abort(500)
-
-
-@app.route('/api/<version>/add_risk', methods=['POST'])
-@limit_content_length(MAX_LENGHT)
-def add_risk(version=app.config['ACTUAL_API']):
-    """
-    Adds a new risk into the system
-
-    :param version: Api version
-    :return:
-    """
-    if _check_connection(version):
-        data = _convert_to_dict(request.json)
-        username = session['username']
-        id = session['id']
-        # validate users data
-        if data and _check_add_risk_data(data):
-            # User and data are OK. save data into DB
-            res = DATABASE.add_risk(data)
-            if res:
-                logging.info("add_risk: Stored in database ok")
-                return Response('Data stored in database OK\n'), 200
-            else:
-                logging.error("add_risk: Stored in database failed")
-                return "There is an error in DB", 500
         else:
             abort(500)
 
 
 @app.route('/api/<version>/add_new_user', methods=['POST'])
 @limit_content_length(MAX_LENGHT)
+@auth.login_required
+@required_roles('administrator')
 def add_new_user(version=app.config['ACTUAL_API']):
     """
-    Adds a new system user into the system. The idea is to add a user with a stakeholder to create some role based system.
+    Adds a new system user into the system. The idea is to add a user with a stakeholder.
 
-    :param version:
+    An example in JSON could be:
+
+    {
+        "username": "rubennS",
+        "password": "ruben",
+        "type": "admin"
+    }
+
+
+    :param version: Api version
     :return:
     """
-    if _check_connection(version):
+    """
+    if Utilities.check_connection(app, version):
         data = _convert_to_dict(request.json)
+        # Verifying the user
+        user_data = Utilities.check_session(app, DATABASE)
         # Validate new user data
-        if data and _check_add_new_user(data):
+        if data and Utilities.check_add_new_user_data(data) and user_data.stake_holder_name == "admin":
             # Data entered is ok
             res = DATABASE.add_new_user_in_system(data)
             if res and isinstance(res, list):
                 # The user entered a bad state holder. Return something
+                Utilities.write_log_warning(app, ("add_new_user: the username: %s entered an invalid stakeholder. 412" %
+                                            user_data.username))
                 msg = "Your request is not 100% finished because you have entered an invalid stakeholder, please, " \
                       "review your JSON request and set 'type' value to one of the following " \
                       "list to decide what is the best choice for you: \n \n %s" % res
                 return Response(msg, 412)
             if res and res is True:
                 # Data entered ok
+                Utilities.write_log_info(app, ("add_new_user: the username: %s inserts new user into database" %
+                                         user_data.username))
                 return Response('Data stored in database OK\n'), 200
+        else:
+            abort(500)
+    """
+    return Response('Not available\n'), 200
+
+
+@app.route('/api/<version>/clear_user', methods=['POST'])
+@limit_content_length(MAX_LENGHT)
+@auth.login_required
+@required_roles('administrator')
+def clear_user(version=app.config['ACTUAL_API']):
+    """
+    Clear all data related to a list of defined users. This is only can be performed by an administration
+    level role. The administrator needs to define the username and its role.
+
+    An example in JSON could be:
+
+    {
+        "id": "eu:c4a:pilot:lecce:user:12345",
+    }
+
+    :param version: Api version
+    :return: A message containing the res of the operation
+    """
+
+    if Utilities.check_connection(app, version):
+        data = _convert_to_dict(request.json)
+        if data and Utilities.check_clear_user_data(data) and USER:
+            # We are going to check if data has a self-signed certificate
+            try:
+                id = s.unsign(data[0]['id'])
+                # Clearing user data
+                Utilities.write_log_warning(app, "clean_user: deleting all user data from the system")
+                # TODO call to AR and SR datanase to delete ALL user data from the system
+
+                #ar_res = AR_DATABASE.clear_user_data_in_system(data)
+                #sr_res = SR_DATABASE.cls  # More cleaning here
+
+
+                # @@@@@@@@@@@@@@@@@@@
+                res = True
+                if res:
+                    Utilities.write_log_info(app, ("clean_user: the administrator deletes the user : %s " % data[0]['id']))
+                    return Response('User data deleted from system\n'), 200
+            except BadSignature:
+                # Admin sends an invalid signed signature. We are going to check if user exist and create a signed user
+                # to validate its intentions.
+                exist = AR_DATABASE.check_user_in_role(data[0]['id'])
+                if exist:
+                    # User exist in database, we signed its username.
+                    id_signed = s.sign(data[0]['id'])
+                    Utilities.write_log_info(app, "clean_user: generating a self-signed user to ensure deletion")
+                    return jsonify(summary="Send again the deletion useranme using the 'id' value of dis json",
+                                   id=id_signed), 200
+                else:
+                    # User not exist in database
+                    return "The entered user do not exist in the system", 418
+
+        else:
+            abort(500)
+
+
+@app.route('/api/<version>/add_measure', methods=['POST'])
+@limit_content_length(MAX_LENGHT)
+@auth.login_required
+@required_roles('administrator', 'geriatrician')
+def add_measure(version=app.config['ACTUAL_API']):
+    """
+    Adds a new measure into the system. This endpoint is sensible to different combinations of GEF/GES
+
+
+    An example in JSON could be:
+
+    {
+         "gef": "motility",
+         "ges": "still_moving",
+         "payload": {
+             "user": "eu:c4a:pilot:lecce:user:12345",
+             "date": "2016-05-19"
+             "tm_secs": "9000"
+         },
+         "timestamp": "2016-05-20 00:08:41.013329",
+         "extra": {
+             "pilot": "lecce"
+         }
+    }
+
+
+    :param version: Api version
+    :return:
+
+    """
+    if Utilities.check_connection(app, version):
+        # We created a list of Python dict.
+        data = _convert_to_dict(request.json)
+        if data and Utilities.check_add_measure_data(data) and USER:
+            # User and data are OK. save data into DB
+            res = SR_DATABASE.add_measure(data)
+            if res:
+                Utilities.write_log_info(app, ("add_measure: the username: %s adds new action into database" %
+                                         USER.username))
+                return Response('add_measure: data stored in database OK\n'), 200
+            else:
+                Utilities.write_log_error(app, ("add_measure: the username: %s failed to store data into database. 500" %
+                                          USER.username))
+                return "There is an error in DB", 500
         else:
             abort(500)
 
@@ -392,6 +668,7 @@ def add_new_user(version=app.config['ACTUAL_API']):
 ######                              Error handlers
 ###################################################################################################
 ###################################################################################################
+
 
 @app.errorhandler(400)
 def not_found(error):
@@ -425,6 +702,7 @@ def data_sent_too_long(error):
 ###################################################################################################
 
 # JSON RELATED
+# TODO move this class to intermediate level to filter user password.
 def serialize(model):
     """Transforms a model into a dictionary which can be dumped to JSON."""
     # first we get the names of all the columns on your model
@@ -442,187 +720,7 @@ def date_handler(obj):
         raise TypeError
 
 
-# CHECKS RELATED
-def _check_connection(p_ver):
-    """
-    Make a full check of all needed data
-
-
-    :param p_ver: Actual version of the API
-    :return: True if everithing is OK.
-            An error code (abort) if something is bad
-    """
-
-    if _check_version(p_ver=p_ver):
-        if _check_content_tye():
-            if _check_session():
-                logging.info("check_connection: User entered data is OK")
-                return True
-            else:
-                logging.error("check_connection: User session cookie is not OK, 401")
-                abort(401)
-        else:
-            logging.error("check_connection: Content-type is not JSON serializable, 400")
-            abort(400)
-    else:
-        logging.error("check_connection, Actual API is WRONG, 404")
-        abort(404)
-
-
-# Todo this will ask into database if the username and ID are valid or not. Needs to be developed to the folowing versions.
-def _check_session():
-    """
-    Checks if the actual user has a session cookie registered
-
-    :return: True if cookie is ok
-            False is there isn't any cookie or cookie is bad.
-    """
-    res = False
-    if session.get('username') and session.get('id'):
-        # todo define a method in post_orm to validate user based on username and row ID
-        res = True
-    return res
-
-
-def _check_content_tye():
-    """
-    Checks if actual content_type is OK
-
-
-    :param p_ver: Actual version of API
-    :return: True if everything is ok.
-            False if something is wrong
-    """
-    content_type_ok = False
-    # Check if request headers are ok
-    if request.headers['content-type'] == 'application/json':
-        content_type_ok = True
-    return content_type_ok
-
-
-def _check_version(p_ver):
-    """
-    Check if we are using a good api version
-
-    :param p_ver: version
-    :return:  True or False if api used is ok.
-    """
-    api_good_version = False
-    if p_ver in app.config['AVAILABLE_API']:
-        api_good_version = True
-    return api_good_version
-
-
-def _check_add_action_data(p_data):
-    """
-    Check if data is ok and if the not nullable values are filled.
-
-
-    :param p_data: data from the user.
-    :return: True or False if data is ok.
-    """
-    res = False
-    # Check if JSON has all needed values
-    for data in p_data:
-        if all(k in data for k in ("action", "location", "payload", 'timestamp', 'rating', 'extra', 'secret')):
-            if all(l in data['payload'] for l in ("user", "position")):
-                if "pilot" in data['extra'] and data['extra']['pilot'] in ("madrid", "lecce", "singapore",
-                                                                           "montpellier", "athens", "birmingham"):
-                    res = True
-
-    return res
-
-
-def _check_add_risk_data(p_data):
-    """
-    Check if data is ok and if the not nullable values are filled.
-
-    :param p_data:
-    :return: True or False if data i ok
-    """
-    res = False
-    # Check if JSON has all needed values
-    for data in p_data:
-        if all(k in data for k in (
-                "risk_name", "ratio",
-                "description")):  # todo behavior is not user anymore, consider to check intra and Inter
-            res = True
-    return res
-
-
-# todo this check is not longer needed, maybe is very interesting to change this into intra and inter check
-def _check_add_behavior_data(p_data):
-    """
-    Check if data is ok and if the not nullable values are filled.
-
-    :param p_data:
-    :return: True or False if data is ok
-    """
-    res = False
-    # Check if JSON has all needed values
-    for data in p_data:
-        # if all(k in data for k in "behavior_name"):
-        if "behavior_name" in data:
-            res = True
-    return res
-
-
-def _check_add_activity_data(p_data):
-    """
-    Check if data is ok and if the not nullable values are filled.
-
-    :param p_data:
-    :return: True or False if data is ok
-    """
-    res = False
-    # Check if JSON has all needed values
-    for data in p_data:
-        # if all(k in data for k in "activity_name"):
-        if "activity_name" in data:
-            res = True
-    return res
-
-
-def _check_add_new_user(p_data):
-    """
-    Check if data is ok and if the not nullable values are filled.
-
-    :param p_data:
-    :return:  True or False if data is ok
-    """
-    res = False
-    # Check if JSON has all needed values
-    for data in p_data:
-        # if all(k in data for k in "activity_name"):
-        if "username" in data and 'password' in data and 'type' in data:
-            res = True
-    return res
-
-
-def _check_search(p_data):
-    """
-    Check if search data is ok and evaluates what is the best table that fits with search criteria
-
-    :param p_data:
-    :return:    True if all is OK
-                False if there is a problem
-    """
-    res = False
-    if all(k in p_data for k in ("table", "criteria")):
-        logging.debug("JSON data is OK")
-        # Data entered is OK we are going to check if tables exists or not
-        table = p_data['table'].lower() or None  # lowering string cases
-        current_tables = DATABASE.get_tables()
-        if table in current_tables:
-            # all ok
-            res = True
-        else:
-            # User is trying to search in an incorrect table, show a list of current tables
-            logging.error("User entered an invalid table name: %s" % tables)
-            res = False
-    return res
-
-
+# CONVERSIONS RELATED
 def _convert_to_dict(p_requested_data):
     """
     This method checks if current data is in JSON list format or it needs to be convert to one
@@ -651,26 +749,38 @@ def _convert_to_dict(p_requested_data):
 
 
 """
+Different curl examples:
 
-curl -X POST -d @filename.txt http://127.0.0.1:5000/add_action --header "Content-Type:application/json"
+
+curl -u rubuser:testingpassw -i -X GET http://0.0.0.1:5000/api/login
 
 
 curl -X POST -k -b cookie.txt -d @json_data.txt -w @curl-format.txt http://0.0.0.0:5000/api/0.1/add_action --header "Content-Type:application/json"
 
 
-curl -X POST -d '{"name1":"Rodolfo","name2":"Pakorro"}' http://127.0.0.1:5000/add_action --header "Content-Type:application/json"
-
-curl -X POST -k -c cookie.txt -d '{"username":"admin","password":"admin"}' https://10.48.1.49/api/0.1/login --header "Content-Type:application/json"
-
 -c cookie.txt --> Save the actual cookie
 -b cookie.txt --> Loads actual cookie
+-u username:password --> HTTP auth method login
 
 Sample curl to store new actions
+===================================
 
+# Using cookie
 curl -X POST -b cookie.txt -k -d @json_data.txt http://0.0.0.0:5000/api/0.1/add_action --header "Content-Type:application/json"
+# Using token
+curl -u eyJhbGciOiJIUzI1NiIsImV4cCI6MTQ4NjcyMjU5OSwiaWF0IjoxNDg2NzIxOTk5fQ.eyJpZCI6M30.op_1X9YUqFgKqXorO73JT6bw36jm_ttqAbDnJtcaKA8 -X POST -k -d @json_data_sample.txt http://0.0.0.0:5000/api/0.1/add_action --header "Content-Type:application/json"
 
 
+Sample curl to store new measures
+====================================
 
-todo we need to add support to role-based system user actions. Some actions can only be performed by certain roles.
+# Using username and password
+curl -u admin:admin -i -X POST  -d @json_add_measure.txt  http://0.0.0.0:5000/api/0.1/add_measure --header "Content-Type:application/json"
+
+
+Sample curl to store an action
+====================================
+
+
 
 """

@@ -15,6 +15,7 @@ TOMCAT_VERSION="tomcat8"
 LIB="/usr/share/""${TOMCAT_VERSION}""/lib"
 WEBAPPS="/var/lib/""${TOMCAT_VERSION}""/webapps/"
 CONFIG="/etc/""${TOMCAT_VERSION}""/"
+SERVER_CONFIG_FILE="/etc/""${TOMCAT_VERSION}""/server.xml"
 
 
 # Path related variables
@@ -108,11 +109,15 @@ sleep 3
 #done
 
 
-# todo this will changed to an SSL service
 # Copy server.xml config File
 sudo /bin/cp $MAINFOLDER/conf/tomcat/server.xml $CONFIG
 sudo /bin/cp $MAINFOLDER/conf/tomcat/.keystore $HOME
 
+
+# We want to add current .keystore path into server.xml
+sudo sed "s+HOME+$HOME+g" $SERVER_CONFIG_FILE > $TFILE && sudo mv $TFILE $SERVER_CONFIG_FILE
+
+# Restarting tomcat SERVER
 echo "Starting Tomcat service................."
 sudo service $TOMCAT_VERSION restart
 echo "Data interface installed successfully!!!!!"

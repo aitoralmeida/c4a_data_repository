@@ -197,33 +197,4 @@ public class RuleEngineTest {
         assertTrue(res);
     }
 
-
-    ////////////////////////////////////////////////////////////////////////////
-    ////////////////////////////////////////////////////////////////////////////
-    ////////////
-    //////////// Full real program tests, based on the response of the main
-    ////////////
-    ////////////////////////////////////////////////////////////////////////////
-    ////////////////////////////////////////////////////////////////////////////
-
-
-    /**
-     * Test if the program can handle an empty file. when the user sends a valid mapping file but this is empty.
-     */
-
-    @Test
-    public void testEmptyMapFile() throws Exception {
-        RuleEngine rEngine = new RuleEngine("./mappingEmpty.ttl", "./rules.txt");
-        assertFalse(rEngine.inference());       // The mappingFile is Empty so,it needs to returns a False State
-    }
-
-
-    /**
-     * Test if the prorgram can handle an empty Rules file, when the user sends a valid Rules file but this is empty.
-     */
-    @Test
-    public void testEmptyRulesFile() throws Exception {
-        RuleEngine rEngine = new RuleEngine("./mapping.ttl", "./rulesEmpty.txt");
-        assertFalse(rEngine.inference());
-    }
 }
