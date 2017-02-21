@@ -179,6 +179,7 @@ def verify_password(username_or_token, password):
 
     """
 
+    global USER
     if session and session.get('token', False):
         # Validating user using the encrypted cookie.
         user = AR_DATABASE.verify_auth_token(session['token'], app)
@@ -192,11 +193,9 @@ def verify_password(username_or_token, password):
             Utilities.write_log_error(app, "login: User entered an invalid username or password. 401")
             # If there are some user session, the system will clear all data to force user to make a successful login.
             session.pop('token', None)
-            global USER
             USER = None
             return False
     # Put the user id in a global stage
-    global USER
     USER = user
     # Writing the log
     Utilities.write_log_info(app, ("login: User login successfully with username or token: %s" % username_or_token))
