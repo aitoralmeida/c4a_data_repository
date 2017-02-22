@@ -17,10 +17,10 @@ from flask import Flask, request, make_response, Response, abort, redirect, url_
     request_finished
 from flask_httpauth import HTTPBasicAuth
 from sqlalchemy.orm import class_mapper
-from packUtils.utilities import Utilities
+from src.packUtils.utilities import Utilities
 from itsdangerous import Signer, BadSignature
 
-from packControllers import post_orm, ar_post_orm, sr_post_orm
+from src.packControllers import ar_post_orm, sr_post_orm
 
 __author__ = 'Rubén Mulero'
 __copyright__ = "Copyright 2016, City4Age project"

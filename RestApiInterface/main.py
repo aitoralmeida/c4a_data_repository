@@ -5,7 +5,7 @@ import os
 import sys
 from logging.handlers import RotatingFileHandler
 
-from packControllers import ar_post_orm, sr_post_orm
+from src.packControllers import ar_post_orm, sr_post_orm
 from src.packFlask.api import app as application
 from src.packORM import ar_tables, sr_tables
 

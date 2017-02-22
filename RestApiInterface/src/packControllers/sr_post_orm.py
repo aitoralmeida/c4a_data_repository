@@ -8,11 +8,10 @@ calls into the SR database. This class is directly inherited from PostORM superc
 """
 
 
-
-from packORM import sr_tables
+from src.packORM import sr_tables
 from post_orm import PostORM
 from sqlalchemy import MetaData
-import datetime
+
 
 __author__ = 'Rubén Mulero'
 __copyright__ = "Copyright 2016, City4Age project"

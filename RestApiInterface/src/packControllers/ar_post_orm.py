@@ -10,7 +10,7 @@ calls into the AR database. This class is directly inherited from PostORM superc
 import datetime
 import logging
 from sqlalchemy import MetaData
-from packORM import ar_tables
+from src.packORM import ar_tables
 from post_orm import PostORM
 
 __author__ = 'Rubén Mulero'
