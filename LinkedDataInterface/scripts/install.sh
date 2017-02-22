@@ -84,7 +84,8 @@ sleep 3
 nano $MAPPING 3>&1 1>&2 2>&3
 
 # Move war file to tomcat dest
-sudo cp $FUSEKI/fuseki.war $WEBAPPS
+sudo rm -r $WEBAPPS/ROOT
+sudo cp $FUSEKI/ROOT.war $WEBAPPS
 
 echo "Creating fuseki configuration directory"
 # Creating fuseki libs

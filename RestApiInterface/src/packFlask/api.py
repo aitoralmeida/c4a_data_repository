@@ -309,8 +309,8 @@ def api(version=app.config['ACTUAL_API']):
         return "You have entered an invalid api version", 404
 
 
-@app.route("/get_my_info", methods=["GET"])
-def get_my_ip():
+@app.route("/api/<version>/get_my_info", methods=["GET"])
+def get_my_ip(version=app.config['ACTUAL_API']):
     return jsonify({'ip': request.remote_addr,
                     'platform': request.user_agent.string,
                     }), 200
