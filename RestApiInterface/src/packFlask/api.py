@@ -780,6 +780,6 @@ curl -u admin:admin -i -X POST  -d @json_add_measure.txt  http://0.0.0.0:5000/ap
 Sample curl to store an action
 ====================================
 
-
+curl -u admin:admin -i -X POST -d @json_add_action.txt  http://0.0.0.0:5000/api/0.1/add_action --header "Content-Type:application/json"
 
 """

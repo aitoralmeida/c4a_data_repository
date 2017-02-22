@@ -1,15 +1,20 @@
 from fabric.api import run, env, sudo, prefix
 from fabric.context_managers import cd
+from fabric.network import ssh
 import random
 
+
+
+# Log configuration
+ssh.util.log_to_file("paramiko.log", 10)
 
 ##### Server configuration
 
 # Server Hosts
 env.hosts = [
-    '10.48.1.115:5800',
+    '10.48.1.115:5800'
     #'odin.deusto.es:5800',
-    '10.48.1.142:22',
+    #'10.48.1.142:22',
     # and.so.on ......
 ]
 
@@ -81,8 +86,8 @@ def _create_database():
          (DB_USER, DB_PASS), user='postgres')
     sudo('psql -c "CREATE DATABASE %s WITH OWNER %s"' % (DB_DATABASE, DB_USER), user='postgres')
     # Restore database
-    with cd('/opt/c4a_data_repository/Database'):
-        run('psql -U %s -d %s < database' % (DB_USER, DB_DATABASE))
+    #with cd('/opt/c4a_data_repository/Database'):
+    #    run('psql -U %s -d %s < database' % (DB_USER, DB_DATABASE))
 
 
 def _install_rest_api():
@@ -93,6 +98,11 @@ def _install_rest_api():
     """
     with cd('/opt/c4a_data_repository/RestApiInterface/scripts'):
         run('/bin/bash ./install.sh')
+
+    with cd('/opt/c4a_data_repository/Database'):
+        sudo('cp db_backup.sh /etc/cron.daily')
+        sudo('chmod +x /etc/cron.daily/db_backup.sh')
+        sudo('systemctl restart cron.service')
 
 
 def _install_linked_data():
