@@ -294,14 +294,14 @@ def api(version=app.config['ACTUAL_API']):
         This API is designed to be used with curl and JSON request.
 
         <ul>
+            <li><b>login</b>: Obtain an identification user token.</li>
+            <li><b>logout</b>: Remove the actual user token from the system.</li>
             <li><b>add_action</b>: Adds new Action into database.</li>
             <li><b>add_activity</b>: Adds new Activity into database.</li>
             <li><b>add_measure</b>: Adds a new Measure into database.</li>
-            <li><b>login</b>: Obtain an identification user token.</li>
-            <li><b>logout</b>: Remove the actual user token from the system.</li>
             <li><b>search</b>: Search datasets in database due to some search criteria.</li>
             <li><b>clear_user</b>: Delete a user and all its related data from the system (Administrator only).</li>
-            <li><b>get_my_ip</b>: Returns user information about the actual client.</li>
+            <li><b>get_my_info</b>: Returns user information about the actual client.</li>
         </ul>
 
         """
@@ -310,7 +310,13 @@ def api(version=app.config['ACTUAL_API']):
 
 
 @app.route("/api/<version>/get_my_info", methods=["GET"])
-def get_my_ip(version=app.config['ACTUAL_API']):
+def get_my_info(version=app.config['ACTUAL_API']):
+    """
+    A simple endpoint to obtain user agent information if the user request it
+
+    :param version: Api version
+    :return:
+    """
     return jsonify({'ip': request.remote_addr,
                     'platform': request.user_agent.string,
                     }), 200
@@ -471,22 +477,22 @@ def add_activity(version=app.config['ACTUAL_API']):
         "activity_start_date": "2014-05-20 06:08:41.22222",
         "activity_end_date": "2014-05-20 07:08:41.22222",
         "since": "2014-05-20 01:08:41.22222",
-        "house_number": 0,
-        "location": {
-            "name": "it:puglia:lecce:bus:39",
-            "indoor": false
-        },
+        "house_number": 0,                          # HOUSE NUMBER 0? better an optional value?
+        "location":"it:puglia:lecce:bus:39",
+        "indoor": false,
         "pilot": "lecce"
-    }, {
+    },
+    {
         "activity_name": "doBreakFast",
         "activity_start_date": "2015-05-20 06:18:41.22222",
         "activity_end_date": "2015-05-20 07:08:41.22222",
         "since": "2011-05-20 01:08:41.22222",
         "house_number": 2,
         "location": {
-            "name": "it:puglia:madrid:house:2",
-            "indoor": true
-        },
+             "lat": "41",
+             "long": "18"
+         },
+        "indoor": true,
         "pilot": "madrid"
     }]
 

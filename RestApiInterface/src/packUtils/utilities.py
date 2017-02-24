@@ -234,12 +234,32 @@ class Utilities(object):
                     "minimum": 0
                 },
                 "location": {
-                    "type": "object",
-                    "properties": {
-                        "name": {"type": "string"},
-                        "indoor": {"type": "boolean"}
-                    },
-                    "required": ["name", "indoor"]
+                    "description": "location of the performed action",
+                    "anyOf": [
+                        {
+                            "type": "object",
+                            "properties": {
+                                "lat": {
+                                    "type": "string",
+                                    "minLength": 1,
+                                },
+                                "long": {
+                                    "type": "string",
+                                    "minLength": 1,
+                                }
+                            },
+                            "required": ["lat", "long"]
+                        },
+                        {
+                            "type": "string",
+                            "minLength": 3,
+                            "maxLength": 50
+                        }
+                    ]
+                },
+                "indoor": {
+                    "description": "Defines if the activity is inside a building or not",
+                    "type": "boolean",
                 },
                 "pilot": {
                     "description": "the name of the city where is the location",
@@ -257,8 +277,7 @@ class Utilities(object):
                 }
             },
             "required": ["activity_name", "activity_start_date", "activity_end_date", "since", "house_number",
-                         "location",
-                         "pilot"],
+                         "location", "indoor", "pilot"],
             "additionalProperties": False
         }
 

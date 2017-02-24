@@ -144,8 +144,15 @@ class ARPostORM(PostORM):
         for data in p_data:
             # We are going to find if location is inside DB
             pilot = self._get_or_create(ar_tables.Pilot, name=data['pilot'])
-            location = self._get_or_create(ar_tables.Location, location_name=data['location']['name'],
-                                           indoor=data['location']['indoor'], pilot_name=pilot.name)
+            if data.get('location', False) and isinstance(data['location'], dict):
+                # The sent location is a latitude and longitude based location
+                location = self._get_or_create(ar_tables.Location, latitude=data['location']['lat'],
+                                               longitude=data['location']['long'], indoor=data['indoor'],
+                                               pilot_name=pilot.name)
+            else:
+                # The sent location is an URN based location
+                location = self._get_or_create(ar_tables.Location, urn=data['location'], indoor=data['indoor'],
+                                               pilot_name=pilot.name)
 
             activity = self._get_or_create(ar_tables.Activity, activity_name=data['activity_name'],
                                            activity_start_date=data['activity_start_date'],

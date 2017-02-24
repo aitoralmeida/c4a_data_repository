@@ -41,7 +41,7 @@ def _install_deps():
         # Ubuntu based distro
         run("echo Installing dependencies for UBUNTU GNU/Linux Distribution")
         sudo('apt-get update && apt-get -y install python-dev postgresql-9.5 postgresql-server-dev-9.5 virtualenv '
-             'build-essential nginx openjdk-8-jre tomcat8 openjdk-8-jdk git')
+             'build-essential nginx openjdk-8-jre tomcat8 openjdk-8-jdk git libservlet3.1-java')
     else:
         # Debian based distro
         run("echo Installing dependencies for UBUNTU GNU/Linux Distribution")
@@ -81,13 +81,12 @@ def _create_database():
         # Restart postgres
         sudo('systemctl restart postgresql.service')
 
-    # Create user, database and restore data.
+    # Create user, database and grant access
     sudo('psql -c "CREATE USER %s WITH NOCREATEDB NOCREATEUSER ENCRYPTED PASSWORD E\'%s\'"' %
          (DB_USER, DB_PASS), user='postgres')
     sudo('psql -c "CREATE DATABASE %s WITH OWNER %s"' % (DB_DATABASE, DB_USER), user='postgres')
-    # Restore database
-    #with cd('/opt/c4a_data_repository/Database'):
-    #    run('psql -U %s -d %s < database' % (DB_USER, DB_DATABASE))
+    sudo('psql -c "GRANT ALL PRIVILEGES ON DATABASE %s TO %s"' % (DB_DATABASE, DB_USER), user='postgres')
+    sudo('psql -c "FLUSH PRIVILEGES"', user='postgres')
 
 
 def _install_rest_api():
@@ -113,7 +112,9 @@ def _install_linked_data():
     """
     with cd('/opt/c4a_data_repository/LinkedDataInterface/scripts'):
         run('/bin/bash ./install.sh')
-
+    with cd('/etc'):
+        sudo('chown -R tomcat8:tomcat8 ./fuseki')
+        sudo('systemctl restart tomcat8.service')
 
 # Main installation method.
 def main_install():
