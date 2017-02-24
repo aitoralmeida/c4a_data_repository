@@ -180,7 +180,7 @@ public class RuleEngine {
         String result = out.toString();
         // Launch curl to upload or current knowledge into Fuseki
         ProcessBuilder p = new ProcessBuilder("curl", "-k", "-X", "POST", "--header", "Content-Type: application/rdf+xml",
-                "-d", result, "http://localhost:8080/fuseki/city4age/data");
+                "-d", result, "http://localhost:8080/city4age/data");
         try {
             System.out.println("Uploading new Knowledge to Fuseki......................\n");
             LOGGER.info("Uploading data to Fuseki server");
