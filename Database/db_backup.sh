@@ -1,4 +1,5 @@
-#!/usr/bin/env bash
+#!/bin/sh
+
 
 #################################################################
 ########
@@ -26,7 +27,7 @@ fi
 # Test if Nginx is installed in the system
 if [ ! -d  $BACKUPFOLDER ]; then
     # We create the backup folder
-    mkdir -p "$HOME/city4age_database_backups"
+    mkdir -p $BACKUPFOLDER
 fi
 
 ############# Creating backup
