@@ -15,6 +15,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.StringWriter;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.logging.FileHandler;
@@ -38,7 +39,6 @@ public class RuleEngine {
     private Integer execution = 0;
     private String rulesFile;
     private String mapFile;
-    private String mapFile2;
     private OntModel oldOntModel = null;
     private String newLine;
     private Logger LOGGER;
@@ -49,15 +49,12 @@ public class RuleEngine {
      * The constructor of the class. Here is defined the parameters of this class.
      * There are two mapFiles to attach. It is important to use this two files for each schema of database
      *
-     *
-     * @param pMapFile The first mapFile of D2RQ generated map file.
-     * @param pMapFile2 The second maFile of D2RQ generated map file
+     * @param pMapFile    The first mapFile of D2RQ generated map file.
      * @param pRulesFiles The rules file containig all needed rules
-     * @param pLogger A looger instance to log actions of this class.
+     * @param pLogger     A looger instance to log actions of this class.
      */
-    public RuleEngine(String pMapFile, String pMapFile2, String pRulesFiles, Logger pLogger) {
+    public RuleEngine(String pMapFile, String pRulesFiles, Logger pLogger) {
         this.mapFile = pMapFile;
-        this.mapFile2 = pMapFile2;
         this.rulesFile = pRulesFiles;
         this.LOGGER = pLogger;
         // Separation printing service
@@ -67,13 +64,12 @@ public class RuleEngine {
     /**
      * The main execution method for this class. Here we are going to take loaded Mapping and Rules file to try
      * infer new statmenets based on saved data in database.
-     *
+     * <p>
      * This method will extract and map all data into knowledge and then, use the loaded Rules to try to create
      * new statements.
-     *
+     * <p>
      * If all the process works as intented and the new knowledge is valid with the actual Design of the Ontology
      * then this data will be uploaded into Fuseki server.
-     *
      *
      * @return True or false if the operation is done successfully.
      */
@@ -81,19 +77,13 @@ public class RuleEngine {
     public boolean inference() {
         boolean res = false;
         Model instances = null;
-        Model instances2 = null;
         // Loading mapModelFile from Path
         Model mapModel = FileManager.get().loadModel(this.mapFile);
-        Model mapModel2 = FileManager.get().loadModel(this.mapFile2);
         // Load rules defined by the user.
-        List <Rule> listRules = Rule.rulesFromURL("file:" + this.rulesFile);
+        List<Rule> listRules = Rule.rulesFromURL("file:" + this.rulesFile);
         // We check if we have usefull data
-        if (!mapModel.isEmpty() && !mapModel2.isEmpty() && !listRules.isEmpty()) {
+        if (!mapModel.isEmpty() && !listRules.isEmpty()) {
             instances = new ModelD2RQ(mapModel, "http://www.morelab.deusto.es/ontologies/sorelcom#");
-            instances2 = new ModelD2RQ(mapModel2, "http://www.morelab.deusto.es/ontologies/sorelcom#");
-            //Todo: Check if this work well and instances are not merging
-            //Merge all instances in a single value
-            instances.add(instances2);
             // Create a new ontoloyModel
             final OntModel finalResult = ModelFactory.createOntologyModel();
             // Creating the reasoner based on previously loaded rules
@@ -106,22 +96,14 @@ public class RuleEngine {
                 ValidityReport validity = inf.validate();
                 if (validity.isValid()) {
                     // Add new knowledge to the model.
-                    // Todo your need to ensure to test carefully this part. Use a debugger.
                     finalResult.add(instances);
                     finalResult.add(inf.getDeductionsModel());
                     // Set prefix map
                     finalResult.setNsPrefixes(instances.getNsPrefixMap());
                     finalResult.setNsPrefixes(inf.getDeductionsModel().getNsPrefixMap());
 
-                    // TODO check if we can obtain all prefixes from 2º instances
-                    finalResult.setNsPrefixes(instances2.getNsPrefixMap());
-
-
-
-                    // TODO in this part, we are goingi to user our approach to obtain city data
-                    this.obtainCityInformation(finalResult);
-
-
+                    // TODO in this part, we are going to user our approach to obtain city data
+                    //this.updateCityInformation(finalResult);
 
 
                     // updated instances
@@ -135,7 +117,7 @@ public class RuleEngine {
                         }
                         this.oldOntModel = finalResult;
                         this.serve(finalResult);
-                    }else {
+                    } else {
                         finalResult.close();
                     }
                     // The function works well, so we return a True state
@@ -148,7 +130,7 @@ public class RuleEngine {
                     }
                     LOGGER.severe("There are conflicts with infered values. Check system err output");
                 }
-            }else {
+            } else {
                 // There is a problem in the inference model
                 System.err.println("Problems in the inference model, it returns a empty state");
                 LOGGER.severe("The inference returns a empty state. May the rule reasoner is not working well " +
@@ -156,19 +138,17 @@ public class RuleEngine {
             }
             // Closing Files.
             inf.close();
-        }else {
+        } else {
             System.err.println(" The mapping file or the rules file are empty. Please check if they are OK.");
             LOGGER.severe("Mapping file or Rules file are empty. Check if they are valid.");
         }
         // Closing files
         mapModel.close();
-        mapModel2.close();
         listRules.clear();
         return res;
     }
 
     /**
-     *
      * Upload Data into Fuseki server
      *
      * @param pModel Result model with all statements
@@ -180,7 +160,7 @@ public class RuleEngine {
         String result = out.toString();
         // Launch curl to upload or current knowledge into Fuseki
         ProcessBuilder p = new ProcessBuilder("curl", "-k", "-X", "POST", "--header", "Content-Type: application/rdf+xml",
-                "-d", result, "http://localhost:8080/city4age/data");
+                "-d", result, "https://localhost:8443/city4age/data");
         try {
             System.out.println("Uploading new Knowledge to Fuseki......................\n");
             LOGGER.info("Uploading data to Fuseki server");
@@ -191,7 +171,7 @@ public class RuleEngine {
                     new BufferedReader(new InputStreamReader(shell.getInputStream()));
             StringBuilder builder = new StringBuilder();
             String line = null;
-            while ( (line = reader.readLine()) != null) {
+            while ((line = reader.readLine()) != null) {
                 builder.append(line);
                 builder.append(System.getProperty("line.separator"));
             }
@@ -201,49 +181,119 @@ public class RuleEngine {
                 System.out.println("Ok");
                 // Logging sucesfull uploading
                 LOGGER.info("New data uploaded to Fuseki." + newLine + "Number of instances: " + pModel.size()
-                        + newLine +"Graph data uploaded is: " + pModel.write(System.out, "N-TRIPLES"));
+                        + newLine + "Graph data uploaded is: " + pModel.write(System.out, "N-TRIPLES"));
 
-            }else {
+            } else {
                 System.err.println("Some error happened. Is Fuseki activated?");
-                LOGGER.severe("Data can not upload to Fuseki, check if Fuseki is activated: " +output);
+                LOGGER.severe("Data can not upload to Fuseki, check if Fuseki is activated: " + output);
             }
-        }catch (IOException e) {
+        } catch (IOException e) {
             LOGGER.severe("Fatal IO error detected in ProcessBuilder call");
             e.printStackTrace();
         }
     }
 
 
+    /**
+     * This method checks the Final model to obtain cities and make SPARQL queries to dbpedia
+     * to update information about them
+     *
+     * @param pFinalResult The final model containing all inferred knowledge.
+     */
+    private void updateCityInformation(OntModel pFinalResult) {
+
+        ArrayList<String> cities = new ArrayList<>();
+        // Iterate data to search for cities
+        StmtIterator iter = pFinalResult.listStatements();
+        try {
+            while (iter.hasNext()) {
+                Statement stmt = iter.next();
+                // Obtain the data from resources
+                Resource s = stmt.getSubject();
+                Resource p = stmt.getPredicate();
+                RDFNode o = stmt.getObject();
+                // Prepare some values for evaluations
+                String sURI = new String();
+                String pURI = new String();
+                String oURI = new String();
 
 
-    // TODO use this to add new contents of city based on information of final results.
+                if (s.isURIResource()) {
+                    // We get the URI
+                    sURI = s.getURI();
+                } else if (s.isAnon()) {
+                    System.out.print("blank");
+                }
+                if (p.isURIResource())
+                    // We get the URI.
+                    pURI = p.getURI();
+                if (o.isURIResource()) {
+                    // We get the URI
+                    oURI = o.asResource().getURI();
+                } else if (o.isAnon()) {
+                    System.out.print("blank");
+                } else if (o.isLiteral()) {
+                    // TODO verify how to get the appropiate value
+                    System.out.print("literal");        // <---- VALUE
+                }
+
+                /* Once data is gathered, here is decided if the information matches the requirements
+                to call or not to DBPEDIA to extend knowledge with the city information.
+
+                # The idea is to use the following
+
+                    // Sujeto --> City4Age:City
+                    // Property --> hasName O DBPEDIA:CITY
+                    // LITERAL --> Lecce
+
+                    // Sujeto --> City4Age:City
+                    // Predicado --> rdf:sameAS
+                    // PRedicado --> DBpediaResource:LECCE
+
+                 */
+
+                // MOCK
+                if (sURI == "City4Age:City" && pURI == "rdf:hasName" && o.asLiteral().getValue() == "AS") {
+                    // TODO use a method here to obtain city information if it is requiered.
+
+                    Statement statement = this.obtainCityInformation("A city name");
+                    if (statement != null) {
+                        // Adding new statmenet to our current Knowleged
+                        pFinalResult.add(statement);
+                    }
+                }
+            }
+        } finally {
+            if (iter != null) iter.close();
+        }
+    }
+
+    /**
+     * This method receives information about a city and returns the required information to be added into the model
+     * if there is usefull city information.
+     *
+     * @param pCity The name of the city.
+     * @return A triple-based structured to add it into the knowledge.
+     */
+
+    private Statement obtainCityInformation(String pCity) {
+
+        // Initialiting the statemenr
+        Statement statement = null;
 
 
-    private void obtainCityInformation(OntModel pFinalResult) {
-        // TODO We need to iterate data and request to DBpedia city information
-        // Alternative use Spotlight to discover data
-
-
-
-        // Iterate over the data to extract city name
-
-        String pCity = new String();
-
-
-
-        // Defining the structure of the quey
+        // Define the structure of the SPARQL query
         String query = "PREFIX dcterms: <http://dbpedia.org/resource/>\n" +
                 "\n" +
                 "SELECT ?place WHERE{\n" +
-                "  ?place owl:sameAs dcterms:"+ pCity + " .\n" +
+                "  ?place owl:sameAs dcterms:" + pCity + " .\n" +
                 "  \n" +
                 "}";
-
-
-        ProcessBuilder p = new ProcessBuilder("curl", "-G", dbpedia, "--data-urlencode", "query='", query, "'");
-        try{
+        // Define de bash command to send the SPARQL query.
+        ProcessBuilder p = new ProcessBuilder("curl", "-G", dbpedia, "--data-urlencode", "query=" + query + "");
+        try {
             System.out.println("Requesting information from DBPedia\n");
-            LOGGER.info("Making a call to DBPedia requesting information for " +pCity);
+            LOGGER.info("Making a call to DBPedia requesting information for " + pCity);
             // Execute our command
             final Process shell = p.start();
             // catch output and see if all is ok
@@ -251,24 +301,37 @@ public class RuleEngine {
                     new BufferedReader(new InputStreamReader(shell.getInputStream()));
             StringBuilder builder = new StringBuilder();
             String line = null;
-            while ( (line = reader.readLine()) != null) {
+            while ((line = reader.readLine()) != null) {
                 builder.append(line);
                 builder.append(System.getProperty("line.separator"));
             }
-            String output = builder.toString(); // We rexeive the URI of the town
+            String output = builder.toString(); // We receive the URI of the town
 
-            // Decide here if append or not data
-
-
+            // Decide here how to manage the DATA
 
 
 
-        }catch (IOException e) {
+            // If we need to append data we create the statement
+            // Create a base model
+            Model model = ModelFactory.createDefaultModel();
+            // Create the needed resources
+            final Resource subject = ResourceFactory.createResource("urn:ex:s");
+            final Property predicate = ResourceFactory.createProperty("urn:ex:p");
+            final Resource object = ResourceFactory.createResource("urn:ex:o");
+            // Append data to the model
+            statement = model.createStatement(subject,predicate,object);
+
+
+
+        } catch (IOException e) {
             LOGGER.severe("Fatal IO error detected in ProcessBuilder call");
             e.printStackTrace();
         }
 
+        return statement;
     }
+
+
 
     /**
      * Checks if the ouputs of two diferent OntoModels are or not different.

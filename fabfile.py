@@ -41,12 +41,13 @@ def _install_deps():
         # Ubuntu based distro
         run("echo Installing dependencies for UBUNTU GNU/Linux Distribution")
         sudo('apt-get update && apt-get -y install python-dev postgresql-9.5 postgresql-server-dev-9.5 virtualenv '
-             'build-essential nginx openjdk-8-jre tomcat8 openjdk-8-jdk git libservlet3.1-java')
+             'build-essential nginx openjdk-8-jre tomcat8 openjdk-8-jdk git libservlet3.1-java '
+             'libapache2-mod-proxy-html libxml2-dev')
     else:
         # Debian based distro
         run("echo Installing dependencies for UBUNTU GNU/Linux Distribution")
         sudo('apt-get update && apt-get -y install python-dev postgresql-9.4 postgresql-server-dev-9.4 virtualenv '
-             'build-essential nginx openjdk-8-jre tomcat8 openjdk-8-jdk git')
+             'build-essential nginx openjdk-8-jre tomcat8 openjdk-8-jdk git libapache2-mod-proxy-html libxml2-dev')
 
 def _deploy():
     """

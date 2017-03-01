@@ -53,54 +53,60 @@ class SRPostORM(PostORM):
         res = False
 
         for data in p_data:
-            # Registering GEF value if it is not in DB
-            gef_cd_detection_variable = self._get_or_create(sr_tables.CDDetectionVariable,
-                                                            detection_variable_name=data['gef'],
-                                                            detection_variable_type='gef')
+            try:
+                # Registering GEF value if it is not in DB
+                gef_cd_detection_variable = self._get_or_create(sr_tables.CDDetectionVariable,
+                                                                detection_variable_name=data['gef'],
+                                                                detection_variable_type='gef')
 
-            self._get_or_create(sr_tables.CDPilotDetectionVariable, pilot_name=data['extra']['pilot'],
-                                detection_variable_id=gef_cd_detection_variable.id)
+                self._get_or_create(sr_tables.CDPilotDetectionVariable, pilot_name=data['extra']['pilot'],
+                                    detection_variable_id=gef_cd_detection_variable.id)
 
-            # Creating the sub-factor and attach it to GEF
-            ges_cd_detection_variable = self._get_or_create(sr_tables.CDDetectionVariable,
-                                                            detection_variable_name=data['ges'],
-                                                            detection_variable_type='ges',
-                                                            derived_detection_variable_id=gef_cd_detection_variable.id)
+                # Creating the sub-factor and attach it to GEF
+                ges_cd_detection_variable = self._get_or_create(sr_tables.CDDetectionVariable,
+                                                                detection_variable_name=data['ges'],
+                                                                detection_variable_type='ges',
+                                                                derived_detection_variable_id=gef_cd_detection_variable.id)
 
-            self._get_or_create(sr_tables.CDPilotDetectionVariable, pilot_name=data['extra']['pilot'],
-                                detection_variable_id=ges_cd_detection_variable.id)
+                # Registering the pilot to GES
+                self._get_or_create(sr_tables.CDPilotDetectionVariable, pilot_name=data['extra']['pilot'],
+                                    detection_variable_id=ges_cd_detection_variable.id)
 
-            # Adding the user information
-            user_in_role = self._get_or_create(sr_tables.UserInRole, id=data['payload']['user'],
-                                               pilot_name=data['extra']['pilot'])
-            # Adding time interval information
-            time_interval = self._get_or_create(sr_tables.TimeInterval, interval_start=data['payload']['date'])
+                # Adding the user information
+                user_in_role = self._get_or_create(sr_tables.UserInRole, id=data['payload']['user'],
+                                                   pilot_name=data['extra']['pilot'])
+                # Adding time interval information
+                time_interval = self._get_or_create(sr_tables.TimeInterval, interval_start=data['payload']['date'])
 
 
 
-            # Adding measure values
-            for key, value in data['payload'].items():
-                if key not in ['user', 'date']:
-                    # We are filtering user an data. Adding values.....
-                    # Adding measure information in detection variable.
-                    measure_cd_detection_variable = self._get_or_create(sr_tables.CDDetectionVariable,
-                                                                        detection_variable_name=key,
-                                                                        detection_variable_type='mea',
-                                                                        derived_detection_variable_id=ges_cd_detection_variable.id)
-                                                                        # TODO we need to put as derived from GES?
+                # Adding measure values
+                for key, value in data['payload'].items():
+                    if key not in ['user', 'date']:
+                        # We are filtering user an data. Adding values.....
+                        # Adding measure information in detection variable.
+                        measure_cd_detection_variable = self._get_or_create(sr_tables.CDDetectionVariable,
+                                                                            detection_variable_name=key,
+                                                                            detection_variable_type='mea',
+                                                                            derived_detection_variable_id=ges_cd_detection_variable.id)
+                                                                            # TODO we need to put as derived from GES?
 
-                    # Addmin measures values
-                    self._get_or_create(sr_tables.VariationMeasureValue, user_in_role_id=user_in_role.id,
-                                        measure_value=value, measure_type_id=measure_cd_detection_variable.id,
-                                        time_interval_id=time_interval.id)
+                        # Addmin measures values
+                        self._get_or_create(sr_tables.VariationMeasureValue, user_in_role_id=user_in_role.id,
+                                            measure_value=value, measure_type_id=measure_cd_detection_variable.id,
+                                            time_interval_id=time_interval.id)
 
-                    # OPTIONALLY adding pilot data
-                    self._get_or_create(sr_tables.CDPilotDetectionVariable, pilot_name=data['extra']['pilot'],
-                                        detection_variable_id=measure_cd_detection_variable.id)
+                        # OPTIONALLY adding pilot data
+                        self._get_or_create(sr_tables.CDPilotDetectionVariable, pilot_name=data['extra']['pilot'],
+                                            detection_variable_id=measure_cd_detection_variable.id)
 
-            # If all works as intended we return a true state
-            # TODO catch possible errors in a try catch block to trace the error inside a log.
-            res = True
+                # If all works as intended we return a true state
+                res = True
+            except Exception as e:
+                # TODO improve this error log
+                print (e)
+                res = False
+
         # Committing and exit
         self.commit()
         return res

@@ -364,6 +364,11 @@ def search(version=app.config['ACTUAL_API']):
             limit = data.get('limit', 10) if data and data.get('limit', 10) >= 0 else 10
             offset = data.get('offset', 0) if data and data.get('offset', 0) >= 0 else 0
             order_by = data.get('order_by', 'asc') if data and data.get('order_by', 'asc') in ['asc', 'desc'] else 'asc'
+
+
+            # TODO we need to know exactly what kind of tables we need to call
+
+
             # Obtain table class using the name of the desired table
             table_class = AR_DATABASE.get_table_object_by_name(data['table'])
             # Query database and select needed elements

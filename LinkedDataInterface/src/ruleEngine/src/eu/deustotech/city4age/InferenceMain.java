@@ -27,14 +27,13 @@ public class InferenceMain {
 
     public static void main(String[] args) {
         if (args.length > 0 && args[0].length() > 0 && args[0].contains(".ttl") &&
-                args[1].length() > 0 && args[1].contains(".ttl") &&
-                args[2].length() > 0 && args[2].contains("rules")) {
+                args[1].length() > 0 && args[1].contains("rules")) {
 
             // Initializing logging service
             Logger LOGGER = initLoginService();
 
             // Loading RuleEngine
-            RuleEngine rEngine = new RuleEngine(args[0], args[1], args[2], LOGGER);
+            RuleEngine rEngine = new RuleEngine(args[0], args[1], LOGGER);
             // Defining the default timerTask
             Timer timer = new Timer();
 
@@ -51,8 +50,8 @@ public class InferenceMain {
                 }
             };
             // Decide if the program uses user defined time or system default.
-            if (args.length >= 4 && args[3].length() > 0 && isLong(args[3])) {
-                LOGGER.info("User entered a defined time interval. The value is --> {}" + args[3]);
+            if (args.length >= 3 && args[2].length() > 0 && isLong(args[2])) {
+                LOGGER.info("User entered a defined time interval. The value is --> {}" + args[2]);
                 System.out.print("Executing a time-defined TimerTask");
                 timer.scheduleAtFixedRate(timerTask, 0, Long.parseLong(args[3])); // Setting user defined time.
             }else {
