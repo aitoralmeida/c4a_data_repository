@@ -300,6 +300,7 @@ def api(version=app.config['ACTUAL_API']):
             <li><b>add_activity</b>: Adds new Activity into database.</li>
             <li><b>add_measure</b>: Adds a new Measure into database.</li>
             <li><b>search</b>: Search datasets in database due to some search criteria.</li>
+            <li><b>add_new_user</b>: Adds a new registered user in the system (Administrator only).</li>
             <li><b>clear_user</b>: Delete a user and all its related data from the system (Administrator only).</li>
             <li><b>get_my_info</b>: Returns user information about the actual client.</li>
         </ul>
@@ -475,6 +476,9 @@ def add_activity(version=app.config['ACTUAL_API']):
     Adds a new activity into the system
 
 
+    # TODO Instrumental and Basic activities are present HERE!!!! There are two type of Activities
+    # Copanion? YES NO boolean
+
     An example in JSON could be:
 
     [{
@@ -527,47 +531,39 @@ def add_activity(version=app.config['ACTUAL_API']):
 @required_roles('administrator')
 def add_new_user(version=app.config['ACTUAL_API']):
     """
-    Adds a new system user into the system. The idea is to add a user with a stakeholder.
+    Adds a new system user into the system. The idea is give to an user in the system, an system access.
 
     An example in JSON could be:
 
     {
         "username": "rubennS",
         "password": "ruben",
-        "type": "admin"
+        "user": "urn:eu:c4a:pilot:lecce:user:1234",
+        "roletype": "administrator"
     }
-
 
     :param version: Api version
     :return:
     """
-    """
+
+    # TODO think about add optionally the roletype if the user already exist in the server.
+
     if Utilities.check_connection(app, version):
         data = _convert_to_dict(request.json)
-        # Verifying the user
-        user_data = Utilities.check_session(app, DATABASE)
-        # Validate new user data
-        if data and Utilities.check_add_new_user_data(data) and user_data.stake_holder_name == "admin":
-            # Data entered is ok
-            res = DATABASE.add_new_user_in_system(data)
-            if res and isinstance(res, list):
-                # The user entered a bad state holder. Return something
-                Utilities.write_log_warning(app, ("add_new_user: the username: %s entered an invalid stakeholder. 412" %
-                                            user_data.username))
-                msg = "Your request is not 100% finished because you have entered an invalid stakeholder, please, " \
-                      "review your JSON request and set 'type' value to one of the following " \
-                      "list to decide what is the best choice for you: \n \n %s" % res
-                return Response(msg, 412)
-            if res and res is True:
-                # Data entered ok
-                Utilities.write_log_info(app, ("add_new_user: the username: %s inserts new user into database" %
-                                         user_data.username))
+        if data and Utilities.check_add_new_user_data(AR_DATABASE, data) and USER:
+            # User and entered data are OK. save new user into DB
+            res_ar = AR_DATABASE.add_new_user_in_system(data)
+            res_sr = SR_DATABASE.add_new_user_in_system(data)
+            if res_ar and res_sr:
+                Utilities.write_log_info(app, ("add_new_user: the username: %s adds new user into database" %
+                                         USER.username))
                 return Response('Data stored in database OK\n'), 200
+            else:
+                Utilities.write_log_error(app, ("add_new_user: the username: %s failed to store "
+                                                "data into database. 500" % USER.username))
+                return Response("There is an error in DB"), 500
         else:
             abort(500)
-    """
-    return Response('Not available\n'), 200
-
 
 @app.route('/api/<version>/clear_user', methods=['POST'])
 @limit_content_length(MAX_LENGHT)
@@ -587,7 +583,7 @@ def clear_user(version=app.config['ACTUAL_API']):
     :param version: Api version
     :return: A message containing the res of the operation
     """
-
+    """
     if Utilities.check_connection(app, version):
         data = _convert_to_dict(request.json)
         if data and Utilities.check_clear_user_data(data) and USER:
@@ -624,6 +620,8 @@ def clear_user(version=app.config['ACTUAL_API']):
         else:
             abort(500)
 
+    """
+    return "Not implemented yet", 501
 
 @app.route('/api/<version>/add_measure', methods=['POST'])
 @limit_content_length(MAX_LENGHT)

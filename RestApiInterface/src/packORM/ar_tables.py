@@ -246,6 +246,7 @@ class UserInRole(Base):
     id = Column(String(75), primary_key=True)
     valid_from = Column(TIMESTAMP, default=datetime.datetime.utcnow)
     valid_to = Column(TIMESTAMP)
+    medical_record = Column(String(75))
 
     # one2many
     #stake_holder_name = Column(String(25), ForeignKey('stake_holder.name'))
@@ -421,18 +422,22 @@ class CDRole(Base):
     """
 
     __tablename__ = 'cd_role'
+
     id = Column(Integer, Sequence('cd_role_seq'), primary_key=True)
-    role_name = Column(String(50))
-    role_abbreviation = Column(String(3))
-    role_description = Column(String(350))
+    role_name = Column(String(50), nullable=False, unique=True)
+    role_abbreviation = Column(String(3), nullable=False)
+    role_description = Column(String(350), nullable=False)
+    valid_from = Column(TIMESTAMP, default=datetime.datetime.utcnow)
+    valid_to = Column(TIMESTAMP)
 
     # one2many
     user_in_role = relationship('UserInRole')
 
     def __repr__(self):
-        return "<CDRole(role_name='%s', role_abbreviation='%s', role_abbreviation='%s')>" % (self.role_name,
-                                                                                             self.role_abbreviation,
-                                                                                             self.role_description)
+        return "<CDRole(id='%s', role_name='%s', role_abbreviation='%s', role_description='%s'," \
+               "valid_from='%s', valid_to='%s')>" % (self.id, self.role_name,
+                                                     self.role_abbreviation, self.role_description, self.valid_from,
+                                                     self.valid_to)
 
 
 class InterBehaviour(Base):

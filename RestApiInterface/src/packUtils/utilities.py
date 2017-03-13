@@ -22,7 +22,6 @@ __status__ = "Prototype"
 
 
 class Utilities(object):
-
     # CHECKS RELATED
     @staticmethod
     def check_connection(app, p_ver):
@@ -273,7 +272,7 @@ class Utilities(object):
                         "montpellier",
                         "athens",
                         "birmingham"
-                      ]
+                    ]
                 }
             },
             "required": ["activity_name", "activity_start_date", "activity_end_date", "since", "house_number",
@@ -295,10 +294,11 @@ class Utilities(object):
         return res
 
     @staticmethod
-    def check_add_new_user_data(p_data):
+    def check_add_new_user_data(p_database, p_data):
         """
         Check if data is ok and if the not nullable values are filled.
 
+        :p_p_database: The database instance to call
         :param p_data: User sent data
 
         :return:  True or False if data is ok
@@ -320,17 +320,32 @@ class Utilities(object):
                     "minLength": 3,
                     "maxLength": 45
                 },
-                "type": {
-                    "description": "The stakeholder needed by the system",
+                "user": {
+                    "description": "The id of the user that is going to have an access",
+                    "type": "string",
+                    "pattern": "urn:[a-z]{2}:c4a:[a-z]{5}:[a-z]{5,10}:user:[1-9]{1,10}$"
+                },
+                "roletype": {
+                    "description": "The role name of registered user",
                     "type": "string",
                     "minLength": 3,
-                    "maxLength": 20
+                    "maxLength": 20,
+                    "enum": [
+                        "care_giver",
+                        "care_receiver",
+                        "geriatrician",
+                        "municipality_representative",
+                        "researcher",
+                        "application_developer",
+                        "administrator"
+                    ]
                 }
             },
             "required": [
                 "username",
                 "password",
-                "type"
+                "user",
+                "roletype"
             ],
             "additionalProperties": False
         }
@@ -340,11 +355,30 @@ class Utilities(object):
                 # We have a list of dicts
                 for data in p_data:
                     validate(data, schema)
+                    if Utilities.validate_user_registered(p_database, data):
+                        # The user exist in the system
+                        logging.error("The entered username is duplicated: %s", data['username'])
+                        raise ValidationError("Duplicate username: %s", data["username"])
+                    elif Utilities.validate_user_in_role(p_database, data):
+                        # The user hasn't any acess in the system or there isnt any user with that ID
+                        logging.error("The user entered has already a username and password in the system")
+                        raise ValidationError("The user has already a username/password configured")
             else:
+                # single user to be registered in database
                 validate(p_data, schema)
+                if Utilities.validate_user_registered(p_database, p_data):
+                    # The user exist in the system
+                    logging.error("The entered username is duplicated: %s", p_data['username'])
+                    raise ValidationError("Duplicate username: %s", p_data["username"])
+                elif Utilities.validate_user_in_role(p_database, p_data):
+                    # The user hasn't any acess in the system or there isnt any user with that ID
+                    logging.error("The user entered has already a username and password in the system")
+                    raise ValidationError("The user has already a username/password configured")
             res = True
         except ValidationError:
             logging.error("The schema entered by the user is invalid")
+
+            # TODO we need to return error messages to the API to use ABORT personal meesages
 
         return res
 
@@ -359,20 +393,20 @@ class Utilities(object):
         """
         res = False
         schema = {
-              "title": "Clear all data related to user in the system",
-              "type": "object",
-              "properties": {
+            "title": "Clear all data related to user in the system",
+            "type": "object",
+            "properties": {
                 "id": {
-                  "description": "The id of the user in role in system",
-                  "type": "string",
-                  "minLength": 10,
-                  "maxLength": 75
+                    "description": "The id of the user in role in system",
+                    "type": "string",
+                    "minLength": 10,
+                    "maxLength": 75
                 }
-              },
-              "required": [
+            },
+            "required": [
                 "id"
-              ],
-              "additionalProperties": False
+            ],
+            "additionalProperties": False
         }
 
         try:
@@ -492,8 +526,6 @@ class Utilities(object):
         """
         res = False
 
-
-
         schema = {
             "title": "Search datasets schema validator",
             "type": "object",
@@ -538,13 +570,13 @@ class Utilities(object):
                     # Once data is validated, we are going to check if tables ARE OK
                     if not Utilities.validate_search_tables(p_database, data):
                         logging.error("User entered an invalid table name: %s" % p_database.get_tables)
-                        raise ValidationError
+                        raise ValidationError("Invalid table name: %s", data['table'])
             else:
                 validate(p_data, schema)
                 # Once data is validated, we are going to check if tables ARE OK
                 if not Utilities.validate_search_tables(p_database, p_data):
                     logging.error("User entered an invalid table name: %s" % p_database.get_tables)
-                    raise ValidationError
+                    raise ValidationError("Invalid table name: %s", p_data['table'])
 
             res = True
         except ValidationError:
@@ -552,25 +584,64 @@ class Utilities(object):
 
         return res
 
-
     # TODO review this search method
     @staticmethod
-    def validate_search_tables(p_database, p_data):
+    def validate_search_tables(p_database, p_one_data):
         """
-        This class check if the current data set has valid tables to make a search in database
+        This method checks if the current data set has valid tables to make a search in database
 
         :param p_database: The database instantiation of SQL Alchemy
-        :param p_data: User sent data
+        :param p_one_data: User sent data
 
         :return: True o False if tables are ok
         """
         res = False
-        if p_data and p_data.get('table', False):
-            table = p_data['table'].lower() or None  # lowering string cases
+        if p_one_data and p_one_data.get('table', False):
+            table = p_one_data['table'].lower() or None  # lowering string cases
             current_tables = p_database.get_tables()
             if table in current_tables:
                 res = True
         return res
+
+
+    @staticmethod
+    def validate_user_registered(p_database, p_one_data):
+        """
+        This method checks if the current data set has a duplicate username in database.
+
+        :param p_database: The database instantiation of SQL Alchemy
+        :param p_one_data: User sent data
+
+        :return: True if the user exists in the system
+                  False if the user not exist in the system
+        """
+        res = False
+        if p_one_data and p_one_data.get('username', False):
+            username = p_one_data['username'].lower() or None  # lowering string cases
+            # Get current registered users
+            res = p_database.check_username(username)
+        return res
+
+
+    @staticmethod
+    def validate_user_in_role(p_database, p_one_data):
+        """
+        Give the user information, check if it has already a username/password configured.
+
+        If the user has not a username/password configured or if it not exist in the system, then this method will
+        return a True state status,
+
+        :param p_database: The database instance
+        :param p_one_data: The user information (ID)
+        :return: True if the user hasn't a username/password configured (Access in user registered) or if the user id
+        """
+        res = False
+        if p_one_data and p_one_data.get('user', False):
+            user_in_role = p_one_data['user'].lower() or None  # lowering string cases
+            # Get current registered users
+            res = p_database.check_user_access(user_in_role)
+        return res
+
 
     @staticmethod
     def write_log_info(app, p_message):

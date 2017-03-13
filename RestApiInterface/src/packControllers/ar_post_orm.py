@@ -24,8 +24,8 @@ __status__ = "Prototype"
 
 
 class ARPostORM(PostORM):
-    def __init__(self):
-        PostORM.__init__(self)
+    def __init__(self, autoflush=True):
+        PostORM.__init__(self, autoflush)
 
     def create_tables(self):
         """
@@ -165,47 +165,40 @@ class ARPostORM(PostORM):
 
         return self.commit()
 
-    """
-    # TODO this class will change with v.2 stakeholder
     def add_new_user_in_system(self, p_data):
-    
-        #########################################
+
+        """
         This method, allows to administrative system users, add new user into the system.
-    
-        These administrative users need to set what is the stakeholder of the user in this system.
-    
-        If all is well, this method will return a boolean value, otherwise it will return a message containing a list of
-        stakeholders, defined in a global list variable.
-    
+
+        The administrator MUST provide a valid user_in_role ID to grant access in the system. This function covers two
+        different points:
+
+                1.- If the user is already in the system (user_in_role) this method gives it an access to the system
+                2.- If the user is not in the system, this method creates a new user accces
+
         :param p_data:
         :return: True if everything goes well.
                  False if there are any problem
-                 A list of stakeholders if the user entered an invalid stakeholder.
     
-        #######################################
-    
-    
-        res = False
+        """
         for data in p_data:
-            # TODO You need to check first if ALL data is in stakeholders before doing anything.
-            if data and 'type' in data and data['type'] in stakeholders:
-                # StakeHolder entered ok we are going to enter data in DB
-                stakeholder = self._get_or_create(tables.StakeHolder, name=data[
-                    'type'])  # consider to enter a user type according to it'ts current role
-                user_in_system = self._get_or_create(tables.UserInSystem, username=data['username'],
-                                                     password=data['password'],
-                                                     stake_holder_name=stakeholder.name)
-    
-                if stakeholder and user_in_system:
-                    logging.info("Data entered ok into the system")
-                    res = True
+            # We are going to check if the actual user exists in the system
+            user_registered = self._get_or_create(ar_tables.UserRegistered, username=data['username'].lower(),
+                                                  password=data['password'])
+
+            cd_role = self._get_or_create(ar_tables.CDRole, role_name=data['roletype'])
+
+            # Check if the user was already registered in the server
+            user_in_role = self._get_or_create(ar_tables.UserInRole, id=data['user'])
+            if user_in_role.cd_role_id is None and user_in_role.user_registered_id is None:
+                # This is a new and empty user. Insert new information
+                user_in_role.cd_role_id = cd_role.id
+                user_in_role.user_registered_id = user_registered.id
             else:
-                res = stakeholders
-                logging.error("There isn't a stakeholder inside JSON or data is invalid, value is: ", data['type'] or
-                              None)
-                break
-        return res
-    """
+                # The user already exist in the system, so only it is necessary to add the login credentials
+                user_in_role.user_registered_id = user_registered.id
+
+        return self.commit()
 
     def add_user_action(self, p_user_id, p_route, p_ip, p_agent, p_data, p_status_code):
         """
@@ -246,6 +239,7 @@ class ARPostORM(PostORM):
         :return: The name of the role attached to this user
         """
         res = None
+        # TODO this method would give error if there isnt' data in database, change the logis
         user_in_role = self.session.query(ar_tables.UserInRole).filter_by(user_registered_id=p_user_id)[0].cd_role_id \
                        or None
         if user_in_role is not None:
@@ -262,6 +256,7 @@ class ARPostORM(PostORM):
                 False if it not exist in the system
         """
         res = False
+        # TODO this method would give error if there isnt' data in database, change the logis
         user_in_role = self.session.query(ar_tables.UserInRole).filter_by(id=p_user_id) or None
         if user_in_role and user_in_role.count() == 1 and user_in_role[0].id == p_user_id:
             # The user exist in the system
@@ -293,3 +288,35 @@ class ARPostORM(PostORM):
         }
         # We instantiate desired table
         return all_tables[p_table_name]
+
+    def check_username(self, p_username):
+        """
+        Given an usernaem. check if if exist or not in database
+
+        :param p_username: The username in the system
+        :return: True if the user exist in database
+                False if the user not exist in database
+        """
+        res = False
+        username = self.session.query(ar_tables.UserRegistered).filter_by(username=p_username)
+        if username and username.count() == 1 and username[0].username == p_username:
+            # The user exist in the system
+            res = True
+        return res
+
+    def check_user_access(self, p_user_in_role):
+        """
+        Given a user in role, check if it has already an access in the system.
+
+        If the user doesn't exist, we assume that it has no access in the system.
+
+        :param p_user_in_role: The id of the user_in_role
+        :return: True if the user has an access in the system
+                False if the user hasn't access in the system or it isn't exist.
+        """
+        res = False
+        user_authenthicated = self.session.query(ar_tables.UserInRole).filter_by(id=p_user_in_role)
+        if user_authenthicated and user_authenthicated.count() == 1 and \
+                        user_authenthicated[0].user_registered_id != None:
+            res = True
+        return res

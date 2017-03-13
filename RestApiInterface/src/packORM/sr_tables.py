@@ -287,10 +287,10 @@ class CDRole(Base):                                                             
     __tablename__ = 'cd_role'
 
     id = Column(Integer, Sequence('cd_role_seq'), primary_key=True)
-    role_name = Column(String(50), nullable=False)
-    role_abbreviation = Column(String(3))
-    role_description = Column(String(200), nullable=False)
-    valid_from = Column(TIMESTAMP, nullable=False)
+    role_name = Column(String(50), nullable=False, unique=True)
+    role_abbreviation = Column(String(3), nullable=False)
+    role_description = Column(String(350), nullable=False)
+    valid_from = Column(TIMESTAMP, default=datetime.datetime.utcnow)
     valid_to = Column(TIMESTAMP)
 
     # One2Many
@@ -316,6 +316,7 @@ class UserInRole(Base):                                                         
     id = Column(String(75), primary_key=True)
     valid_from = Column(TIMESTAMP, default=datetime.datetime.utcnow)
     valid_to = Column(TIMESTAMP)
+    medical_record = Column(String(75))
 
     # Many2One
     user_registered_id = Column(Integer, ForeignKey('user_registered.id'))

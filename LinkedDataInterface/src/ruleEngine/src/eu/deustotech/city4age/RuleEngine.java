@@ -73,7 +73,6 @@ public class RuleEngine {
      *
      * @return True or false if the operation is done successfully.
      */
-
     public boolean inference() {
         boolean res = false;
         Model instances = null;
@@ -103,8 +102,7 @@ public class RuleEngine {
                     finalResult.setNsPrefixes(inf.getDeductionsModel().getNsPrefixMap());
 
                     // TODO in this part, we are going to user our approach to obtain city data
-                    //this.updateCityInformation(finalResult);
-
+                    this.updateCityInformation(finalResult);
 
                     // updated instances
                     this.printResults(finalResult, inf, finalResult.getBaseModel());
@@ -277,18 +275,18 @@ public class RuleEngine {
      */
 
     private Statement obtainCityInformation(String pCity) {
-
-        // Initialiting the statemenr
+        // Initialiting the statement
         Statement statement = null;
-
 
         // Define the structure of the SPARQL query
         String query = "PREFIX dcterms: <http://dbpedia.org/resource/>\n" +
+                "PREFIX owl: <http://www.w3.org/2002/07/owl#>\n" +
                 "\n" +
                 "SELECT ?place WHERE{\n" +
                 "  ?place owl:sameAs dcterms:" + pCity + " .\n" +
                 "  \n" +
                 "}";
+
         // Define de bash command to send the SPARQL query.
         ProcessBuilder p = new ProcessBuilder("curl", "-G", dbpedia, "--data-urlencode", "query=" + query + "");
         try {

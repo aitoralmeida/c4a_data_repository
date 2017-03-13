@@ -59,7 +59,7 @@ else:
 
 class PostORM(object):
 
-    def __init__(self):
+    def __init__(self, autoflush=True):
         # TODO we will define the name of the schema for the next step.
         # schema_name = schema
         # Make basic connection and setup declatarive
@@ -69,9 +69,22 @@ class PostORM(object):
             session = session_mark()
             if session:
                 print("Connection OK")
-                self.session = session
+                if autoflush:
+                    logging.info("Created session connection with autoflush")
+                    self.session = session
+                else:
+                    logging.info("Created session connection without autoflush")
+                    self.session = session.no_autoflush
         except OperationalError:
             print ("Database arguments are invalid")
+
+    def flush(self):
+        """
+        Force flush the actual session. Usefull for non autoflush created sessions
+
+        :return: None
+        """
+        self.session.flush()
 
     def insert_one(self, p_data):
         """
