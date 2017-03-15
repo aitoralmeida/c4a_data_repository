@@ -535,6 +535,8 @@ class Action(Base):                                                             
             self.action_name, self.category)
 
 
+# TODO consider to remove this class from this table design
+
 class EAM(Base):                                                                                      # DECIDE
     """
     This table stores the duration of each related action/activity in a simple place.
@@ -550,7 +552,7 @@ class EAM(Base):                                                                
     # one2many
     action_id = Column(Integer, ForeignKey('action.id'))
 
-    # TODO this is not listed in this DATABASE, Ensure to add here.
+    # TODO change this to poin
     # many2many
     #start_range = relationship("EAMStartRangeRel")
     #simple_location = relationship("EAMSimpleLocationRel")

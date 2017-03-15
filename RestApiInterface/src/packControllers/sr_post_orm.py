@@ -34,15 +34,12 @@ class SRPostORM(PostORM):
         """
         return sr_tables.create_tables(self.engine)
 
-    def get_tables(self):
-        """
-        List current database tables in DATABASE active connection (Current installed system).
 
-        :return: A list containing current tables.
-        """
-        m = MetaData()
-        m.reflect(self.engine, schema='city4age_sr')
-        return m.tables.keys()
+###################################################################################################
+###################################################################################################
+######                              DATABASE ADDERS
+###################################################################################################
+###################################################################################################
 
     def add_measure(self, p_data):
         """
@@ -77,7 +74,6 @@ class SRPostORM(PostORM):
                                                    pilot_name=data['extra']['pilot'])
                 # Adding time interval information
                 time_interval = self._get_or_create(sr_tables.TimeInterval, interval_start=data['payload']['date'])
-
 
 
                 # Adding measure values
@@ -145,6 +141,30 @@ class SRPostORM(PostORM):
                 user_in_role.user_registered_id = user_registered.id
 
         return self.commit()
+
+
+###################################################################################################
+###################################################################################################
+######                              DATABASE GETTERS
+###################################################################################################
+###################################################################################################
+
+    def get_tables(self):
+        """
+        List current database tables in DATABASE active connection (Current installed system).
+
+        :return: A list containing current tables.
+        """
+        m = MetaData()
+        m.reflect(self.engine, schema='city4age_sr')
+        return m.tables.keys()
+
+
+###################################################################################################
+###################################################################################################
+######                              DATABASE CHECKERS
+###################################################################################################
+###################################################################################################
 
     def check_username(self, p_username):
         """

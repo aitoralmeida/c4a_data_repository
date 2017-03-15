@@ -187,7 +187,6 @@ class Utilities(object):
             res = True
         except ValidationError:
             logging.error("The schema entered by the user is invalid")
-
         return res
 
     @staticmethod
@@ -298,7 +297,7 @@ class Utilities(object):
         """
         Check if data is ok and if the not nullable values are filled.
 
-        :p_p_database: The database instance to call
+        :param p_database: The database instance to call
         :param p_data: User sent data
 
         :return:  True or False if data is ok
@@ -355,6 +354,9 @@ class Utilities(object):
                 # We have a list of dicts
                 for data in p_data:
                     validate(data, schema)
+
+                    # TODO check this part to think about doing only one method
+
                     if Utilities.validate_user_registered(p_database, data):
                         # The user exist in the system
                         logging.error("The entered username is duplicated: %s", data['username'])
@@ -584,6 +586,106 @@ class Utilities(object):
 
         return res
 
+    @staticmethod
+    def check_add_eam_data(p_database, p_data):
+        """
+        This method checks if the current data is properly JSON formatted with the required files
+
+
+        :param p_database: The database instance
+        :param p_data: The data sent by the user
+
+        :return: True is the data is OK
+                False and error state if the data is KO
+        """
+        res = False
+        schema = {
+            "title": "Eam database additional data validator",
+            "type": "object",
+            "properties": {
+                "activity_name": {
+                    "description": "The name of the current activity",
+                    "type": "string",
+                    "minLength": 3,
+                    "maxLength": 50
+                },
+                "locations": {
+                    "description": "A list containing the possible locations of the EAM",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "minItems": 1,
+                    "uniqueItems": True,
+                    "additionalProperties": False
+                },
+                "actions": {
+                    "description": "A list containing the possible actions of the EAM",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "minItems": 1,
+                    "uniqueItems": True,
+                    "additionalProperties": False
+                },
+                "duration": {
+                    "description": "The total duration of the EAM",
+                    "type": "integer",
+                    "minimum": 0
+                },
+                "start": {
+                    "description": "A complex list of items containing time intervals",
+                    "type": "array",
+                    "items": {
+                        "description": "The items of the array, the should be time intervals",
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "pattern": "^([0-9]|0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]$"
+                        },
+                        "minItems": 2,
+                        "maxItems": 2,
+                        "uniqueItems": True,
+                        "additionalProperties": False
+                    },
+                    "minItems": 1,
+                    "uniqueItems": True,
+                    "additionalProperties": False,
+                    "required": ["items"]
+                }
+            },
+            "required": [
+                "activity_name",
+                "locations",
+                "actions",
+                "duration",
+                "start"
+            ],
+            "additionalProperties": False
+        }
+
+        try:
+            if type(p_data) is list:
+                # We have a list of dicts
+                for data in p_data:
+                    validate(data, schema)
+                    # checking data integrity
+                    res = Utilities.validate_eam(p_database, data)
+                    if not res:
+                        raise ValidationError("The activity, action or location doesn't exist in database")
+            else:
+                validate(p_data, schema)
+                # checking data integrity
+                res = Utilities.validate_eam(p_database, p_data)
+                if not res:
+                    raise ValidationError("The activity, action or location doesn't exist in database")
+            res = True
+        except ValidationError:
+            # TODO find a proper method to return user messages.
+            logging.error("The schema entered by the user is invalid")
+        return res
+
     # TODO review this search method
     @staticmethod
     def validate_search_tables(p_database, p_one_data):
@@ -603,7 +705,6 @@ class Utilities(object):
                 res = True
         return res
 
-
     @staticmethod
     def validate_user_registered(p_database, p_one_data):
         """
@@ -622,7 +723,6 @@ class Utilities(object):
             res = p_database.check_username(username)
         return res
 
-
     @staticmethod
     def validate_user_in_role(p_database, p_one_data):
         """
@@ -640,6 +740,57 @@ class Utilities(object):
             user_in_role = p_one_data['user'].lower() or None  # lowering string cases
             # Get current registered users
             res = p_database.check_user_access(user_in_role)
+        return res
+
+    @staticmethod
+    def validate_eam(p_database, p_one_data):
+        """
+        This method checks if the given element of a EAM has valid information.
+
+        To know it we need to check the following:
+
+            * Activiy: If the activities exist in DB
+            * Actions: If the actions exist in DB
+            * Locations: If the locations exist in DB
+
+        :param p_database: The database instance
+        :param p_one_data: The information about an EAM
+        :return: True if the information of EAM is correct
+                False if some of the EAM elements are not correct
+        """
+        res = False
+
+        # checking if exist activity name
+        if p_one_data and p_one_data.get('activity_name', False):
+            activity_name = p_one_data['activity_name'].lower() or None
+            # Check if the activity exist in DB
+            res = p_database.check_activity(activity_name)
+
+        # checking if exist action name
+        if res and p_one_data and p_one_data.get('actions', False):
+            # We check if the actions exist in DB
+            for action_name in p_one_data['actions']:
+                # GIVING an action name we check it in DB
+                res = p_database.check_action(action_name.lower())
+                if not res:
+                    res = False     # Ensuring that result is FALSE and not NONE or whatever
+                    break
+        else:
+            logging.error("validate_eam: some of the values are not present")
+            res = False
+
+        if res and p_one_data and p_one_data.get('locations', False):
+            # We check if the locations exist in DB
+            for location_name in p_one_data['locations']:
+                # GIVING a location name we check it in DB
+                res = p_database.check_location(location_name.lower())
+                if not res:
+                    res = False
+                    break
+        else:
+            logging.error("validate_eam: some of the values are not present")
+            res = False
+
         return res
 
 

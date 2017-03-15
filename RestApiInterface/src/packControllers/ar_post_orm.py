@@ -34,20 +34,12 @@ class ARPostORM(PostORM):
         """
         return ar_tables.create_tables(self.engine)
 
-    def get_auth_token(self, p_user, app, expiration=600):
-        """
-        Giving a registered user ID creates a new token to be authenticated
 
-        :param p_user: The ID o a registered user
-        :param app:  The Flask APP
-        :param expiration:  Cookie expiration time
-        :return: A token to be sent to the final user
-        """
-        token = None
-        if p_user and app:
-            # Generation of a new user Toke containing user ID
-            token = p_user.generate_auth_token(app, expiration)
-        return token
+###################################################################################################
+###################################################################################################
+######                              DATABASE VERIFIERS
+###################################################################################################
+###################################################################################################
 
     def verify_user_login(self, p_username, p_password, p_app):
         """
@@ -89,6 +81,14 @@ class ARPostORM(PostORM):
                 user_data = self.session.query(ar_tables.UserRegistered).get(res.get('id', 0))
         return user_data
 
+
+###################################################################################################
+###################################################################################################
+######                              DATABASE ADDERS
+###################################################################################################
+###################################################################################################
+
+
     def add_action(self, p_data):
         """
         Adds a new action into the database.
@@ -102,7 +102,7 @@ class ARPostORM(PostORM):
         for data in p_data:
             # Basic tables
             # We are going to check if basic data exist in DB and insert it in case that is the first time.
-            action = self._get_or_create(ar_tables.Action, action_name=data['action'])
+            action = self._get_or_create(ar_tables.Action, action_name=data['action'].lower())
             executed_action_date = datetime.datetime.strptime(data['timestamp'], '%Y-%m-%d %H:%M:%S.%f')
             pilot = self._get_or_create(ar_tables.Pilot, name=data['extra']['pilot'])
             user = self._get_or_create(ar_tables.UserInRole, id=data['payload']['user'], pilot_name=pilot.name)
@@ -112,7 +112,7 @@ class ARPostORM(PostORM):
                                                longitude=data['location']['long'], indoor=True, pilot_name=pilot.name)
             else:
                 # The sent location is an URN based location
-                location = self._get_or_create(ar_tables.Location, urn=data['location'], indoor=True,
+                location = self._get_or_create(ar_tables.Location, urn=data['location'].lower(), indoor=True,
                                                pilot_name=pilot.name)
             # Inserting the values attached with this action into database
             for key, value in data['payload'].items():
@@ -151,10 +151,10 @@ class ARPostORM(PostORM):
                                                pilot_name=pilot.name)
             else:
                 # The sent location is an URN based location
-                location = self._get_or_create(ar_tables.Location, urn=data['location'], indoor=data['indoor'],
+                location = self._get_or_create(ar_tables.Location, urn=data['location'].lower(), indoor=data['indoor'],
                                                pilot_name=pilot.name)
 
-            activity = self._get_or_create(ar_tables.Activity, activity_name=data['activity_name'],
+            activity = self._get_or_create(ar_tables.Activity, activity_name=data['activity_name'].lower(),
                                            activity_start_date=data['activity_start_date'],
                                            activity_end_date=data['activity_end_date'],
                                            since=data['since'])
@@ -200,6 +200,44 @@ class ARPostORM(PostORM):
 
         return self.commit()
 
+
+    def add_eam(self, p_data):
+        """
+        Giving EAM information data, this method insert the needed data into DB.
+
+
+        :param p_data: A list containing instances of JSON data with the needed information
+        :return:  True if everything is ok
+        """
+
+        for data in p_data:
+            # Getting activity id from DB
+            activity=self._get_or_create(ar_tables.Activity, activity_name=data['activity_name'].lower())
+            # Insert eam information
+            eam = self._get_or_create(ar_tables.EAM, duration=data['duration'], activity_id=activity.id)
+            # For each location
+            for location in data['locations']:
+                # Insert EAM location REL
+                location_data = self._get_or_create(ar_tables.Location, urn=location.lower())
+                self._get_or_create(ar_tables.EAMLocationRel, location_id=location_data.id, eam_id=eam.id)
+            # Insert the time ranges
+            for date_range in data['start']:
+                # Insert the actual range
+                start_range = self._get_or_create(ar_tables.StartRange,
+                                                  start_hour=date_range[0],
+                                                  end_hour=date_range[1])
+                # Insert the m2m table
+                self._get_or_create(ar_tables.EAMStartRangeRel, start_range_id=start_range.id, eam_id=eam.id)
+            # Insert the action ranges
+            for action in data['actions']:
+                # Insert the actual action
+                action = self._get_or_create(ar_tables.Action, action_name=action.lower())
+                # Insert the m2m table
+                self._get_or_create(ar_tables.EAMActionRel, action_id=action.id, eam_id=eam.id)
+
+        return self.commit()
+
+
     def add_user_action(self, p_user_id, p_route, p_ip, p_agent, p_data, p_status_code):
         """
     
@@ -220,6 +258,28 @@ class ARPostORM(PostORM):
                                                user_registered_id=p_user_id)
         self.insert_one(new_user_action)
         return self.commit()
+
+###################################################################################################
+###################################################################################################
+######                              DATABASE GETTERS
+###################################################################################################
+###################################################################################################
+
+    def get_auth_token(self, p_user, app, expiration=600):
+        """
+        Giving a registered user ID creates a new token to be authenticated
+
+        :param p_user: The ID o a registered user
+        :param app:  The Flask APP
+        :param expiration:  Cookie expiration time
+        :return: A token to be sent to the final user
+        """
+        token = None
+        if p_user and app:
+            # Generation of a new user Toke containing user ID
+            token = p_user.generate_auth_token(app, expiration)
+        return token
+
 
     def get_tables(self):
         """
@@ -247,22 +307,6 @@ class ARPostORM(PostORM):
             res = self.session.query(ar_tables.CDRole).get(user_in_role).role_name or None
         return res
 
-    def check_user_in_role(self, p_user_id):
-        """
-        Giving user id, this method checks if the user exist or no in the system.
-
-        :param p_user_id: The user_in_role id in the system
-        :return: True if the user_in_role exist in the system
-                False if it not exist in the system
-        """
-        res = False
-        # TODO this method would give error if there isnt' data in database, change the logis
-        user_in_role = self.session.query(ar_tables.UserInRole).filter_by(id=p_user_id) or None
-        if user_in_role and user_in_role.count() == 1 and user_in_role[0].id == p_user_id:
-            # The user exist in the system
-            res = True
-        return res
-
     # TODO find a solution to this workaround
     def get_table_object_by_name(self, p_table_name):
         """
@@ -288,6 +332,29 @@ class ARPostORM(PostORM):
         }
         # We instantiate desired table
         return all_tables[p_table_name]
+
+
+###################################################################################################
+###################################################################################################
+######                              DATABASE CHECKS
+###################################################################################################
+###################################################################################################
+
+    def check_user_in_role(self, p_user_id):
+        """
+        Giving user id, this method checks if the user exist or no in the system.
+
+        :param p_user_id: The user_in_role id in the system
+        :return: True if the user_in_role exist in the system
+                False if it not exist in the system
+        """
+        res = False
+        # TODO this method would give error if there isnt' data in database, change the logis
+        user_in_role = self.session.query(ar_tables.UserInRole).filter_by(id=p_user_id) or None
+        if user_in_role and user_in_role.count() == 1 and user_in_role[0].id == p_user_id:
+            # The user exist in the system
+            res = True
+        return res
 
     def check_username(self, p_username):
         """
@@ -318,5 +385,48 @@ class ARPostORM(PostORM):
         user_authenthicated = self.session.query(ar_tables.UserInRole).filter_by(id=p_user_in_role)
         if user_authenthicated and user_authenthicated.count() == 1 and \
                         user_authenthicated[0].user_registered_id != None:
+            res = True
+        return res
+
+    def check_activity(self, p_activity_name):
+        """
+        Giving an activity name, we check if it exist or not in the system.
+
+
+        :param p_activity_name: The name of an activity
+        :return: True if the activity exist in the system
+                False if the activity doesn't exist in the system
+        """
+        res = False
+        activity = self.session.query(ar_tables.Activity).filter_by(activity_name=p_activity_name)
+        if activity and activity.count() == 1:
+            res = True
+        return res
+
+    def check_action(self, p_action_name):
+        """
+        Giving the action anem, we check if it exist or not in the system.
+
+        :param p_action_name: The name of the action
+        :return: True if the action exist in database.
+                False if the action doesn't exist in database
+        """
+        res = False
+        action = self.session.query(ar_tables.Action).filter_by(action_name=p_action_name)
+        if action and action.count() == 1:
+            res = True
+        return res
+
+    def check_location(self, p_location_name):
+        """
+        giving the location name, we check if it exist or not in the system.
+
+        :param p_location_name: The name of the location
+        :return: True if the location exist in the system
+                False if the location deesn't exist in the system
+        """
+        res = False
+        location = self.session.query(ar_tables.Location).filter_by(urn=p_location_name)
+        if location and location.count() == 1:
             res = True
         return res

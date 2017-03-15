@@ -117,3 +117,8 @@ RestApiInterface/src/packORM/tables.pyc
 
 # Pycharm realted data
 .idea
+DemoRestAPI/bin/
+DemoRestAPI/include/
+LinkedDataInterface/src/ruleEngine/mapping_sr.ttl
+RestApiInterface/log/
+apache_mods_activation.txt

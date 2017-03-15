@@ -166,6 +166,9 @@ class ExecutedAction(Base):
 
     __tablename__ = 'executed_action'
 
+    # TODO you need to make here some changes in order to save the actions data in database
+    # TODO POSITION COULD BE SPLLITED INTO TWO DIFFERENT COLLUMNS CALLED LAT/LONG
+
     id = Column(Integer, Sequence('executed_action_id_seq'), primary_key=True)
     user_in_role_id = Column(String(75), ForeignKey('user_in_role.id'))
     action_id = Column(Integer, ForeignKey('action.id'))
@@ -197,16 +200,28 @@ class EAMStartRangeRel(Base):
     start_range = relationship("StartRange")
 
 
-class EAMSimpleLocationRel(Base):
+class EAMLocationRel(Base):
     """
-    EAM < -- > SimpleLocation
+    EAM < -- > Location
     """
 
-    __tablename__ = 'eam_simple_location_rel'
+    __tablename__ = 'eam_location_rel'
 
     eam_id = Column(Integer, ForeignKey('eam.id'), primary_key=True)
-    simple_location_id = Column(Integer, ForeignKey('simple_location.id'), primary_key=True)
-    simple_location = relationship("SimpleLocation")
+    location_id = Column(Integer, ForeignKey('location.id'), primary_key=True)
+    location = relationship("Location")
+
+
+class EAMActionRel(Base):
+    """
+    EAM < -- > Action
+    """
+
+    __tablename__ = 'eam_action_rel'
+
+    eam_id = Column(Integer, ForeignKey('eam.id'), primary_key=True)
+    action_id = Column(Integer, ForeignKey('action.id'), primary_key=True)
+    action = relationship("Action")
 
 
 class LocationActivityRel(Base):
@@ -336,9 +351,6 @@ class Action(Base):
     action_name = Column(String(50))
     category = Column(String(25))
 
-    # one2many
-    eam = relationship("EAM")
-
     def __repr__(self):
         return "<Action(action_name='%s', category='%s')>" % (
             self.action_name, self.category)
@@ -461,7 +473,7 @@ class InterBehaviour(Base):
 # EAM Related Tables
 class EAM(Base):
     """
-    This table stores the duration of each related action/activity in a simple place.
+    This table stores the duration of each related action/activity in a location
     """
 
     __tablename__ = 'eam'
@@ -471,31 +483,14 @@ class EAM(Base):
     #one2one
     activity_id = Column(Integer, ForeignKey('activity.id'))
     activity = relationship("Activity", back_populates="eam")
-    # one2many
-    action_id = Column(Integer, ForeignKey('action.id'))
+
     # many2many
     start_range = relationship("EAMStartRangeRel")
-    simple_location = relationship("EAMSimpleLocationRel")
+    location = relationship("EAMLocationRel")
+    action = relationship("EAMActionRel")
 
     def __repr__(self):
         return "<EAM(duration='%s')>" % self.duration
-
-
-class SimpleLocation(Base):
-    """
-    This table defines a list of simple locations. For example:
-
-    "Kitchen", "Bathroom", "Restroom"......
-
-    """
-
-    __tablename__ = 'simple_location'
-
-    id = Column(Integer, Sequence('simple_location_seq'), primary_key=True)
-    simple_location_name = Column(String(25), unique=True)
-
-    def __repr__(self):
-        return "<SimpleLocation(simple_location_name='%s')>" % self.simple_location_name
 
 
 class StartRange(Base):
@@ -507,11 +502,11 @@ class StartRange(Base):
     __tablename__ = 'start_range'
 
     id = Column(Integer, Sequence('start_range_seq'), primary_key=True)
-    start_hour = Column(TIMESTAMP)
-    end_hour = Column(TIMESTAMP)
+    start_hour = Column(String(10))
+    end_hour = Column(String(10))
 
     def __repr__(self):
-        return "<SimpleLocation(start_hour='%s', end_hour='%s')>" % (self.start_hour, self.end_hour)
+        return "<StartRange(start_hour='%s', end_hour='%s')>" % (self.start_hour, self.end_hour)
 
 
 class UserAction(Base):

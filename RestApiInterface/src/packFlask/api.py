@@ -299,6 +299,7 @@ def api(version=app.config['ACTUAL_API']):
             <li><b>add_action</b>: Adds new Action into database.</li>
             <li><b>add_activity</b>: Adds new Activity into database.</li>
             <li><b>add_measure</b>: Adds a new Measure into database.</li>
+            <li><b>add_eam</b>: Adds information about EAM's in the API related to an activity.</li>
             <li><b>search</b>: Search datasets in database due to some search criteria.</li>
             <li><b>add_new_user</b>: Adds a new registered user in the system (Administrator only).</li>
             <li><b>clear_user</b>: Delete a user and all its related data from the system (Administrator only).</li>
@@ -565,6 +566,7 @@ def add_new_user(version=app.config['ACTUAL_API']):
         else:
             abort(500)
 
+
 @app.route('/api/<version>/clear_user', methods=['POST'])
 @limit_content_length(MAX_LENGHT)
 @auth.login_required
@@ -583,6 +585,9 @@ def clear_user(version=app.config['ACTUAL_API']):
     :param version: Api version
     :return: A message containing the res of the operation
     """
+
+    # TODO this class will be coded when all database structure has in stable stage
+
     """
     if Utilities.check_connection(app, version):
         data = _convert_to_dict(request.json)
@@ -622,6 +627,7 @@ def clear_user(version=app.config['ACTUAL_API']):
 
     """
     return "Not implemented yet", 501
+
 
 @app.route('/api/<version>/add_measure', methods=['POST'])
 @limit_content_length(MAX_LENGHT)
@@ -665,6 +671,52 @@ def add_measure(version=app.config['ACTUAL_API']):
                 return Response('add_measure: data stored in database OK\n'), 200
             else:
                 Utilities.write_log_error(app, ("add_measure: the username: %s failed to store data into database. 500" %
+                                          USER.username))
+                return "There is an error in DB", 500
+        else:
+            abort(500)
+
+
+@app.route('/api/<version>/add_eam', methods=['POST'])
+@limit_content_length(MAX_LENGHT)
+@auth.login_required
+@required_roles('researcher', 'application_developer', 'administrator')
+def add_eam(version=app.config['ACTUAL_API']):
+    """
+    This endpoint allows to pilots insert information about realted EAMS from different type of activities.
+
+    It allow to Expert Activity Model, have an input access to discover new activities based on user performed actions.
+
+
+    An example in JSON could be:
+
+    {
+        "activity_name": "AnsweringPhone",
+        "locations": ["Kitchen", "Office", "Bedroom"],
+        "actions": ["KitchenPIR", "BedroomPIR"],
+        "duration": 120,
+        "start": [
+            ["12:00", "12:05"],
+            ["20:00", "20:10"]
+        ]
+    }
+
+
+    :param version: Api version
+    :return:
+    """
+    if Utilities.check_connection(app, version):
+        # We created a list of Python dict.
+        data = _convert_to_dict(request.json)
+        if data and Utilities.check_add_eam_data(AR_DATABASE, data) and USER:
+            # The user data are correct. We proceed to insert it into DB
+            res = AR_DATABASE.add_eam(data)
+            if res:
+                Utilities.write_log_info(app, ("add_eam: the username: %s adds new EAM into database" %
+                                         USER.username))
+                return Response('add_eam: data stored in database OK\n'), 200
+            else:
+                Utilities.write_log_error(app, ("add_eam: the username: %s failed to store data into database. 500" %
                                           USER.username))
                 return "There is an error in DB", 500
         else:
