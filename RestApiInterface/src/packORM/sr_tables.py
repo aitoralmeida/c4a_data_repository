@@ -14,8 +14,8 @@ import os
 
 from itsdangerous import (TimedJSONWebSignatureSerializer
                           as Serializer, BadSignature, SignatureExpired)
-from sqlalchemy import Column, Integer, String, Boolean, Sequence, Float, BigInteger, ForeignKey, LargeBinary, \
-    TIMESTAMP, Text, TypeDecorator, event, MetaData
+from sqlalchemy import Column, Integer, String, Boolean, Sequence, Numeric,  Float, BigInteger, ForeignKey, \
+    LargeBinary, TIMESTAMP, Text, TypeDecorator, event, MetaData
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, validates
 from sqlalchemy.schema import CreateSchema
@@ -421,7 +421,7 @@ class CRProfile(Base):                                                          
     id = Column(Integer, Sequence('cr_profile_seq'), primary_key=True)
     ref_height = Column(Float(4))
     ref_weight = Column(Float(4))
-    ref_mean_blood_pressure = Column(Float(5))         # TODO research how to solve precission
+    ref_mean_blood_pressure = Column(Numeric(precision=5, scale=2))
     date = Column(TIMESTAMP)
     birth_date = Column(TIMESTAMP)
     gender = Column(Boolean)
@@ -639,7 +639,8 @@ class NumericIndicatorValue(Base):                                              
     __tablename__ = 'numeric_indicator_value'
 
     id = Column(Integer, Sequence('numeric_indicator_value_seq'), primary_key=True)
-    nui_value = Column(Float(10), nullable=False)          # TODO research how to solve precission
+
+    nui_value = Column(Numeric(precision=10, scale=2), nullable=False)
 
     # Many 2 one tables
     nui_type_id = Column(Integer, ForeignKey('cd_detection_variable.id'))
@@ -707,9 +708,8 @@ class GeriatricFactorValue(Base):                                               
     __tablename__ = 'geriatric_factor_value'
 
     id = Column(Integer, Sequence('geriatric_factor_value_seq'), primary_key=True)
-    gef_value = Column(Float(3), nullable=False)            # TODO research how to solve precission
-    derivation_weight = Column(Float(5))                    # TODO research how to solve precission
-
+    gef_value = Column(Numeric(precision=3, scale=2), nullable=False)
+    derivation_weight = Column(Numeric(precision=5, scale=2))
     # Many2One relationships
     time_interval_id = Column(Integer, ForeignKey('time_interval.id'), nullable=False)
     user_in_role_id = Column(String(75), ForeignKey('user_in_role.id'), nullable=False)
@@ -804,7 +804,7 @@ class CDRiskStatus(Base):                                                       
 
     risk_status = Column(String(1), primary_key=True)
     risk_status_description = Column(String(250), nullable=False)
-    confidence_rating = Column(Float(3), nullable=False)           # TODO research how to solve precission
+    confidence_rating = Column(Numeric(precision=3, scale=2), nullable=False)
     icon_image = Column(LargeBinary)
 
     # One2Many
@@ -833,7 +833,7 @@ class CDDetectionVariable(Base):                                                
     detection_variable_name = Column(String(100), nullable=False)
     valid_from = Column(TIMESTAMP, default=datetime.datetime.utcnow())
     valid_to = Column(TIMESTAMP)
-    derivation_weight = Column(Float(5))               # TODO research how to solve precission
+    derivation_weight = Column(Numeric(precision=5, scale=2))
 
     # FK
     detection_variable_type = Column(String(3), ForeignKey('cd_detection_variable_type.detection_variable_type'),

@@ -2,20 +2,26 @@ package eu.deustotech.city4age;
 
 import com.hp.hpl.jena.graph.Graph;
 import com.hp.hpl.jena.ontology.OntModel;
+import com.hp.hpl.jena.query.*;
 import com.hp.hpl.jena.rdf.model.*;
 import com.hp.hpl.jena.reasoner.Reasoner;
 import com.hp.hpl.jena.reasoner.ValidityReport;
 import com.hp.hpl.jena.reasoner.rulesys.GenericRuleReasoner;
 import com.hp.hpl.jena.reasoner.rulesys.Rule;
 import com.hp.hpl.jena.util.FileManager;
+
 import de.fuberlin.wiwiss.d2rq.jena.ModelD2RQ;
 import sun.rmi.runtime.Log;
 
+import javax.xml.ws.http.HTTPException;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.StringWriter;
+import java.lang.reflect.Array;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.logging.FileHandler;
@@ -42,7 +48,7 @@ public class RuleEngine {
     private OntModel oldOntModel = null;
     private String newLine;
     private Logger LOGGER;
-    private static final String dbpedia = "http://dbpedia.org/sparql";
+    private static final String dbpedia = "https://dbpedia.org/sparql";
 
 
     /**
@@ -101,8 +107,10 @@ public class RuleEngine {
                     finalResult.setNsPrefixes(instances.getNsPrefixMap());
                     finalResult.setNsPrefixes(inf.getDeductionsModel().getNsPrefixMap());
 
-                    // TODO in this part, we are going to user our approach to obtain city data
-                    this.updateCityInformation(finalResult);
+                    // Obtaining knowledge from DBPEDIA about different cities to have a 5 start ontology.
+                    OntModel dbpediaCityModel = this.updateCityInformation(finalResult);
+                    // Adding information in our final result
+                    finalResult.add(dbpediaCityModel);
 
                     // updated instances
                     this.printResults(finalResult, inf, finalResult.getBaseModel());
@@ -197,10 +205,15 @@ public class RuleEngine {
      * to update information about them
      *
      * @param pFinalResult The final model containing all inferred knowledge.
+     * @return A OntModel to be added to final loaded model.
+     *
      */
-    private void updateCityInformation(OntModel pFinalResult) {
+    private OntModel updateCityInformation(OntModel pFinalResult) {
 
-        ArrayList<String> cities = new ArrayList<>();
+        // Defining the list of target cities to obtain desired information
+        List<String> places = Arrays.asList("lecce", "singapore", "madrid", "birmingham", "montpellier", "athens");
+        // Creating response ontology
+        OntModel res = ModelFactory.createOntologyModel();
         // Iterate data to search for cities
         StmtIterator iter = pFinalResult.listStatements();
         try {
@@ -215,7 +228,7 @@ public class RuleEngine {
                 String pURI = new String();
                 String oURI = new String();
 
-
+                // Assing the values of the current statement
                 if (s.isURIResource()) {
                     // We get the URI
                     sURI = s.getURI();
@@ -231,8 +244,9 @@ public class RuleEngine {
                 } else if (o.isAnon()) {
                     System.out.print("blank");
                 } else if (o.isLiteral()) {
-                    // TODO verify how to get the appropiate value
-                    System.out.print("literal");        // <---- VALUE
+                    // TODO verify how to get the appropriate value
+                    oURI = o.asLiteral().getString();           // Getting the literal value (city name)
+
                 }
 
                 /* Once data is gathered, here is decided if the information matches the requirements
@@ -240,30 +254,32 @@ public class RuleEngine {
 
                 # The idea is to use the following
 
-                    // Sujeto --> City4Age:City
+                    FROM:
+
+                    // Subj --> City4Age:City
                     // Property --> hasName O DBPEDIA:CITY
                     // LITERAL --> Lecce
 
-                    // Sujeto --> City4Age:City
-                    // Predicado --> rdf:sameAS
-                    // PRedicado --> DBpediaResource:LECCE
+                    CREATE:
+
+                    // Sub --> City4Age:City
+                    // Predicado --> owl:sameAS
+                    // PRED --> DBpediaResource:LECCE  <-- AN URI
 
                  */
-
-                // MOCK
-                if (sURI == "City4Age:City" && pURI == "rdf:hasName" && o.asLiteral().getValue() == "AS") {
-                    // TODO use a method here to obtain city information if it is requiered.
-
-                    Statement statement = this.obtainCityInformation("A city name");
+                // TODO define here what are the rules to check a city information
+                if (sURI.equals("City4Age:City") && pURI.equals("rdf:hasName") && oURI.toLowerCase().equals(places)) {
+                    Statement statement = this.obtainCityInformation(oURI.toLowerCase());
                     if (statement != null) {
-                        // Adding new statmenet to our current Knowleged
-                        pFinalResult.add(statement);
+                        // Adding new statmenet to our current model
+                        res.add(statement);
                     }
                 }
             }
         } finally {
             if (iter != null) iter.close();
         }
+        return res;
     }
 
     /**
@@ -271,64 +287,56 @@ public class RuleEngine {
      * if there is usefull city information.
      *
      * @param pCity The name of the city.
-     * @return A triple-based structured to add it into the knowledge.
+     * @return A statement containing the N-Triple containing the city URI from dbpedia
      */
 
     private Statement obtainCityInformation(String pCity) {
         // Initialiting the statement
         Statement statement = null;
-
         // Define the structure of the SPARQL query
-        String query = "PREFIX dcterms: <http://dbpedia.org/resource/>\n" +
-                "PREFIX owl: <http://www.w3.org/2002/07/owl#>\n" +
-                "\n" +
-                "SELECT ?place WHERE{\n" +
-                "  ?place owl:sameAs dcterms:" + pCity + " .\n" +
-                "  \n" +
-                "}";
-
-        // Define de bash command to send the SPARQL query.
-        ProcessBuilder p = new ProcessBuilder("curl", "-G", dbpedia, "--data-urlencode", "query=" + query + "");
+        String queryString  =
+                "PREFIX xsd:     <http://www.w3.org/2001/XMLSchema#>\n" +
+                "PREFIX rdf:     <http://www.w3.org/1999/02/22-rdf-syntax-ns#> \n" +
+                "PREFIX rdfs:    <http://www.w3.org/2000/01/rdf-schema#>\n" +
+                "PREFIX owl:     <http://www.w3.org/2002/07/owl#>\n" +
+                "PREFIX fn:      <http://www.w3.org/2005/xpath-functions#>\n" +
+                "PREFIX apf:     <http://jena.hpl.hp.com/ARQ/property#>\n" +
+                "PREFIX dc:      <http://purl.org/dc/elements/1.1/>\n" +
+                "PREFIX dbo:     <http://dbpedia.org/ontology/>\n" +
+                "SELECT DISTINCT ?city  WHERE {?city rdf:type dbo:PopulatedPlace ; rdfs:label ?label FILTER regex(?label,'^"+ pCity+"$','i') }";
+        // now creating query object
+        Query query = QueryFactory.create(queryString);
+        // initializing queryExecution factory with remote service.
+        QueryExecution qexec = QueryExecutionFactory.sparqlService("https://dbpedia.org/sparql", query);
+        // Executing the query and see the results
         try {
-            System.out.println("Requesting information from DBPedia\n");
+            System.out.println("Requesting information from DBPedia");
             LOGGER.info("Making a call to DBPedia requesting information for " + pCity);
-            // Execute our command
-            final Process shell = p.start();
-            // catch output and see if all is ok
-            BufferedReader reader =
-                    new BufferedReader(new InputStreamReader(shell.getInputStream()));
-            StringBuilder builder = new StringBuilder();
-            String line = null;
-            while ((line = reader.readLine()) != null) {
-                builder.append(line);
-                builder.append(System.getProperty("line.separator"));
+            ResultSet results = qexec.execSelect();
+
+            // TODO for the moment, we are assuming that we are receiving only 1 city. For future iterations
+
+            for (; results.hasNext();) {
+                // Getting the current data
+                QuerySolution q = results.next();
+                // Create a base model
+                Model model = ModelFactory.createDefaultModel();
+
+                // Create the needed resources
+                final Resource subject = ResourceFactory.createResource("City4Age:City");
+                final Property predicate = ResourceFactory.createProperty("owl:sameAs"); // owl base
+                final Resource object = q.getResource("city");     // URI of dbpedia resource
+                // Append the resources to the statement
+                statement = model.createStatement(subject,predicate,object);
             }
-            String output = builder.toString(); // We receive the URI of the town
-
-            // Decide here how to manage the DATA
-
-
-
-            // If we need to append data we create the statement
-            // Create a base model
-            Model model = ModelFactory.createDefaultModel();
-            // Create the needed resources
-            final Resource subject = ResourceFactory.createResource("urn:ex:s");
-            final Property predicate = ResourceFactory.createProperty("urn:ex:p");
-            final Resource object = ResourceFactory.createResource("urn:ex:o");
-            // Append data to the model
-            statement = model.createStatement(subject,predicate,object);
-
-
-
-        } catch (IOException e) {
-            LOGGER.severe("Fatal IO error detected in ProcessBuilder call");
-            e.printStackTrace();
+        } catch (Exception e) {
+            LOGGER.severe("There are some problems while the reasoner try to connect to Dbpedia");
         }
-
+        finally {
+            qexec.close();
+        }
         return statement;
     }
-
 
 
     /**

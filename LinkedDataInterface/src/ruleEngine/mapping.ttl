@@ -175,6 +175,20 @@ map:city4age_ar_cd_role_role_description a d2rq:PropertyBridge;
 	d2rq:propertyDefinitionLabel "cd_role role_description";
 	d2rq:column "city4age_ar.cd_role.role_description";
 	.
+map:city4age_ar_cd_role_valid_from a d2rq:PropertyBridge;
+	d2rq:belongsToClassMap map:city4age_ar_cd_role;
+	d2rq:property vocab:city4age_ar_cd_role_valid_from;
+	d2rq:propertyDefinitionLabel "cd_role valid_from";
+	d2rq:column "city4age_ar.cd_role.valid_from";
+	d2rq:datatype xsd:dateTime;
+	.
+map:city4age_ar_cd_role_valid_to a d2rq:PropertyBridge;
+	d2rq:belongsToClassMap map:city4age_ar_cd_role;
+	d2rq:property vocab:city4age_ar_cd_role_valid_to;
+	d2rq:propertyDefinitionLabel "cd_role valid_to";
+	d2rq:column "city4age_ar.cd_role.valid_to";
+	d2rq:datatype xsd:dateTime;
+	.
 
 # Table city4age_ar.eam
 map:city4age_ar_eam a d2rq:ClassMap;
@@ -202,12 +216,6 @@ map:city4age_ar_eam_duration a d2rq:PropertyBridge;
 	d2rq:column "city4age_ar.eam.duration";
 	d2rq:datatype xsd:integer;
 	.
-map:city4age_ar_eam_action_id__ref a d2rq:PropertyBridge;
-	d2rq:belongsToClassMap map:city4age_ar_eam;
-	d2rq:property vocab:city4age_ar_eam_action_id;
-	d2rq:refersToClassMap map:city4age_ar_action;
-	d2rq:join "city4age_ar.eam.action_id => city4age_ar.action.id";
-	.
 map:city4age_ar_eam_activity_id__ref a d2rq:PropertyBridge;
 	d2rq:belongsToClassMap map:city4age_ar_eam;
 	d2rq:property vocab:city4age_ar_eam_activity_id;
@@ -215,13 +223,22 @@ map:city4age_ar_eam_activity_id__ref a d2rq:PropertyBridge;
 	d2rq:join "city4age_ar.eam.activity_id => city4age_ar.activity.id";
 	.
 
-# Table city4age_ar.eam_simple_location_rel (n:m)
-map:city4age_ar_eam_simple_location_rel__link a d2rq:PropertyBridge;
+# Table city4age_ar.eam_action_rel (n:m)
+map:city4age_ar_eam_action_rel__link a d2rq:PropertyBridge;
 	d2rq:belongsToClassMap map:city4age_ar_eam;
-	d2rq:property vocab:city4age_ar_eam_simple_location_rel;
-	d2rq:refersToClassMap map:city4age_ar_simple_location;
-	d2rq:join "city4age_ar.eam_simple_location_rel.eam_id => city4age_ar.eam.id";
-	d2rq:join "city4age_ar.eam_simple_location_rel.simple_location_id => city4age_ar.simple_location.id";
+	d2rq:property vocab:city4age_ar_eam_action_rel;
+	d2rq:refersToClassMap map:city4age_ar_action;
+	d2rq:join "city4age_ar.eam_action_rel.eam_id => city4age_ar.eam.id";
+	d2rq:join "city4age_ar.eam_action_rel.action_id => city4age_ar.action.id";
+	.
+
+# Table city4age_ar.eam_location_rel (n:m)
+map:city4age_ar_eam_location_rel__link a d2rq:PropertyBridge;
+	d2rq:belongsToClassMap map:city4age_ar_eam;
+	d2rq:property vocab:city4age_ar_eam_location_rel;
+	d2rq:refersToClassMap map:city4age_ar_location;
+	d2rq:join "city4age_ar.eam_location_rel.eam_id => city4age_ar.eam.id";
+	d2rq:join "city4age_ar.eam_location_rel.location_id => city4age_ar.location.id";
 	.
 
 # Table city4age_ar.eam_start_range_rel (n:m)
@@ -503,32 +520,6 @@ map:city4age_ar_pilot_population_size a d2rq:PropertyBridge;
 	d2rq:datatype xsd:integer;
 	.
 
-# Table city4age_ar.simple_location
-map:city4age_ar_simple_location a d2rq:ClassMap;
-	d2rq:dataStorage map:database;
-	d2rq:uriPattern "city4age_ar/simple_location/@@city4age_ar.simple_location.id@@";
-	d2rq:class vocab:city4age_ar_simple_location;
-	d2rq:classDefinitionLabel "city4age_ar.simple_location";
-	.
-map:city4age_ar_simple_location__label a d2rq:PropertyBridge;
-	d2rq:belongsToClassMap map:city4age_ar_simple_location;
-	d2rq:property rdfs:label;
-	d2rq:pattern "simple_location #@@city4age_ar.simple_location.id@@";
-	.
-map:city4age_ar_simple_location_id a d2rq:PropertyBridge;
-	d2rq:belongsToClassMap map:city4age_ar_simple_location;
-	d2rq:property vocab:city4age_ar_simple_location_id;
-	d2rq:propertyDefinitionLabel "simple_location id";
-	d2rq:column "city4age_ar.simple_location.id";
-	d2rq:datatype xsd:integer;
-	.
-map:city4age_ar_simple_location_simple_location_name a d2rq:PropertyBridge;
-	d2rq:belongsToClassMap map:city4age_ar_simple_location;
-	d2rq:property vocab:city4age_ar_simple_location_simple_location_name;
-	d2rq:propertyDefinitionLabel "simple_location simple_location_name";
-	d2rq:column "city4age_ar.simple_location.simple_location_name";
-	.
-
 # Table city4age_ar.start_range
 map:city4age_ar_start_range a d2rq:ClassMap;
 	d2rq:dataStorage map:database;
@@ -553,14 +544,12 @@ map:city4age_ar_start_range_start_hour a d2rq:PropertyBridge;
 	d2rq:property vocab:city4age_ar_start_range_start_hour;
 	d2rq:propertyDefinitionLabel "start_range start_hour";
 	d2rq:column "city4age_ar.start_range.start_hour";
-	d2rq:datatype xsd:dateTime;
 	.
 map:city4age_ar_start_range_end_hour a d2rq:PropertyBridge;
 	d2rq:belongsToClassMap map:city4age_ar_start_range;
 	d2rq:property vocab:city4age_ar_start_range_end_hour;
 	d2rq:propertyDefinitionLabel "start_range end_hour";
 	d2rq:column "city4age_ar.start_range.end_hour";
-	d2rq:datatype xsd:dateTime;
 	.
 
 # Table city4age_ar.user_action
@@ -658,6 +647,12 @@ map:city4age_ar_user_in_role_valid_to a d2rq:PropertyBridge;
 	d2rq:propertyDefinitionLabel "user_in_role valid_to";
 	d2rq:column "city4age_ar.user_in_role.valid_to";
 	d2rq:datatype xsd:dateTime;
+	.
+map:city4age_ar_user_in_role_medical_record a d2rq:PropertyBridge;
+	d2rq:belongsToClassMap map:city4age_ar_user_in_role;
+	d2rq:property vocab:city4age_ar_user_in_role_medical_record;
+	d2rq:propertyDefinitionLabel "user_in_role medical_record";
+	d2rq:column "city4age_ar.user_in_role.medical_record";
 	.
 map:city4age_ar_user_in_role_user_registered_id__ref a d2rq:PropertyBridge;
 	d2rq:belongsToClassMap map:city4age_ar_user_in_role;
@@ -1932,6 +1927,12 @@ map:city4age_sr_user_in_role_valid_to a d2rq:PropertyBridge;
 	d2rq:propertyDefinitionLabel "user_in_role valid_to";
 	d2rq:column "city4age_sr.user_in_role.valid_to";
 	d2rq:datatype xsd:dateTime;
+	.
+map:city4age_sr_user_in_role_medical_record a d2rq:PropertyBridge;
+	d2rq:belongsToClassMap map:city4age_sr_user_in_role;
+	d2rq:property vocab:city4age_sr_user_in_role_medical_record;
+	d2rq:propertyDefinitionLabel "user_in_role medical_record";
+	d2rq:column "city4age_sr.user_in_role.medical_record";
 	.
 map:city4age_sr_user_in_role_user_registered_id__ref a d2rq:PropertyBridge;
 	d2rq:belongsToClassMap map:city4age_sr_user_in_role;
