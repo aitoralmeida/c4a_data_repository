@@ -237,6 +237,18 @@ class LocationActivityRel(Base):
     activity = relationship("Activity")
 
 
+class LocationLocationTypeRel(Base):
+    """
+    Location < -- > LocationType
+    """
+
+    __tablename__ = 'location_location_type_rel'
+
+    location_id = Column(Integer, ForeignKey('location.id'), primary_key=True)
+    location_type_id = Column(Integer, ForeignKey('location_type.id'), primary_key=True)
+    location_type = relationship('LocationType')
+
+
 class ActionValue(Base):
     """
     Metric < -- > Action
@@ -360,6 +372,7 @@ class Location(Base):
     """
     Users location in a specific time
     """
+
     __tablename__ = 'location'
 
     id = Column(Integer, Sequence('location_id_seq'), primary_key=True)
@@ -373,10 +386,22 @@ class Location(Base):
 
     # many2many
     activity = relationship("LocationActivityRel")
+    location_type = relationship("LocationLocationTypeRel")
 
     def __repr__(self):
         return "<Location(location_name='%s', indoor='%s', urn='%s', latitude='%s', longitude='%s')>" % (
             self.location_name, self.indoor, self.urn, self.latitude, self.longitude)
+
+
+class LocationType(Base):
+    """
+    Each location has a location type to have a logical order in the system
+    """
+
+    __tablename__ = 'location_type'
+
+    id = Column(Integer, Sequence('location_type_id_seq'), primary_key=True)
+    location_type_name = Column(String(50), unique=True)
 
 
 class Activity(Base):
