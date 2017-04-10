@@ -9,6 +9,7 @@ calls into the AR database. This class is directly inherited from PostORM superc
 
 import datetime
 import logging
+import arrow
 from sqlalchemy import MetaData
 from src.packORM import ar_tables
 from post_orm import PostORM
@@ -34,12 +35,11 @@ class ARPostORM(PostORM):
         """
         return ar_tables.create_tables(self.engine)
 
-
-###################################################################################################
-###################################################################################################
-######                              DATABASE VERIFIERS
-###################################################################################################
-###################################################################################################
+    ###################################################################################################
+    ###################################################################################################
+    ######                              DATABASE VERIFIERS
+    ###################################################################################################
+    ###################################################################################################
 
     def verify_user_login(self, p_username, p_password, p_app):
         """
@@ -81,13 +81,11 @@ class ARPostORM(PostORM):
                 user_data = self.session.query(ar_tables.UserRegistered).get(res.get('id', 0))
         return user_data
 
-
-###################################################################################################
-###################################################################################################
-######                              DATABASE ADDERS
-###################################################################################################
-###################################################################################################
-
+    ###################################################################################################
+    ###################################################################################################
+    ######                              DATABASE ADDERS
+    ###################################################################################################
+    ###################################################################################################
 
     def add_action(self, p_data):
         """
@@ -99,13 +97,17 @@ class ARPostORM(PostORM):
         :param p_data: a Python d
         :return: True if everything is OK or False if there is a problem.
         """
+
         for data in p_data:
             # Basic tables
             # We are going to check if basic data exist in DB and insert it in case that is the first time.
-            action = self._get_or_create(ar_tables.Action, action_name=data['action'].lower())
-            executed_action_date = datetime.datetime.strptime(data['timestamp'], '%Y-%m-%d %H:%M:%S.%f')
-            pilot = self._get_or_create(ar_tables.Pilot, name=data['extra']['pilot'])
-            user = self._get_or_create(ar_tables.UserInRole, id=data['payload']['user'], pilot_name=pilot.name)
+            cd_action = self._get_or_create(ar_tables.CDAction, action_name=data['action'].lower())
+            pilot = self._get_or_create(ar_tables.Pilot, pilot_code=data['pilot'].lower())
+
+            # TODO think about what kind of default role we need to add in the LEA.
+
+            user = self._get_or_create(ar_tables.UserInRole, id=int(data['user'].split(':')[-1]), pilot_name=pilot.name)
+
             if data.get('location', False) and isinstance(data['location'], dict):
                 # The sent location is a latitude and longitude based location
                 location = self._get_or_create(ar_tables.Location, latitude=data['location']['lat'],
@@ -116,19 +118,20 @@ class ARPostORM(PostORM):
                                                pilot_name=pilot.name)
             # Inserting the values attached with this action into database
             for key, value in data['payload'].items():
-                if key not in ['user', 'instanceID']:
+                if key not in ['user', 'instance_id']:
                     metric = self._get_or_create(ar_tables.Metric, name=key)
-                    self._get_or_create(ar_tables.ActionValue, metric_id=metric.id, action_id=action.id, value=value,
-                                        date=executed_action_date)
-
-            # We insert all related data to executed_action
-            self._get_or_create(ar_tables.ExecutedAction, executed_action_date=executed_action_date,
-                                rating=data['rating'],
-                                instance_id=data['payload']['instanceID'],
-                                location_id=location.id,
-                                action_id=action.id,
-                                user_in_role_id=user.id)
-
+                    self._get_or_create(ar_tables.ActionValue, metric_id=metric.id, action_id=cd_action.id, value=value,
+                                        date=data['timestamp'])
+            # Insert a new executed action
+            executed_action = ar_tables.ExecutedAction(executed_action_date=data['timestamp'],
+                                                       instance_id=data['payload']['instance_id'],
+                                                       location_id=location.id,
+                                                       cd_action_id=cd_action.id,
+                                                       user_in_role_id=user.id,
+                                                       data_source_type=' '.join(data['extra'].get('data_source_type',
+                                                                                                   ['sensors'])))
+            # pending insert
+            self.insert_one(executed_action)
         # Whe prepared all data, now we are going to commit it into DB.
         return self.commit()
 
@@ -168,38 +171,76 @@ class ARPostORM(PostORM):
     def add_new_user_in_system(self, p_data):
 
         """
-        This method, allows to administrative system users, add new user into the system.
-
-        The administrator MUST provide a valid user_in_role ID to grant access in the system. This function covers two
-        different points:
-
-                1.- If the user is already in the system (user_in_role) this method gives it an access to the system
-                2.- If the user is not in the system, this method creates a new user accces
-
-        :param p_data:
-        :return: True if everything goes well.
-                 False if there are any problem
+        This method allow to an administrative user insert a new registerd user in the system or update the credentails
+        of an already registered user_in_role in the system
+        
+        :param p_data The needed data to add a new user in the system
+        :return A dict containing the data of the registered user
     
         """
+
+        user_in_role_ids = {}
         for data in p_data:
-            # We are going to check if the actual user exists in the system
+            # Creating the user information in the system
             user_registered = self._get_or_create(ar_tables.UserRegistered, username=data['username'].lower(),
                                                   password=data['password'])
-
-            cd_role = self._get_or_create(ar_tables.CDRole, role_name=data['roletype'])
-
-            # Check if the user was already registered in the server
-            user_in_role = self._get_or_create(ar_tables.UserInRole, id=data['user'])
-            if user_in_role.cd_role_id is None and user_in_role.user_registered_id is None:
-                # This is a new and empty user. Insert new information
-                user_in_role.cd_role_id = cd_role.id
+            # Getting the user information to know if is an update or a new user in the system
+            user = data.get('user', False)
+            if user:
+                # We have already user information in the system, giving access to the user.
+                # Obtaining the user instance in the system and giving it the access.
+                user_in_role = self._get_or_create(ar_tables.UserInRole, id=int(data['user'].split(':')[-1]))
                 user_in_role.user_registered_id = user_registered.id
             else:
-                # The user already exist in the system, so only it is necessary to add the login credentials
-                user_in_role.user_registered_id = user_registered.id
+                # The user is not registered in the system, so we need to create it
+                cd_role = self._get_or_create(ar_tables.CDRole, role_name=p_data['roletype'])
+                pilot = self._get_or_create(ar_tables.Pilot, pilot_code=p_data['pilot'])
+                user_in_role = self._get_or_create(ar_tables.UserInRole,
+                                                   valid_from=p_data.get('valid_from', arrow.utcnow()),
+                                                   valid_to=p_data.get('valid_to', None),
+                                                   cd_role_id=cd_role.id,
+                                                   user_registered_id=user_registered.id,
+                                                   pilot_id=pilot.id)
+                # Adding City4Age ID to the return value
+                user_in_role_ids[data['username'].lower()] = user_in_role.id
 
-        return self.commit()
+        self.commit()
+        return user_in_role_ids
 
+    def add_new_care_receiver(self, p_data, p_user_id):
+        """
+        
+        This method allow to a Pilot user, adds a new care receiver in the system. With its user credentials and so on.
+        
+        :param p_data: The data containing the new care receiver information
+        :param p_user_id: The Pilot registration access id
+        :return: The City4Age ID value (user_in_role table ID)
+        """
+
+        user_in_role_ids = {}
+        for data in p_data:
+            # Registering the actual user in the system
+            user_registered = self._get_or_create(ar_tables.UserRegistered, username=data['username'].lower(),
+                                                  password=data['password'])
+            # Gettig the CD role id of care_receiver
+            cd_role = self._get_or_create(ar_tables.CDRole, role_name='care_receiver')
+            # Obtaining Pilot ID through the Pilot credentials
+            pilot_name = self._get_or_create(ar_tables.UserInRole, user_registered_id=p_user_id).pilot_name
+            # Creating the user_in_role table for the new user in the system
+            user_in_role = self._get_or_create(ar_tables.UserInRole,
+                                               valid_from=data.get('valid_from', arrow.utcnow()),
+                                               valid_to=data.get('valid_to', None),
+                                               cd_role_id=cd_role.id,
+                                               pilot_name=pilot_name,
+                                               pilot_source_user_id=data.get('pilot_source_id', None),
+                                               user_registered_id=user_registered.id)
+            # Getting the new ID
+            self.flush()
+            # Adding City4Age ID to the return value
+            user_in_role_ids[data['username'].lower()] = user_in_role.id
+
+        # Return the dictionary containing the care_recievers IDs
+        return user_in_role_ids
 
     def add_eam(self, p_data):
         """
@@ -212,7 +253,7 @@ class ARPostORM(PostORM):
 
         for data in p_data:
             # Getting activity id from DB
-            activity=self._get_or_create(ar_tables.Activity, activity_name=data['activity_name'].lower())
+            activity = self._get_or_create(ar_tables.Activity, activity_name=data['activity_name'].lower())
             # Insert eam information
             eam = self._get_or_create(ar_tables.EAM, duration=data['duration'], activity_id=activity.id)
             # For each location
@@ -237,7 +278,6 @@ class ARPostORM(PostORM):
 
         return self.commit()
 
-
     def add_user_action(self, p_user_id, p_route, p_ip, p_agent, p_data, p_status_code):
         """
     
@@ -259,11 +299,11 @@ class ARPostORM(PostORM):
         self.insert_one(new_user_action)
         return self.commit()
 
-###################################################################################################
-###################################################################################################
-######                              DATABASE GETTERS
-###################################################################################################
-###################################################################################################
+    ###################################################################################################
+    ###################################################################################################
+    ######                              DATABASE GETTERS
+    ###################################################################################################
+    ###################################################################################################
 
     def get_auth_token(self, p_user, app, expiration=600):
         """
@@ -279,7 +319,6 @@ class ARPostORM(PostORM):
             # Generation of a new user Toke containing user ID
             token = p_user.generate_auth_token(app, expiration)
         return token
-
 
     def get_tables(self):
         """
@@ -333,12 +372,11 @@ class ARPostORM(PostORM):
         # We instantiate desired table
         return all_tables[p_table_name]
 
-
-###################################################################################################
-###################################################################################################
-######                              DATABASE CHECKS
-###################################################################################################
-###################################################################################################
+    ###################################################################################################
+    ###################################################################################################
+    ######                              DATABASE CHECKS
+    ###################################################################################################
+    ###################################################################################################
 
     def check_user_in_role(self, p_user_id):
         """
@@ -358,11 +396,11 @@ class ARPostORM(PostORM):
 
     def check_username(self, p_username):
         """
-        Given an usernaem. check if if exist or not in database
+        Giving a username. check if if exist or not in database
 
         :param p_username: The username in the system
         :return: True if the user exist in database
-                False if the user not exist in database
+                False if the user do not exist in database
         """
         res = False
         username = self.session.query(ar_tables.UserRegistered).filter_by(username=p_username)
@@ -382,9 +420,10 @@ class ARPostORM(PostORM):
                 False if the user hasn't access in the system or it isn't exist.
         """
         res = False
-        user_authenthicated = self.session.query(ar_tables.UserInRole).filter_by(id=p_user_in_role)
-        if user_authenthicated and user_authenthicated.count() == 1 and \
-                        user_authenthicated[0].user_registered_id != None:
+        user_in_role = self.session.query(ar_tables.UserInRole).filter_by(id=p_user_in_role)
+        if user_in_role and user_in_role.count() == 0 or user_in_role and user_in_role.count() == 1 and user_in_role[0] \
+                .user_registered_id is not None:
+            # The user doesn't exist in the system or it has already a user credentials
             res = True
         return res
 

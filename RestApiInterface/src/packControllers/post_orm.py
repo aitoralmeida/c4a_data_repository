@@ -86,6 +86,15 @@ class PostORM(object):
         """
         self.session.flush()
 
+    def refresh(self, p_data):
+        """
+        Force refresh to pending data to obtain i'ts direct ID
+        
+        :param p_data: 
+        :return: The updated data
+        """
+        self.session.refresh(p_data)
+
     def insert_one(self, p_data):
         """
         Insert one desired data

@@ -11,6 +11,8 @@ import ConfigParser
 import datetime
 import inspect
 import os
+import arrow
+from sqlalchemy_utils import ArrowType
 
 from itsdangerous import (TimedJSONWebSignatureSerializer
                           as Serializer, BadSignature, SignatureExpired)
@@ -166,24 +168,28 @@ class ExecutedAction(Base):
 
     __tablename__ = 'executed_action'
 
-    # TODO you need to make here some changes in order to save the actions data in database
-    # TODO POSITION COULD BE SPLLITED INTO TWO DIFFERENT COLLUMNS CALLED LAT/LONG
-
-    id = Column(Integer, Sequence('executed_action_id_seq'), primary_key=True)
-    user_in_role_id = Column(String(75), ForeignKey('user_in_role.id'))
-    action_id = Column(Integer, ForeignKey('action.id'))
+    # Generating the Sequence
+    executed_action_id_seq = Sequence('executed_action_id_seq', metadata=Base.metadata)
+    # Creating the columns
+    id = Column(Integer, server_default=executed_action_id_seq.next_value(), primary_key=True)
+    user_in_role_id = Column(Integer, ForeignKey('user_in_role.id'))
+    cd_action_id = Column(Integer, ForeignKey('cd_action.id'))
     activity_id = Column(Integer, ForeignKey('activity.id'), nullable=True)
     location_id = Column(Integer, ForeignKey('location.id'))
-    date = Column(TIMESTAMP, default=datetime.datetime.utcnow)
-    executed_action_date = Column(TIMESTAMP)
-    # Asociated information
+    #date = Column(TIMESTAMP, default=datetime.datetime.utcnow)
+    date = Column(ArrowType, default=arrow.utcnow())
+    #executed_action_date = Column(TIMESTAMP)
+    executed_action_date = Column(ArrowType)
+
+    # Associated information
     rating = Column(Integer)
     sensor_id = Column(Integer)
     instance_id = Column(String(4))
+    data_source_type = Column(String(200))
     extra_information = Column(Text)
 
     # Relationship with other TABLES
-    action = relationship("Action")
+    cd_action = relationship("CDAction")
     activity = relationship("Activity")
     location = relationship("Location")
 
@@ -212,16 +218,16 @@ class EAMLocationRel(Base):
     location = relationship("Location")
 
 
-class EAMActionRel(Base):
+class EAMCDActionRel(Base):
     """
-    EAM < -- > Action
+    EAM < -- > CDAction
     """
 
-    __tablename__ = 'eam_action_rel'
+    __tablename__ = 'eam_cd_action_rel'
 
     eam_id = Column(Integer, ForeignKey('eam.id'), primary_key=True)
-    action_id = Column(Integer, ForeignKey('action.id'), primary_key=True)
-    action = relationship("Action")
+    cd_action_id = Column(Integer, ForeignKey('cd_action.id'), primary_key=True)
+    cd_action = relationship("CDAction")
 
 
 class LocationActivityRel(Base):
@@ -249,18 +255,19 @@ class LocationLocationTypeRel(Base):
     location_type = relationship('LocationType')
 
 
-class ActionValue(Base):
+class CDActionMetric(Base):
     """
-    Metric < -- > Action
+    Metric < -- > CDAction
     """
 
-    __tablename__ = 'action_value'
+    __tablename__ = 'cd_action_metric'
 
     metric_id = Column(Integer, ForeignKey('metric.id'), primary_key=True)
-    action_id = Column(Integer, ForeignKey('action.id'), primary_key=True)
-    date = Column(TIMESTAMP, primary_key=True)
+    cd_action_id = Column(Integer, ForeignKey('cd_action.id'), primary_key=True)
+    #date = Column(TIMESTAMP, primary_key=True)
+    date = Column(ArrowType, primary_key=True)
     value = Column(String(10), nullable=False)
-    action = relationship('Action')
+    cd_action = relationship('CDAction')
 
 # Tables
 class UserInRole(Base):
@@ -270,13 +277,18 @@ class UserInRole(Base):
 
     __tablename__ = 'user_in_role'
 
-    id = Column(String(75), primary_key=True)
-    valid_from = Column(TIMESTAMP, default=datetime.datetime.utcnow)
-    valid_to = Column(TIMESTAMP)
+    # Generating the Sequence
+    user_in_role_seq = Sequence('user_in_role_seq', metadata=Base.metadata)
+    # Creating the columns
+    id = Column(Integer, server_default=user_in_role_seq.next_value(), primary_key=True)
+    #valid_from = Column(TIMESTAMP, default=datetime.datetime.utcnow)
+    valid_from = Column(ArrowType, default=arrow.utcnow())
+    #valid_to = Column(TIMESTAMP)
+    valid_to = Column(ArrowType)
     medical_record = Column(String(75))
+    pilot_source_user_id = Column(Integer)  # This field is not intended to be unique.
 
     # one2many
-    #stake_holder_name = Column(String(25), ForeignKey('stake_holder.name'))
     user_registered_id = Column(Integer, ForeignKey('user_registered.id'))
     cd_role_id = Column(Integer, ForeignKey('cd_role.id'))
     pilot_name = Column(String(50), ForeignKey('pilot.name'))
@@ -285,7 +297,7 @@ class UserInRole(Base):
     action = relationship("ExecutedAction", cascade="all, delete-orphan")
 
     def __repr__(self):
-        return "<User(id='%s', valid_from='%s'. valid_to='%s')>" % (self.id, self.valid_from, self.valid_to)
+        return "<UserInRole(id='%s', valid_from='%s'. valid_to='%s')>" % (self.id, self.valid_from, self.valid_to)
 
 
 class UserRegistered(Base):
@@ -294,13 +306,17 @@ class UserRegistered(Base):
     """
     __tablename__ = 'user_registered'
 
-    id = Column(Integer, Sequence('user_registered_seq'), primary_key=True)
+    # Generating the Sequence
+    user_registered_seq = Sequence('user_registered_seq', metadata=Base.metadata)
+    # Creating the columns
+    id = Column(Integer, server_default=user_registered_seq.next_value(), primary_key=True)
     username = Column(Text, nullable=False, unique=True)
     password = Column(Password(rounds=13), nullable=False)
     # Or specify a cost factor other than the default 13
     # password = Column(Password(rounds=10))
     # Without rounds System will use 13 rounds by default
-    created_date = Column(TIMESTAMP, default=datetime.datetime.utcnow)
+    #created_date = Column(TIMESTAMP, default=datetime.datetime.utcnow)
+    created_date = Column(ArrowType, default=arrow.utcnow())
 
     # one2many
     user_action = relationship('UserAction')
@@ -353,19 +369,22 @@ class UserRegistered(Base):
         return data
 
 
-class Action(Base):
+class CDAction(Base):
     """
     Action registration
     """
-    __tablename__ = 'action'
+    __tablename__ = 'cd_action'
 
-    id = Column(Integer, Sequence('action_id_seq'), primary_key=True)
+    # Generating the Sequence
+    cd_action_id_seq = Sequence('cd_action_id_seq', metadata=Base.metadata)
+    # Creating the columns
+    id = Column(Integer, server_default=cd_action_id_seq.next_value(), primary_key=True)
     action_name = Column(String(50))
-    category = Column(String(25))
+    action_description = Column(String(250))
 
     def __repr__(self):
-        return "<Action(action_name='%s', category='%s')>" % (
-            self.action_name, self.category)
+        return "<CDAction(action_name='%s', action_description='%s')>" % (
+            self.action_name, self.action_description)
 
 
 class Location(Base):
@@ -375,7 +394,10 @@ class Location(Base):
 
     __tablename__ = 'location'
 
-    id = Column(Integer, Sequence('location_id_seq'), primary_key=True)
+    # Generating the Sequence
+    location_id_seq = Sequence('location_id_seq', metadata=Base.metadata)
+    # Creating the columns
+    id = Column(Integer, server_default=location_id_seq.next_value(), primary_key=True)
     # The location could be a URN based location or a combination of latitude and longitude
     urn = Column(String(75))
     latitude = Column(String(15))
@@ -400,7 +422,10 @@ class LocationType(Base):
 
     __tablename__ = 'location_type'
 
-    id = Column(Integer, Sequence('location_type_id_seq'), primary_key=True)
+    # Generating the Sequence
+    location_type_id_seq = Sequence('location_type_id_seq', metadata=Base.metadata)
+    # Creating the columns
+    id = Column(Integer, server_default=location_type_id_seq.next_value(), primary_key=True)
     location_type_name = Column(String(50), unique=True)
 
 
@@ -415,12 +440,19 @@ class Activity(Base):
     """
     __tablename__ = 'activity'
 
-    id = Column(Integer, Sequence('activity_id_seq'), primary_key=True)
+    # Generating the Sequence
+    activity_id_seq = Sequence('activity_id_seq', metadata=Base.metadata)
+    # Creating the columns
+    id = Column(Integer, server_default=activity_id_seq.next_value(), primary_key=True)
     activity_name = Column(String(50))
-    activity_start_date = Column(TIMESTAMP)
-    activity_end_date = Column(TIMESTAMP)
-    creation_date = Column(TIMESTAMP, default=datetime.datetime.utcnow)         # get current date
-    since = Column(TIMESTAMP, nullable=True)
+    #activity_start_date = Column(TIMESTAMP)
+    activity_start_date = Column(ArrowType)
+    #activity_end_date = Column(TIMESTAMP)
+    activity_end_date = Column(ArrowType)
+    #creation_date = Column(TIMESTAMP, default=datetime.datetime.utcnow)
+    creation_date = Column(ArrowType, default=arrow.utcnow())
+    #since = Column(TIMESTAMP, nullable=True)
+    since = Column(ArrowType, nullable=True)
 
     # One2one
     eam = relationship("EAM", uselist=False, back_populates="activity")
@@ -440,7 +472,7 @@ class Pilot(Base):
 
     __tablename__ = 'pilot'
 
-    name = Column(String(50), primary_key=True)
+    name = Column(String(50), unique=True, nullable=False, primary_key=True)
     pilot_code = Column(String(4), unique=True, nullable=False)
     population_size = Column(BigInteger)
     # One2Many
@@ -460,12 +492,17 @@ class CDRole(Base):
 
     __tablename__ = 'cd_role'
 
-    id = Column(Integer, Sequence('cd_role_seq'), primary_key=True)
+    # Generating the Sequence
+    cd_role_seq = Sequence('cd_role_seq', metadata=Base.metadata)
+    # Creating the columns
+    id = Column(Integer, server_default=cd_role_seq.next_value(), primary_key=True)
     role_name = Column(String(50), nullable=False, unique=True)
     role_abbreviation = Column(String(3), nullable=False)
     role_description = Column(String(350), nullable=False)
-    valid_from = Column(TIMESTAMP, default=datetime.datetime.utcnow)
-    valid_to = Column(TIMESTAMP)
+    #valid_from = Column(TIMESTAMP, default=datetime.datetime.utcnow)
+    valid_from = Column(ArrowType, default=arrow.utcnow())
+    #valid_to = Column(TIMESTAMP)
+    valid_to = Column(ArrowType)
 
     # one2many
     user_in_role = relationship('UserInRole')
@@ -485,7 +522,10 @@ class InterBehaviour(Base):
 
     __tablename__ = 'inter_behaviour'
 
-    id = Column(Integer, Sequence('inter_behaviour_seq'), primary_key=True)
+    # Generating the Sequence
+    inter_behaviour_seq = Sequence('inter_behaviour_seq', metadata=Base.metadata)
+    # Creating the columns
+    id = Column(Integer, server_default=inter_behaviour_seq.next_value(), primary_key=True)
     deviation = Column(Float(10))
     # many2one relationships
     expected_activity_id = Column(Integer, ForeignKey('activity.id'))
@@ -503,7 +543,10 @@ class EAM(Base):
 
     __tablename__ = 'eam'
 
-    id = Column(Integer, Sequence('eam_seq'), primary_key=True)
+    # Generating the Sequence
+    eam_seq = Sequence('eam_seq', metadata=Base.metadata)
+    # Creating the columns
+    id = Column(Integer, server_default=eam_seq.next_value(), primary_key=True)
     duration = Column(Integer)
     #one2one
     activity_id = Column(Integer, ForeignKey('activity.id'))
@@ -512,7 +555,7 @@ class EAM(Base):
     # many2many
     start_range = relationship("EAMStartRangeRel")
     location = relationship("EAMLocationRel")
-    action = relationship("EAMActionRel")
+    cd_action = relationship("EAMCDActionRel")
 
     def __repr__(self):
         return "<EAM(duration='%s')>" % self.duration
@@ -526,7 +569,10 @@ class StartRange(Base):
 
     __tablename__ = 'start_range'
 
-    id = Column(Integer, Sequence('start_range_seq'), primary_key=True)
+    # Generating the Sequence
+    start_range_seq = Sequence('start_range_seq', metadata=Base.metadata)
+    # Creating the columns
+    id = Column(Integer, server_default=start_range_seq.next_value(), primary_key=True)
     start_hour = Column(String(10))
     end_hour = Column(String(10))
 
@@ -542,12 +588,16 @@ class UserAction(Base):
 
     __tablename__ = 'user_action'
 
-    id = Column(Integer, Sequence('user_action_seq'), primary_key=True)
+    # Generating the Sequence
+    user_action_seq = Sequence('user_action_seq', metadata=Base.metadata)
+    # Creating the columns
+    id = Column(Integer, server_default=user_action_seq.next_value(), primary_key=True)
     route = Column(String(25))
     data = Column(String(255))
     ip = Column(String(60))
     agent = Column(String(255))
-    date = Column(TIMESTAMP, default=datetime.datetime.utcnow)
+    #date = Column(TIMESTAMP, default=datetime.datetime.utcnow)
+    date = Column(ArrowType, default=arrow.utcnow())
     status_code = Column(Integer)
 
     # One2Many
@@ -563,8 +613,11 @@ class Metric(Base):
 
     __tablename__ = 'metric'
 
-    id = Column(Integer, Sequence('metric_seq'), primary_key=True)
+    # Generating the Sequence
+    metric_seq = Sequence('metric_seq', metadata=Base.metadata)
+    # Creating the columns
+    id = Column(Integer, server_default=metric_seq.next_value(), primary_key=True)
     name = Column(String(10))
     description = Column(String(255), nullable=True)
     # M2M relationship
-    action_value = relationship('ActionValue')
+    cd_action_metric = relationship('CDActionMetric')

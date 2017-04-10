@@ -201,8 +201,6 @@ def verify_password(username_or_token, password):
     Utilities.write_log_info(app, ("login: User login successfully with username or token: %s" % username_or_token))
     return True
 
-    # TODO research here to stablish user role permissions
-
 
 @app.route('/api/<version>/login', methods=['GET'])
 @limit_content_length(MAX_LENGHT)
@@ -301,6 +299,7 @@ def api(version=app.config['ACTUAL_API']):
             <li><b>add_measure</b>: Adds a new Measure into database.</li>
             <li><b>add_eam</b>: Adds information about EAM's in the API related to an activity.</li>
             <li><b>search</b>: Search datasets in database due to some search criteria.</li>
+            <li><b>add_care_receiver</b>: Allows to a Pilot add a new user 'care_receiver' in the API.</li>
             <li><b>add_new_user</b>: Adds a new registered user in the system (Administrator only).</li>
             <li><b>clear_user</b>: Delete a user and all its related data from the system (Administrator only).</li>
             <li><b>get_my_info</b>: Returns user information about the actual client.</li>
@@ -358,10 +357,14 @@ def search(version=app.config['ACTUAL_API']):
     :param version: Api version
     :return:
     """
+
+    """
+    
     res = None
     if Utilities.check_connection(app, version):
         data = _convert_to_dict(request.json)[0]
-        if Utilities.check_search(AR_DATABASE, data) and USER:
+        
+        if data and res and USER:
             # data Entered by the user is OK
             limit = data.get('limit', 10) if data and data.get('limit', 10) >= 0 else 10
             offset = data.get('offset', 0) if data and data.get('offset', 0) >= 0 else 0
@@ -396,6 +399,8 @@ def search(version=app.config['ACTUAL_API']):
                 "tables, check if you type one of the following tables: %s" % AR_DATABASE.get_tables()
             ), 413
     return res
+    """
+    return "Not implemented yet", 501
 
 
 @app.route('/api/<version>/add_action', methods=['POST'])
@@ -404,68 +409,46 @@ def search(version=app.config['ACTUAL_API']):
 @required_roles('administrator', 'geriatrician', 'care_giver')
 def add_action(version=app.config['ACTUAL_API']):
     """
-    Add a new action in DB
-
-    An example of add action is described by POLIMI in the following code:
-
-    {
-         "action": "eu:c4a:usermotility:still_start",
-         "location": "it:puglia:lecce:address:roomID",
-         "payload": {
-             "user": "eu:c4a:pilot:lecce:user:12345",
-             "instanceID": "2"
-         },
-         "timestamp": "2016-05-19 07:08:41.013329",
-         "rating": 0.4,
-         "extra": {
-             "pilot": "lecce"
-         },
-         "secret": "jwt_token"
-    },
-
-    OR
+    Add a new LEA (Low Elementary Action) into database.
+    
+    The JSON structure must be in a defined format called Common Data format as:
 
     {
-         "action": "eu:c4a:usermotility:walking_start",
-         "location": {
-             "lat": "41",
-             "long": "18"
-         },
-         "payload": {
-             "user": "eu:c4a:pilot:lecce:user:12345",
-             "instanceID": "2",
-             "speed": "3.1",
-             "info_id": "4"
-         },
-         "timestamp": "2016-05-19 07:08:41.013329",
-         "rating": 0.4,
-         "extra": {
-             "pilot": "lecce"
-         },
-         "secret": "jwt_token"
-    },
-
-
+        "action": "eu:c4a:POI_ENTER",
+        "user": " eu:c4a:user:aaaaa",
+        "pilot": "ATH",
+        "location": "eu:c4a:Shop:Ermou96",
+        "position": "37.976908 23.724375",
+        "timestamp": "2014-05-20T07:08:41.013+03:00",
+        "payload": {
+            "instance_id": "124"
+        },
+        "extra": {
+        "data_source_type": ["sensors", "external_dataset"]
+        }
+    }
+    
     :param version: Api version
-    :return:
+    :return: Different kind of HTML codes explaining if the action was sucesfull
     """
 
     if Utilities.check_connection(app, version):
         # We created a list of Python dict.
         data = _convert_to_dict(request.json)
-        if data and Utilities.check_add_action_data(data) and USER:
+        res, msg = Utilities.check_add_action_data(data)
+        if data and res and USER:
             # User and data are OK. save data into DB
             res = AR_DATABASE.add_action(data)
             if res:
                 Utilities.write_log_info(app, ("add_action: the username: %s adds new action into database" %
                                          USER.username))
-                return Response('add_action: data stored in database OK\n'), 200
+                return Response('Data stored in database OK\n'), 200
             else:
                 Utilities.write_log_error(app, ("add_action: the username: %s failed to store data into database. 500" %
                                           USER.username))
                 return "There is an error in DB", 500
         else:
-            abort(500)
+            return Response(msg), 400
 
 
 @app.route('/api/<version>/add_activity', methods=['POST'])
@@ -511,7 +494,8 @@ def add_activity(version=app.config['ACTUAL_API']):
     """
     if Utilities.check_connection(app, version):
         data = _convert_to_dict(request.json)
-        if data and Utilities.check_add_activity_data(data) and USER:
+        res, msg = Utilities.check_add_activity_data(data)
+        if data and res and USER:
             # User and data are OK. save data into DB
             res = AR_DATABASE.add_activity(data)
             if res:
@@ -523,7 +507,7 @@ def add_activity(version=app.config['ACTUAL_API']):
                                                 "data into database. 500" % USER.username))
                 return Response("There is an error in DB"), 500
         else:
-            abort(500)
+            return Response(msg), 400
 
 
 @app.route('/api/<version>/add_new_user', methods=['POST'])
@@ -539,32 +523,87 @@ def add_new_user(version=app.config['ACTUAL_API']):
     {
         "username": "rubennS",
         "password": "ruben",
-        "user": "urn:eu:c4a:pilot:lecce:user:1234",
-        "roletype": "administrator"
+        "valid_from": "2014-05-20T07:08:41.013+03:00", **# OPTIONAL
+        "valid_to": "2018-05-20T07:08:41.013+03:00", **# OPTIONAL
+        "user": "eu:c4a:user:1234567", # OPTIONAL
+        "roletype": "administrator",
+        "pilot": "ath"
     }
+    
+    
+    There are optional parameters that are used only if the administrator wants to add access credentials to ana ctive
+    user in the system.
+    
 
     :param version: Api version
     :return:
     """
-
-    # TODO think about add optionally the roletype if the user already exist in the server.
-
     if Utilities.check_connection(app, version):
         data = _convert_to_dict(request.json)
-        if data and Utilities.check_add_new_user_data(AR_DATABASE, data) and USER:
+        # check the JSON data
+        res, msg = Utilities.check_add_new_user_data(AR_DATABASE, data)
+        if data and res and USER:
             # User and entered data are OK. save new user into DB
             res_ar = AR_DATABASE.add_new_user_in_system(data)
             res_sr = SR_DATABASE.add_new_user_in_system(data)
             if res_ar and res_sr:
                 Utilities.write_log_info(app, ("add_new_user: the username: %s adds new user into database" %
                                          USER.username))
-                return Response('Data stored in database OK\n'), 200
+
+                return Response('The user(s) are registered successfully in the system: ', jsonify(res_ar), 200)
             else:
                 Utilities.write_log_error(app, ("add_new_user: the username: %s failed to store "
                                                 "data into database. 500" % USER.username))
                 return Response("There is an error in DB"), 500
         else:
-            abort(500)
+            return Response(msg), 400
+
+
+@app.route('/api/<version>/add_care_receiver', methods=['POST'])
+@limit_content_length(MAX_LENGHT)
+@auth.login_required
+@required_roles('application_developer', 'administrator')
+def add_care_receiver(version=app.config['ACTUAL_API']):
+    """
+    This method allow to the Pilots (roletype: developers) to add new users in the system with the role
+    care_receivers
+    
+    An example in JSON could be:
+
+    {
+        "pilot_user_source_id": "xxXXX?????",
+        "valid_from": "2014-05-20T07:08:41.013+03:00", ** OPTIONAL
+        "valid_to": "2018-05-20T07:08:41.013+03:00", ** OPTIONAL
+        "username": "rubennS",
+        "password": "ruben"
+    }
+    
+    
+    :param version: 
+    :return: A urn with --> eu:c4a:user:{city4AgeId}
+    """
+
+    if Utilities.check_connection(app, version):
+        data = _convert_to_dict(request.json)
+        # Checking if INPUT json is OK
+        res, msg = Utilities.check_add_care_receiver_data(AR_DATABASE, data)
+        if data and res and USER:
+            # User and entered data are OK. save new user into DB
+            res_ar = AR_DATABASE.add_new_care_receiver(data, USER.id)
+            res_sr = SR_DATABASE.add_new_care_receiver(data, USER.id)
+            if res_ar and res_sr:
+                Utilities.write_log_info(app, ("add_care_receiver: the username: %s adds new user into database" %
+                                               USER.username))
+
+                # We only return one value, because both database has the same IDS
+                return jsonify(res_ar)
+
+            else:
+                Utilities.write_log_error(app, ("add_care_receiver: the username: %s failed to store "
+                                                "data into database. 500" % USER.username))
+                return Response("There is an error in DB"), 500
+        else:
+            return Response(msg), 400
 
 
 @app.route('/api/<version>/clear_user', methods=['POST'])
@@ -641,19 +680,19 @@ def add_measure(version=app.config['ACTUAL_API']):
     An example in JSON could be:
 
     {
-         "gef": "motility",
-         "ges": "still_moving",
-         "payload": {
-             "user": "eu:c4a:pilot:lecce:user:12345",
-             "date": "2016-05-19"
-             "tm_secs": "9000"
-         },
-         "timestamp": "2016-05-20 00:08:41.013329",
-         "extra": {
-             "pilot": "lecce"
-         }
+        "user": " eu:c4a:user:12345",
+        "pilot": "SIN",
+        "interval_start": "2014-01-20T00:00:00.000+08:00",
+        "duration": "DAY",
+        "payload": {
+          "WALK_STEPS": 1728,
+          "OUTDOOR_TIME": 25328,
+          "PHONECALLS_PLACED_PERC": 21.23           # Two rounded decimal precision
+        },
+        "extra": {
+          "dataSourceType": [ "sensors" ]
+        }
     }
-
 
     :param version: Api version
     :return:
@@ -662,7 +701,8 @@ def add_measure(version=app.config['ACTUAL_API']):
     if Utilities.check_connection(app, version):
         # We created a list of Python dict.
         data = _convert_to_dict(request.json)
-        if data and Utilities.check_add_measure_data(data) and USER:
+        res, msg = Utilities.check_add_measure_data(data)
+        if data and res and USER:
             # User and data are OK. save data into DB
             res = SR_DATABASE.add_measure(data)
             if res:
@@ -674,7 +714,7 @@ def add_measure(version=app.config['ACTUAL_API']):
                                           USER.username))
                 return "There is an error in DB", 500
         else:
-            abort(500)
+            return Response(msg), 400
 
 
 @app.route('/api/<version>/add_eam', methods=['POST'])
@@ -708,7 +748,8 @@ def add_eam(version=app.config['ACTUAL_API']):
     if Utilities.check_connection(app, version):
         # We created a list of Python dict.
         data = _convert_to_dict(request.json)
-        if data and Utilities.check_add_eam_data(AR_DATABASE, data) and USER:
+        res, msg = Utilities.check_add_eam_data(AR_DATABASE, data)
+        if data and res and USER:
             # The user data are correct. We proceed to insert it into DB
             res = AR_DATABASE.add_eam(data)
             if res:
@@ -720,7 +761,7 @@ def add_eam(version=app.config['ACTUAL_API']):
                                           USER.username))
                 return "There is an error in DB", 500
         else:
-            abort(500)
+            return Response(msg), 400
 
 
 ###################################################################################################
@@ -728,14 +769,6 @@ def add_eam(version=app.config['ACTUAL_API']):
 ######                              Error handlers
 ###################################################################################################
 ###################################################################################################
-
-
-@app.errorhandler(400)
-def not_found(error):
-    error_msg = "An error 400 is happened with the following error msg: %s" % error
-    logging.error(error_msg)
-    resp = make_response("Your content type or data is not in JSON format or need some arguments\n", 400)
-    return resp
 
 
 @app.errorhandler(500)

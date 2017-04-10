@@ -11,6 +11,7 @@ import ConfigParser
 import datetime
 import inspect
 import os
+import arrow
 
 from itsdangerous import (TimedJSONWebSignatureSerializer
                           as Serializer, BadSignature, SignatureExpired)
@@ -19,6 +20,7 @@ from sqlalchemy import Column, Integer, String, Boolean, Sequence, Numeric,  Flo
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, validates
 from sqlalchemy.schema import CreateSchema
+from sqlalchemy_utils import ArrowType
 
 from PasswordHash import PasswordHash
 from Encryption import Encryption
@@ -187,12 +189,15 @@ class FrailtyStatusTimeline(Base):                                              
 
     __tablename__ = 'frailty_status_timeline'
 
-    changed = Column(TIMESTAMP, primary_key=True)
-    user_in_role_id = Column(String(75), primary_key=True)     # TODO ensure that this class is OK
+    #changed = Column(TIMESTAMP, primary_key=True)
+    changed = Column(ArrowType, default=arrow.utcnow())
+
+
+    user_in_role_id = Column(Integer, primary_key=True)     # TODO ensure that this class is OK
 
     # user_in_role_id = Column(String(75), ForeignKey('user_in_role.id'), primary_key=True)
     time_interval_id = Column(Integer, ForeignKey('time_interval.id'), primary_key=True)
-    changed_by = Column(String(75), ForeignKey('user_in_role.id'))
+    changed_by = Column(Integer, ForeignKey('user_in_role.id'))
     frailty_notice = Column(String(200))
 
     # Many2One
@@ -210,7 +215,7 @@ class CDPilotDetectionVariable(Base):                                           
 
     __tablename__ = 'cd_pilot_detection_variable'
 
-    pilot_name = Column(String(50), ForeignKey('pilot.name'), primary_key=True) # TODO name or ID?
+    pilot_name = Column(String(50), ForeignKey('pilot.name'), primary_key=True)
     detection_variable_id = Column(Integer, ForeignKey('cd_detection_variable.id'), primary_key=True)
 
     # Relationship with other Tables
@@ -240,7 +245,9 @@ class AssessmentAudienceRole(Base):                                             
 
     assessment_id = Column(Integer, ForeignKey('assessment.id'), primary_key=True)
     role_id = Column(Integer, ForeignKey('cd_role.id'), primary_key=True)
-    assigned = Column(TIMESTAMP, default=datetime.datetime.utcnow, nullable=True)
+    #assigned = Column(TIMESTAMP, default=datetime.datetime.utcnow, nullable=True)
+    assigned = Column(ArrowType, default=arrow.utcnow(), nullable=True)
+
 
     # Relationship with other Tables
     assessment = relationship('Assessment')
@@ -250,27 +257,44 @@ class ExecutedAction(Base):                                                     
     """
     Multi relationship table.
 
-    User - Action -- Activity -- Location
+    User - CDAction -- Activity -- Location
     """
 
     __tablename__ = 'executed_action'
 
-    id = Column(Integer, Sequence('executed_action_id_seq'), primary_key=True)
-    user_in_role_id = Column(String(75), ForeignKey('user_in_role.id'))
-    action_id = Column(Integer, ForeignKey('action.id'))
+    # Generating the Sequence
+    executed_action_id_seq = Sequence('executed_action_id_seq', metadata=Base.metadata)
+    # Creating the columns
+    id = Column(Integer, server_default=executed_action_id_seq.next_value(), primary_key=True)
+    user_in_role_id = Column(Integer, ForeignKey('user_in_role.id'))
+    cd_action_id = Column(Integer, ForeignKey('cd_action.id'))
     activity_id = Column(Integer, ForeignKey('activity.id'), nullable=True)
     location_id = Column(Integer, ForeignKey('location.id'))
-    date = Column(TIMESTAMP, default=datetime.datetime.utcnow)
-    executed_action_date = Column(TIMESTAMP)
+    #date = Column(TIMESTAMP, default=datetime.datetime.utcnow)
+    date = Column(ArrowType, default=arrow.utcnow())
+    #executed_action_date = Column(TIMESTAMP)
+    executed_action_date = Column(ArrowType)
     # Asociated information
     rating = Column(Integer)
     sensor_id = Column(Integer)
     payload = Column(String(50))
     extra_information = Column(Text)
     # Relationship with other TABLES
-    action = relationship("Action")
+    cd_action = relationship("CDAction")
     activity = relationship("Activity")
     location = relationship("Location")
+
+
+class LocationLocationTypeRel(Base):
+    """
+    Location < -- > LocationType
+    """
+
+    __tablename__ = 'location_location_type_rel'
+
+    location_id = Column(Integer, ForeignKey('location.id'), primary_key=True)
+    location_type_id = Column(Integer, ForeignKey('location_type.id'), primary_key=True)
+    location_type = relationship('LocationType')
 
 
 """
@@ -286,12 +310,17 @@ class CDRole(Base):                                                             
 
     __tablename__ = 'cd_role'
 
-    id = Column(Integer, Sequence('cd_role_seq'), primary_key=True)
+    # Generating the Sequence
+    cd_role_seq = Sequence('cd_role_seq', metadata=Base.metadata)
+    # Creating the columns
+    id = Column(Integer, server_default=cd_role_seq.next_value(), primary_key=True)
     role_name = Column(String(50), nullable=False, unique=True)
     role_abbreviation = Column(String(3), nullable=False)
     role_description = Column(String(350), nullable=False)
-    valid_from = Column(TIMESTAMP, default=datetime.datetime.utcnow)
-    valid_to = Column(TIMESTAMP)
+    #valid_from = Column(TIMESTAMP, default=datetime.datetime.utcnow)
+    valid_from = Column(ArrowType, default=arrow.utcnow())
+    #valid_to = Column(TIMESTAMP)
+    valid_to = Column(ArrowType)
 
     # One2Many
     user_in_role = relationship('UserInRole')
@@ -313,16 +342,22 @@ class UserInRole(Base):                                                         
 
     __tablename__ = 'user_in_role'
 
-    id = Column(String(75), primary_key=True)
-    valid_from = Column(TIMESTAMP, default=datetime.datetime.utcnow)
-    valid_to = Column(TIMESTAMP)
+    # Generating the Sequence
+    user_in_role_seq = Sequence('user_in_role_seq', metadata=Base.metadata)
+    # Creating the columns
+    id = Column(Integer, server_default=user_in_role_seq.next_value(), primary_key=True)
+    #valid_from = Column(TIMESTAMP, default=datetime.datetime.utcnow)
+    valid_from = Column(ArrowType, default=arrow.utcnow())
+    #valid_to = Column(TIMESTAMP)
+    valid_to = Column(ArrowType)
     medical_record = Column(String(75))
+    pilot_source_user_id = Column(String(20))
 
     # Many2One
     user_registered_id = Column(Integer, ForeignKey('user_registered.id'))
     # TODO think to configure database to add a "default" cd_role"
     cd_role_id = Column(Integer, ForeignKey('cd_role.id'))
-    pilot_name = Column(String(50), ForeignKey('pilot.name')) #             TODO ID OR NAME?
+    pilot_name = Column(String(50), ForeignKey('pilot.name'))
 
     # M2M relationships
     action = relationship("ExecutedAction", cascade="all, delete-orphan")
@@ -352,13 +387,17 @@ class UserRegistered(Base):                                                     
     """
     __tablename__ = 'user_registered'
 
-    id = Column(Integer, Sequence('user_registered_seq'), primary_key=True)
+    # Generating the Sequence
+    user_registered_seq = Sequence('user_registered_seq', metadata=Base.metadata)
+    # Creating the columns
+    id = Column(Integer, server_default=user_registered_seq.next_value(), primary_key=True)
     username = Column(Text, nullable=False, unique=True)
     password = Column(Password(rounds=13), nullable=False)
     # Or specify a cost factor other than the default 13
     # password = Column(Password(rounds=10))
     # Without rounds System will use 13 rounds by default
-    created_date = Column(TIMESTAMP, default=datetime.datetime.utcnow)
+    #created_date = Column(TIMESTAMP, default=datetime.datetime.utcnow)
+    created_date = Column(ArrowType, default=arrow.utcnow())
 
     # one2many
     # historical = relationship('Historical')
@@ -418,16 +457,21 @@ class CRProfile(Base):                                                          
 
     __tablename__ = 'cr_profile'
 
-    id = Column(Integer, Sequence('cr_profile_seq'), primary_key=True)
+    # Generating the Sequence
+    cr_profile_seq = Sequence('cr_profile_seq', metadata=Base.metadata)
+    # Creating the columns
+    id = Column(Integer, server_default=cr_profile_seq.next_value(), primary_key=True)
     ref_height = Column(Float(4))
     ref_weight = Column(Float(4))
     ref_mean_blood_pressure = Column(Numeric(precision=5, scale=2))
-    date = Column(TIMESTAMP)
-    birth_date = Column(TIMESTAMP)
+    #date = Column(TIMESTAMP)
+    date = Column(ArrowType)
+    #birth_date = Column(TIMESTAMP)
+    birth_date = Column(ArrowType)
     gender = Column(Boolean)
 
     # Many2One
-    user_in_role_id = Column(String(75), ForeignKey('user_in_role.id'))
+    user_in_role_id = Column(Integer, ForeignKey('user_in_role.id'))
 
     def __repr__(self):
         return "<CRProfile(id='%s', ref_height='%s', ref_weight='%s', ref_mean_blood_pressure='%s', date='%s'," \
@@ -436,14 +480,14 @@ class CRProfile(Base):                                                          
                                                    self.gender)
 
 
-class Pilot(Base):                                                                                  # OK
+class Pilot(Base):
     """
     The pilot table stores the information about the Pilots in a defined locations and what users are participating
     """
 
     __tablename__ = 'pilot'
 
-    name = Column(String(50), primary_key=True)
+    name = Column(String(50), unique=True, nullable=False, primary_key=True)
     pilot_code = Column(String(4), unique=True, nullable=False)
     population_size = Column(BigInteger)
     # One2Many
@@ -458,14 +502,16 @@ class Pilot(Base):                                                              
                                                                               self.population_size)
 
 
-# TODO considerar to add a M2M relationship with Activity to fullfull the requierements of AR
 class Location(Base):                                                                               # OK
     """
     Users location in a specific time
     """
     __tablename__ = 'location'
 
-    id = Column(Integer, Sequence('location_id_seq'), primary_key=True)
+    # Generating the Sequence
+    location_id_seq = Sequence('location_id_seq', metadata=Base.metadata)
+    # Creating the columns
+    id = Column(Integer, server_default=location_id_seq.next_value(), primary_key=True)
     location_name = Column(String(75))
     indoor = Column(Boolean)
     # One2Many
@@ -473,9 +519,24 @@ class Location(Base):                                                           
 
     # many2many
     # activity = relationship("LocationActivityRel") # TODO ask for intermediate TABLE multiple locations
+    location_type = relationship("LocationLocationTypeRel")
 
     def __repr__(self):
         return "<Location(location_name='%s', indoor='%s')>" % (self.location_name, self.indoor)
+
+
+class LocationType(Base):
+    """
+    Each location has a location type to have a logical order in the system
+    """
+
+    __tablename__ = 'location_type'
+
+    # Generating the Sequence
+    location_type_id_seq = Sequence('location_type_id_seq', metadata=Base.metadata)
+    # Creating the columns
+    id = Column(Integer, server_default=location_type_id_seq.next_value(), primary_key=True)
+    location_type_name = Column(String(50), unique=True)
 
 
 class Activity(Base):                                                                               # OK
@@ -489,15 +550,22 @@ class Activity(Base):                                                           
     """
     __tablename__ = 'activity'
 
-    id = Column(Integer, Sequence('activity_id_seq'), primary_key=True)
+    # Generating the Sequence
+    activity_id_seq = Sequence('activity_id_seq', metadata=Base.metadata)
+    # Creating the columns
+    id = Column(Integer, server_default=activity_id_seq.next_value(), primary_key=True)
     activity_name = Column(String(50))
-    activity_start_date = Column(TIMESTAMP)
-    activity_end_date = Column(TIMESTAMP)
-    creation_date = Column(TIMESTAMP, default=datetime.datetime.utcnow)         # get current date
-    since = Column(TIMESTAMP, nullable=True)
+    #activity_start_date = Column(TIMESTAMP)
+    activity_start_date = Column(ArrowType)
+    #activity_end_date = Column(TIMESTAMP)
+    activity_end_date = Column(ArrowType)
+    #creation_date = Column(TIMESTAMP, default=datetime.datetime.utcnow)         # get current date
+    creation_date = Column(ArrowType, default=arrow.utcnow())
+    #since = Column(TIMESTAMP, nullable=True)
+    since = Column(ArrowType, nullable=True)
 
     # FK
-    user_in_role_id = Column(String(75), ForeignKey('user_in_role.id'), nullable=False)
+    user_in_role_id = Column(Integer, ForeignKey('user_in_role.id'), nullable=False)
     time_interval_id = Column(Integer, ForeignKey('time_interval.id'), nullable=False)
     data_source_type = Column(String(3), ForeignKey('cd_data_source_type.data_source_type'))
 
@@ -517,21 +585,24 @@ class Activity(Base):                                                           
                % (self.activity_name, self.activity_start_date, self.activity_end_date, self.creation_date)
 
 
-class Action(Base):                                                                                   # OK
+class CDAction(Base):                                                                                   # OK
     """
     Action registration
     """
-    __tablename__ = 'action'
+    __tablename__ = 'cd_action'
 
-    id = Column(Integer, Sequence('action_id_seq'), primary_key=True)
+    # Generating the Sequence
+    cd_action_id_seq = Sequence('cd_action_id_seq', metadata=Base.metadata)
+    # Creating the columns
+    id = Column(Integer, server_default=cd_action_id_seq.next_value(), primary_key=True)
     action_name = Column(String(50))
-    category = Column(String(25))
+    action_description = Column(String(250))
 
     # one2many
     eam = relationship("EAM")
 
     def __repr__(self):
-        return "<Action(action_name='%s', category='%s')>" % (
+        return "<CDAction(action_name='%s', category='%s')>" % (
             self.action_name, self.category)
 
 
@@ -544,13 +615,16 @@ class EAM(Base):                                                                
 
     __tablename__ = 'eam'
 
-    id = Column(Integer, Sequence('eam_seq'), primary_key=True)
+    # Generating the Sequence
+    eam_seq = Sequence('eam_seq', metadata=Base.metadata)
+    # Creating the columns
+    id = Column(Integer, server_default=eam_seq.next_value(), primary_key=True)
     duration = Column(Integer)
     #one2one
     activity_id = Column(Integer, ForeignKey('activity.id'))
     activity = relationship("Activity", back_populates="eam")
     # one2many
-    action_id = Column(Integer, ForeignKey('action.id'))
+    cd_action_id = Column(Integer, ForeignKey('cd_action.id'))
 
     # TODO change this to poin
     # many2many
@@ -568,9 +642,16 @@ class TimeInterval(Base):                                                       
 
     __tablename__ = 'time_interval'
 
-    id = Column(Integer, Sequence('time_interval_seq'), primary_key=True)
-    interval_start = Column(TIMESTAMP, nullable=False)
-    interval_end = Column(TIMESTAMP)
+
+    # Generating the Sequence
+    time_interval_seq = Sequence('time_interval_seq', metadata=Base.metadata)
+    # Creating the columns
+    id = Column(Integer, server_default=time_interval_seq.next_value(), primary_key=True)
+    #interval_start = Column(TIMESTAMP, nullable=False)
+    interval_start = Column(ArrowType, nullable=False)
+    #interval_end = Column(TIMESTAMP)
+    interval_end = Column(ArrowType)
+
 
     # Many2One
     typical_period = Column(String(3), ForeignKey('cd_typical_period.typical_period'))
@@ -596,7 +677,8 @@ class CDTypicalPeriod(Base):                                                    
 
     typical_period = Column(String(3), primary_key=True)
     period_description = Column(String(50), nullable=False)
-    typical_duration = Column(TIMESTAMP)
+    #typical_duration = Column(TIMESTAMP)
+    typical_duration = Column(ArrowType)
 
     # One2Many
     time_interval = relationship('TimeInterval')
@@ -614,11 +696,14 @@ class VariationMeasureValue(Base):                                              
 
     __tablename__ = 'variation_measure_value'
 
-    id = Column(Integer, Sequence('variation_measure_value_seq'), primary_key=True)
+    # Generating the Sequence
+    variation_measure_value_seq = Sequence('variation_measure_value_seq', metadata=Base.metadata)
+    # Creating the columns
+    id = Column(Integer, server_default=variation_measure_value_seq.next_value(), primary_key=True)
     measure_value = Column(Float(4))
     # Many2One
     activity_id = Column(Integer, ForeignKey('activity.id'))
-    user_in_role_id = Column(String(75), ForeignKey('user_in_role.id'), nullable=False)
+    user_in_role_id = Column(Integer, ForeignKey('user_in_role.id'), nullable=False)
     measure_type_id = Column(Integer, ForeignKey('cd_detection_variable.id'), nullable=False)
     time_interval_id = Column(Integer, ForeignKey('time_interval.id'), nullable=False)
     data_source_type = Column(String(3), ForeignKey('cd_data_source_type.data_source_type'))
@@ -638,14 +723,16 @@ class NumericIndicatorValue(Base):                                              
 
     __tablename__ = 'numeric_indicator_value'
 
-    id = Column(Integer, Sequence('numeric_indicator_value_seq'), primary_key=True)
-
+    # Generating the Sequence
+    numeric_indicator_value_seq = Sequence('numeric_indicator_value_seq', metadata=Base.metadata)
+    # Creating the columns
+    id = Column(Integer, server_default=numeric_indicator_value_seq.next_value(), primary_key=True)
     nui_value = Column(Numeric(precision=10, scale=2), nullable=False)
 
     # Many 2 one tables
     nui_type_id = Column(Integer, ForeignKey('cd_detection_variable.id'))
     time_interval_id = Column(Integer, ForeignKey('time_interval.id'), nullable=False)
-    user_in_role_id = Column(String(75), ForeignKey('user_in_role.id'))
+    user_in_role_id = Column(Integer, ForeignKey('user_in_role.id'))
     data_source_type = Column(String(3), ForeignKey('cd_data_source_type.data_source_type'))
 
     def __repr__(self):
@@ -683,14 +770,18 @@ class SourceEvidence(Base):                                                     
 
     __tablename__ = 'source_evidence'
 
-    id = Column(Integer, Sequence('source_evidence_seq'), primary_key=True)
+    # Generating the Sequence
+    source_evidence_seq = Sequence('source_evidence_seq', metadata=Base.metadata)
+    # Creating the columns
+    id = Column(Integer, server_default=source_evidence_seq.next_value(), primary_key=True)
     geriatric_factor_id = Column(Integer, ForeignKey('geriatric_factor_value.id'), primary_key=True)
     text_evidence = Column(Text)
     multimedia_evidence = Column(LargeBinary)
-    uploaded = Column(TIMESTAMP, default=datetime.datetime.utcnow, nullable=False)
+    #uploaded = Column(TIMESTAMP, default=datetime.datetime.utcnow, nullable=False)
+    uploaded = Column(ArrowType, default=arrow.utcnow(), nullable=False)
 
     # Many2One
-    author_id = Column(String(75), ForeignKey('user_in_role.id'))
+    author_id = Column(Integer, ForeignKey('user_in_role.id'))
 
     def __repr__(self):
         return "<SourceEvidence(geriatric_factor_id='%s', text_evidence='%s', uploaded='%s', author_id='%s')>" % \
@@ -707,12 +798,16 @@ class GeriatricFactorValue(Base):                                               
 
     __tablename__ = 'geriatric_factor_value'
 
-    id = Column(Integer, Sequence('geriatric_factor_value_seq'), primary_key=True)
+
+    # Generating the Sequence
+    geriatric_factor_value_seq = Sequence('geriatric_factor_value_seq', metadata=Base.metadata)
+    # Creating the columns
+    id = Column(Integer, server_default=geriatric_factor_value_seq.next_value(), primary_key=True)
     gef_value = Column(Numeric(precision=3, scale=2), nullable=False)
     derivation_weight = Column(Numeric(precision=5, scale=2))
     # Many2One relationships
     time_interval_id = Column(Integer, ForeignKey('time_interval.id'), nullable=False)
-    user_in_role_id = Column(String(75), ForeignKey('user_in_role.id'), nullable=False)
+    user_in_role_id = Column(Integer, ForeignKey('user_in_role.id'), nullable=False)
     data_source_type = Column(String(3), ForeignKey('cd_data_source_type.data_source_type'))
     gef_type_id = Column(Integer, ForeignKey('cd_detection_variable.id'))
 
@@ -734,15 +829,21 @@ class Assessment(Base):                                                         
 
     __tablename__ = 'assessment'
 
-    id = Column(Integer, Sequence('assessment_seq'), primary_key=True)
+
+    # Generating the Sequence
+    assessment_seq = Sequence('assessment_seq', metadata=Base.metadata)
+    # Creating the columns
+    id = Column(Integer, server_default=assessment_seq.next_value(), primary_key=True)
     assessment_comment = Column(String)
     data_validity_status = Column(String(1))
-    created = Column(TIMESTAMP, default=datetime.datetime.utcnow, nullable=False)
-    updated = Column(TIMESTAMP)
+    #created = Column(TIMESTAMP, default=datetime.datetime.utcnow, nullable=False)
+    created = Column(ArrowType, default=arrow.utcnow(), nullable=False)
+    #updated = Column(TIMESTAMP)
+    updated = Column(ArrowType)
 
     # Many2One
     risk_status = Column(String(1), ForeignKey('cd_risk_status.risk_status'), nullable=False)
-    author_id = Column(String(75), ForeignKey('user_in_role.id'))
+    author_id = Column(Integer, ForeignKey('user_in_role.id'))
 
     def __repr__(self):
         return "<Assessment(assessment_comment='%s', data_validity_status='%s')>" % (self.activity_name,
@@ -757,17 +858,19 @@ class CareProfile(Base):                                                        
 
     __tablename__ = 'care_profile'
 
-    user_in_role_id = Column(String(75), ForeignKey('user_in_role.id'), primary_key=True)
+    user_in_role_id = Column(Integer, ForeignKey('user_in_role.id'), primary_key=True)
     individual_summary = Column(String, nullable=False)
     attention_status = Column(String(1))
     intervention_status = Column(String(1))
-    last_intervention_date = Column(TIMESTAMP)
-    created = Column(TIMESTAMP, default=datetime.datetime.utcnow, nullable=False)
-    last_updated = Column(TIMESTAMP)
-
+    #last_intervention_date = Column(TIMESTAMP)
+    last_intervention_date = Column(ArrowType)
+    #created = Column(TIMESTAMP, default=datetime.datetime.utcnow, nullable=False)
+    created = Column(ArrowType, default=arrow.utcnow(), nullable=False)
+    #last_updated = Column(TIMESTAMP)
+    last_updated = Column(ArrowType)
     # Many 2 one Relationships
-    created_by = Column(String(75), ForeignKey('user_in_role.id'), nullable=False)
-    last_updated_by = Column(String(75), ForeignKey('user_in_role.id'))
+    created_by = Column(Integer, ForeignKey('user_in_role.id'), nullable=False)
+    last_updated_by = Column(Integer, ForeignKey('user_in_role.id'))
 
     def __repr__(self):
         return "<CareProfile(user_in_role_id='%s', individual_summary='%s', attention_status='%s', " \
@@ -829,10 +932,15 @@ class CDDetectionVariable(Base):                                                
 
     __tablename__ = 'cd_detection_variable'
 
-    id = Column(Integer, Sequence('numeric_indicator_value_seq'), primary_key=True)
+    # Generating the Sequence
+    cd_detection_variable_seq = Sequence('cd_detection_variable_seq', metadata=Base.metadata)
+    # Creating the columns
+    id = Column(Integer, server_default=cd_detection_variable_seq.next_value() , primary_key=True)
     detection_variable_name = Column(String(100), nullable=False)
-    valid_from = Column(TIMESTAMP, default=datetime.datetime.utcnow())
-    valid_to = Column(TIMESTAMP)
+    #valid_from = Column(TIMESTAMP, default=datetime.datetime.utcnow())
+    valid_from = Column(ArrowType, default=arrow.utcnow())
+    #valid_to = Column(TIMESTAMP)
+    valid_to = Column(ArrowType)
     derivation_weight = Column(Numeric(precision=5, scale=2))
 
     # FK
@@ -879,7 +987,11 @@ class InterActivityBehaviourVariation(Base):                                    
 
     __tablename__ = 'inter_activity_behaviour_variation'
 
-    id = Column(Integer, Sequence('inter_activity_behaviour_variation_seq'), primary_key=True)
+
+    # Generating the Sequence
+    inter_activity_behaviour_variation_seq = Sequence('inter_activity_behaviour_variation_seq', metadata=Base.metadata)
+    # Creating the columns
+    id = Column(Integer, server_default=inter_activity_behaviour_variation_seq.next_value(), primary_key=True)
     deviation = Column(Float)
 
     # many2one relationships
@@ -900,12 +1012,17 @@ class UserAction(Base):
 
     __tablename__ = 'user_action'
 
-    id = Column(Integer, Sequence('user_action_seq'), primary_key=True)
+    # Generating the Sequence
+    user_action_seq = Sequence('user_action_seq', metadata=Base.metadata)
+    # Creating the columns
+
+    id = Column(Integer, server_default=user_action_seq.next_value(), primary_key=True)
     route = Column(String(25))
     data = Column(String(255))
     ip = Column(String(60))
     agent = Column(String(255))
-    date = Column(TIMESTAMP, default=datetime.datetime.utcnow)
+    #date = Column(TIMESTAMP, default=datetime.datetime.utcnow)
+    date = Column(ArrowType, default=arrow.utcnow())
     status_code = Column(Integer)
 
     # One2Many

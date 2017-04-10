@@ -282,6 +282,46 @@ public class RuleEngine {
         return res;
     }
 
+
+    /////////////////////////////////
+
+    /**
+     * This method search in geocitties Ontology to obtain a valid URI containing the city information
+     *
+     * @param pCity The name of the city to search
+     * @return A statmenet contianing the needed knowledge to link a city with its information
+     */
+
+    private Statement obtainCityInformationv2(String pCity) {
+        Statement statement = null;
+        // Making the call to geoname database
+        String query = "http://api.geonames.org/search?name_equals="+pCity+"&featureClass=P&type=rdf&&username=elektro";
+        ProcessBuilder p = new ProcessBuilder("curl", "-X", "POST", query);
+
+        //Check if the call is OK. In case of yes we create the query
+
+        return statement;
+    }
+
+    /////////////////////////////////
+
+
+
+
+
+
+
+    //////////////////////////////////////////////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////////////////////////
+    //////////////////////////////
+    //////////////////////////////
+    //////////////////////////////      OLD    STYLE
+    //////////////////////////////
+    //////////////////////////////////////////////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////////////////////////
+
     /**
      * This method receives information about a city and returns the required information to be added into the model
      * if there is usefull city information.
@@ -291,6 +331,32 @@ public class RuleEngine {
      */
 
     private Statement obtainCityInformation(String pCity) {
+
+        // TODO An optional idea is to use the genonames API to obtain information ina XML format notation
+        /*
+        an example could be
+
+        Thi is a direct call, so there we need to use a SPARQL query to obtain the desired information
+
+        http://api.geonames.org/search?name_equals=lecce&featureClass=P&type=rdf&&username=elektro
+
+
+
+        @@@@@
+
+        <gn:Feature rdf:about="http://sws.geonames.org/3020251/">
+        <rdfs:isDefinedBy rdf:resource="http://sws.geonames.org/3020251/about.rdf"/>
+
+
+
+        @@@2
+
+
+
+         */
+
+
+
         // Initialiting the statement
         Statement statement = null;
         // Define the structure of the SPARQL query

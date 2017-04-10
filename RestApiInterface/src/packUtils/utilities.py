@@ -8,8 +8,9 @@ This class has all utilities of the project. The idea is to store all checkers, 
 """
 
 import logging
+from collections import Counter
 from flask import abort, session, request
-from jsonschema import validate, ValidationError
+from jsonschema import validate, ValidationError, FormatChecker
 
 __author__ = 'Rubén Mulero'
 __copyright__ = "Copyright 2016, City4Age project"
@@ -86,6 +87,7 @@ class Utilities(object):
         """
 
         res = False
+        msg = None
         # Defining schema to be compared with entered data
         schema = {
             "title": "Add action schema",
@@ -95,10 +97,28 @@ class Utilities(object):
                     "description": "the name of the action",
                     "type": "string",
                     "minLength": 3,
-                    "maxLength": 50
+                    "maxLength": 50,
+                    "pattern": "^eu:c4a:[a-z,A-Z]{3,15}_[a-z,A-Z]{3,15}$",
+                },
+                "user": {
+                    "description": "The user in role who performs the registered action",
+                    "type": "string",
+                    "minLength": 3,
+                    "maxLength": 50,
+                    "pattern": "^eu:c4a:user:[0-9]{1,15}$",
+                },
+                "pilot": {
+                    "description": "the name of the city where is the location",
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 10,
+                    "enum": [
+                        "ATH", "BHX", "LCC", "MAD", "MPL", "SIN",
+                        "ath", "bhx", "lcc", "mad", "mpl", "sin",
+                    ]
                 },
                 "location": {
-                    "description": "location of the performed action",
+                    "description": "Semantic location of the performed action",
                     "anyOf": [
                         {
                             "type": "object",
@@ -117,15 +137,28 @@ class Utilities(object):
                         {
                             "type": "string",
                             "minLength": 3,
-                            "maxLength": 50
+                            "maxLength": 50,
+                            "pattern": "^eu:c4a:[a-z,A-Z,0-9]{3,25}:[a-z,A-Z,0-9]{3,30}$",
                         }
                     ]
+                },
+                "position": {
+                    "description": "The exact position given in Lat/Long format",
+                    "type": "string",
+                    "minLength": 3,
+                    "maxLength": 50
+                },
+                "timestamp": {
+                    "description": "The time when de action was performed",
+                    "type": "string",
+                    "format": "date-time",
+                    "minLength": 3,
+                    "maxLength": 45
                 },
                 "payload": {
                     "type": "object",
                     "properties": {
-                        "user": {"type": "string"},
-                        "instanceID": {
+                        "instance_id": {
                             "description": "an ID required to associate correlated LEA records, such as 'start-stop' "
                                            "LEA instances",
                             "type": "string",
@@ -133,49 +166,36 @@ class Utilities(object):
                             "maxLength": 4
                         }
                     },
-                    "required": ["user", "instanceID"]
-                },
-                "timestamp": {
-                    "description": "The time when de action was performed",
-                    "type": "string",
-                    # "format": "date-time",   # ASK To know if sended data is in RFC 3339, section 5.6. to use this format
-                    "minLength": 3,
-                    "maxLength": 50
-                },
-                "rating": {
-                    "description": "Uncertainty value of the action",
-                    "type": "number",
-                    "minimum": 0,
-                    "maximum": 1,
+                    "required": ["instance_id"],
+                    "additionalProperties": False
                 },
                 "extra": {
+                    "description": "Additional information given by the Pilot in the LEA",
                     "type": "object",
                     "properties": {
-                        "pilot": {
-                            "description": "the name of the city where is the location",
-                            "type": "string",
-                            "minLength": 1,
-                            "maxLength": 40,
-                            "enum": [
-                                "madrid",
-                                "lecce",
-                                "singapore",
-                                "montpellier",
-                                "athens",
-                                "birmingham"
-                            ]
+                        "data_source_type": {
+                            "description": "how the action has been decided or imported",
+                            "type": "array",
+                            "uniqueItems": True,
+                            "items": {
+                                "type": "string",
+                                "enum": [
+                                    "sensors",
+                                    "city_dataset",
+                                    "external_dataset",
+                                    "manual_input",
+                                ],
+                            },
                         },
                     },
-                    "required": ["pilot"]
-                },
-                "secret": {
-                    "description": "Some aditional values",
-                    "type": "string",
+                    "additionalProperties": False,
                 },
             },
-            "required": ["action", "payload", "timestamp", "rating", "extra", "secret"],
-            "additionalProperties": False
+            "required": ["action", "user", "pilot", "location", "position", "timestamp", "payload", "extra"],
+            "additionalProperties": False,
         }
+
+        # TODO you need to validate if the action is valid or not againts the "listed" actions in DB
 
         try:
             if type(p_data) is list:
@@ -185,9 +205,10 @@ class Utilities(object):
             else:
                 validate(p_data, schema)
             res = True
-        except ValidationError:
+        except ValidationError as e:
             logging.error("The schema entered by the user is invalid")
-        return res
+            msg = e.message
+        return res, msg
 
     @staticmethod
     def check_add_activity_data(p_data):
@@ -203,6 +224,7 @@ class Utilities(object):
         """
 
         res = False
+        msg = None
         # Defining schema to be compared with entered data
         schema = {
             "title": "Add activity schema",
@@ -287,10 +309,10 @@ class Utilities(object):
             else:
                 validate(p_data, schema)
             res = True
-        except ValidationError:
+        except ValidationError as e:
             logging.error("The schema entered by the user is invalid")
-
-        return res
+            msg = e.message
+        return res, msg
 
     @staticmethod
     def check_add_new_user_data(p_database, p_data):
@@ -303,6 +325,7 @@ class Utilities(object):
         :return:  True or False if data is ok
         """
         res = False
+        msg = None  # A return message containing useful information
         schema = {
             "title": "Add new user in system schema",
             "type": "object",
@@ -320,9 +343,11 @@ class Utilities(object):
                     "maxLength": 45
                 },
                 "user": {
-                    "description": "The id of the user that is going to have an access",
+                    "description": "The user who the administrator wants to give an access in the system",
                     "type": "string",
-                    "pattern": "urn:[a-z]{2}:c4a:[a-z]{5}:[a-z]{5,10}:user:[1-9]{1,10}$"
+                    "minLength": 3,
+                    "maxLength": 50,
+                    "pattern": "^eu:c4a:user:[0-9]{1,15}$",
                 },
                 "roletype": {
                     "description": "The role name of registered user",
@@ -338,51 +363,176 @@ class Utilities(object):
                         "application_developer",
                         "administrator"
                     ]
-                }
+                },
+                "pilot": {
+                    "description": "the name of the city where is the location",
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 10,
+                    "enum": [
+                        "ATH", "BHX", "LCC", "MAD", "MPL", "SIN",
+                        "ath", "bhx", "lcc", "mad", "mpl", "sin",
+                    ]
+                },
+                "valid_from": {
+                    "description": "The start date of the validity of the user",
+                    "type": "string",
+                    "format": "date-time",
+                    "minLength": 3,
+                    "maxLength": 45
+                },
+                "valid_to": {
+                    "description": "The maximum end date of the validity of the user",
+                    "type": "string",
+                    "format": "date-time",
+                    "minLength": 3,
+                    "maxLength": 45,
+                },
             },
             "required": [
                 "username",
                 "password",
-                "user",
-                "roletype"
+                "roletype",
+                "pilot"
             ],
             "additionalProperties": False
         }
 
         try:
             if type(p_data) is list:
+                list_of_usernames = []
                 # We have a list of dicts
                 for data in p_data:
                     validate(data, schema)
-
-                    # TODO check this part to think about doing only one method
-
+                    # Validating if the user exists already in the system
                     if Utilities.validate_user_registered(p_database, data):
                         # The user exist in the system
                         logging.error("The entered username is duplicated: %s", data['username'])
-                        raise ValidationError("Duplicate username: %s", data["username"])
-                    elif Utilities.validate_user_in_role(p_database, data):
-                        # The user hasn't any acess in the system or there isnt any user with that ID
-                        logging.error("The user entered has already a username and password in the system")
-                        raise ValidationError("The user has already a username/password configured")
+                        raise ValidationError("The entered username is duplicated: %s" % data['username'])
+                    if data.get('user', False) and Utilities.validate_user_in_role(p_database, data):
+                        # The user hasn't any access in the system or there inst any user with that ID
+                        logging.error("The user entered has already a username and password in the system or it is not"
+                                      "exist")
+                        raise ValidationError("The user entered has already a username and password " \
+                                              "in the system or it is not exist: %s" % data['username'])
+                    # Appending the usernames
+                    list_of_usernames.append(data['username'])
+                # We are going to search for duplicated users in the json list sent by the user
+                duplicated = [k for k, v in Counter(list_of_usernames).items() if v > 1]
+                if len(duplicated) > 0:
+                    # Raise an error for duplicated values
+                    logging.error("There are two usernames in your user information")
+                    raise ValidationError("There are two usernames in your user information")
             else:
                 # single user to be registered in database
                 validate(p_data, schema)
                 if Utilities.validate_user_registered(p_database, p_data):
                     # The user exist in the system
                     logging.error("The entered username is duplicated: %s", p_data['username'])
-                    raise ValidationError("Duplicate username: %s", p_data["username"])
+                    raise ValidationError("The entered username is duplicated: %s" % p_data['username'])
                 elif Utilities.validate_user_in_role(p_database, p_data):
                     # The user hasn't any acess in the system or there isnt any user with that ID
                     logging.error("The user entered has already a username and password in the system")
-                    raise ValidationError("The user has already a username/password configured")
+                    raise ValidationError("The user entered has already a username and password " \
+                                          "in the system: %s" % p_data['username'])
             res = True
-        except ValidationError:
+        except ValidationError as e:
             logging.error("The schema entered by the user is invalid")
+            msg = e.message
+        return res, msg
 
-            # TODO we need to return error messages to the API to use ABORT personal meesages
+    @staticmethod
+    def check_add_care_receiver_data(p_database, p_data):
+        """
+        This method checks if the entered data by a Pilot in its JSON structure is properly configured
+        
+    
+        :param p_database: A database instance 
+        :param p_data: The needed data 
+        :return: True if everything is OK
+                 False is something is  KO
+        """
 
-        return res
+        res = False
+        msg = None
+        schema = {
+            "title": "Add a new care receiver in the system",
+            "type": "object",
+            "properties": {
+                "pilot_user_source_id": {
+                    "description": "The Pilot local id from their local database to identify the registered user",
+                    "type": "string",
+                    "minLength": 3,
+                    "maxLength": 45
+                },
+                "valid_from": {
+                    "description": "The start date of the validity of the user",
+                    "type": "string",
+                    "format": "date-time",
+                    "minLength": 3,
+                    "maxLength": 45
+                },
+                "valid_to": {
+                    "description": "The maximum end date of the validity of the user",
+                    "type": "string",
+                    "format": "date-time",
+                    "minLength": 3,
+                    "maxLength": 45,
+                },
+                "username": {
+                    "description": "The username of the actual user",
+                    "type": "string",
+                    "minLength": 4,
+                    "maxLength": 15
+                },
+                "password": {
+                    "description": "The password for the user",
+                    "type": "string",
+                    "minLength": 4,
+                    "maxLength": 45
+                },
+            },
+            "required": [
+                "pilot_user_source_id",
+                "username",
+                "password",
+            ],
+            "additionalProperties": False
+        }
+
+        try:
+            if type(p_data) is list:
+                # Creatin an empty list of usernames
+                list_of_usernames = []
+                # We have a list of dicts
+                for data in p_data:
+                    # FormatChecker used to check that timestamp is correct
+                    validate(data, schema, format_checker=FormatChecker())
+                    if Utilities.validate_user_registered(p_database, data):
+                        # The user exist in the system
+                        logging.error("The entered username is duplicated: %s", data['username'])
+                        raise ValidationError("Duplicate username: %s" % data["username"])
+                    # adding the username to the list
+                    list_of_usernames.append(data['username'])
+                # We are going to search for duplicated users in the json list sent by the user
+                duplicated = [k for k, v in Counter(list_of_usernames).items() if v > 1]
+                if len(duplicated) > 0:
+                    # Raise an error for duplicated values
+                    logging.error("The user entered two or more username in the input data")
+                    raise ValidationError("The user entered two or more username in the input data")
+            else:
+                # single user to be registered in database
+                validate(p_data, schema)
+                if Utilities.validate_user_registered(p_database, p_data):
+                    # The user exist in the system
+                    logging.error("The entered username is duplicated: %s", p_data['username'])
+                    raise ValidationError("Duplicate username: %s" % p_data["username"])
+            res = True
+        except ValidationError as e:
+            logging.error("The schema entered by the user is invalid")
+            msg = e.message
+
+        return res, msg
 
     @staticmethod
     def check_clear_user_data(p_data):
@@ -393,7 +543,9 @@ class Utilities(object):
 
         :return:  True or False if data is ok
         """
+
         res = False
+        msg = None
         schema = {
             "title": "Clear all data related to user in the system",
             "type": "object",
@@ -411,6 +563,8 @@ class Utilities(object):
             "additionalProperties": False
         }
 
+        # TODO Insert a validation to know if the user exist already in the system. Maybe there is implemented yet
+
         try:
             if type(p_data) is list:
                 # We have a list of dicts
@@ -419,10 +573,10 @@ class Utilities(object):
             else:
                 validate(p_data, schema)
             res = True
-        except ValidationError:
+        except ValidationError as e:
             logging.error("The schema entered by the user is invalid")
-
-        return res
+            msg = e.message
+        return res, msg
 
     @staticmethod
     def check_add_measure_data(p_data):
@@ -434,74 +588,115 @@ class Utilities(object):
         :return:
         """
         res = False
+        msg = None
+
+        """
+
+        {
+            "user": " eu:c4a:user:12345",
+            "pilot": "SIN",
+            "interval_start": "2014-01-20T00:00:00.000+08:00",
+            "duration": "DAY",
+            "payload": {
+                "WALK_STEPS": 1728,
+                "OUTDOOR_TIME": 25328,
+                "PHONECALLS_PLACED_PERC": 21.23
+            },
+            "extra": {
+                "dataSourceType": ["sensors"]
+            }
+        }
+
+        """
 
         schema = {
             "title": "Add measure schema",
             "type": "object",
             "properties": {
-                "gef": {
-                    "description": "The name of the type of measure to enter",
+                "user": {
+                    "description": "The user in role who performs the registered action",
                     "type": "string",
                     "minLength": 3,
-                    "maxLength": 50
+                    "maxLength": 50,
+                    "pattern": "^eu:c4a:user:[0-9]{1,15}$",
                 },
-                "ges": {
-                    "description": "The sub-type of measure to enter",
+                "pilot": {
+                    "description": "the name of the city where is the location",
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 10,
+                    "enum": [
+                        "ATH", "BHX", "LCC", "MAD", "MPL", "SIN",
+                        "ath", "bhx", "lcc", "mad", "mpl", "sin",
+                    ]
+                },
+                "interval_start": {
+                    "description": "The start time when the measure is recorded",
+                    "type": "string",
+                    "format": "date-time",
+                    "minLength": 3,
+                    "maxLength": 45
+                },
+                "duration": {
+                    "description": "A nominal value e.g Day, Week and so on to define the end time of the measure",
                     "type": "string",
                     "minLength": 3,
-                    "maxLength": 50
+                    "maxLength": 45
+                },
+                "interval_end": {
+                    "description": "The end time when the measure is recorded",
+                    "type": "string",
+                    "format": "date-time",
+                    "minLength": 3,
+                    "maxLength": 45
                 },
                 "payload": {
                     "description": "contains relative information about the entered GEF/GES into the system",
                     "type": "object",
-                    "properties": {
-                        # Required parameters for all combinations of GEF/GES
-                        "user": {
-                            "type": "string",
-                            "minLength": 3,
-                            "maxLength": 50
-                        },
-                        "date": {
-                            "type": "string",
-                            # "format": "date-time",   # ASK To know if sended data is in RFC 3339, section 5.6. to use this format
-                            "minLength": 3,
-                            "maxLength": 50
-                        },
+                    "patternProperties": {
+                        "^[a-z, A-Z]": {"type": "number",
+                                        "minimum": 0,
+                                        "maximum": 1000000,
+                                        "exclusiveMinimum": True,
+                                        "exclusiveMaximum": True,
+                                        "multipleOf": 0.01,
+                                        },
                     },
-                    "required": ["user", "date"],
-                },
-                "timestamp": {
-                    "description": "The time when de action was performed",
-                    "type": "string",
-                    # "format": "date-time",   # ASK To know if sended data is in RFC 3339, section 5.6. to use this format
-                    "minLength": 3,
-                    "maxLength": 50
+                    "additionalProperties": False,
+                    "minProperties": 1,
+                    "maxProperties": 20
                 },
                 "extra": {
-                    "description": "contains the information about what pilot performs the action",
+                    "description": "Additional information given by the Pilot in the LEA",
                     "type": "object",
                     "properties": {
-                        "pilot": {
-                            "description": "the name of the city when the measure is performed",
-                            "type": "string",
-                            "minLength": 1,
-                            "maxLength": 40,
-                            "enum": [
-                                "madrid",
-                                "lecce",
-                                "singapore",
-                                "montpellier",
-                                "athens",
-                                "birmingham"
-                            ]
-                        }
+                        "dataSourceType": {
+                            "description": "how the action has been decided or imported",
+                            "type": "array",
+                            "uniqueItems": True,
+                            "items": {
+                                "type": "string",
+                                "enum": [
+                                    "sensors",
+                                    "city_dataset",
+                                    "external_dataset",
+                                    "manual_input",
+                                ],
+                            },
+                        },
                     },
-                    "required": ["pilot"]
+                    "required": ["dataSourceType"],
+                    "additionalProperties": False,
                 }
             },
-            "required": ["gef", "ges", "payload", "timestamp", "extra"],
-            "additionalProperties": False
+            "additionalProperties": False,
+            "oneOf": [
+                {"required": ["user", "pilot", "interval_start", "extra", "duration"]},
+                {"required": ["user", "pilot", "interval_start", "extra", "interval_end"]}
+            ]
         }
+
+        # TODO you need to check if the measures exist or not in DB
 
         try:
             if type(p_data) is list:
@@ -511,9 +706,10 @@ class Utilities(object):
             else:
                 validate(p_data, schema)
             res = True
-        except ValidationError:
+        except ValidationError as e:
             logging.error("The schema entered by the user is invalid")
-        return res
+            msg = e.message
+        return res, msg
 
     @staticmethod
     def check_search_data(p_database, p_data):
@@ -527,7 +723,7 @@ class Utilities(object):
                     False if there is a problem
         """
         res = False
-
+        msg = None
         schema = {
             "title": "Search datasets schema validator",
             "type": "object",
@@ -572,19 +768,19 @@ class Utilities(object):
                     # Once data is validated, we are going to check if tables ARE OK
                     if not Utilities.validate_search_tables(p_database, data):
                         logging.error("User entered an invalid table name: %s" % p_database.get_tables)
-                        raise ValidationError("Invalid table name: %s", data['table'])
+                        raise ValidationError("Invalid table name: %s" % data['table'])
             else:
                 validate(p_data, schema)
                 # Once data is validated, we are going to check if tables ARE OK
                 if not Utilities.validate_search_tables(p_database, p_data):
                     logging.error("User entered an invalid table name: %s" % p_database.get_tables)
-                    raise ValidationError("Invalid table name: %s", p_data['table'])
+                    raise ValidationError("Invalid table name: %s" % p_data['table'])
 
             res = True
-        except ValidationError:
+        except ValidationError as e:
             logging.error("The schema entered by the user is invalid")
-
-        return res
+            msg = e.message
+        return res, msg
 
     @staticmethod
     def check_add_eam_data(p_database, p_data):
@@ -599,6 +795,7 @@ class Utilities(object):
                 False and error state if the data is KO
         """
         res = False
+        msg = None
         schema = {
             "title": "Eam database additional data validator",
             "type": "object",
@@ -673,18 +870,20 @@ class Utilities(object):
                     # checking data integrity
                     res = Utilities.validate_eam(p_database, data)
                     if not res:
+                        logging.error("The activity, action or location doesn't exist in database")
                         raise ValidationError("The activity, action or location doesn't exist in database")
             else:
                 validate(p_data, schema)
                 # checking data integrity
                 res = Utilities.validate_eam(p_database, p_data)
                 if not res:
+                    logging.error("The activity, action or location doesn't exist in database")
                     raise ValidationError("The activity, action or location doesn't exist in database")
             res = True
-        except ValidationError:
-            # TODO find a proper method to return user messages.
+        except ValidationError as e:
             logging.error("The schema entered by the user is invalid")
-        return res
+            msg = e.message
+        return res, msg
 
     # TODO review this search method
     @staticmethod
@@ -723,10 +922,12 @@ class Utilities(object):
             res = p_database.check_username(username)
         return res
 
+    # TODO this method needs more changes.
+
     @staticmethod
     def validate_user_in_role(p_database, p_one_data):
         """
-        Give the user information, check if it has already a username/password configured.
+        Give the user information, check if it has already a username/password configured or if it exist in the system
 
         If the user has not a username/password configured or if it not exist in the system, then this method will
         return a True state status,
@@ -738,8 +939,10 @@ class Utilities(object):
         res = False
         if p_one_data and p_one_data.get('user', False):
             user_in_role = p_one_data['user'].lower() or None  # lowering string cases
+            # Converting the user data to get the ID
+            user_in_role_id = int(user_in_role.split(':')[-1])
             # Get current registered users
-            res = p_database.check_user_access(user_in_role)
+            res = p_database.check_user_access(user_in_role_id)
         return res
 
     @staticmethod
@@ -773,7 +976,7 @@ class Utilities(object):
                 # GIVING an action name we check it in DB
                 res = p_database.check_action(action_name.lower())
                 if not res:
-                    res = False     # Ensuring that result is FALSE and not NONE or whatever
+                    res = False  # Ensuring that result is FALSE and not NONE or whatever
                     break
         else:
             logging.error("validate_eam: some of the values are not present")
@@ -792,7 +995,6 @@ class Utilities(object):
             res = False
 
         return res
-
 
     @staticmethod
     def write_log_info(app, p_message):

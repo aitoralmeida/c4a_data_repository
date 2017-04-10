@@ -7,6 +7,7 @@ calls into the SR database. This class is directly inherited from PostORM superc
 
 """
 
+import arrow
 
 from src.packORM import sr_tables
 from post_orm import PostORM
@@ -47,6 +48,10 @@ class SRPostORM(PostORM):
 
         :return:
         """
+
+        # TODO you need to change this class and add new changes of measures. Remember the hinds of dataasourcetype
+
+
         res = False
 
         for data in p_data:
@@ -110,37 +115,77 @@ class SRPostORM(PostORM):
     def add_new_user_in_system(self, p_data):
 
         """
-        This method, allows to administrative system users, add new user into the system.
+        This method allow to an administrative user insert a new registerd user in the system or update the credentails
+        of an already registered user_in_role in the system
 
-        The administrator MUST provide a valid user_in_role ID to grant access in the system. This function covers two
-        different points:
-
-                1.- If the user is already in the system (user_in_role) this method gives it an access to the system
-                2.- If the user is not in the system, this method creates a new user accces
-
-        :param p_data:
-        :return: True if everything goes well.
-                 False if there are any problem
+        :param p_data The needed data to add a new user in the system
+        :return A dict containing the data of the registered user
 
         """
+
+        user_in_role_ids = {}
         for data in p_data:
-            # We are going to check if the actual user exists in the system
+            # Creating the user information in the system
             user_registered = self._get_or_create(sr_tables.UserRegistered, username=data['username'].lower(),
                                                   password=data['password'])
-
-            cd_role = self._get_or_create(sr_tables.CDRole, role_name=data['roletype'])
-
-            # Check if the user was already registered in the server
-            user_in_role = self._get_or_create(sr_tables.UserInRole, id=data['user'])
-            if user_in_role.cd_role_id is None and user_in_role.user_registered_id is None:
-                # This is a new and empty user. Insert new information
-                user_in_role.cd_role_id = cd_role.id
+            # Getting the user information to know if is an update or a new user in the system
+            user = data.get('user', False)
+            if user:
+                # We have already user information in the system, giving access to the user.
+                # Obtaining the user instance in the system and giving it the access.
+                user_in_role = self._get_or_create(sr_tables.UserInRole, id=int(data['user'].split(':')[-1]))
                 user_in_role.user_registered_id = user_registered.id
             else:
-                # The user already exist in the system, so only it is necessary to add the login credentials
-                user_in_role.user_registered_id = user_registered.id
+                # The user is not registered in the system, so we need to create it
+                cd_role = self._get_or_create(sr_tables.CDRole, role_name=p_data['roletype'])
+                pilot = self._get_or_create(sr_tables.Pilot, pilot_code=p_data['pilot'])
+                user_in_role = self._get_or_create(sr_tables.UserInRole,
+                                                   valid_from=p_data.get('valid_from', arrow.utcnow()),
+                                                   valid_to=p_data.get('valid_to', None),
+                                                   cd_role_id=cd_role.id,
+                                                   user_registered_id=user_registered.id,
+                                                   pilot_id=pilot.id)
+                # Adding City4Age ID to the return value
+                user_in_role_ids[data['username'].lower()] = user_in_role.id
 
-        return self.commit()
+        self.commit()
+        return user_in_role_ids
+
+    def add_new_care_receiver(self, p_data, p_user_id):
+        """
+
+        This method allow to a Pilot user, adds a new care receiver in the system. With its user credentials and so on.
+
+        :param p_data: The data containing the new care receiver information
+        :param p_user_id: The Pilot registration access id
+        :return: The City4Age ID value (user_in_role table ID)
+        """
+
+        user_in_role_ids = {}
+        for data in p_data:
+            # Registering the actual user in the system
+            user_registered = self._get_or_create(sr_tables.UserRegistered, username=data['username'].lower(),
+                                                  password=data['password'])
+            # Gettig the CD role id of care_receiver
+            cd_role = self._get_or_create(sr_tables.CDRole, role_name='care_receiver')
+            # Obtaining Pilot ID through the Pilot credentials
+            pilot_name = self._get_or_create(sr_tables.UserInRole, user_registered_id=p_user_id).pilot_name
+            # Creating the user_in_role table for the new user in the system
+            user_in_role = self._get_or_create(sr_tables.UserInRole,
+                                               valid_from=data.get('valid_from', arrow.utcnow()),
+                                               valid_to=data.get('valid_to', None),
+                                               cd_role_id=cd_role.id,
+                                               pilot_name=pilot_name,
+                                               pilot_source_user_id=data.get('pilot_source_id', None),
+                                               user_registered_id=user_registered.id)
+            # Getting the new ID
+            self.flush()
+            # Adding City4Age ID to the return value
+            user_in_role_ids[data['username'].lower()] = user_in_role.id
+
+        # Return the dictionary containing the care_recievers IDs
+        return user_in_role_ids
+
 
 
 ###################################################################################################
@@ -168,7 +213,7 @@ class SRPostORM(PostORM):
 
     def check_username(self, p_username):
         """
-        Given an usernaem. check if if exist or not in database
+        Given an username. check if if exist or not in database
 
         :param p_username: The username in the system
         :return: True if the user exist in database
@@ -188,11 +233,13 @@ class SRPostORM(PostORM):
         If the user doesn't exist, we assume that it has no access in the system.
 
         :param p_user_in_role: The id of the user_in_role
-        :return: True if the user has an access in the sytem
+        :return: True if the user has an access in the system
                 False if the user hasn't access in the system or it isn't exist.
         """
         res = False
-        user_authenthicated = self.session.query(sr_tables.UserInRole).filter_by(id=p_user_in_role)
-        if user_authenthicated and user_authenthicated.count() == 1 and user_authenthicated[0].user_registered_id == p_user_in_role:
+        user_in_role = self.session.query(sr_tables.UserInRole).filter_by(id=p_user_in_role)
+        if user_in_role and user_in_role.count() == 0 or user_in_role and user_in_role.count() == 1 and user_in_role[0] \
+                .user_registered_id is not None:
+            # The user doesn't exist in the system or it has already a user credentials
             res = True
         return res
