@@ -49,7 +49,7 @@ class SRPostORM(PostORM):
         :return:
         """
 
-        # TODO you need to change this class and add new changes of measures. Remember the hinds of dataasourcetype
+        # TODO You need to perform changes in this class and attach the data_source_type as 'sensors' for default value
 
 
         res = False

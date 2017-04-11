@@ -103,10 +103,9 @@ class ARPostORM(PostORM):
             # We are going to check if basic data exist in DB and insert it in case that is the first time.
             cd_action = self._get_or_create(ar_tables.CDAction, action_name=data['action'].lower())
             pilot = self._get_or_create(ar_tables.Pilot, pilot_code=data['pilot'].lower())
-
-            # TODO think about what kind of default role we need to add in the LEA.
-
-            user = self._get_or_create(ar_tables.UserInRole, id=int(data['user'].split(':')[-1]), pilot_name=pilot.name)
+            cd_role = self._get_or_create(role_name='care_receiver') # Assuming the default value --> care_receiver
+            user = self._get_or_create(ar_tables.UserInRole, id=int(data['user'].split(':')[-1]), pilot_name=pilot.name,
+                                       cd_role_id=cd_role.id)
 
             if data.get('location', False) and isinstance(data['location'], dict):
                 # The sent location is a latitude and longitude based location

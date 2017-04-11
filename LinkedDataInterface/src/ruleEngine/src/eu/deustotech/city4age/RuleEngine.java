@@ -209,9 +209,9 @@ public class RuleEngine {
      *
      */
     private OntModel updateCityInformation(OntModel pFinalResult) {
-
+        // TODO think about using the uppercase cases of the cities
         // Defining the list of target cities to obtain desired information
-        List<String> places = Arrays.asList("lecce", "singapore", "madrid", "birmingham", "montpellier", "athens");
+        final List<String> places = Arrays.asList("lecce", "singapore", "madrid", "birmingham", "montpellier", "athens");
         // Creating response ontology
         OntModel res = ModelFactory.createOntologyModel();
         // Iterate data to search for cities
@@ -267,6 +267,12 @@ public class RuleEngine {
                     // PRED --> DBpediaResource:LECCE  <-- AN URI
 
                  */
+
+                //////////////
+                Statement statement2 = this.obtainCityInformationv2(oURI.toLowerCase());
+                ///////
+
+
                 // TODO define here what are the rules to check a city information
                 if (sURI.equals("City4Age:City") && pURI.equals("rdf:hasName") && oURI.toLowerCase().equals(places)) {
                     Statement statement = this.obtainCityInformation(oURI.toLowerCase());
@@ -297,8 +303,34 @@ public class RuleEngine {
         // Making the call to geoname database
         String query = "http://api.geonames.org/search?name_equals="+pCity+"&featureClass=P&type=rdf&&username=elektro";
         ProcessBuilder p = new ProcessBuilder("curl", "-X", "POST", query);
+        try {
+            System.out.println("Uploading new Knowledge to Fuseki......................\n");
+            LOGGER.info("Uploading data to Fuseki server");
+            // Execute our command
+            final Process shell = p.start();
+            // catch output and see if all is ok
+            BufferedReader reader =
+                    new BufferedReader(new InputStreamReader(shell.getInputStream()));
+            StringBuilder builder = new StringBuilder();
+            String line = null;
+            while ((line = reader.readLine()) != null) {
+                builder.append(line);
+                builder.append(System.getProperty("line.separator"));
+            }
+            String output = builder.toString();
 
-        //Check if the call is OK. In case of yes we create the query
+            System.out.print(output);
+
+
+
+        } catch (IOException e) {
+            LOGGER.severe("Fatal IO error detected in ProcessBuilder call");
+            e.printStackTrace();
+        }
+
+
+
+
 
         return statement;
     }
