@@ -177,9 +177,9 @@ class ExecutedAction(Base):
     activity_id = Column(Integer, ForeignKey('activity.id'), nullable=True)
     location_id = Column(Integer, ForeignKey('location.id'))
     #date = Column(TIMESTAMP, default=datetime.datetime.utcnow)
-    date = Column(ArrowType, default=arrow.utcnow())
+    date = Column(ArrowType(timezone=True), default=arrow.utcnow())
     #executed_action_date = Column(TIMESTAMP)
-    executed_action_date = Column(ArrowType)
+    executed_action_date = Column(ArrowType(timezone=True))
 
     # Associated information
     rating = Column(Integer)
@@ -265,7 +265,7 @@ class CDActionMetric(Base):
     metric_id = Column(Integer, ForeignKey('metric.id'), primary_key=True)
     cd_action_id = Column(Integer, ForeignKey('cd_action.id'), primary_key=True)
     #date = Column(TIMESTAMP, primary_key=True)
-    date = Column(ArrowType, primary_key=True)
+    date = Column(ArrowType(timezone=True), primary_key=True)
     value = Column(String(10), nullable=False)
     cd_action = relationship('CDAction')
 
@@ -282,16 +282,16 @@ class UserInRole(Base):
     # Creating the columns
     id = Column(Integer, server_default=user_in_role_seq.next_value(), primary_key=True)
     #valid_from = Column(TIMESTAMP, default=datetime.datetime.utcnow)
-    valid_from = Column(ArrowType, default=arrow.utcnow())
+    valid_from = Column(ArrowType(timezone=True), default=arrow.utcnow())
     #valid_to = Column(TIMESTAMP)
-    valid_to = Column(ArrowType)
+    valid_to = Column(ArrowType(timezone=True))
     medical_record = Column(String(75))
     pilot_source_user_id = Column(Integer)  # This field is not intended to be unique.
 
     # one2many
     user_registered_id = Column(Integer, ForeignKey('user_registered.id'))
     cd_role_id = Column(Integer, ForeignKey('cd_role.id'))
-    pilot_name = Column(String(50), ForeignKey('pilot.name'))
+    pilot_code = Column(String(4), ForeignKey('pilot.code'))
 
     # m2m
     action = relationship("ExecutedAction", cascade="all, delete-orphan")
@@ -316,7 +316,7 @@ class UserRegistered(Base):
     # password = Column(Password(rounds=10))
     # Without rounds System will use 13 rounds by default
     #created_date = Column(TIMESTAMP, default=datetime.datetime.utcnow)
-    created_date = Column(ArrowType, default=arrow.utcnow())
+    created_date = Column(ArrowType(timezone=True), default=arrow.utcnow())
 
     # one2many
     user_action = relationship('UserAction')
@@ -398,13 +398,10 @@ class Location(Base):
     location_id_seq = Sequence('location_id_seq', metadata=Base.metadata)
     # Creating the columns
     id = Column(Integer, server_default=location_id_seq.next_value(), primary_key=True)
-    # The location could be a URN based location or a combination of latitude and longitude
-    urn = Column(String(75))
-    latitude = Column(String(15))
-    longitude = Column(String(15))
+    location_name = Column(String(50), unique=True)
     indoor = Column(Boolean)
     # One2Many
-    pilot_name = Column(String(50), ForeignKey('pilot.name'), nullable=True)
+    pilot_code = Column(String(4), ForeignKey('pilot.code'), nullable=True)
 
     # many2many
     activity = relationship("LocationActivityRel")
@@ -445,14 +442,9 @@ class Activity(Base):
     # Creating the columns
     id = Column(Integer, server_default=activity_id_seq.next_value(), primary_key=True)
     activity_name = Column(String(50))
-    #activity_start_date = Column(TIMESTAMP)
-    activity_start_date = Column(ArrowType)
-    #activity_end_date = Column(TIMESTAMP)
-    activity_end_date = Column(ArrowType)
-    #creation_date = Column(TIMESTAMP, default=datetime.datetime.utcnow)
-    creation_date = Column(ArrowType, default=arrow.utcnow())
-    #since = Column(TIMESTAMP, nullable=True)
-    since = Column(ArrowType, nullable=True)
+    activity_description = Column(String(200))
+    creation_date = Column(ArrowType(timezone=True), default=arrow.utcnow())
+    instrumental = Column(Boolean, default=False, nullable=False)
 
     # One2one
     eam = relationship("EAM", uselist=False, back_populates="activity")
@@ -472,15 +464,15 @@ class Pilot(Base):
 
     __tablename__ = 'pilot'
 
-    name = Column(String(50), unique=True, nullable=False, primary_key=True)
-    pilot_code = Column(String(4), unique=True, nullable=False)
+    code = Column(String(4), unique=True, nullable=False, primary_key=True)
+    pilot_name = Column(String(50), unique=True, nullable=False)
     population_size = Column(BigInteger)
     # One2Many
     user_in_role = relationship('UserInRole')
     location = relationship('Location')
 
     def __repr__(self):
-        return "<Pilot(name='%s', pilot_code='%s', population_size='%s')>" % (self.name, self.pilot_code,
+        return "<Pilot(name='%s', pilot_code='%s', population_size='%s')>" % (self.name, self.code,
                                                                               self.population_size)
 
 
@@ -500,9 +492,9 @@ class CDRole(Base):
     role_abbreviation = Column(String(3), nullable=False)
     role_description = Column(String(350), nullable=False)
     #valid_from = Column(TIMESTAMP, default=datetime.datetime.utcnow)
-    valid_from = Column(ArrowType, default=arrow.utcnow())
+    valid_from = Column(ArrowType(timezone=True), default=arrow.utcnow())
     #valid_to = Column(TIMESTAMP)
-    valid_to = Column(ArrowType)
+    valid_to = Column(ArrowType(timezone=True))
 
     # one2many
     user_in_role = relationship('UserInRole')
@@ -597,7 +589,7 @@ class UserAction(Base):
     ip = Column(String(60))
     agent = Column(String(255))
     #date = Column(TIMESTAMP, default=datetime.datetime.utcnow)
-    date = Column(ArrowType, default=arrow.utcnow())
+    date = Column(ArrowType(timezone=True), default=arrow.utcnow())
     status_code = Column(Integer)
 
     # One2Many

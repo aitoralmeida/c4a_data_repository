@@ -119,28 +119,10 @@ class Utilities(object):
                 },
                 "location": {
                     "description": "Semantic location of the performed action",
-                    "anyOf": [
-                        {
-                            "type": "object",
-                            "properties": {
-                                "lat": {
-                                    "type": "string",
-                                    "minLength": 1,
-                                },
-                                "long": {
-                                    "type": "string",
-                                    "minLength": 1,
-                                }
-                            },
-                            "required": ["lat", "long"]
-                        },
-                        {
-                            "type": "string",
-                            "minLength": 3,
-                            "maxLength": 50,
-                            "pattern": "^eu:c4a:[a-z,A-Z,0-9]{3,25}:[a-z,A-Z,0-9]{3,30}$",
-                        }
-                    ]
+                    "type": "string",
+                    "minLength": 3,
+                    "maxLength": 50,
+                    "pattern": "^eu:c4a:[a-z,A-Z,0-9]{3,25}:[a-z,A-Z,0-9]{1,30}$",
                 },
                 "position": {
                     "description": "The exact position given in Lat/Long format",
@@ -201,9 +183,9 @@ class Utilities(object):
             if type(p_data) is list:
                 # We have a list of dicts
                 for data in p_data:
-                    validate(data, schema)
+                    validate(data, schema, format_checker=FormatChecker())
             else:
-                validate(p_data, schema)
+                validate(p_data, schema, format_checker=FormatChecker())
             res = True
         except ValidationError as e:
             logging.error("The schema entered by the user is invalid")
@@ -211,7 +193,7 @@ class Utilities(object):
         return res, msg
 
     @staticmethod
-    def check_add_activity_data(p_data):
+    def check_add_activity_data(p_database, p_data):
         """
         Check if data is ok and if the not nullable values are filled.
 
@@ -236,17 +218,12 @@ class Utilities(object):
                     "minLength": 3,
                     "maxLength": 50
                 },
-                "activity_start_date": {
-                    "description": "The start date of the executed activity",
-                    "type": "string"
+                "activity_description": {
+                    "description": "The description of the activity"
                 },
-                "activity_end_date": {
-                    "description": "The final date of the executed activity",
-                    "type": "string"
-                },
-                "since": {
-                    "description": "A measure to make some calculations based on activity",
-                    "type": "string"
+                "instrumental": {
+                    "description": "Defines if an activity is a Basic or a instrumental Activity",
+                    "type": "boolean"
                 },
                 "house_number": {
                     "description": "The number of house in case of indoor is true",
@@ -254,28 +231,11 @@ class Utilities(object):
                     "minimum": 0
                 },
                 "location": {
-                    "description": "location of the performed action",
-                    "anyOf": [
-                        {
-                            "type": "object",
-                            "properties": {
-                                "lat": {
-                                    "type": "string",
-                                    "minLength": 1,
-                                },
-                                "long": {
-                                    "type": "string",
-                                    "minLength": 1,
-                                }
-                            },
-                            "required": ["lat", "long"]
-                        },
-                        {
-                            "type": "string",
-                            "minLength": 3,
-                            "maxLength": 50
-                        }
-                    ]
+                    "description": "Semantic location of the performed action",
+                    "type": "string",
+                    "minLength": 3,
+                    "maxLength": 50,
+                    "pattern": "^eu:c4a:[a-z,A-Z,0-9]{3,25}:[a-z,A-Z,0-9]{1,30}$",
                 },
                 "indoor": {
                     "description": "Defines if the activity is inside a building or not",
@@ -285,29 +245,45 @@ class Utilities(object):
                     "description": "the name of the city where is the location",
                     "type": "string",
                     "minLength": 1,
-                    "maxLength": 40,
+                    "maxLength": 10,
                     "enum": [
-                        "madrid",
-                        "lecce",
-                        "singapore",
-                        "montpellier",
-                        "athens",
-                        "birmingham"
+                        "ATH", "BHX", "LCC", "MAD", "MPL", "SIN",
+                        "ath", "bhx", "lcc", "mad", "mpl", "sin",
                     ]
-                }
+                },
             },
-            "required": ["activity_name", "activity_start_date", "activity_end_date", "since", "house_number",
-                         "location", "indoor", "pilot"],
+            "required": ["activity_name"],
             "additionalProperties": False
         }
+
+        # TODO modify the validator when the user decide to use spatio-temporal activities (House, location...)
 
         try:
             if type(p_data) is list:
                 # We have a list of dicts
+                list_of_activities = []
                 for data in p_data:
-                    validate(data, schema)
+                    validate(data, schema, format_checker=FormatChecker())
+                    # check if the activity exist in database or not
+                    if Utilities.validate_activity(p_database, data):
+                        # The activity exist already in database
+                        logging.error("The entered activity is duplicated: %s", data['activity_name'])
+                        raise ValidationError("The entered activity is duplicated: %s" % data['activity_name'])
+                    # Appending the activity
+                    list_of_activities.append(data['activity_name'])
+                # We are going to search for duplicated users in the json list sent by the user
+                duplicated = [k for k, v in Counter(list_of_activities).items() if v > 1]
+                if len(duplicated) > 0:
+                    # Raise an error for duplicated values
+                    logging.error("There are are duplicated activity names in the JSON: %s" % duplicated)
+                    raise ValidationError("There are are duplicated activity names in the JSON: %s" % duplicated)
             else:
-                validate(p_data, schema)
+                validate(p_data, schema, format_checker=FormatChecker())
+                # check if the activity exist in database or not
+                if Utilities.validate_activity(p_database, p_data):
+                    # The activity exist already in database
+                    logging.error("The entered activity is duplicated: %s", p_data['activity_name'])
+                    raise ValidationError("The entered activity is duplicated: %s" % p_data['activity_name'])
             res = True
         except ValidationError as e:
             logging.error("The schema entered by the user is invalid")
@@ -403,7 +379,7 @@ class Utilities(object):
                 list_of_usernames = []
                 # We have a list of dicts
                 for data in p_data:
-                    validate(data, schema)
+                    validate(data, schema, format_checker=FormatChecker())
                     # Validating if the user exists already in the system
                     if Utilities.validate_user_registered(p_database, data):
                         # The user exist in the system
@@ -421,11 +397,11 @@ class Utilities(object):
                 duplicated = [k for k, v in Counter(list_of_usernames).items() if v > 1]
                 if len(duplicated) > 0:
                     # Raise an error for duplicated values
-                    logging.error("There are two usernames in your user information")
-                    raise ValidationError("There are two usernames in your user information")
+                    logging.error("There are duplicated usernames in your JSON: %s" % duplicated)
+                    raise ValidationError("There are duplicated usernames in your JSON: %s" % duplicated)
             else:
                 # single user to be registered in database
-                validate(p_data, schema)
+                validate(p_data, schema, format_checker=FormatChecker())
                 if Utilities.validate_user_registered(p_database, p_data):
                     # The user exist in the system
                     logging.error("The entered username is duplicated: %s", p_data['username'])
@@ -522,7 +498,7 @@ class Utilities(object):
                     raise ValidationError("The user entered two or more username in the input data")
             else:
                 # single user to be registered in database
-                validate(p_data, schema)
+                validate(p_data, schema, format_checker=FormatChecker())
                 if Utilities.validate_user_registered(p_database, p_data):
                     # The user exist in the system
                     logging.error("The entered username is duplicated: %s", p_data['username'])
@@ -569,9 +545,9 @@ class Utilities(object):
             if type(p_data) is list:
                 # We have a list of dicts
                 for data in p_data:
-                    validate(data, schema)
+                    validate(data, schema, format_checker=FormatChecker())
             else:
-                validate(p_data, schema)
+                validate(p_data, schema, format_checker=FormatChecker())
             res = True
         except ValidationError as e:
             logging.error("The schema entered by the user is invalid")
@@ -589,25 +565,6 @@ class Utilities(object):
         """
         res = False
         msg = None
-
-        """
-
-        {
-            "user": " eu:c4a:user:12345",
-            "pilot": "SIN",
-            "interval_start": "2014-01-20T00:00:00.000+08:00",
-            "duration": "DAY",
-            "payload": {
-                "WALK_STEPS": 1728,
-                "OUTDOOR_TIME": 25328,
-                "PHONECALLS_PLACED_PERC": 21.23
-            },
-            "extra": {
-                "dataSourceType": ["sensors"]
-            }
-        }
-
-        """
 
         schema = {
             "title": "Add measure schema",
@@ -641,7 +598,11 @@ class Utilities(object):
                     "description": "A nominal value e.g Day, Week and so on to define the end time of the measure",
                     "type": "string",
                     "minLength": 3,
-                    "maxLength": 45
+                    "maxLength": 45,
+                    "enum": [
+                        "DAY", "WK", "MON",
+                        "day", "wk", "mon"
+                    ]
                 },
                 "interval_end": {
                     "description": "The end time when the measure is recorded",
@@ -654,13 +615,35 @@ class Utilities(object):
                     "description": "contains relative information about the entered GEF/GES into the system",
                     "type": "object",
                     "patternProperties": {
-                        "^[a-z, A-Z]": {"type": "number",
-                                        "minimum": 0,
-                                        "maximum": 1000000,
-                                        "exclusiveMinimum": True,
-                                        "exclusiveMaximum": True,
-                                        "multipleOf": 0.01,
-                                        },
+                        "^[a-z, A-Z]": {
+                            "type": "object",
+                            "properties": {
+                                "value": {
+                                    "type": "number",
+                                    "minimum": 0,
+                                    "maximum": 1000000,
+                                    "exclusiveMinimum": True,
+                                    "exclusiveMaximum": True,
+                                    "multipleOf": 0.01
+                                },
+                                "data_source_type": {
+                                    "description": "how the action has been decided or imported",
+                                    "type": "array",
+                                    "uniqueItems": True,
+                                    "items": {
+                                        "type": "string",
+                                        "enum": [
+                                            "sensors",
+                                            "city_dataset",
+                                            "external_dataset",
+                                            "manual_input",
+                                        ],
+                                    },
+                                },
+                            },
+                            "additionalProperties": False,
+                            "required": ["value"]
+                        },
                     },
                     "additionalProperties": False,
                     "minProperties": 1,
@@ -669,24 +652,6 @@ class Utilities(object):
                 "extra": {
                     "description": "Additional information given by the Pilot in the LEA",
                     "type": "object",
-                    "properties": {
-                        "dataSourceType": {
-                            "description": "how the action has been decided or imported",
-                            "type": "array",
-                            "uniqueItems": True,
-                            "items": {
-                                "type": "string",
-                                "enum": [
-                                    "sensors",
-                                    "city_dataset",
-                                    "external_dataset",
-                                    "manual_input",
-                                ],
-                            },
-                        },
-                    },
-                    "required": ["dataSourceType"],
-                    "additionalProperties": False,
                 }
             },
             "additionalProperties": False,
@@ -702,9 +667,9 @@ class Utilities(object):
             if type(p_data) is list:
                 # We have a list of dicts
                 for data in p_data:
-                    validate(data, schema)
+                    validate(data, schema, format_checker=FormatChecker())
             else:
-                validate(p_data, schema)
+                validate(p_data, schema, format_checker=FormatChecker())
             res = True
         except ValidationError as e:
             logging.error("The schema entered by the user is invalid")
@@ -764,13 +729,13 @@ class Utilities(object):
         try:
             if type(p_data) is list:
                 for data in p_data:
-                    validate(data, schema)
+                    validate(data, schema, format_checker=FormatChecker())
                     # Once data is validated, we are going to check if tables ARE OK
                     if not Utilities.validate_search_tables(p_database, data):
                         logging.error("User entered an invalid table name: %s" % p_database.get_tables)
                         raise ValidationError("Invalid table name: %s" % data['table'])
             else:
-                validate(p_data, schema)
+                validate(p_data, schema, format_checker=FormatChecker())
                 # Once data is validated, we are going to check if tables ARE OK
                 if not Utilities.validate_search_tables(p_database, p_data):
                     logging.error("User entered an invalid table name: %s" % p_database.get_tables)
@@ -866,14 +831,14 @@ class Utilities(object):
             if type(p_data) is list:
                 # We have a list of dicts
                 for data in p_data:
-                    validate(data, schema)
+                    validate(data, schema, format_checker=FormatChecker())
                     # checking data integrity
                     res = Utilities.validate_eam(p_database, data)
                     if not res:
                         logging.error("The activity, action or location doesn't exist in database")
                         raise ValidationError("The activity, action or location doesn't exist in database")
             else:
-                validate(p_data, schema)
+                validate(p_data, schema, format_checker=FormatChecker())
                 # checking data integrity
                 res = Utilities.validate_eam(p_database, p_data)
                 if not res:
@@ -995,6 +960,25 @@ class Utilities(object):
             res = False
 
         return res
+
+    @staticmethod
+    def validate_activity(p_database, p_one_data):
+        """
+        This method check in database if the current activity exist already or not to avoid
+        duplicate insertion from methods like add_activity
+        
+        :param p_database: Databas instance 
+        :param p_one_data: The element to be checked
+        :return: True if all is correct
+                False if there are duplicated elements in DB
+        """
+        res = False
+        # checking if exist activity name
+        if p_one_data and p_one_data.get('activity_name', False):
+            activity_name = p_one_data['activity_name'].lower() or None
+            res = p_database.check_activity(activity_name)
+        return res
+
 
     @staticmethod
     def write_log_info(app, p_message):

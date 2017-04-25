@@ -175,12 +175,12 @@ def create_pilot(p_tables, p_orm):
     """
     # Creating pilots names
     list_of_pilots = list()
-    madrid = p_tables.Pilot(name='madrid', pilot_code='mad', population_size=3141991)
-    lecce = p_tables.Pilot(name='lecce', pilot_code='lcc', population_size=89839)
-    singapore = p_tables.Pilot(name='singapore', pilot_code='sin', population_size=5610000)
-    montpellier = p_tables.Pilot(name='montpellier', pilot_code='mlp', population_size=268456)
-    athens = p_tables.Pilot(name='athens', pilot_code='ath', population_size=3090508)
-    birmingham = p_tables.Pilot(name='birmingham', pilot_code='bhx', population_size=1101360)
+    madrid = p_tables.Pilot(pilot_name='madrid', code='mad', population_size=3141991)
+    lecce = p_tables.Pilot(pilot_name='lecce', code='lcc', population_size=89839)
+    singapore = p_tables.Pilot(pilot_name='singapore', code='sin', population_size=5610000)
+    montpellier = p_tables.Pilot(pilot_name='montpellier', code='mlp', population_size=268456)
+    athens = p_tables.Pilot(pilot_name='athens', code='ath', population_size=3090508)
+    birmingham = p_tables.Pilot(pilot_name='birmingham', code='bhx', population_size=1101360)
     list_of_pilots.extend([madrid, lecce, singapore, montpellier, athens, birmingham])
     # Insert data, pending action
     p_orm.insert_all(list_of_pilots)

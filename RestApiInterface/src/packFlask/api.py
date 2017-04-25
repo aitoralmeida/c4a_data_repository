@@ -429,7 +429,7 @@ def add_action(version=app.config['ACTUAL_API']):
     }
     
     :param version: Api version
-    :return: Different kind of HTML codes explaining if the action was sucesfull
+    :return: Different kind of HTML codes explaining if the action was successful
     """
 
     if Utilities.check_connection(app, version):
@@ -465,41 +465,27 @@ def add_activity(version=app.config['ACTUAL_API']):
 
     An example in JSON could be:
 
-    [{
-        "activity_name": "kitchenActivity",
-        "activity_start_date": "2014-05-20 06:08:41.22222",
-        "activity_end_date": "2014-05-20 07:08:41.22222",
-        "since": "2014-05-20 01:08:41.22222",
-        "house_number": 0,                          # HOUSE NUMBER 0? better an optional value?
-        "location":"it:puglia:lecce:bus:39",
-        "indoor": false,
-        "pilot": "lecce"
-    },
     {
-        "activity_name": "doBreakFast",
-        "activity_start_date": "2015-05-20 06:18:41.22222",
-        "activity_end_date": "2015-05-20 07:08:41.22222",
-        "since": "2011-05-20 01:08:41.22222",
-        "house_number": 2,
-        "location": {
-             "lat": "41",
-             "long": "18"
-         },
-        "indoor": true,
-        "pilot": "madrid"
-    }]
+        "activity_name": "LeaveHouse",
+        "activity_description": "Some description of the activity",          # Optional
+        "instrumental": True,                                               # Optional
+        "house_number": 0,              # Optional
+        "indoor": false,                # Optional
+        "location":"eu:c4a:Bus:39",     # Optional
+        "pilot": "LCC"                  # Optional
+    }
 
     :param version: Api version
     :return:
     """
     if Utilities.check_connection(app, version):
         data = _convert_to_dict(request.json)
-        res, msg = Utilities.check_add_activity_data(data)
+        res, msg = Utilities.check_add_activity_data(AR_DATABASE, data)
         if data and res and USER:
             # User and data are OK. save data into DB
             res = AR_DATABASE.add_activity(data)
             if res:
-                Utilities.write_log_info(app, ("add_activity: the username: %s adds new action into database" %
+                Utilities.write_log_info(app, ("add_activity: the username: %s adds new activity into database" %
                                          USER.username))
                 return Response('Data stored in database OK\n'), 200
             else:
@@ -592,9 +578,8 @@ def add_care_receiver(version=app.config['ACTUAL_API']):
             res_ar = AR_DATABASE.add_new_care_receiver(data, USER.id)
             res_sr = SR_DATABASE.add_new_care_receiver(data, USER.id)
             if res_ar and res_sr:
-                Utilities.write_log_info(app, ("add_care_receiver: the username: %s adds new user into database" %
-                                               USER.username))
-
+                Utilities.write_log_info(app, ("add_care_receiver: the username: %s adds new care receiver "
+                                               "into database" % USER.username))
                 # We only return one value, because both database has the same IDS
                 return jsonify(res_ar)
 
@@ -680,17 +665,17 @@ def add_measure(version=app.config['ACTUAL_API']):
     An example in JSON could be:
 
     {
-        "user": " eu:c4a:user:12345",
+        "user": "eu:c4a:user:12345",
         "pilot": "SIN",
         "interval_start": "2014-01-20T00:00:00.000+08:00",
-        "duration": "DAY",
+        "duration": "DAY",                                  # OPTIONALLY COULD BE INTERVAL_END
         "payload": {
-          "WALK_STEPS": 1728,
-          "OUTDOOR_TIME": 25328,
-          "PHONECALLS_PLACED_PERC": 21.23           # Two rounded decimal precision
+          "WALK_STEPS": { "value": 1728 },
+          "SHOP_VISITS": { "value": 3, "data_source_type": ["sensors", "external_dataset"]},
+          "PHONECALLS_PLACED_PERC": { "value": 21.23, "data_source_type": ["external_dataset"] }
         },
         "extra": {
-          "dataSourceType": [ "sensors" ]
+          "pilot_specific_field": “some value”
         }
     }
 
@@ -778,6 +763,14 @@ def data_sent_error(error):
     resp = make_response("Data entered is invalid, please check your JSON\n", 500)
     return resp
 
+
+@app.errorhandler(400)
+def data_sent_error(error):
+    error_msg = "An error 400 is happened with the following error msg: %s" % error
+    logging.error(error_msg)
+    resp = make_response("You have sent a bad request. If your request contains a JSON based structure"
+                         "check it might be bad formatted.", 400)
+    return resp
 
 @app.errorhandler(413)
 def data_sent_too_long(error):

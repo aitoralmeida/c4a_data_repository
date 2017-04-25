@@ -52,6 +52,25 @@ class SRPostORM(PostORM):
         # TODO You need to perform changes in this class and attach the data_source_type as 'sensors' for default value
 
 
+        """
+        
+        {
+            "user": "eu:c4a:user:12345",
+            "pilot": "SIN",
+            "interval_start": "2014-01-20T00:00:00.000+08:00",
+            "duration": "DAY",                                  # OPTIONALLY COULD BE INTERVAL_END
+            "payload": {
+              "WALK_STEPS": { "value": 1728 },
+              "SHOP_VISITS": { "value": 3, "data_source_type": ["sensors", "external_dataset"]},
+              "PHONECALLS_PLACED_PERC": { "value": 21.23, "data_source_type": ["external_dataset"] }
+            },
+            "extra": {
+              "pilot_specific_field": “some value”
+            }
+        }
+        
+        """
+
         res = False
 
         for data in p_data:
@@ -61,7 +80,7 @@ class SRPostORM(PostORM):
                                                                 detection_variable_name=data['gef'],
                                                                 detection_variable_type='gef')
 
-                self._get_or_create(sr_tables.CDPilotDetectionVariable, pilot_name=data['extra']['pilot'],
+                self._get_or_create(sr_tables.CDPilotDetectionVariable, pilot_code=data['extra']['pilot'],
                                     detection_variable_id=gef_cd_detection_variable.id)
 
                 # Creating the sub-factor and attach it to GEF
@@ -71,12 +90,12 @@ class SRPostORM(PostORM):
                                                                 derived_detection_variable_id=gef_cd_detection_variable.id)
 
                 # Registering the pilot to GES
-                self._get_or_create(sr_tables.CDPilotDetectionVariable, pilot_name=data['extra']['pilot'],
+                self._get_or_create(sr_tables.CDPilotDetectionVariable, pilot_code=data['extra']['pilot'],
                                     detection_variable_id=ges_cd_detection_variable.id)
 
                 # Adding the user information
                 user_in_role = self._get_or_create(sr_tables.UserInRole, id=data['payload']['user'],
-                                                   pilot_name=data['extra']['pilot'])
+                                                   pilot_code=data['extra']['pilot'])
                 # Adding time interval information
                 time_interval = self._get_or_create(sr_tables.TimeInterval, interval_start=data['payload']['date'])
 
@@ -98,7 +117,7 @@ class SRPostORM(PostORM):
                                             time_interval_id=time_interval.id)
 
                         # OPTIONALLY adding pilot data
-                        self._get_or_create(sr_tables.CDPilotDetectionVariable, pilot_name=data['extra']['pilot'],
+                        self._get_or_create(sr_tables.CDPilotDetectionVariable, pilot_code=data['extra']['pilot'],
                                             detection_variable_id=measure_cd_detection_variable.id)
 
                 # If all works as intended we return a true state
@@ -138,13 +157,13 @@ class SRPostORM(PostORM):
             else:
                 # The user is not registered in the system, so we need to create it
                 cd_role = self._get_or_create(sr_tables.CDRole, role_name=p_data['roletype'])
-                pilot = self._get_or_create(sr_tables.Pilot, pilot_code=p_data['pilot'])
+                pilot = self._get_or_create(sr_tables.Pilot, code=p_data['pilot'].lower())
                 user_in_role = self._get_or_create(sr_tables.UserInRole,
                                                    valid_from=p_data.get('valid_from', arrow.utcnow()),
                                                    valid_to=p_data.get('valid_to', None),
                                                    cd_role_id=cd_role.id,
                                                    user_registered_id=user_registered.id,
-                                                   pilot_id=pilot.id)
+                                                   pilot_code=pilot.code)
                 # Adding City4Age ID to the return value
                 user_in_role_ids[data['username'].lower()] = user_in_role.id
 
@@ -169,13 +188,13 @@ class SRPostORM(PostORM):
             # Gettig the CD role id of care_receiver
             cd_role = self._get_or_create(sr_tables.CDRole, role_name='care_receiver')
             # Obtaining Pilot ID through the Pilot credentials
-            pilot_name = self._get_or_create(sr_tables.UserInRole, user_registered_id=p_user_id).pilot_name
+            pilot_code = self._get_or_create(sr_tables.UserInRole, user_registered_id=p_user_id).pilot_code
             # Creating the user_in_role table for the new user in the system
             user_in_role = self._get_or_create(sr_tables.UserInRole,
                                                valid_from=data.get('valid_from', arrow.utcnow()),
                                                valid_to=data.get('valid_to', None),
                                                cd_role_id=cd_role.id,
-                                               pilot_name=pilot_name,
+                                               pilot_code=pilot_code,
                                                pilot_source_user_id=data.get('pilot_source_id', None),
                                                user_registered_id=user_registered.id)
             # Getting the new ID

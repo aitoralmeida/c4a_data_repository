@@ -102,19 +102,22 @@ class ARPostORM(PostORM):
             # Basic tables
             # We are going to check if basic data exist in DB and insert it in case that is the first time.
             cd_action = self._get_or_create(ar_tables.CDAction, action_name=data['action'].lower())
-            pilot = self._get_or_create(ar_tables.Pilot, pilot_code=data['pilot'].lower())
-            cd_role = self._get_or_create(role_name='care_receiver') # Assuming the default value --> care_receiver
-            user = self._get_or_create(ar_tables.UserInRole, id=int(data['user'].split(':')[-1]), pilot_name=pilot.name,
-                                       cd_role_id=cd_role.id)
+            pilot = self._get_or_create(ar_tables.Pilot, code=data['pilot'].lower())
 
-            if data.get('location', False) and isinstance(data['location'], dict):
-                # The sent location is a latitude and longitude based location
-                location = self._get_or_create(ar_tables.Location, latitude=data['location']['lat'],
-                                               longitude=data['location']['long'], indoor=True, pilot_name=pilot.name)
-            else:
-                # The sent location is an URN based location
-                location = self._get_or_create(ar_tables.Location, urn=data['location'].lower(), indoor=True,
-                                               pilot_name=pilot.name)
+            # TODO maybe is interesting to obtain first if the user_in_role exist previously in DB and obtain it's role
+
+            # Assuming the default value --> care_receiver
+            cd_role = self._get_or_create(ar_tables.CDRole, role_name='care_receiver')
+            user = self._get_or_create(ar_tables.UserInRole, id=int(data['user'].split(':')[-1]), pilot_code=pilot.code,
+                                       cd_role_id=cd_role.id)
+            # Adding the location
+            location_type = self._get_or_create(ar_tables.LocationType,
+                                                location_type_name=data['location'].split(':')[-2].lower())
+            location = self._get_or_create(ar_tables.Location, location_name=data['location'].split(':')[-1].lower(),
+                                           indoor=True,
+                                           pilot_code=pilot.code)
+            location_type_rel = self._get_or_create(ar_tables.LocationLocationTypeRel, location_id=location.id,
+                                                    location_type_id=location_type.id)
             # Inserting the values attached with this action into database
             for key, value in data['payload'].items():
                 if key not in ['user', 'instance_id']:
@@ -144,18 +147,24 @@ class ARPostORM(PostORM):
     
         """
         for data in p_data:
-            # We are going to find if location is inside DB
-            pilot = self._get_or_create(ar_tables.Pilot, name=data['pilot'])
-            if data.get('location', False) and isinstance(data['location'], dict):
-                # The sent location is a latitude and longitude based location
-                location = self._get_or_create(ar_tables.Location, latitude=data['location']['lat'],
-                                               longitude=data['location']['long'], indoor=data['indoor'],
-                                               pilot_name=pilot.name)
-            else:
-                # The sent location is an URN based location
-                location = self._get_or_create(ar_tables.Location, urn=data['location'].lower(), indoor=data['indoor'],
-                                               pilot_name=pilot.name)
+            # Adding the new activity
+            activity = self._get_or_create(ar_tables.Activity, activity_name=data['activity_name'].lower(),
+                                           activity_description=data.get('activity_description', None))
+            self.insert_one(activity)
 
+        """
+        # TODO use this pattern only if we decide to store more aditional data
+        for data in p_data:
+            # We are going to find if location is inside DB
+            pilot = self._get_or_create(ar_tables.Pilot, code=data['pilot'].lower())
+            # Adding the location
+            location_type = self._get_or_create(ar_tables.LocationType,
+                                                location_type_name=data['location'].split(':')[-2].lower())
+            location = self._get_or_create(ar_tables.Location, location_name=data['location'].split(':')[-1].lower(),
+                                           indoor=True, pilot_code=pilot.code)
+            location_type_rel = self._get_or_create(ar_tables.LocationLocationTypeRel, location_id=location.id,
+                                                    location_type_id=location_type.id)
+            # Adding activity
             activity = self._get_or_create(ar_tables.Activity, activity_name=data['activity_name'].lower(),
                                            activity_start_date=data['activity_start_date'],
                                            activity_end_date=data['activity_end_date'],
@@ -164,6 +173,8 @@ class ARPostORM(PostORM):
             # Adding location_activity_rel
             self._get_or_create(ar_tables.LocationActivityRel, activity_id=activity.id, location_id=location.id,
                                 house_number=data['house_number'])
+
+        """
 
         return self.commit()
 
@@ -193,13 +204,13 @@ class ARPostORM(PostORM):
             else:
                 # The user is not registered in the system, so we need to create it
                 cd_role = self._get_or_create(ar_tables.CDRole, role_name=p_data['roletype'])
-                pilot = self._get_or_create(ar_tables.Pilot, pilot_code=p_data['pilot'])
+                pilot = self._get_or_create(ar_tables.Pilot, code=p_data['pilot'].lower())
                 user_in_role = self._get_or_create(ar_tables.UserInRole,
                                                    valid_from=p_data.get('valid_from', arrow.utcnow()),
                                                    valid_to=p_data.get('valid_to', None),
                                                    cd_role_id=cd_role.id,
                                                    user_registered_id=user_registered.id,
-                                                   pilot_id=pilot.id)
+                                                   pilot_code=pilot.code)
                 # Adding City4Age ID to the return value
                 user_in_role_ids[data['username'].lower()] = user_in_role.id
 
@@ -224,13 +235,13 @@ class ARPostORM(PostORM):
             # Gettig the CD role id of care_receiver
             cd_role = self._get_or_create(ar_tables.CDRole, role_name='care_receiver')
             # Obtaining Pilot ID through the Pilot credentials
-            pilot_name = self._get_or_create(ar_tables.UserInRole, user_registered_id=p_user_id).pilot_name
+            pilot_code = self._get_or_create(ar_tables.UserInRole, user_registered_id=p_user_id).pilot_code
             # Creating the user_in_role table for the new user in the system
             user_in_role = self._get_or_create(ar_tables.UserInRole,
                                                valid_from=data.get('valid_from', arrow.utcnow()),
                                                valid_to=data.get('valid_to', None),
                                                cd_role_id=cd_role.id,
-                                               pilot_name=pilot_name,
+                                               pilot_code=pilot_code,
                                                pilot_source_user_id=data.get('pilot_source_id', None),
                                                user_registered_id=user_registered.id)
             # Getting the new ID
@@ -257,9 +268,18 @@ class ARPostORM(PostORM):
             eam = self._get_or_create(ar_tables.EAM, duration=data['duration'], activity_id=activity.id)
             # For each location
             for location in data['locations']:
-                # Insert EAM location REL
-                location_data = self._get_or_create(ar_tables.Location, urn=location.lower())
-                self._get_or_create(ar_tables.EAMLocationRel, location_id=location_data.id, eam_id=eam.id)
+                # Insert EAM location REL and locationType
+                location = self._get_or_create(ar_tables.Location, location_name=location.lower())
+                # Getting the location type or creating a default one
+                location_type = self.session.query(ar_tables.LocationLocationTypeRel).filter_by(location_id=location.id)
+                if location_type.count() == 0:
+                    # Our location doesn't have any kind of location type, so we will assign one
+                    location_type = self._get_or_create(ar_tables.LocationType,
+                                                        location_type_name='eam')
+                    location_type_rel = self._get_or_create(ar_tables.LocationLocationTypeRel, location_id=location.id,
+                                                            location_type_id=location_type.id)
+                # Adding the relationship to EAM
+                self._get_or_create(ar_tables.EAMLocationRel, location_id=location.id, eam_id=eam.id)
             # Insert the time ranges
             for date_range in data['start']:
                 # Insert the actual range
@@ -464,7 +484,7 @@ class ARPostORM(PostORM):
                 False if the location deesn't exist in the system
         """
         res = False
-        location = self.session.query(ar_tables.Location).filter_by(urn=p_location_name)
+        location = self.session.query(ar_tables.Location).filter_by(location_name=p_location_name)
         if location and location.count() == 1:
             res = True
         return res

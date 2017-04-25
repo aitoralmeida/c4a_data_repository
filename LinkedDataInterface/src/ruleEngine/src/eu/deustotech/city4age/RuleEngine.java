@@ -10,6 +10,7 @@ import com.hp.hpl.jena.reasoner.rulesys.GenericRuleReasoner;
 import com.hp.hpl.jena.reasoner.rulesys.Rule;
 import com.hp.hpl.jena.util.FileManager;
 
+import com.sun.xml.internal.bind.v2.TODO;
 import de.fuberlin.wiwiss.d2rq.jena.ModelD2RQ;
 import sun.rmi.runtime.Log;
 
@@ -134,7 +135,7 @@ public class RuleEngine {
                     for (Iterator i = validity.getReports(); i.hasNext(); ) {
                         System.err.println(" - " + i.next());
                     }
-                    LOGGER.severe("There are conflicts with infered values. Check system err output");
+                    LOGGER.severe("There are conflicts with inferred values. Check system err output");
                 }
             } else {
                 // There is a problem in the inference model
@@ -185,7 +186,7 @@ public class RuleEngine {
             if (output.length() > 0 && output.contains("count")) {
                 // We have good response from the server
                 System.out.println("Ok");
-                // Logging sucesfull uploading
+                // Logging successful uploading
                 LOGGER.info("New data uploaded to Fuseki." + newLine + "Number of instances: " + pModel.size()
                         + newLine + "Graph data uploaded is: " + pModel.write(System.out, "N-TRIPLES"));
 
@@ -268,10 +269,6 @@ public class RuleEngine {
 
                  */
 
-                //////////////
-                Statement statement2 = this.obtainCityInformationv2(oURI.toLowerCase());
-                ///////
-
 
                 // TODO define here what are the rules to check a city information
                 if (sURI.equals("City4Age:City") && pURI.equals("rdf:hasName") && oURI.toLowerCase().equals(places)) {
@@ -304,8 +301,8 @@ public class RuleEngine {
         String query = "http://api.geonames.org/search?name_equals="+pCity+"&featureClass=P&type=rdf&&username=elektro";
         ProcessBuilder p = new ProcessBuilder("curl", "-X", "POST", query);
         try {
-            System.out.println("Uploading new Knowledge to Fuseki......................\n");
-            LOGGER.info("Uploading data to Fuseki server");
+            System.out.println("Calling to geocitires about city information from: "+pCity +"\n");
+            LOGGER.info("Calling to geocities to obtain information from: "+ pCity);
             // Execute our command
             final Process shell = p.start();
             // catch output and see if all is ok
@@ -313,13 +310,19 @@ public class RuleEngine {
                     new BufferedReader(new InputStreamReader(shell.getInputStream()));
             StringBuilder builder = new StringBuilder();
             String line = null;
+            // Filling with information the string builder list
             while ((line = reader.readLine()) != null) {
                 builder.append(line);
                 builder.append(System.getProperty("line.separator"));
             }
+
+
+            // TODO Using this method you need to think about recover only the usefull data
+
+            // In builder object we have a lot of different lines of the needed URI. We need only to recover one
             String output = builder.toString();
 
-            System.out.print(output);
+
 
 
 
