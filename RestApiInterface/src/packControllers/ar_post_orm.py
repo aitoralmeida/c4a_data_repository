@@ -436,13 +436,12 @@ class ARPostORM(PostORM):
 
         :param p_user_in_role: The id of the user_in_role
         :return: True if the user has an access in the system
-                False if the user hasn't access in the system or it isn't exist.
+                False if the user hasn't any access in the system
         """
         res = False
         user_in_role = self.session.query(ar_tables.UserInRole).filter_by(id=p_user_in_role)
-        if user_in_role and user_in_role.count() == 0 or user_in_role and user_in_role.count() == 1 and user_in_role[0] \
-                .user_registered_id is not None:
-            # The user doesn't exist in the system or it has already a user credentials
+        if user_in_role and user_in_role.count() == 1 and user_in_role[0].user_registered_id is not None:
+            # The user has already access in the system
             res = True
         return res
 

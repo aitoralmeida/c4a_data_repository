@@ -50,6 +50,7 @@ class FlaskTestCase(unittest.TestCase):
         self.ar_database.close()
         self.sr_database.close()
 
+
     ###################################################
     ########   GET Tests
     ###################################################
@@ -68,6 +69,11 @@ class FlaskTestCase(unittest.TestCase):
         """ Test Api redirect"""
         response = self.app.get('/api', follow_redirects=True)
         assert "<h1>Welcome to City4Age Rest A" in response.data
+
+    def test_get_my_info(self):
+        """Test if the get my info is returning user-agent information"""
+        response = self.app.get('/api/0.1/get_my_info')
+        assert "ip" in response.data             # If response data cotnains the IP string, it is working well
 
     ###################################################
     ########   POST Tests
@@ -105,6 +111,13 @@ class FlaskTestCase(unittest.TestCase):
         response = self.app.get('/api/0.1/login', content_type='application/json', follow_redirects=True,
                                 headers=self.headers_good)
         self.assertEqual(response.status_code, 200)
+
+    ### Add_action
+
+    # TODO add action related tests
+
+
+
 
     """
     def test_basic_search(self):
@@ -173,145 +186,6 @@ class FlaskTestCase(unittest.TestCase):
         assert response.data.count('ruben') == 0 and response.status_code == 200
     """
 
-    ###################################################
-    ########   INTERNAl Tests
-    ###################################################
-
-    def test_check_add_action_data(self):
-        """ Test if action data check is working well"""
-        json_example_action = {
-             "action": "eu:c4a:usermotility:still_start",
-             "location": "it:puglia:lecce:address:roomID",
-             "payload": {
-                 "user": "eu:c4a:pilot:lecce:user:12345",
-                 "instanceID": "2"
-             },
-             "timestamp": "2016-05-19 07:08:41.013329",
-             "rating": 0.4,
-             "extra": {
-                 "pilot": "lecce"
-             },
-             "secret": "jwt_token"
-        }
-
-        json_example_action_list = [
-            {
-                "action": "eu:c4a:usermotility:still_start",
-                "location": "it:puglia:lecce:address:roomID",
-                "payload": {
-                    "user": "eu:c4a:pilot:lecce:user:12345",
-                    "instanceID": "2"
-                },
-                "timestamp": "2016-05-19 07:08:41.013329",
-                "rating": 0.4,
-                "extra": {
-                    "pilot": "lecce"
-                },
-                "secret": "jwt_token"
-            },
-            {
-                "action": "eu:c4a:usermotility:walking_start",
-                "location": {
-                    "lat": "41",
-                    "long": "18"
-                },
-                "payload": {
-                    "user": "eu:c4a:pilot:lecce:user:12345",
-                    "instanceID": "2",
-                    "speed": "3.1",
-                    "info_id": "4"
-                },
-                "timestamp": "2016-05-19 07:08:41.013329",
-                "rating": 0.4,
-                "extra": {
-                    "pilot": "lecce"
-                },
-                "secret": "jwt_token"
-            }
-        ]
-
-        self.assertTrue(Utilities.check_add_action_data(json_example_action) and
-                        Utilities.check_add_action_data(json_example_action_list))
-
-    def test_check_add_activity_data(self):
-        """ Test if activity data check is working well"""
-        json_example_activity = {
-            "activity_name": "kitchenActivity",
-            "activity_start_date": "2014-05-20 06:08:41.22222",
-            "activity_end_date": "2014-05-20 07:08:41.22222",
-            "since": "2014-05-20 01:08:41.22222",
-            "house_number": 0,
-            "location": {
-                "name": "it:puglia:lecce:bus:39",
-                "indoor": False
-            },
-            "pilot": "lecce"
-        }
-
-        json_example_activity_list = [{
-            "activity_name": "kitchenActivity",
-            "activity_start_date": "2014-05-20 06:08:41.22222",
-            "activity_end_date": "2014-05-20 07:08:41.22222",
-            "since": "2014-05-20 01:08:41.22222",
-            "house_number": 0,
-            "location": {
-                "name": "it:puglia:lecce:bus:39",
-                "indoor": False
-            },
-            "pilot": "lecce"
-        }]
-
-        self.assertTrue(Utilities.check_add_activity_data(json_example_activity) and
-                        Utilities.check_add_activity_data(json_example_activity_list))
-
-    """
-    def test_check_add_new_user(self):
-        # Test if the add new user check is working well
-        json_example_user = {
-            "username": "rmulero",
-            "password": "heyPassWord1212323@@@#@3!!",
-            "type": "admin"
-        }
-
-        json_example_user_list = [{
-            "username": "rmulero",
-            "password": "heyPassWord1212323@@@#@3!!",
-            "type": "admin"
-        }]
-
-        self.assertTrue(Utilities.check_add_new_user(json_example_user) and
-                        Utilities.check_add_new_user(json_example_user_list))
-    """
-
-
-    def test_check_search(self):
-        """ Test if search check is working well"""
-        json_example_search = {
-            'table': 'user_in_system',
-            'criteria': {
-                'col1': 'value',
-                'col2': 'value'
-            },
-            ###### Optional parameters
-            'limit': 2323,
-            'offset': 2,
-            'order_by': 'desc'
-        }
-
-        json_example_search_list = [{
-            'table': 'user_in_system',
-            'criteria': {
-                'col1': 'value',
-                'col2': 'value'
-            },
-            ###### Optional parameters
-            'limit': 2323,
-            'offset': 2,
-            'order_by': 'desc'
-        }]
-
-        self.assertTrue(Utilities.check_search(self.database, json_example_search) and
-                        Utilities.check_search(self.database, json_example_search_list))
 
 
 if __name__ == '__main__':

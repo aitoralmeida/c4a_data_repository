@@ -47,7 +47,7 @@ app.config.from_object(__name__)
 auth = HTTPBasicAuth()
 
 # Signatura verification configuration
-s = Signer(os.urandom(24))
+# s = Signer(os.urandom(24))
 
 
 ###################################################################################################
@@ -143,11 +143,10 @@ def when_request_finished(sender, response, **extra):
         agent = request.user_agent.string or "User is not sending its agent"
         data = "User entered an JSON with length of: %s" % request.content_length or "No data found"
         status_code = response.status_code or "No status code. Check estrange behavior"
-
-        # TODO we will consider to insert into different historical places . (Users endpoints as a list to decide)
         # Inserting data into database
-        res = AR_DATABASE.add_user_action(USER.id, route, ip, agent, data, status_code)
-        if not res:
+        res_ar = AR_DATABASE.add_user_action(USER.id, route, ip, agent, data, status_code)
+        res_sr = SR_DATABASE.add_user_action(USER.id, route, ip, agent, data, status_code)
+        if not res_ar or not res_sr:
             logging.error("Historical data is not storing well into DB. The sent data is the following:"
                           "\n User id: %s"
                           "\n Route: %s"
@@ -205,7 +204,7 @@ def verify_password(username_or_token, password):
 @app.route('/api/<version>/login', methods=['GET'])
 @limit_content_length(MAX_LENGHT)
 @auth.login_required
-@required_roles('administrator', 'geriatrician')
+#@required_roles('administrator', 'geriatrician')
 def login(version=app.config['ACTUAL_API']):
     """
     Gives the ability to login into API. It returns an encrypted cookie with the token information and a JSON containing
@@ -215,11 +214,14 @@ def login(version=app.config['ACTUAL_API']):
     :return: A token with user ID information in two formats: 1) in a cookie encrypted; 2) in a JSON decoded.
     """
     if Utilities.check_version(app, version):
-        # We retieve the actual loggin user information
+        # We relieve the actual logging user information
         if USER:
             token = AR_DATABASE.get_auth_token(USER, app, expiration=600)
             session['token'] = token
             return jsonify({'token': token.decode('ascii')})
+    else:
+        Utilities.write_log_error(app, "logout: User entered an invalid api version, 404")
+        return "You have entered an invalid api version", 404
 
 
 @app.route('/api/<version>/logout', methods=['GET'])
@@ -236,7 +238,7 @@ def logout(version=app.config['ACTUAL_API']):
         if USER:
             session.pop('token', None)
             USER = None
-            Utilities.write_log_info(app, ("logout: User logout successfully"))
+            Utilities.write_log_info(app, "logout: User logout successfully")
             flash('You were logged out')
             return redirect(url_for('api', version=app.config['ACTUAL_API']))
     else:
@@ -564,7 +566,6 @@ def add_care_receiver(version=app.config['ACTUAL_API']):
         "password": "ruben"
     }
     
-    
     :param version: 
     :return: A urn with --> eu:c4a:user:{city4AgeId}
     """
@@ -708,7 +709,7 @@ def add_measure(version=app.config['ACTUAL_API']):
 @required_roles('researcher', 'application_developer', 'administrator')
 def add_eam(version=app.config['ACTUAL_API']):
     """
-    This endpoint allows to pilots insert information about realted EAMS from different type of activities.
+    This endpoint allows to pilots insert information about related EAMS from different type of activities.
 
     It allow to Expert Activity Model, have an input access to discover new activities based on user performed actions.
 
@@ -838,7 +839,7 @@ def _convert_to_dict(p_requested_data):
 Different curl examples:
 
 
-curl -u rubuser:testingpassw -i -X GET http://0.0.0.1:5000/api/login
+curl -u rubuser:testingpassw -i -X GET http://0.0.0.0:5000/api/0.1/login
 
 
 curl -X POST -k -b cookie.txt -d @json_data.txt -w @curl-format.txt http://0.0.0.0:5000/api/0.1/add_action --header "Content-Type:application/json"

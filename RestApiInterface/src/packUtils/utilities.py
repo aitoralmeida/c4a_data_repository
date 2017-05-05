@@ -385,10 +385,10 @@ class Utilities(object):
                         # The user exist in the system
                         logging.error("The entered username is duplicated: %s", data['username'])
                         raise ValidationError("The entered username is duplicated: %s" % data['username'])
-                    if data.get('user', False) and Utilities.validate_user_in_role(p_database, data):
+                    if data.get('user', False) and Utilities.validate_user_access(p_database, data):
                         # The user hasn't any access in the system or there inst any user with that ID
-                        logging.error("The user entered has already a username and password in the system or it is not"
-                                      "exist")
+                        logging.error("The user entered has already a username and password " \
+                                              "in the system or it is not exist: %s" % data['username'])
                         raise ValidationError("The user entered has already a username and password " \
                                               "in the system or it is not exist: %s" % data['username'])
                     # Appending the usernames
@@ -406,9 +406,10 @@ class Utilities(object):
                     # The user exist in the system
                     logging.error("The entered username is duplicated: %s", p_data['username'])
                     raise ValidationError("The entered username is duplicated: %s" % p_data['username'])
-                elif Utilities.validate_user_in_role(p_database, p_data):
+                elif Utilities.validate_user_access(p_database, p_data):
                     # The user hasn't any acess in the system or there isnt any user with that ID
-                    logging.error("The user entered has already a username and password in the system")
+                    logging.error("The user entered has already a username and password " \
+                                          "in the system: %s" % p_data['username'])
                     raise ValidationError("The user entered has already a username and password " \
                                           "in the system: %s" % p_data['username'])
             res = True
@@ -597,7 +598,7 @@ class Utilities(object):
                 "duration": {
                     "description": "A nominal value e.g Day, Week and so on to define the end time of the measure",
                     "type": "string",
-                    "minLength": 3,
+                    "minLength": 2,
                     "maxLength": 45,
                     "enum": [
                         "DAY", "WK", "MON",
@@ -890,16 +891,18 @@ class Utilities(object):
     # TODO this method needs more changes.
 
     @staticmethod
-    def validate_user_in_role(p_database, p_one_data):
+    def validate_user_access(p_database, p_one_data):
         """
-        Give the user information, check if it has already a username/password configured or if it exist in the system
+        Giving the user information and a database connection, 
+        checks if it has already a username/password configured or if it exist in the system
 
-        If the user has not a username/password configured or if it not exist in the system, then this method will
-        return a True state status,
+        If the user has already a username/password this method will return a True state
+        
 
         :param p_database: The database instance
         :param p_one_data: The user information (ID)
-        :return: True if the user hasn't a username/password configured (Access in user registered) or if the user id
+        :return:    True if the user has already an access in the system
+                    False if the user hasn't any access in the system.
         """
         res = False
         if p_one_data and p_one_data.get('user', False):

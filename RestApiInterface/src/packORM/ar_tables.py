@@ -16,7 +16,7 @@ from sqlalchemy_utils import ArrowType
 
 from itsdangerous import (TimedJSONWebSignatureSerializer
                           as Serializer, BadSignature, SignatureExpired)
-from sqlalchemy import Column, Integer, String, Boolean, Sequence, Float, BigInteger, ForeignKey, TIMESTAMP, \
+from sqlalchemy import Column, Integer, String, Boolean, Sequence, Float, BigInteger, ForeignKey, Numeric, \
     Text, TypeDecorator, event, MetaData
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, validates
@@ -172,21 +172,21 @@ class ExecutedAction(Base):
     executed_action_id_seq = Sequence('executed_action_id_seq', metadata=Base.metadata)
     # Creating the columns
     id = Column(Integer, server_default=executed_action_id_seq.next_value(), primary_key=True)
+    # Associated information
+    date = Column(ArrowType(timezone=True), default=arrow.utcnow())
+    executed_action_date = Column(ArrowType(timezone=True))
+    rating = Column(Numeric(precision=5, scale=2))
+    sensor_id = Column(Integer)
+    # TODO look if position goes here
+    position = Column(String(255))
+    data_source_type = Column(String(200))      # An "array" containing the data source
+    extra_information = Column(String(1000))    # An "array" containing extra information
+
+    # FK keys
     user_in_role_id = Column(Integer, ForeignKey('user_in_role.id'))
     cd_action_id = Column(Integer, ForeignKey('cd_action.id'))
     activity_id = Column(Integer, ForeignKey('activity.id'), nullable=True)
     location_id = Column(Integer, ForeignKey('location.id'))
-    #date = Column(TIMESTAMP, default=datetime.datetime.utcnow)
-    date = Column(ArrowType(timezone=True), default=arrow.utcnow())
-    #executed_action_date = Column(TIMESTAMP)
-    executed_action_date = Column(ArrowType(timezone=True))
-
-    # Associated information
-    rating = Column(Integer)
-    sensor_id = Column(Integer)
-    instance_id = Column(String(4))
-    data_source_type = Column(String(200))
-    extra_information = Column(Text)
 
     # Relationship with other TABLES
     cd_action = relationship("CDAction")
@@ -281,12 +281,9 @@ class UserInRole(Base):
     user_in_role_seq = Sequence('user_in_role_seq', metadata=Base.metadata)
     # Creating the columns
     id = Column(Integer, server_default=user_in_role_seq.next_value(), primary_key=True)
-    #valid_from = Column(TIMESTAMP, default=datetime.datetime.utcnow)
     valid_from = Column(ArrowType(timezone=True), default=arrow.utcnow())
-    #valid_to = Column(TIMESTAMP)
     valid_to = Column(ArrowType(timezone=True))
-    medical_record = Column(String(75))
-    pilot_source_user_id = Column(Integer)  # This field is not intended to be unique.
+    pilot_source_user_id = Column(Integer, unique=False)
 
     # one2many
     user_registered_id = Column(Integer, ForeignKey('user_registered.id'))
@@ -310,12 +307,9 @@ class UserRegistered(Base):
     user_registered_seq = Sequence('user_registered_seq', metadata=Base.metadata)
     # Creating the columns
     id = Column(Integer, server_default=user_registered_seq.next_value(), primary_key=True)
-    username = Column(Text, nullable=False, unique=True)
+    username = Column(String(25), nullable=False, unique=True)
     password = Column(Password(rounds=13), nullable=False)
-    # Or specify a cost factor other than the default 13
-    # password = Column(Password(rounds=10))
-    # Without rounds System will use 13 rounds by default
-    #created_date = Column(TIMESTAMP, default=datetime.datetime.utcnow)
+    display_name = Column(String(100))
     created_date = Column(ArrowType(timezone=True), default=arrow.utcnow())
 
     # one2many
@@ -398,7 +392,7 @@ class Location(Base):
     location_id_seq = Sequence('location_id_seq', metadata=Base.metadata)
     # Creating the columns
     id = Column(Integer, server_default=location_id_seq.next_value(), primary_key=True)
-    location_name = Column(String(50), unique=True)
+    location_name = Column(String(50), unique=True, nullable=False)
     indoor = Column(Boolean)
     # One2Many
     pilot_code = Column(String(4), ForeignKey('pilot.code'), nullable=True)
@@ -491,10 +485,8 @@ class CDRole(Base):
     role_name = Column(String(50), nullable=False, unique=True)
     role_abbreviation = Column(String(3), nullable=False)
     role_description = Column(String(350), nullable=False)
-    #valid_from = Column(TIMESTAMP, default=datetime.datetime.utcnow)
     valid_from = Column(ArrowType(timezone=True), default=arrow.utcnow())
-    #valid_to = Column(TIMESTAMP)
-    valid_to = Column(ArrowType(timezone=True))
+    valid_to = Column(ArrowType(timezone=True), nullable=True)
 
     # one2many
     user_in_role = relationship('UserInRole')
@@ -588,10 +580,8 @@ class UserAction(Base):
     data = Column(String(255))
     ip = Column(String(60))
     agent = Column(String(255))
-    #date = Column(TIMESTAMP, default=datetime.datetime.utcnow)
     date = Column(ArrowType(timezone=True), default=arrow.utcnow())
     status_code = Column(Integer)
-
     # One2Many
     user_registered_id = Column(Integer, ForeignKey('user_registered.id'))
 

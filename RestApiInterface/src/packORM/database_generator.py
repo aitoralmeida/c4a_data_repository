@@ -10,7 +10,6 @@ import logging
 import ar_tables
 import sr_tables
 
-from packControllers import ar_post_orm, sr_post_orm
 
 __author__ = 'Rubén Mulero'
 __copyright__ = "Copyright 2017, City4Age project"
@@ -22,14 +21,17 @@ __email__ = "ruben.mulero@deusto.es"
 __status__ = "Prototype"
 
 
-def generate_database():
+def generate_database(p_ar_post_orm, p_sr_post_orm):
     """
     Checks if there is a database created and inserts the base data.
+    
+    :param p_ar_post_orm: An instantiation of the Activity Recognition database
+    :param p_sr_post_orm: An instantiation of the Shared Recognition database
 
     :return:
     """
     # Checking Activity Recognition tables
-    ar_orm = ar_post_orm.ARPostORM()
+    ar_orm = p_ar_post_orm
     if len(ar_orm.get_tables()) == 0:
         print("Creating Activity Recognition database schema........")
         # We need to create tables in database
@@ -54,7 +56,7 @@ def generate_database():
         print ("Done")
 
     # Checking Shared Repository tables
-    sr_orm = sr_post_orm.SRPostORM()
+    sr_orm = p_sr_post_orm
     if len(sr_orm.get_tables()) == 0:
         print ("Creating Shared Repository database schema........")
         # We need to create tables in database

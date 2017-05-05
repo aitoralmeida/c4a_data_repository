@@ -6,6 +6,7 @@ import sys
 from logging.handlers import RotatingFileHandler
 from src.packFlask.api import app as application
 from src.packORM import database_generator
+from src.packControllers import ar_post_orm, sr_post_orm
 
 __author__ = 'Rubén Mulero'
 __copyright__ = "Copyright 2016, City4Age project"
@@ -32,7 +33,7 @@ if __name__ == '__main__':
     if not os.path.exists('./log'):
         os.makedirs('./log')
     # Check if database is created and inserts data if it is necessary
-    database_generator.generate_database()
+    database_generator.generate_database(ar_post_orm.ARPostORM(), sr_post_orm.SRPostORM())
     # Setting logging handlers
     logHandler = RotatingFileHandler('./log/info.log', maxBytes=1024 * 1024 * 100, backupCount=20)
     # set the log handler level
