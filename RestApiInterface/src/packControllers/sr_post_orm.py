@@ -8,11 +8,11 @@ calls into the SR database. This class is directly inherited from PostORM superc
 """
 
 import arrow
+import logging
 
 from src.packORM import sr_tables
 from post_orm import PostORM
 from sqlalchemy import MetaData
-
 
 __author__ = 'Rubén Mulero'
 __copyright__ = "Copyright 2016, City4Age project"
@@ -35,12 +35,32 @@ class SRPostORM(PostORM):
         """
         return sr_tables.create_tables(self.engine)
 
+    def add_user_action(self, p_user_id, p_route, p_ip, p_agent, p_data, p_status_code):
+        """
 
-###################################################################################################
-###################################################################################################
-######                              DATABASE ADDERS
-###################################################################################################
-###################################################################################################
+        Adds a new entry in the historical database to record user action performed in the API.
+
+        :param p_user_id: The Id of the registered user in the system
+        :param p_route: The route that has been executed.
+        :param p_ip: The ip of the user's machine
+        :param p_agent: Information about the client (Browner, platform, operating system and so on)
+        :param p_data: The JSON data sended by the user.
+        :param p_status_code: If the response of the command is True (200 ok) or False (400, 401, 404, 500....)
+
+        :return: True if data is stored in database
+                False if there are some problems
+        """
+        new_user_action = sr_tables.UserAction(route=p_route, data=p_data, ip=p_ip, agent=p_agent,
+                                               status_code=p_status_code,
+                                               user_in_system_id=p_user_id)
+        self.insert_one(new_user_action)
+        return self.commit()
+
+    ###################################################################################################
+    ###################################################################################################
+    ######                              DATABASE ADDERS
+    ###################################################################################################
+    ###################################################################################################
 
     def add_measure(self, p_data):
         """
@@ -49,77 +69,69 @@ class SRPostORM(PostORM):
         :return:
         """
 
-        # TODO You need to perform changes in this class and attach the data_source_type as 'sensors' for default value
-
-
-        """
-        
-        {
-            "user": "eu:c4a:user:12345",
-            "pilot": "SIN",
-            "interval_start": "2014-01-20T00:00:00.000+08:00",
-            "duration": "DAY",                                  # OPTIONALLY COULD BE INTERVAL_END
-            "payload": {
-              "WALK_STEPS": { "value": 1728 },
-              "SHOP_VISITS": { "value": 3, "data_source_type": ["sensors", "external_dataset"]},
-              "PHONECALLS_PLACED_PERC": { "value": 21.23, "data_source_type": ["external_dataset"] }
-            },
-            "extra": {
-              "pilot_specific_field": “some value”
-            }
-        }
-        
-        """
-
         res = False
 
         for data in p_data:
             try:
-                # Registering GEF value if it is not in DB
-                gef_cd_detection_variable = self._get_or_create(sr_tables.CDDetectionVariable,
-                                                                detection_variable_name=data['gef'],
-                                                                detection_variable_type='gef')
+                # insert pilot data
+                pilot = self._get_or_create(sr_tables.Pilot, code=data['pilot'].lower())
+                # Insert user in role data
+                cd_role = self._get_or_create(sr_tables.CDRole, role_name='Care recipient')
+                user_in_role = self._get_or_create(sr_tables.UserInRole, id=int(data['user'].split(':')[-1]),
+                                                   pilot_code=pilot.code,
+                                                   cd_role_id=cd_role.id)
 
-                self._get_or_create(sr_tables.CDPilotDetectionVariable, pilot_code=data['extra']['pilot'],
-                                    detection_variable_id=gef_cd_detection_variable.id)
-
-                # Creating the sub-factor and attach it to GEF
-                ges_cd_detection_variable = self._get_or_create(sr_tables.CDDetectionVariable,
-                                                                detection_variable_name=data['ges'],
-                                                                detection_variable_type='ges',
-                                                                derived_detection_variable_id=gef_cd_detection_variable.id)
-
-                # Registering the pilot to GES
-                self._get_or_create(sr_tables.CDPilotDetectionVariable, pilot_code=data['extra']['pilot'],
-                                    detection_variable_id=ges_cd_detection_variable.id)
-
-                # Adding the user information
-                user_in_role = self._get_or_create(sr_tables.UserInRole, id=data['payload']['user'],
-                                                   pilot_code=data['extra']['pilot'])
-                # Adding time interval information
-                time_interval = self._get_or_create(sr_tables.TimeInterval, interval_start=data['payload']['date'])
-
-
+                # Insert time interval data
+                if not data.get('interval_end', False) and data.get('duration', False):
+                    # nominal interval
+                    # Extracting different nominal intervals
+                    ar = arrow.get(data['interval_start'])
+                    if data['duration'] == 'DAY':
+                        # duration of 1 day
+                        interval_end = ar.replace(days=1)       # Adding +1 day
+                    elif data['duration'] == 'WK':
+                        # duration of 7 days
+                        interval_end = ar.replace(days=7)       # Adding +7 days
+                    elif data['duration'] == 'MON':
+                        # duration of 1 month
+                        interval_end = ar.replace(months=1)     # Adding +1 month
+                    else:
+                        # Defaulting, maybe there is an error in the implementation
+                        logging.warning("An error happened with the extraction of duration. Default to +1 day")
+                        interval_end = ar.replace(days=1)
+                else:
+                    # Numeric interval
+                    interval_end = data['interval_end']
+                time_interval = self._get_or_create(sr_tables.TimeInterval, interval_start=data['interval_start'],
+                                                    interval_end=interval_end)
                 # Adding measure values
+
                 for key, value in data['payload'].items():
-                    if key not in ['user', 'date']:
-                        # We are filtering user an data. Adding values.....
-                        # Adding measure information in detection variable.
-                        measure_cd_detection_variable = self._get_or_create(sr_tables.CDDetectionVariable,
-                                                                            detection_variable_name=key,
-                                                                            detection_variable_type='mea',
-                                                                            derived_detection_variable_id=ges_cd_detection_variable.id)
-                                                                            # TODO we need to put as derived from GES?
+                    # We are filtering user an data. Adding values.....
+                    # Adding measure information in detection variable.
+                    measure_cd_detection_variable = self._get_or_create(sr_tables.CDDetectionVariable,
+                                                                        detection_variable_name=key.lower())
+                    # Admin measures values
+                    variation_measure_value = self._get_or_create(sr_tables.VariationMeasureValue,
+                                                                  user_in_role_id=user_in_role.id,
+                                                                  measure_value=value.get('value', 0),
+                                                                  measure_type_id=measure_cd_detection_variable.id,
+                                                                  time_interval_id=time_interval.id,
+                                                                  data_source_type=' '.join(
+                                                                      value.get('data_source_type', ['sensors'])))
 
-                        # Addmin measures values
-                        self._get_or_create(sr_tables.VariationMeasureValue, user_in_role_id=user_in_role.id,
-                                            measure_value=value, measure_type_id=measure_cd_detection_variable.id,
-                                            time_interval_id=time_interval.id)
+                    # OPTIONALLY adding pilot data
+                    self._get_or_create(sr_tables.CDPilotDetectionVariable, pilot_code=data['pilot'].lower(),
+                                        detection_variable_id=measure_cd_detection_variable.id)
 
-                        # OPTIONALLY adding pilot data
-                        self._get_or_create(sr_tables.CDPilotDetectionVariable, pilot_code=data['extra']['pilot'],
-                                            detection_variable_id=measure_cd_detection_variable.id)
-
+                # Check if there are extra information and insert data
+                if data.get('extra', False):
+                    dictlist = []
+                    for key, value in data.get('extra', None).iteritems():
+                        # Creating a temp list of items
+                        temp = key + ':' + value
+                        dictlist.append(temp)
+                    variation_measure_value.extra_information = ' '.join(dictlist)
                 # If all works as intended we return a true state
                 res = True
             except Exception as e:
@@ -131,10 +143,11 @@ class SRPostORM(PostORM):
         self.commit()
         return res
 
+
     def add_new_user_in_system(self, p_data):
 
         """
-        This method allow to an administrative user insert a new registerd user in the system or update the credentails
+        This method allow to an administrative user insert a new registered user in the system or update the credentials
         of an already registered user_in_role in the system
 
         :param p_data The needed data to add a new user in the system
@@ -145,30 +158,31 @@ class SRPostORM(PostORM):
         user_in_role_ids = {}
         for data in p_data:
             # Creating the user information in the system
-            user_registered = self._get_or_create(sr_tables.UserRegistered, username=data['username'].lower(),
-                                                  password=data['password'])
+            user_in_system = self._get_or_create(sr_tables.UserInSystem, username=data['username'].lower(),
+                                                 password=data['password'])
             # Getting the user information to know if is an update or a new user in the system
             user = data.get('user', False)
             if user:
                 # We have already user information in the system, giving access to the user.
                 # Obtaining the user instance in the system and giving it the access.
                 user_in_role = self._get_or_create(sr_tables.UserInRole, id=int(data['user'].split(':')[-1]))
-                user_in_role.user_registered_id = user_registered.id
+                user_in_role.user_in_system_id = user_in_system.id
             else:
                 # The user is not registered in the system, so we need to create it
-                cd_role = self._get_or_create(sr_tables.CDRole, role_name=p_data['roletype'])
-                pilot = self._get_or_create(sr_tables.Pilot, code=p_data['pilot'].lower())
+                cd_role = self._get_or_create(sr_tables.CDRole, role_name=data['roletype'])
+                pilot = self._get_or_create(sr_tables.Pilot, code=data['pilot'].lower())
                 user_in_role = self._get_or_create(sr_tables.UserInRole,
-                                                   valid_from=p_data.get('valid_from', arrow.utcnow()),
-                                                   valid_to=p_data.get('valid_to', None),
+                                                   valid_from=data.get('valid_from', arrow.utcnow()),
+                                                   valid_to=data.get('valid_to', None),
                                                    cd_role_id=cd_role.id,
-                                                   user_registered_id=user_registered.id,
+                                                   user_in_system_id=user_in_system.id,
                                                    pilot_code=pilot.code)
                 # Adding City4Age ID to the return value
                 user_in_role_ids[data['username'].lower()] = user_in_role.id
 
         self.commit()
         return user_in_role_ids
+
 
     def add_new_care_receiver(self, p_data, p_user_id):
         """
@@ -183,12 +197,12 @@ class SRPostORM(PostORM):
         user_in_role_ids = {}
         for data in p_data:
             # Registering the actual user in the system
-            user_registered = self._get_or_create(sr_tables.UserRegistered, username=data['username'].lower(),
-                                                  password=data['password'])
+            user_in_system = self._get_or_create(sr_tables.UserInSystem, username=data['username'].lower(),
+                                                 password=data['password'])
             # Gettig the CD role id of care_receiver
             cd_role = self._get_or_create(sr_tables.CDRole, role_name='care_receiver')
             # Obtaining Pilot ID through the Pilot credentials
-            pilot_code = self._get_or_create(sr_tables.UserInRole, user_registered_id=p_user_id).pilot_code
+            pilot_code = self._get_or_create(sr_tables.UserInRole, user_in_system_id=p_user_id).pilot_code
             # Creating the user_in_role table for the new user in the system
             user_in_role = self._get_or_create(sr_tables.UserInRole,
                                                valid_from=data.get('valid_from', arrow.utcnow()),
@@ -196,7 +210,7 @@ class SRPostORM(PostORM):
                                                cd_role_id=cd_role.id,
                                                pilot_code=pilot_code,
                                                pilot_source_user_id=data.get('pilot_source_id', None),
-                                               user_registered_id=user_registered.id)
+                                               user_in_system_id=user_in_system.id)
             # Getting the new ID
             self.flush()
             # Adding City4Age ID to the return value
@@ -205,13 +219,36 @@ class SRPostORM(PostORM):
         # Return the dictionary containing the care_recievers IDs
         return user_in_role_ids
 
+    def add_activity(self, p_data):
+        """
+        Adds a new activity into the database by finding first if the location exists or not into DB
 
+        :param p_data:
+        :return: True if everything goes well.
+                False if there are any problem
 
-###################################################################################################
-###################################################################################################
-######                              DATABASE GETTERS
-###################################################################################################
-###################################################################################################
+        """
+        for data in p_data:
+            # Adding the new activity
+            activity = self._get_or_create(sr_tables.Activity, activity_name=data['activity_name'].lower(),
+                                           activity_description=data.get('activity_description', None),
+                                           instrumental=data.get('instrumental', False))
+            # Optionally insert location
+            if data.get('location', False) and data.get('pilot', False):
+                location = self._get_or_create(sr_tables.Location, location_name=data['location'].lower(),
+                                               indoor=data.get('indoor', True),
+                                               pilot_code=data.get('pilot', None).lower())
+                # Intermediate table Location - Activity
+                self._get_or_create(sr_tables.LocationActivityRel, location_id=location.id, activity_id=activity.id,
+                                    house_number=data.get('house_number', None))
+
+        return self.commit()
+
+    ###################################################################################################
+    ###################################################################################################
+    ######                              DATABASE GETTERS
+    ###################################################################################################
+    ###################################################################################################
 
     def get_tables(self):
         """
@@ -223,12 +260,24 @@ class SRPostORM(PostORM):
         m.reflect(self.engine, schema='city4age_sr')
         return m.tables.keys()
 
+    def get_measures(self):
+        """
+        Retrieves a list with the names of all measures in database
+        
+        :return: A lis containing the measures name in database
+        """
+        list_measures = self.session.query(sr_tables.CDDetectionVariable.detection_variable_name).all()
+        # Extracted list of actions
+        measures = []
+        for mea in list_measures:
+            measures.append(mea[0])
+        return measures
 
-###################################################################################################
-###################################################################################################
-######                              DATABASE CHECKERS
-###################################################################################################
-###################################################################################################
+    ###################################################################################################
+    ###################################################################################################
+    ######                              DATABASE CHECKERS
+    ###################################################################################################
+    ###################################################################################################
 
     def check_username(self, p_username):
         """
@@ -239,7 +288,7 @@ class SRPostORM(PostORM):
                 False if the user not exist in database
         """
         res = False
-        username = self.session.query(sr_tables.UserRegistered).filter_by(username=p_username)
+        username = self.session.query(sr_tables.UserInSystem).filter_by(username=p_username)
         if username and username.count() == 1 and username[0].username == p_username:
             # The user exist in the system
             res = True
@@ -256,8 +305,24 @@ class SRPostORM(PostORM):
                 False if the user hasn't any access in the system
         """
         res = False
-        user_in_role = self.session.query(ar_tables.UserInRole).filter_by(id=p_user_in_role)
-        if user_in_role and user_in_role.count() == 1 and user_in_role[0].user_registered_id is not None:
+        user_in_role = self.session.query(sr_tables.UserInRole).filter_by(id=p_user_in_role)
+        if user_in_role and user_in_role.count() == 1 and user_in_role[0].user_in_system_id is not None:
             # The user has already access in the system
+            res = True
+        return res
+
+    def check_user_pilot(self, p_user_id, p_pilot):
+        """
+        Giving a user and a Pilot, this method checks if the user exist and if its Pilot is equal 
+        of the given Pilot.
+
+        :param p_user_id: The user id of the system 
+        :param p_pilot: The given Pilot to compare
+        :return: 
+        """
+        res = False
+        user_in_role = self.session.query(sr_tables.UserInRole).filter_by(id=p_user_id) or None
+        if user_in_role and user_in_role.count() == 0 or user_in_role and user_in_role.count() == 1 and \
+                        user_in_role[0].id == int(p_user_id) and user_in_role[0].pilot_code == p_pilot:
             res = True
         return res

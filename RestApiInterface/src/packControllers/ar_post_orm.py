@@ -54,7 +54,7 @@ class ARPostORM(PostORM):
         """
         user_data = None
         if p_username and p_password and p_app:
-            res = self.query(ar_tables.UserRegistered, {'username': p_username})
+            res = self.query(ar_tables.UserInSystem, {'username': p_username})
             if res and res.count() == 1 and res[0].password == p_password \
                     and res[0].username == p_username:
                 logging.info("verify_user_login: Login ok.")
@@ -76,9 +76,9 @@ class ARPostORM(PostORM):
         """
         user_data = None
         if app and token:
-            res = ar_tables.UserRegistered.verify_auth_token(token, app)
+            res = ar_tables.UserInSystem.verify_auth_token(token, app)
             if res and res.get('id', False):
-                user_data = self.session.query(ar_tables.UserRegistered).get(res.get('id', 0))
+                user_data = self.session.query(ar_tables.UserInSystem).get(res.get('id', 0))
         return user_data
 
     ###################################################################################################
@@ -101,37 +101,37 @@ class ARPostORM(PostORM):
         for data in p_data:
             # Basic tables
             # We are going to check if basic data exist in DB and insert it in case that is the first time.
-            cd_action = self._get_or_create(ar_tables.CDAction, action_name=data['action'].lower())
+            cd_action = self._get_or_create(ar_tables.CDAction, action_name=data['action'].split(':')[-1].lower())
             pilot = self._get_or_create(ar_tables.Pilot, code=data['pilot'].lower())
-
-            # TODO maybe is interesting to obtain first if the user_in_role exist previously in DB and obtain it's role
-
             # Assuming the default value --> care_receiver
-            cd_role = self._get_or_create(ar_tables.CDRole, role_name='care_receiver')
+            cd_role = self._get_or_create(ar_tables.CDRole, role_name='Care recipient')
             user = self._get_or_create(ar_tables.UserInRole, id=int(data['user'].split(':')[-1]), pilot_code=pilot.code,
                                        cd_role_id=cd_role.id)
             # Adding the location
-            location_type = self._get_or_create(ar_tables.LocationType,
-                                                location_type_name=data['location'].split(':')[-2].lower())
-            location = self._get_or_create(ar_tables.Location, location_name=data['location'].split(':')[-1].lower(),
+            # location_type = self._get_or_create(ar_tables.LocationType,
+            #                                   location_type_name=data['location'].split(':')[-2].lower())
+            # location = self._get_or_create(ar_tables.Location, location_name=data['location'].split(':')[-1].lower(),
+            location = self._get_or_create(ar_tables.Location, location_name=data['location'].lower(),
                                            indoor=True,
                                            pilot_code=pilot.code)
-            location_type_rel = self._get_or_create(ar_tables.LocationLocationTypeRel, location_id=location.id,
-                                                    location_type_id=location_type.id)
+            # location_type_rel = self._get_or_create(ar_tables.LocationLocationTypeRel, location_id=location.id, location_type_id=location_type.id)
+
             # Inserting the values attached with this action into database
             for key, value in data['payload'].items():
-                if key not in ['user', 'instance_id']:
-                    metric = self._get_or_create(ar_tables.Metric, name=key)
-                    self._get_or_create(ar_tables.ActionValue, metric_id=metric.id, action_id=cd_action.id, value=value,
-                                        date=data['timestamp'])
+                metric = self._get_or_create(ar_tables.Metric, name=key)
+                self._get_or_create(ar_tables.CDActionMetric, metric_id=metric.id, cd_action_id=cd_action.id,
+                                    value=value,
+                                    date=data['timestamp'])
             # Insert a new executed action
-            executed_action = ar_tables.ExecutedAction(executed_action_date=data['timestamp'],
-                                                       instance_id=data['payload']['instance_id'],
+            executed_action = ar_tables.ExecutedAction(execution_datetime=data['timestamp'],
                                                        location_id=location.id,
                                                        cd_action_id=cd_action.id,
                                                        user_in_role_id=user.id,
-                                                       data_source_type=' '.join(data['extra'].get('data_source_type',
-                                                                                                   ['sensors'])))
+                                                       position=data['position'],
+                                                       data_source_type=' '.join(data.get('data_source_type',
+                                                                                          ['sensors'])),
+                                                       extra_information=' '.join(data.get('extra', None))
+                                                       )
             # pending insert
             self.insert_one(executed_action)
         # Whe prepared all data, now we are going to commit it into DB.
@@ -149,39 +149,23 @@ class ARPostORM(PostORM):
         for data in p_data:
             # Adding the new activity
             activity = self._get_or_create(ar_tables.Activity, activity_name=data['activity_name'].lower(),
-                                           activity_description=data.get('activity_description', None))
-            self.insert_one(activity)
-
-        """
-        # TODO use this pattern only if we decide to store more aditional data
-        for data in p_data:
-            # We are going to find if location is inside DB
-            pilot = self._get_or_create(ar_tables.Pilot, code=data['pilot'].lower())
-            # Adding the location
-            location_type = self._get_or_create(ar_tables.LocationType,
-                                                location_type_name=data['location'].split(':')[-2].lower())
-            location = self._get_or_create(ar_tables.Location, location_name=data['location'].split(':')[-1].lower(),
-                                           indoor=True, pilot_code=pilot.code)
-            location_type_rel = self._get_or_create(ar_tables.LocationLocationTypeRel, location_id=location.id,
-                                                    location_type_id=location_type.id)
-            # Adding activity
-            activity = self._get_or_create(ar_tables.Activity, activity_name=data['activity_name'].lower(),
-                                           activity_start_date=data['activity_start_date'],
-                                           activity_end_date=data['activity_end_date'],
-                                           since=data['since'])
-
-            # Adding location_activity_rel
-            self._get_or_create(ar_tables.LocationActivityRel, activity_id=activity.id, location_id=location.id,
-                                house_number=data['house_number'])
-
-        """
+                                           activity_description=data.get('activity_description', None),
+                                           instrumental=data.get('instrumental', False))
+            # Optionally insert location
+            if data.get('location', False) and data.get('pilot', False):
+                location = self._get_or_create(ar_tables.Location, location_name=data['location'].lower(),
+                                               indoor=data.get('indoor', True),
+                                               pilot_code=data.get('pilot', None).lower())
+                # Intermediate table Location - Activity
+                self._get_or_create(ar_tables.LocationActivityRel, location_id=location.id, activity_id=activity.id,
+                                    house_number=data.get('house_number', None))
 
         return self.commit()
 
     def add_new_user_in_system(self, p_data):
 
         """
-        This method allow to an administrative user insert a new registerd user in the system or update the credentails
+        This method allow to an administrative user insert a new registered user in the system or update the credentials
         of an already registered user_in_role in the system
         
         :param p_data The needed data to add a new user in the system
@@ -192,24 +176,24 @@ class ARPostORM(PostORM):
         user_in_role_ids = {}
         for data in p_data:
             # Creating the user information in the system
-            user_registered = self._get_or_create(ar_tables.UserRegistered, username=data['username'].lower(),
-                                                  password=data['password'])
+            user_in_system = self._get_or_create(ar_tables.UserInSystem, username=data['username'].lower(),
+                                                 password=data['password'])
             # Getting the user information to know if is an update or a new user in the system
             user = data.get('user', False)
             if user:
                 # We have already user information in the system, giving access to the user.
                 # Obtaining the user instance in the system and giving it the access.
                 user_in_role = self._get_or_create(ar_tables.UserInRole, id=int(data['user'].split(':')[-1]))
-                user_in_role.user_registered_id = user_registered.id
+                user_in_role.user_in_system_id = user_in_system.id
             else:
                 # The user is not registered in the system, so we need to create it
-                cd_role = self._get_or_create(ar_tables.CDRole, role_name=p_data['roletype'])
-                pilot = self._get_or_create(ar_tables.Pilot, code=p_data['pilot'].lower())
+                cd_role = self._get_or_create(ar_tables.CDRole, role_name=data['roletype'])
+                pilot = self._get_or_create(ar_tables.Pilot, code=data['pilot'].lower())
                 user_in_role = self._get_or_create(ar_tables.UserInRole,
-                                                   valid_from=p_data.get('valid_from', arrow.utcnow()),
-                                                   valid_to=p_data.get('valid_to', None),
+                                                   valid_from=data.get('valid_from', arrow.utcnow()),
+                                                   valid_to=data.get('valid_to', None),
                                                    cd_role_id=cd_role.id,
-                                                   user_registered_id=user_registered.id,
+                                                   user_in_system_id=user_in_system.id,
                                                    pilot_code=pilot.code)
                 # Adding City4Age ID to the return value
                 user_in_role_ids[data['username'].lower()] = user_in_role.id
@@ -230,12 +214,12 @@ class ARPostORM(PostORM):
         user_in_role_ids = {}
         for data in p_data:
             # Registering the actual user in the system
-            user_registered = self._get_or_create(ar_tables.UserRegistered, username=data['username'].lower(),
-                                                  password=data['password'])
+            user_in_system = self._get_or_create(ar_tables.UserInSystem, username=data['username'].lower(),
+                                                 password=data['password'])
             # Gettig the CD role id of care_receiver
-            cd_role = self._get_or_create(ar_tables.CDRole, role_name='care_receiver')
+            cd_role = self._get_or_create(ar_tables.CDRole, role_name='Care recipient')
             # Obtaining Pilot ID through the Pilot credentials
-            pilot_code = self._get_or_create(ar_tables.UserInRole, user_registered_id=p_user_id).pilot_code
+            pilot_code = self._get_or_create(ar_tables.UserInRole, user_in_system_id=p_user_id).pilot_code
             # Creating the user_in_role table for the new user in the system
             user_in_role = self._get_or_create(ar_tables.UserInRole,
                                                valid_from=data.get('valid_from', arrow.utcnow()),
@@ -243,7 +227,7 @@ class ARPostORM(PostORM):
                                                cd_role_id=cd_role.id,
                                                pilot_code=pilot_code,
                                                pilot_source_user_id=data.get('pilot_source_id', None),
-                                               user_registered_id=user_registered.id)
+                                               user_in_system_id=user_in_system.id)
             # Getting the new ID
             self.flush()
             # Adding City4Age ID to the return value
@@ -270,14 +254,17 @@ class ARPostORM(PostORM):
             for location in data['locations']:
                 # Insert EAM location REL and locationType
                 location = self._get_or_create(ar_tables.Location, location_name=location.lower())
-                # Getting the location type or creating a default one
-                location_type = self.session.query(ar_tables.LocationLocationTypeRel).filter_by(location_id=location.id)
-                if location_type.count() == 0:
-                    # Our location doesn't have any kind of location type, so we will assign one
-                    location_type = self._get_or_create(ar_tables.LocationType,
-                                                        location_type_name='eam')
-                    location_type_rel = self._get_or_create(ar_tables.LocationLocationTypeRel, location_id=location.id,
-                                                            location_type_id=location_type.id)
+
+
+                # # Getting the location type or creating a default one
+                # location_type = self.session.query(ar_tables.LocationLocationTypeRel).filter_by(location_id=location.id)
+                # if location_type.count() == 0:
+                #     # Our location doesn't have any kind of location type, so we will assign one
+                #     location_type = self._get_or_create(ar_tables.LocationType,
+                #                                         location_type_name='eam')
+                #     location_type_rel = self._get_or_create(ar_tables.LocationLocationTypeRel, location_id=location.id,
+                #                                             location_type_id=location_type.id)
+
                 # Adding the relationship to EAM
                 self._get_or_create(ar_tables.EAMLocationRel, location_id=location.id, eam_id=eam.id)
             # Insert the time ranges
@@ -291,9 +278,9 @@ class ARPostORM(PostORM):
             # Insert the action ranges
             for action in data['actions']:
                 # Insert the actual action
-                action = self._get_or_create(ar_tables.Action, action_name=action.lower())
+                action = self._get_or_create(ar_tables.CDAction, action_name=action.lower())
                 # Insert the m2m table
-                self._get_or_create(ar_tables.EAMActionRel, action_id=action.id, eam_id=eam.id)
+                self._get_or_create(ar_tables.EAMCDActionRel, cd_action_id=action.id, eam_id=eam.id)
 
         return self.commit()
 
@@ -314,7 +301,7 @@ class ARPostORM(PostORM):
         """
         new_user_action = ar_tables.UserAction(route=p_route, data=p_data, ip=p_ip, agent=p_agent,
                                                status_code=p_status_code,
-                                               user_registered_id=p_user_id)
+                                               user_in_system_id=p_user_id)
         self.insert_one(new_user_action)
         return self.commit()
 
@@ -353,17 +340,46 @@ class ARPostORM(PostORM):
         """
         Giving user id, this method retrieves the user role in the system.
 
-        :param p_user_id: The user_registered id in the system
+        :param p_user_id: The user_in_system id in the system
         :return: The name of the role attached to this user
         """
         res = None
-        # TODO this method would give error if there isnt' data in database, change the logis
-        user_in_role = self.session.query(ar_tables.UserInRole).filter_by(user_registered_id=p_user_id)[0].cd_role_id \
+
+        # TODO think of using abbreviations
+
+        user_in_role = self.session.query(ar_tables.UserInRole).filter_by(user_in_system_id=p_user_id)[0].cd_role_id \
                        or None
         if user_in_role is not None:
             # We obtain the role name based on FK key obtained in the above filter
             res = self.session.query(ar_tables.CDRole).get(user_in_role).role_name or None
         return res
+
+    def get_users_roles(self):
+        """
+        Thi method recovers a list of different roles from database
+        
+        :return: A list containing the different user roles in the system
+        """
+        list_of_roles = self.session.query(ar_tables.CDRole.role_name).all()
+        # Extracted list of actions
+        roles = []
+        for role in list_of_roles:
+            roles.append(role[0])
+        return roles
+
+    def get_action_name(self):
+        """
+        This method recovers all names of stored actions from database
+        
+        :return: A list containing the names of the CDAction table
+        """
+
+        list_of_actions = self.session.query(ar_tables.CDAction.action_name).all()
+        # Extracted list of actions
+        actions = []
+        for action in list_of_actions:
+            actions.append(action[0])
+        return actions
 
     # TODO find a solution to this workaround
     def get_table_object_by_name(self, p_table_name):
@@ -383,7 +399,7 @@ class ARPostORM(PostORM):
             'pilot': ar_tables.Pilot,
             'simple_location': ar_tables.SimpleLocation,
             'user_in_role': ar_tables.UserInRole,
-            'user_registered': ar_tables.UserRegistered,
+            'user_in_system': ar_tables.UserInSystem,
             'user_action': ar_tables.UserAction,
             'metric': ar_tables.Metric,
             'action_value': ar_tables.ActionValue,
@@ -399,17 +415,32 @@ class ARPostORM(PostORM):
 
     def check_user_in_role(self, p_user_id):
         """
-        Giving user id, this method checks if the user exist or no in the system.
+        Giving user id, this method checks if the user exist or not in the system.
 
         :param p_user_id: The user_in_role id in the system
         :return: True if the user_in_role exist in the system
                 False if it not exist in the system
         """
         res = False
-        # TODO this method would give error if there isnt' data in database, change the logis
         user_in_role = self.session.query(ar_tables.UserInRole).filter_by(id=p_user_id) or None
         if user_in_role and user_in_role.count() == 1 and user_in_role[0].id == p_user_id:
             # The user exist in the system
+            res = True
+        return res
+
+    def check_user_pilot(self, p_user_id, p_pilot):
+        """
+        Giving a user and a Pilot, this method checks if the user exist and if its Pilot is equal 
+        of the given Pilot.
+        
+        :param p_user_id: The user id of the system 
+        :param p_pilot: The given Pilot to compare
+        :return: 
+        """
+        res = False
+        user_in_role = self.session.query(ar_tables.UserInRole).filter_by(id=p_user_id) or None
+        if user_in_role and user_in_role.count() == 0 or user_in_role and user_in_role.count() == 1 and \
+                        user_in_role[0].id == int(p_user_id) and user_in_role[0].pilot_code == p_pilot:
             res = True
         return res
 
@@ -422,7 +453,7 @@ class ARPostORM(PostORM):
                 False if the user do not exist in database
         """
         res = False
-        username = self.session.query(ar_tables.UserRegistered).filter_by(username=p_username)
+        username = self.session.query(ar_tables.UserInSystem).filter_by(username=p_username)
         if username and username.count() == 1 and username[0].username == p_username:
             # The user exist in the system
             res = True
@@ -440,7 +471,7 @@ class ARPostORM(PostORM):
         """
         res = False
         user_in_role = self.session.query(ar_tables.UserInRole).filter_by(id=p_user_in_role)
-        if user_in_role and user_in_role.count() == 1 and user_in_role[0].user_registered_id is not None:
+        if user_in_role and user_in_role.count() == 1 and user_in_role[0].user_in_system_id is not None:
             # The user has already access in the system
             res = True
         return res
@@ -469,7 +500,7 @@ class ARPostORM(PostORM):
                 False if the action doesn't exist in database
         """
         res = False
-        action = self.session.query(ar_tables.Action).filter_by(action_name=p_action_name)
+        action = self.session.query(ar_tables.CDAction).filter_by(action_name=p_action_name)
         if action and action.count() == 1:
             res = True
         return res

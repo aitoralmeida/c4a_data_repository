@@ -77,7 +77,7 @@ class Utilities(object):
         return api_good_version
 
     @staticmethod
-    def check_add_action_data(p_data):
+    def check_add_action_data(p_database, p_data):
         """
         Check if data is ok and if the not nullable values are filled.
 
@@ -98,7 +98,7 @@ class Utilities(object):
                     "type": "string",
                     "minLength": 3,
                     "maxLength": 50,
-                    "pattern": "^eu:c4a:[a-z,A-Z]{3,15}_[a-z,A-Z]{3,15}$",
+                    "pattern": "^eu:c4a:[a-z,A-Z]{3,15}_[a-z,A-Z]{2,15}$",
                 },
                 "user": {
                     "description": "The user in role who performs the registered action",
@@ -138,54 +138,66 @@ class Utilities(object):
                     "maxLength": 45
                 },
                 "payload": {
+                    "description": "In this field there are send the optional parameters of the LEA",
                     "type": "object",
-                    "properties": {
-                        "instance_id": {
-                            "description": "an ID required to associate correlated LEA records, such as 'start-stop' "
-                                           "LEA instances",
-                            "type": "string",
-                            "minLength": 1,
-                            "maxLength": 4
-                        }
-                    },
-                    "required": ["instance_id"],
-                    "additionalProperties": False
+                    "additionalProperties": True
                 },
+
+                "data_source_type": {
+                    "description": "how the action has been decided or imported",
+                    "type": "array",
+                    "uniqueItems": True,
+                    "items": {
+                        "type": "string",
+                        "enum": [
+                            "sensors",
+                            "city_dataset",
+                            "external_dataset",
+                            "manual_input",
+                        ],
+                    },
+                },
+
                 "extra": {
                     "description": "Additional information given by the Pilot in the LEA",
                     "type": "object",
-                    "properties": {
-                        "data_source_type": {
-                            "description": "how the action has been decided or imported",
-                            "type": "array",
-                            "uniqueItems": True,
-                            "items": {
-                                "type": "string",
-                                "enum": [
-                                    "sensors",
-                                    "city_dataset",
-                                    "external_dataset",
-                                    "manual_input",
-                                ],
-                            },
-                        },
-                    },
-                    "additionalProperties": False,
+                    "additionalProperties": True,
                 },
             },
-            "required": ["action", "user", "pilot", "location", "position", "timestamp", "payload", "extra"],
+            "required": ["action", "user", "pilot", "location", "position", "timestamp", "payload", "data_source_type"],
             "additionalProperties": False,
         }
 
-        # TODO you need to validate if the action is valid or not againts the "listed" actions in DB
-
         try:
+            # Obtaining the list of action from database
+            list_of_actions = p_database.get_action_name()
+            # Extracting actions from the two level lists
+            # checking data
             if type(p_data) is list:
                 # We have a list of dicts
                 for data in p_data:
                     validate(data, schema, format_checker=FormatChecker())
+                    # We are going to validate if inserted actions are OK
+                    if not data['action'].split(':')[-1].lower() in list_of_actions:
+                        # Raising
+                        logging.error("The action inserted doesn't exist in the system: %s" % data['action'])
+                        raise ValidationError("The action inserted doesn't exist in the system: %s" % data['action'])
+                    elif not Utilities.validate_user_pilot(p_database, data['user'].split(':')[-1].lower(),
+                                                           data['pilot'].lower()):
+                        logging.error("The entered user pilot is incorrect: %s", data['user'])
+                        raise ValidationError("The entered user pilot is incorrect: %s", data['user'])
             else:
                 validate(p_data, schema, format_checker=FormatChecker())
+                # We are going to validate if inserted actions are OK
+                if not p_data['action'].split(':')[-1].lower() in list_of_actions:
+                    # Raising
+                    logging.error("The action inserted doesn't exist in the system: %s" % p_data['action'])
+                    raise ValidationError("The action inserted doesn't exist in the system: %s" % p_data['action'])
+                elif not Utilities.validate_user_pilot(p_database, p_data['user'].split(':')[-1].lower(),
+                                                       p_data['pilot'].lower()):
+                    logging.error("The entered user pilot is incorrect: %s", p_data['user'])
+                    raise ValidationError("The entered user pilot is incorrect: %s", p_data['user'])
+
             res = True
         except ValidationError as e:
             logging.error("The schema entered by the user is invalid")
@@ -330,15 +342,7 @@ class Utilities(object):
                     "type": "string",
                     "minLength": 3,
                     "maxLength": 20,
-                    "enum": [
-                        "care_giver",
-                        "care_receiver",
-                        "geriatrician",
-                        "municipality_representative",
-                        "researcher",
-                        "application_developer",
-                        "administrator"
-                    ]
+                    "enum": Utilities.get_user_roles(p_database)
                 },
                 "pilot": {
                     "description": "the name of the city where is the location",
@@ -374,6 +378,9 @@ class Utilities(object):
             "additionalProperties": False
         }
 
+
+        # Todo think about using a filtered list of active users to avoid for structures
+
         try:
             if type(p_data) is list:
                 list_of_usernames = []
@@ -391,7 +398,7 @@ class Utilities(object):
                                               "in the system or it is not exist: %s" % data['username'])
                         raise ValidationError("The user entered has already a username and password " \
                                               "in the system or it is not exist: %s" % data['username'])
-                    # Appending the usernames
+                    # Appending the username
                     list_of_usernames.append(data['username'])
                 # We are going to search for duplicated users in the json list sent by the user
                 duplicated = [k for k, v in Counter(list_of_usernames).items() if v > 1]
@@ -556,7 +563,7 @@ class Utilities(object):
         return res, msg
 
     @staticmethod
-    def check_add_measure_data(p_data):
+    def check_add_measure_data(p_database, p_data):
         """
 
         Check if add_measure data is entered ok with required values
@@ -662,15 +669,39 @@ class Utilities(object):
             ]
         }
 
-        # TODO you need to check if the measures exist or not in DB
-
         try:
+            # Getting the list of measures
+            list_of_measures = Utilities.get_measures(p_database)
+            # Checking data
             if type(p_data) is list:
                 # We have a list of dicts
                 for data in p_data:
                     validate(data, schema, format_checker=FormatChecker())
+                    # Validating measures
+                    for payload in data['payload']:
+                        if payload.lower() not in list_of_measures:
+                            # This measure doesn't exist in database
+                            logging.error("The entered measure doesn't exist: %s", payload)
+                            raise ValidationError("The entered measure doesn't exist: %s", payload)
+                    # Validating the user with its pilot
+                    if not Utilities.validate_user_pilot(p_database, data['user'].split(':')[-1].lower(),
+                                                           data['pilot'].lower()):
+                        logging.error("The entered user pilot is incorrect: %s", data['user'])
+                        raise ValidationError("The entered user pilot is incorrect: %s", data['user'])
             else:
                 validate(p_data, schema, format_checker=FormatChecker())
+                # Validating measures
+                for payload in p_data['payload']:
+                    if payload.lower() not in list_of_measures:
+                        # This measure doesn't exist in database
+                        logging.error("The entered measure doesn't exist: %s", payload)
+                        raise ValidationError("The entered measure doesn't exist: %s", payload)
+                # Validating the user with its pilot
+                if not Utilities.validate_user_pilot(p_database, p_data['user'].split(':')[-1].lower(),
+                                                       p_data['pilot'].lower()):
+                    logging.error("The entered user pilot is incorrect: %s", p_data['user'])
+                    raise ValidationError("The entered user pilot is incorrect: %s", p_data['user'])
+
             res = True
         except ValidationError as e:
             logging.error("The schema entered by the user is invalid")
@@ -914,6 +945,21 @@ class Utilities(object):
         return res
 
     @staticmethod
+    def validate_user_pilot(p_database, p_user, p_pilot):
+        """
+        Giving a User and Pilot, this method checks if the users exist in database and if exsit, it checks its pilot 
+        code
+                
+        :param p_database: The database instance 
+        :param p_user: The user in the system
+        :param p_pilot: The pilot 
+        :return: True if the user doens't exist of everything is ok
+                False if something is not well.
+        """
+
+        return p_database.check_user_pilot(p_user, p_pilot)
+
+    @staticmethod
     def validate_eam(p_database, p_one_data):
         """
         This method checks if the given element of a EAM has valid information.
@@ -981,6 +1027,30 @@ class Utilities(object):
             activity_name = p_one_data['activity_name'].lower() or None
             res = p_database.check_activity(activity_name)
         return res
+
+    @staticmethod
+    def get_measures(p_database):
+        """
+        This method recovers all 
+        
+        :param p_databasem: Giving a database, this method recovers all instances of measure data
+        :return: A list of measures
+        """
+
+        list_of_measures = p_database.get_measures()
+        return list_of_measures
+
+    @staticmethod
+    def get_user_roles(p_database):
+        """
+        This method recovers database user roles to help in the JSON schema check structure 
+        
+        
+        :param p_database: The database connector 
+        :return: A list of different roles in the system
+        """
+        list_of_roles = p_database.get_users_roles()
+        return list_of_roles
 
 
     @staticmethod

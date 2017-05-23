@@ -196,7 +196,7 @@ class FrailtyStatusTimeline(Base):
     frailty_notice = Column(String(200))
 
     # FK
-    changed_by = Column(Integer, ForeignKey('user_in_role.id'))
+    changed_by = Column(Integer, ForeignKey('user_in_role.id'), nullable=False)
     frailty_status = Column(String(9), ForeignKey('cd_frailty_status.frailty_status'), nullable=False)
 
     # Relationships
@@ -215,7 +215,7 @@ class CDPilotDetectionVariable(Base):
     detection_variable_id = Column(Integer, ForeignKey('cd_detection_variable.id'), primary_key=True)
 
     # Data
-    detection_variable_description_formula = Column(String(255), nullable=False)
+    detection_variable_description_formula = Column(String(255))
 
     # Relationship with other Tables
     cd_detection_variable = relationship('CDDetectionVariable')
@@ -264,13 +264,13 @@ class ExecutedAction(Base):
     # Creating the columns
     id = Column(Integer, server_default=executed_action_id_seq.next_value(), primary_key=True)
     # Asociated information
-    date = Column(ArrowType(timezone=True), default=arrow.utcnow())
-    executed_action_date = Column(ArrowType(timezone=True))
+    acquisition_datetime = Column(ArrowType(timezone=True), default=arrow.utcnow())
+    execution_datetime = Column(ArrowType(timezone=True))
     rating = Column(Integer)
     sensor_id = Column(Integer)
-    # TODO position?
+    position = Column(String(255))
+    # TODO and this table?¿ Maybe use the metric table or AR?
     payload = Column(String(50))
-
     extra_information = Column(String(1000))  # An "array" containing extra information
 
     # FK keys
@@ -297,6 +297,34 @@ class LocationLocationTypeRel(Base):
     location_type = relationship('LocationType')
 
 
+class LocationCDLocationTypeRel(Base):
+    """
+    Location < -- > LocationType
+    """
+
+    __tablename__ = 'location_cd_location_type_rel'
+
+    location_id = Column(Integer, ForeignKey('location.id'), primary_key=True)
+    location_type_id = Column(Integer, ForeignKey('cd_location_type.id'), primary_key=True)
+    parent_location_type_id = Column(Integer, ForeignKey('cd_location_type.id'))
+
+    # Relationship
+    location = relationship('Location')
+
+
+class LocationActivityRel(Base):
+    """
+    Activity < -- > Location
+    """
+
+    __tablename__ = 'location_activity_rel'
+
+    location_id = Column(Integer, ForeignKey('location.id'), primary_key=True)
+    activity_id = Column(Integer, ForeignKey('activity.id'), primary_key=True)
+    house_number = Column(Integer)
+    activity = relationship("Activity")
+
+
 """
 Base tables. Here is defined the basic tables.
 """
@@ -315,8 +343,8 @@ class CDRole(Base):
     # Creating the columns
     id = Column(Integer, server_default=cd_role_seq.next_value(), primary_key=True)
     role_name = Column(String(50), nullable=False, unique=True)
-    role_abbreviation = Column(String(3), nullable=False)
-    role_description = Column(String(350), nullable=False)
+    role_abbreviation = Column(String(3))
+    role_description = Column(String(350), nullable=True)
     valid_from = Column(ArrowType(timezone=True), default=arrow.utcnow())
     valid_to = Column(ArrowType(timezone=True), nullable=True)
 
@@ -324,7 +352,7 @@ class CDRole(Base):
     user_in_role = relationship('UserInRole')
 
     # Many2One
-    stakeholder_abbreviation = Column(String(3), ForeignKey('stakeholder.stakeholder_abbreviation'))
+    stakeholder_abbreviation = Column(String(3), ForeignKey('stakeholder.abbreviation'))
 
     # M2M Relationship
     assessment_audience_role = relationship('AssessmentAudienceRole')
@@ -343,10 +371,10 @@ class Stakeholder(Base):
 
     __tablename__ = 'stakeholder'
 
-    stakeholder_abbreviation = Column(String(3), primary_key=True)
-    stakeholder_name = Column(String(100))
+    abbreviation = Column(String(3), primary_key=True)
+    stakeholder_name = Column(String(100), nullable=False)
     stakeholder_description = Column(String(250))
-    valid_from = Column(ArrowType(timezone=True))
+    valid_from = Column(ArrowType(timezone=True), default=arrow.utcnow())
     valid_to = Column(ArrowType(timezone=True))
 
     # One2Many relationship
@@ -369,10 +397,9 @@ class UserInRole(Base):
     pilot_source_user_id = Column(String(20))
 
     # Many2One
-    user_registered_id = Column(Integer, ForeignKey('user_registered.id'))
-    # TODO think to configure database to add a "default" cd_role"
+    user_in_system_id = Column(Integer, ForeignKey('user_in_system.id'))
     cd_role_id = Column(Integer, ForeignKey('cd_role.id'))
-    pilot_code = Column(String(50), ForeignKey('pilot.code'))
+    pilot_code = Column(String(4), ForeignKey('pilot.code'))
 
     # M2M relationships
     action = relationship("ExecutedAction", cascade="all, delete-orphan")
@@ -398,16 +425,16 @@ class UserInRole(Base):
         return "<User(id='%s', valid_from='%s'. valid_to='%s')>" % (self.id, self.valid_from, self.valid_to)
 
 
-class UserRegistered(Base):
+class UserInSystem(Base):
     """
     Base data of the users
     """
-    __tablename__ = 'user_registered'
+    __tablename__ = 'user_in_system'
 
     # Generating the Sequence
-    user_registered_seq = Sequence('user_registered_seq', metadata=Base.metadata)
+    user_in_system_seq = Sequence('user_in_system_seq', metadata=Base.metadata)
     # Creating the columns
-    id = Column(Integer, server_default=user_registered_seq.next_value(), primary_key=True)
+    id = Column(Integer, server_default=user_in_system_seq.next_value(), primary_key=True)
     username = Column(String(25), nullable=False, unique=True)
     password = Column(Password(rounds=13), nullable=False)
     display_name = Column(String(100))
@@ -530,7 +557,7 @@ class Location(Base):
     pilot_code = Column(String(4), ForeignKey('pilot.code'), nullable=True)
 
     # many2many
-    # activity = relationship("LocationActivityRel") # TODO ask for intermediate TABLE multiple locations
+    activity = relationship("LocationActivityRel")
     location_type = relationship("LocationLocationTypeRel")
 
     def __repr__(self):
@@ -549,6 +576,26 @@ class LocationType(Base):
     # Creating the columns
     id = Column(Integer, server_default=location_type_id_seq.next_value(), primary_key=True)
     location_type_name = Column(String(50), unique=True)
+
+
+class CDLocationType(Base):
+    """
+    Each location has a location type to have a logical order in the system
+    """
+
+    __tablename__ = 'cd_location_type'
+
+    # Generating the Sequence
+    location_type_id_seq = Sequence('location_type_id_seq', metadata=Base.metadata)
+    # Creating the columns
+    id = Column(Integer, server_default=location_type_id_seq.next_value(), primary_key=True)
+    location_type_name = Column(String(50), unique=True)
+
+    # one2many relations (Multiple)
+    location_location_type_rel = relationship("LocationCDLocationTypeRel",
+                                              foreign_keys='LocationCDLocationTypeRel.location_type_id')
+    parent_location_location_type_rel = relationship("LocationCDLocationTypeRel",
+                                                     foreign_keys='LocationCDLocationTypeRel.parent_location_type_id')
 
 
 class Activity(Base):
@@ -570,10 +617,12 @@ class Activity(Base):
     activity_description = Column(String(200))
     creation_date = Column(ArrowType(timezone=True), default=arrow.utcnow())
     instrumental = Column(Boolean, default=False, nullable=False)
+    data_source_type = Column(String(200))
 
+    # TODO for the moment this two field will be nullable, in order to insert new activities.
     # FK
-    user_in_role_id = Column(Integer, ForeignKey('user_in_role.id'), nullable=False)
-    time_interval_id = Column(Integer, ForeignKey('time_interval.id'), nullable=False)
+    user_in_role_id = Column(Integer, ForeignKey('user_in_role.id'), nullable=True)
+    time_interval_id = Column(Integer, ForeignKey('time_interval.id'), nullable=True)
 
     # One2one
     eam = relationship("EAM", uselist=False, back_populates="activity")
@@ -587,8 +636,7 @@ class Activity(Base):
     variation_measure_value = relationship('VariationMeasureValue')
 
     def __repr__(self):
-        return "<Activity(activity_name='%s', activity_start_date='%s', activity_end_date='%s', creation_date='%s')>" \
-               % (self.activity_name, self.activity_start_date, self.activity_end_date, self.creation_date)
+        return "<Activity(activity_name='%s')>" % self.activity_name
 
 
 class CDAction(Base):
@@ -601,7 +649,7 @@ class CDAction(Base):
     cd_action_id_seq = Sequence('cd_action_id_seq', metadata=Base.metadata)
     # Creating the columns
     id = Column(Integer, server_default=cd_action_id_seq.next_value(), primary_key=True)
-    action_name = Column(String(50))
+    action_name = Column(String(50), unique=True)
     action_description = Column(String(250))
 
     # one2many
@@ -702,7 +750,7 @@ class VariationMeasureValue(Base):
     variation_measure_value_seq = Sequence('variation_measure_value_seq', metadata=Base.metadata)
     # Creating the columns
     id = Column(Integer, server_default=variation_measure_value_seq.next_value(), primary_key=True)
-    measure_value = Column(Numeric(precision=30, scale=10))
+    measure_value = Column(Numeric(precision=30, scale=10), nullable=False)
 
     data_source_type = Column(String(1000))
     extra_information = Column(String(1000))
@@ -969,6 +1017,7 @@ class CDDetectionVariableType(Base):
                 self.detection_variable_type_description)
 
 
+# TODO ask to change the name of this table to InterBehaviour or delete it
 # In AR database this class is called InterBehaviour
 class InterActivityBehaviourVariation(Base):
     """
@@ -1012,4 +1061,4 @@ class UserAction(Base):
     date = Column(ArrowType(timezone=True), default=arrow.utcnow())
     status_code = Column(Integer)
     # One2Many
-    user_registered_id = Column(Integer, ForeignKey('user_registered.id'))
+    user_in_system_id = Column(Integer, ForeignKey('user_in_system.id'))

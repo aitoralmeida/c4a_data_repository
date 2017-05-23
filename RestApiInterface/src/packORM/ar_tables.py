@@ -173,11 +173,10 @@ class ExecutedAction(Base):
     # Creating the columns
     id = Column(Integer, server_default=executed_action_id_seq.next_value(), primary_key=True)
     # Associated information
-    date = Column(ArrowType(timezone=True), default=arrow.utcnow())
-    executed_action_date = Column(ArrowType(timezone=True))
+    acquisition_datetime = Column(ArrowType(timezone=True), default=arrow.utcnow())
+    execution_datetime = Column(ArrowType(timezone=True))
     rating = Column(Numeric(precision=5, scale=2))
     sensor_id = Column(Integer)
-    # TODO look if position goes here
     position = Column(String(255))
     data_source_type = Column(String(200))      # An "array" containing the data source
     extra_information = Column(String(1000))    # An "array" containing extra information
@@ -243,16 +242,19 @@ class LocationActivityRel(Base):
     activity = relationship("Activity")
 
 
-class LocationLocationTypeRel(Base):
+class LocationCDLocationTypeRel(Base):
     """
     Location < -- > LocationType
     """
 
-    __tablename__ = 'location_location_type_rel'
+    __tablename__ = 'location_cd_location_type_rel'
 
     location_id = Column(Integer, ForeignKey('location.id'), primary_key=True)
-    location_type_id = Column(Integer, ForeignKey('location_type.id'), primary_key=True)
-    location_type = relationship('LocationType')
+    location_type_id = Column(Integer, ForeignKey('cd_location_type.id'), primary_key=True)
+    parent_location_type_id = Column(Integer, ForeignKey('cd_location_type.id'))
+
+    # Relationship
+    location = relationship('Location')
 
 
 class CDActionMetric(Base):
@@ -266,8 +268,9 @@ class CDActionMetric(Base):
     cd_action_id = Column(Integer, ForeignKey('cd_action.id'), primary_key=True)
     #date = Column(TIMESTAMP, primary_key=True)
     date = Column(ArrowType(timezone=True), primary_key=True)
-    value = Column(String(10), nullable=False)
+    value = Column(String(50), nullable=False)
     cd_action = relationship('CDAction')
+
 
 # Tables
 class UserInRole(Base):
@@ -286,7 +289,7 @@ class UserInRole(Base):
     pilot_source_user_id = Column(Integer, unique=False)
 
     # one2many
-    user_registered_id = Column(Integer, ForeignKey('user_registered.id'))
+    user_in_system_id = Column(Integer, ForeignKey('user_in_system.id'))
     cd_role_id = Column(Integer, ForeignKey('cd_role.id'))
     pilot_code = Column(String(4), ForeignKey('pilot.code'))
 
@@ -297,16 +300,16 @@ class UserInRole(Base):
         return "<UserInRole(id='%s', valid_from='%s'. valid_to='%s')>" % (self.id, self.valid_from, self.valid_to)
 
 
-class UserRegistered(Base):
+class UserInSystem(Base):
     """
     Base data of the users
     """
-    __tablename__ = 'user_registered'
+    __tablename__ = 'user_in_system'
 
     # Generating the Sequence
-    user_registered_seq = Sequence('user_registered_seq', metadata=Base.metadata)
+    user_in_system_seq = Sequence('user_in_system_seq', metadata=Base.metadata)
     # Creating the columns
-    id = Column(Integer, server_default=user_registered_seq.next_value(), primary_key=True)
+    id = Column(Integer, server_default=user_in_system_seq.next_value(), primary_key=True)
     username = Column(String(25), nullable=False, unique=True)
     password = Column(Password(rounds=13), nullable=False)
     display_name = Column(String(100))
@@ -317,7 +320,7 @@ class UserRegistered(Base):
     user_in_role = relationship('UserInRole')
 
     def __repr__(self):
-        return "<UserRegistered(username='%s', password='%s', created_date='%s')>" % (
+        return "<UserInSystem(username='%s', password='%s', created_date='%s')>" % (
             self.username, self.password, self.created_date)
 
     def to_json(self):
@@ -373,7 +376,7 @@ class CDAction(Base):
     cd_action_id_seq = Sequence('cd_action_id_seq', metadata=Base.metadata)
     # Creating the columns
     id = Column(Integer, server_default=cd_action_id_seq.next_value(), primary_key=True)
-    action_name = Column(String(50))
+    action_name = Column(String(50), unique=True)
     action_description = Column(String(250))
 
     def __repr__(self):
@@ -399,25 +402,30 @@ class Location(Base):
 
     # many2many
     activity = relationship("LocationActivityRel")
-    location_type = relationship("LocationLocationTypeRel")
 
     def __repr__(self):
         return "<Location(location_name='%s', indoor='%s', urn='%s', latitude='%s', longitude='%s')>" % (
             self.location_name, self.indoor, self.urn, self.latitude, self.longitude)
 
 
-class LocationType(Base):
+class CDLocationType(Base):
     """
     Each location has a location type to have a logical order in the system
     """
 
-    __tablename__ = 'location_type'
+    __tablename__ = 'cd_location_type'
 
     # Generating the Sequence
     location_type_id_seq = Sequence('location_type_id_seq', metadata=Base.metadata)
     # Creating the columns
     id = Column(Integer, server_default=location_type_id_seq.next_value(), primary_key=True)
     location_type_name = Column(String(50), unique=True)
+
+    # one2many relations (Multiple)
+    location_location_type_rel = relationship("LocationCDLocationTypeRel",
+                                              foreign_keys='LocationCDLocationTypeRel.location_type_id')
+    parent_location_location_type_rel = relationship("LocationCDLocationTypeRel",
+                                                     foreign_keys='LocationCDLocationTypeRel.parent_location_type_id')
 
 
 class Activity(Base):
@@ -439,6 +447,7 @@ class Activity(Base):
     activity_description = Column(String(200))
     creation_date = Column(ArrowType(timezone=True), default=arrow.utcnow())
     instrumental = Column(Boolean, default=False, nullable=False)
+    data_source_type = Column(String(200))
 
     # One2one
     eam = relationship("EAM", uselist=False, back_populates="activity")
@@ -470,6 +479,30 @@ class Pilot(Base):
                                                                               self.population_size)
 
 
+class Stakeholder(Base):
+    """
+    Each role can be a part of a stakeholder type, this class allows to create different kind of
+    user groups.
+    """
+
+    __tablename__ = 'stakeholder'
+
+    abbreviation = Column(String(3), primary_key=True)
+    stakeholder_name = Column(String(100), nullable=False)
+    stakeholder_description = Column(String(250))
+    valid_from = Column(ArrowType(timezone=True), default=arrow.utcnow())
+    valid_to = Column(ArrowType(timezone=True), nullable=True)
+
+    # One2many relationship
+    cd_role = relationship('CDRole')
+
+    def __rep__(self):
+        return "<CDRole(abbreviation='%s', stakeholder_name='%s', stakeholder_description='%s', " \
+               "valid_from='%s', valid_to='%s')>" % (self.abbreviation, self.stakeholder_name,
+                                                     self.stakeholder_description,
+                                                     self.valid_from, self.valid_to)
+
+
 class CDRole(Base):
     """
     This table stores all data related to the roles for users in the system. The idea is to stablish a role-access
@@ -483,10 +516,13 @@ class CDRole(Base):
     # Creating the columns
     id = Column(Integer, server_default=cd_role_seq.next_value(), primary_key=True)
     role_name = Column(String(50), nullable=False, unique=True)
-    role_abbreviation = Column(String(3), nullable=False)
-    role_description = Column(String(350), nullable=False)
+    role_abbreviation = Column(String(3))
+    role_description = Column(String(350), nullable=True)
     valid_from = Column(ArrowType(timezone=True), default=arrow.utcnow())
     valid_to = Column(ArrowType(timezone=True), nullable=True)
+
+    # FK's
+    stakeholder_abbreviation = Column(String(3), ForeignKey('stakeholder.abbreviation'))
 
     # one2many
     user_in_role = relationship('UserInRole')
@@ -583,7 +619,7 @@ class UserAction(Base):
     date = Column(ArrowType(timezone=True), default=arrow.utcnow())
     status_code = Column(Integer)
     # One2Many
-    user_registered_id = Column(Integer, ForeignKey('user_registered.id'))
+    user_in_system_id = Column(Integer, ForeignKey('user_in_system.id'))
 
 
 class Metric(Base):
@@ -599,7 +635,7 @@ class Metric(Base):
     metric_seq = Sequence('metric_seq', metadata=Base.metadata)
     # Creating the columns
     id = Column(Integer, server_default=metric_seq.next_value(), primary_key=True)
-    name = Column(String(10))
+    name = Column(String(50))
     description = Column(String(255), nullable=True)
     # M2M relationship
     cd_action_metric = relationship('CDActionMetric')

@@ -10,7 +10,6 @@ import logging
 import ar_tables
 import sr_tables
 
-
 __author__ = 'Rubén Mulero'
 __copyright__ = "Copyright 2017, City4Age project"
 __credits__ = ["Rubén Mulero", "Aitor Almeida", "Gorka Azkune", "David Buján"]
@@ -47,6 +46,9 @@ def generate_database(p_ar_post_orm, p_sr_post_orm):
         # Creating Pilot information
         create_pilot(ar_tables, ar_orm)
         logging.info("Created pilots for Activity Recognition schema")
+        # Creating Pilots accounts
+        create_pilots_accounts(ar_tables, ar_orm)
+        logging.info("Created pilot accounts for Activity Recognition schema")
         # Creating CDActivity information:
         create_actions(ar_tables, ar_orm)
         logging.info("Created Actions for Activity Recognition schema")
@@ -72,6 +74,9 @@ def generate_database(p_ar_post_orm, p_sr_post_orm):
         # Creating Pilot information
         create_pilot(sr_tables, sr_orm)
         logging.info("Created pilots for Shared Repository schema")
+        # Creating Pilots accounts
+        create_pilots_accounts(sr_tables, ar_orm)
+        logging.info("Created pilot accounts for Shared Repository schema")
         # Detection variables
         create_detection_variables(sr_tables, sr_orm)
         logging.info("Created detection variables for Shared Repository schema")
@@ -79,6 +84,9 @@ def generate_database(p_ar_post_orm, p_sr_post_orm):
         # Creating CDActivity information:
         create_actions(sr_tables, sr_orm)
         logging.info("Created Actions for Shared Repository schema")
+        # Creating CDDetectionVariable Table
+        create_measure(sr_tables, sr_orm)
+        logging.info("Created CDDetectionVariable for Shared Repository schema")
         # Commit and closing connection
         sr_orm.commit()
         sr_orm.close()
@@ -95,56 +103,81 @@ def create_system_role(p_tables, p_orm):
     """
     # Adding system Roles
     list_of_roles = []
-    care_receiver = p_tables.CDRole(role_name='care_receiver', role_abbreviation='cr',
-                                    role_description='The main user who provides data to the system. Elderly people '
-                                                     'are the primary users having this role in the context of '
-                                                     'City4Age.')
-    care_giver = p_tables.CDRole(role_name='care_giver', role_abbreviation='cg',
-                                 role_description='The care givers are the people closer to the care receivers and'
-                                                  'know all the details about them. They can identify them in the '
-                                                  'system, check the data inserted and annotate the results that '
-                                                  'the system generates')
-    geriatrician = p_tables.CDRole(role_name='geriatrician', role_abbreviation='g',
-                                   role_description='Geriatricians provide medical advice for care receivers based '
-                                                    'on the data they receive from care givers. They don’t need to '
-                                                    'know who the care receivers are but only their profile in order '
-                                                    'to suggest interventions that should be applied.')
 
-    municipality_representative = p_tables.CDRole(role_name='municipality_representative', role_abbreviation='mr',
-                                                  role_description='Representatives from each Pilot/Municipality which are '
-                                                                   'responsible for the recruitment of end-users and the '
-                                                                   'acquisition of data related to elementary actions will have '
-                                                                   'a read-only access to all the data stored in the system. '
-                                                                   'Nevertheless, this doesn’t include access to the personal '
-                                                                   'identifying data of an individual.')
-    researcher = p_tables.CDRole(role_name='researcher', role_abbreviation='r',
-                                 role_description='Researchers will not have access to individual profiles. '
-                                                  'They only need to acquire aggregated data and statistics on '
-                                                  'groups of care receivers. The primary goal of a researcher is '
-                                                  'to analyse the data gathered by the City4Age platform and extract '
-                                                  'useful conclusions.')
-    application_developer = p_tables.CDRole(role_name='application_developer', role_abbreviation='ad',
-                                            role_description='Developers of the various applications of the platform '
-                                                             'need to have access to data and individual profiles of '
-                                                             'care receivers but without knowing the real identity '
-                                                             'of them. They can only access data using the provided '
-                                                             'APIs and services that City4Age will expose.')
+    # End-user roles
+
+    care_recipient = p_tables.CDRole(role_name='Care recipient', role_abbreviation='cr',
+                                     role_description='Care recipient, senior citized observed')
+
+    informal_caregiver = p_tables.CDRole(role_name='Informal caregiver', role_abbreviation='ifc',
+                                         role_description='Informal caregiver, family member, friend, volunteer')
+
+    formal_caregiver = p_tables.CDRole(role_name='Formal caregiver', role_abbreviation='cg',
+                                       role_description='Health or social care provider staff')
+
+    elderly_centre_executive = p_tables.CDRole(role_name='Elderly/community centre executive', role_abbreviation='ece',
+                                               role_description='Operator/manager of elderly/community centre')
+
+    sheltered_accomodation_manager = p_tables.CDRole(role_name='Sheltered accommodation manager',
+                                                     role_abbreviation='sam',
+                                                     role_description='Operator/manager of nursery home, AAL housing, '
+                                                                      'social housing, etc.')
+
+    general_practicioner = p_tables.CDRole(role_name='General practioner', role_abbreviation='gp',
+                                           role_description='Chosen general practice doctor treating the CR')
+
+    local_geriatrician = p_tables.CDRole(role_name='Local/pilot geriatrician', role_abbreviation='lge',
+                                         role_description='Local or pilot location geriatrician treating the CR')
+
+    project_geriatrician = p_tables.CDRole(role_name='Project geriatrician', role_abbreviation='pge',
+                                           role_description='City4Age project expert geriatrician')
+
+    behavioural_scientist = p_tables.CDRole(role_name='Behavioural scientist', role_abbreviation='bhs',
+                                            role_description='Behavioural scientist expert/researcher')
+
+    medical_researcher = p_tables.CDRole(role_name='Medical researcher', role_abbreviation='mdr',
+                                         role_description='Medical researcher')
+
+    epidemiologist = p_tables.CDRole(role_name='Epidemiologist', role_abbreviation='epi',
+                                     role_description='Epidemiologist')
+
+    city_policy_planner = p_tables.CDRole(role_name='City policy planner', role_abbreviation='cpp',
+                                          role_description='Planner/executive of city policy towards the elderly')
+
+    social_service_representative = p_tables.CDRole(role_name='Social service representative', role_abbreviation='ssr',
+                                                    role_description='Social services representative')
+
+    municipality_representative = p_tables.CDRole(role_name='Municipality representative', role_abbreviation='mpr',
+                                                  role_description='Planner/executive of municipality '
+                                                                   'policy towards the elderly')
+
+    pilot_source_system = p_tables.CDRole(role_name='Pilot source system', role_abbreviation='pss',
+                                          role_description='Data source system submitting pilot (city) '
+                                                           'data to the unified data store ')
+
+    # Administrative roles
     administrador = p_tables.CDRole(role_name='administrator', role_abbreviation='a',
-                                    role_description='Administrators have direct access to the collected data stored '
-                                                     'in the City4Age repositories. Nevertheless, they should not be '
-                                                     'able to identify individuals by looking at the data. They are '
-                                                     'in total control of any technical component of the system and '
-                                                     'can adjust the access control mechanism according to the '
-                                                     'project’s needs.')
-    list_of_roles.extend([care_receiver, care_giver, geriatrician, municipality_representative, researcher,
-                          application_developer, administrador])
+                                    role_description='The primary super-user in the system who has all the access to '
+                                                     'manage the system')
+
+    system = p_tables.CDRole(role_name='system', role_abbreviation='s',
+                             role_description='A role used for Pilots tech leads to configure the api endpoints')
+
+    list_of_roles.extend([care_recipient, informal_caregiver, formal_caregiver, elderly_centre_executive,
+                          sheltered_accomodation_manager, general_practicioner, local_geriatrician,
+                          project_geriatrician, behavioural_scientist, medical_researcher, epidemiologist,
+                          city_policy_planner, social_service_representative, municipality_representative,
+                          pilot_source_system, administrador, system])
+
     # Insert data, pending action
     p_orm.insert_all(list_of_roles)
+    # Commit changes
+    p_orm.commit()
 
 
 def create_administrative_account(p_tables, p_orm):
     """
-    This method creates administrative accounts in the system (This is a temporal hardcoded solution)
+    This method creates administrative accounts in the system.
 
     :param p_tables: The tables instance containing available tables
     :param p_orm: The orm connection to the target schema
@@ -152,19 +185,79 @@ def create_administrative_account(p_tables, p_orm):
     """
 
     # with p_orm.no_autoflush:
-    # Creating a simple admin user
-    admin_authenticated = p_tables.UserRegistered(username='admin', password='admin')
-    p_orm.insert_one(admin_authenticated)
-    # Force flush to obtain the ID of the new admin user
+    # Creating administrative accounts
+    admin_authenticated = p_tables.UserInSystem(username='admin', password='admin')
+    system_authenticated = p_tables.UserInSystem(username='system', password='system')
+    # Pending insert into database
+    p_orm.insert_all([admin_authenticated, system_authenticated])
+    # Force flush to obtain the ID of the new accounts
     p_orm.flush()
     # Adding the role type of the new user
     admin_cd_role_id = p_orm.session.query(p_tables.CDRole).filter_by(role_name='administrator').first().id
+    system_cd_role_id = p_orm.session.query(p_tables.CDRole).filter_by(role_name='system').first().id
     # Creating admin user_in_role in the system
-    admin = p_tables.UserInRole(id=0,
-                                valid_from=None, valid_to=None, user_registered_id=admin_authenticated.id,
+    admin = p_tables.UserInRole(valid_from=None, valid_to=None, user_in_system_id=admin_authenticated.id,
                                 cd_role_id=admin_cd_role_id)
+    system = p_tables.UserInRole(valid_from=None, valid_to=None, user_in_system_id=system_authenticated.id,
+                                 cd_role_id=system_cd_role_id)
     # Insert data, pending action
-    p_orm.session.add(admin)
+    p_orm.insert_all([admin, system])
+    # Commit changes
+    p_orm.commit()
+
+
+def create_pilots_accounts(p_tables, p_orm):
+    """
+    This method creates the requires accounts to the Pilots in the system
+
+    Usernames to enter in the API
+    -------------------------------
+
+    “ATH_PSS" for Athens
+    “BHX_PSS” for Birmingham
+    “LCC_PSS” for Lecce
+    “MAD_PSS” for Madrid
+    “MPL_PSS” for Montpellier
+    “SIN_PSS” for Singapore
+    
+    
+    Passwords are created manually.
+
+    """
+    # Creating Pilot accounts
+    athens = p_tables.UserInSystem(username='ATH_PSS', password='VsDaxmeM')
+    birmingham = p_tables.UserInSystem(username='BHX_PSS', password='n56w6qbw')
+    lecce = p_tables.UserInSystem(username='LCC_PSS', password='TTjWhjYZ')
+    madrid = p_tables.UserInSystem(username='MAD_PSS', password='SUJ99dBa')
+    montpellier = p_tables.UserInSystem(username='MPL_PSS', password='Yxr9Ajpw')
+    singapore = p_tables.UserInSystem(username='SIN_PSS', password='GzpNAmUz')
+    # Pending insert into database
+    p_orm.insert_all([athens, birmingham, lecce, madrid, montpellier, singapore])
+    # Force flush to obtain the ID of the new accounts
+    p_orm.flush()
+    # Adding the role type.
+    pilot_source_system_id = p_orm.session.query(p_tables.CDRole).filter_by(role_name='Pilot source system').first().id
+    # Creating pilot user_in_role in the system
+    athens_uir = p_tables.UserInRole(valid_from=None, valid_to=None, user_in_system_id=athens.id,
+                                     cd_role_id=pilot_source_system_id, pilot_code='ath')
+    birmingham_uir = p_tables.UserInRole(valid_from=None, valid_to=None, user_in_system_id=birmingham.id,
+                                         cd_role_id=pilot_source_system_id, pilot_code='bhx')
+    lecce_uir = p_tables.UserInRole(valid_from=None, valid_to=None, user_in_system_id=lecce.id,
+                                    cd_role_id=pilot_source_system_id, pilot_code='lcc')
+
+    madrid_uir = p_tables.UserInRole(valid_from=None, valid_to=None, user_in_system_id=madrid.id,
+                                     cd_role_id=pilot_source_system_id, pilot_code='mad')
+
+    montpellier_uir = p_tables.UserInRole(valid_from=None, valid_to=None, user_in_system_id=montpellier.id,
+                                          cd_role_id=pilot_source_system_id, pilot_code='mlp')
+
+    singapore_uir = p_tables.UserInRole(valid_from=None, valid_to=None, user_in_system_id=singapore.id,
+                                        cd_role_id=pilot_source_system_id, pilot_code='sin')
+
+    # Insert data, pending action
+    p_orm.insert_all([athens_uir, birmingham_uir, lecce_uir, madrid_uir, montpellier_uir, singapore_uir])
+    # Commit changes
+    p_orm.commit()
 
 
 def create_pilot(p_tables, p_orm):
@@ -186,6 +279,8 @@ def create_pilot(p_tables, p_orm):
     list_of_pilots.extend([madrid, lecce, singapore, montpellier, athens, birmingham])
     # Insert data, pending action
     p_orm.insert_all(list_of_pilots)
+    # Commint changes
+    p_orm.commit()
 
 
 def create_detection_variables(p_tables, p_orm):
@@ -226,6 +321,8 @@ def create_detection_variables(p_tables, p_orm):
     list_of_detection_variable_type.extend([gef, ges, mea, gfg, nui, ovl])
     # Insert data, pending action
     p_orm.insert_all(list_of_detection_variable_type)
+    # Commit changes
+    p_orm.commit()
 
 
 def create_measure(p_tables, p_orm):
@@ -237,292 +334,253 @@ def create_measure(p_tables, p_orm):
     :return: 
     """
 
-    # TODO this method needs to be known
     list_of_measures = []
 
-    #TODO INSERT INTO CD_DETECTION_VARIABLE -->
+    appetite = p_tables.CDDetectionVariable(detection_variable_name='appetite', base_unit='integer',
+                                            detection_variable_type='mea')
+    bathroom_time = p_tables.CDDetectionVariable(detection_variable_name='bathroom_time', base_unit='integer',
+                                                 detection_variable_type='mea')
+    bathroom_visits = p_tables.CDDetectionVariable(detection_variable_name='bathroom_visits', base_unit='integer',
+                                                   detection_variable_type='mea')
+    bedroom_time = p_tables.CDDetectionVariable(detection_variable_name='bedroom_time', base_unit='integer',
+                                                detection_variable_type='mea')
+    bedroom_visits = p_tables.CDDetectionVariable(detection_variable_name='bedroom_visits', base_unit='integer',
+                                                  detection_variable_type='mea')
+    cinema_time = p_tables.CDDetectionVariable(detection_variable_name='cinema_time', base_unit='integer',
+                                               detection_variable_type='mea')
+    cinema_visits = p_tables.CDDetectionVariable(detection_variable_name='cinema_visits', base_unit='integer',
+                                                 detection_variable_type='mea')
+    cinema_visits_month = p_tables.CDDetectionVariable(detection_variable_name='cinema_visits_month',
+                                                       base_unit='integer', detection_variable_type='mea')
+    culturepoi_visits_month = p_tables.CDDetectionVariable(detection_variable_name='culturepoi_visits_month',
+                                                           base_unit='integer', detection_variable_type='mea')
+    culturepoi_visits_time_perc_month = p_tables.CDDetectionVariable(
+        detection_variable_name='culturepoi_visits_time_perc_month', base_unit='float', detection_variable_type='mea')
 
-    walk_steps = p_tables.Measure(name='walk_steps',
-                                  description='Number of steps done in the day')
-    walk_steps_fast_perc = p_tables.Measure(name='walk_steps_fast_perc',
-                                            description='Percentage of steps done at fast speed in the day.')
-    walk_steps_medium_perc = p_tables.Measure(name='walk_steps_medium_perc',
-                                              description='Percentage of steps done at medium speed the day.')
-    walk_steps_slow_perc = p_tables.Measure(name='walk_steps_slow_perc',
-                                            description='Percentage of steps done at slow speed in the day')
-    walk_steps_indoor = p_tables.Measure(name='walk_steps_indoor',
-                                         description='number of steps done indoor in the day')
-    walk_steps_indoor_fast_perc = p_tables.Measure(name='walk_steps_indoor_fast_perc',
-                                                   description='Percentage of steps done indoor at fast speed '
-                                                               'in the day')
-    walk_steps_indoor_medium_perc = p_tables.Measure(name='walk_steps_indoor_medium_perc',
-                                                     description='Percentage of steps done indoor at medium speed '
-                                                                 'in the day')
-    walk_steps_indoor_slow_perc = p_tables.Measure(name='walk_steps_indoor_slow_perc',
-                                                   description='Percentage of steps done indoor at slow speed '
-                                                               'in the day')
-    walk_steps_outdoor = p_tables.Measure(name='walk_steps_outdoor',
-                                          description='Number of steps done outdoor in the day')
-    walk_steps_outdoor_fast_perc = p_tables.Measure(name='walk_steps_outdoor_fast_perc',
-                                                    description='Percentage of steps done outdoor at fast '
-                                                                'speed in the day')
-    walk_steps_outdoor_medium_perc = p_tables.Measure(name='walk_steps_outdoor_medium_perc',
-                                                      description='Percentage of steps done outdoor at medium speed in the day')
-    walk_steps_outdoor_slow_perc = p_tables.Measure(name='walk_steps_outdoor_slow_perc',
-                                                    description='Percentage of steps done outdoor at slow speed in'
-                                                                'the day')
-    walk_distance = p_tables.Measure(name='walk_distance', description='Total distance in meters walked in the day')
-    walk_distance_outdoor = p_tables.Measure(name='walk_distance_outdoor',
-                                             description='total distance in meters walked '
-                                                         'outdoor in the day')
-    walk_distance_outdoor_fast_perc = p_tables.Measure(name='walk_distance_outdoor_fast_perc',
-                                                       description='Percentage of distance walked outdoor at fast '
-                                                                   'speed in the day on total distance walked outdoor')
-    walk_distance_outdoor_slow_perc = p_tables.Measure(name='walk_distance_outdoor_slow_perc',
-                                                       description='Percentage of distance walked outdoor at slow speed'
-                                                                   ' in the day on total distance walked outdoor')
-    walk_time_outdoor = p_tables.Measure(name='walk_time_outdoor',
-                                         description='Time in seconds spend walking outdoor in the day')
-    walk_speed_outdoor = p_tables.Measure(name='walk_speed_outdoor',
-                                          description='Average outdoor walking speed in meters/seconds in the day')
-    walk_elevation = p_tables.Measure(name='walk_elevation', description='Elevation in meters climbed in the day')
-    stairs_floor_changes_up = p_tables.Measure(name='stairs_floor_changes_up',
-                                               description='Number of fllor changes performed in the day by '
-                                                           'climbing staris upwards')
-    still_time = p_tables.Measure(name='still_time', description='Time in seconds spent in the still state in the day')
-    physicalactivity_num = p_tables.Measure(name='physicalactivity_num', description='Number of physical activity '
-                                                                                     'sessions attended in the day')
-    physicalactivity_soft_time = p_tables.Measure(name='physicalactivity_soft_time',
-                                                  description='Time in seconds spent in soft activities in the day')
-
-    physicalactivity_moderate_time = p_tables.Measure(name='physicalactivity_soft_time',
-                                                      description='Time in seconds spent in moderate activities '
-                                                                  'in the day')
-    physicalactivity_intense_time = p_tables.Measure(name='physicalactivity_intense_time',
-                                                     description='Time in seconds spent in intense activities '
-                                                                 'in the day')
-
-    physicalactivity_calories = p_tables.Measure(name='physicalactivity_calories', description='Total calories in '
-                                                                                               'kcal burned in the day')
-
-    room_changes = p_tables.Measure(name='room_changes', description='Number of room changes in the day')
-    bedroom_visits = p_tables.Measure(name='bedroom_visits', description='Number of bedroom entrances in the day.')
-    bedroom_time = p_tables.Measure(name='bedroom_time', description='Time in seconds spent in bedroom in the day')
-    bedroom_time_perc = p_tables.Measure(name='bedroom_time_perc', description='Percentage of time spent in bedroom '
-                                                                               'in the day')
-    livingroom_visits = p_tables.Measure(name='livingroom_visits',
-                                         description='Number of living room entrances in the day')
-
-    livingroom_time = p_tables.Measure(name='livingroom_time',
-                                       description='Time in seconds spent in living room in the day')
-    livingroom_time_perc = p_tables.Measure(name='livingroom_time_perc',
-                                            description='Percentage of time spent in living room in the day')
-    restroom_visits = p_tables.Measure(name='restroom_visits', description='Number of restroom entrances in the day')
-    restroom_time = p_tables.Measure(name='restroom_time', description='Time in seconds spent in restroom in the day')
-    restroom_time_perc = p_tables.Measure(name='restroom_time_perc', description='Percentage of time spent in '
-                                                                                 'restroom in the day')
-    kitchen_visits = p_tables.Measure(name='kitchen_visits', description='Number of kitchen entrances in the day')
-    kitchen_time = p_tables.Measure(name='kitchen_time', description='Time in seconds spent in kitchen in the day')
-    kitchen_time_perc = p_tables.Measure(name='kitchen_time_perc', description='Percentage of time spent in kitchen '
-                                                                               'in the day')
-    meals_num = p_tables.Measure(name='meals_num', description='Number of prepared meals delivered to the user '
-                                                               'in the week')
-    lunches_num = p_tables.Measure(name='lunches_num', description='Number of lunches')
-
-    bathroom_visits = p_tables.Measure(name='bathroom_visits', description='Number of bathrooms entrances in a day')
-    bathroom_time = p_tables.Measure(name='bathroom_time', description='Time in seconds spent in bathroom in the day')
-    home_time = p_tables.Measure(name='home_time', description='Time in seconds spent at home in the day')
-    outdoor_num = p_tables.Measure(name='outdoor_num', description='Total number of exits from home in the day')
-    outdoor_time = p_tables.Measure(name='outdoor_time', description='Time in seconds spent outdoor in the day')
-    indoor_outdoor_time_perc = p_tables.Measure(name='indoor_outdoor_time_perc',
-                                                description='Percentage of time spent indoor with respect to time '
-                                                            'spent outdoor in the day')
-    washingmachine_sessions = p_tables.Measure(name='washingmachine_sessions',
-                                               description='Washing machine usage sessions in the day')
-    phonecalls_placed = p_tables.Measure(name='phonecalls_placed',
-                                         description='Number of phone calls placed in the day')
-    phonecalls_received = p_tables.Measure(name='phonecalls_received',
-                                           description='Number of phone calls received in the day')
-    phonecalls_missed = p_tables.Measure(name='phonecalls_missed',
-                                         description='Number of phone calls missed in the day')
-    phonecalls_placed_perc = p_tables.Measure(name='phonecalls_placed_perc',
-                                              description='Percentage of phone calls placed on total phone calls '
-                                                          'in the day')
-    phonecalls_received_perc = p_tables.Measure(name='phonecalls_received_perc',
-                                                description='Percentage of phone calls received on total phone calls '
-                                                            'in a day')
-    phonecalls_long_received_perc = p_tables.Measure(name='phonecalls_long_received_perc',
-                                                     description='Percentage of long phone calls placed '
-                                                                 'on total phone calls placed in the day.')
-    phonecalls_short_received_perc = p_tables.Measure(name='phonecalls_short_received_perc',
-                                                      description='Percentage of short phone calls placed on total '
-                                                                  'phone calls placed in the day')
-
-    phonecalls_long_placed_perc = p_tables.Measure(name='phonecalls_long_placed_perc',
-                                                   description='Percentage of long phone calls placed on total phone '
-                                                               'calls placed in a day')
-    phonecalls_short_placed_perc = p_tables.Measure(name='phonecalls_short_placed_perc',
-                                                    description='Percentage of short phone calls placed on total '
-                                                                'phone calls placed in the day')
-
-    shops_visit = p_tables.Measure(name='shops_visit', description='Number of visits to monitored shops ni the day')
-    shops_visit_week = p_tables.Measure(name='shops_visit_week', description='Number of visits to monitored '
-                                                                             'shops in the week')
-
-    shops_time = p_tables.Measure(name='shops_time', description='Time in seconds spent in monitored shops in the day')
-    shops_outdoor_time_perc = p_tables.Measure(name='shops_outdoor_time_perc',
-                                               description='Percentage of time spent in monitored shops with respect '
-                                                           'to time spent outdoor in the day')
-    supermarket_visits = p_tables.Measure(name='supermarket_visits', description='Number of visits to monitored '
-                                                                                 'supermarkets in the day')
-    supermarket_visits_week = p_tables.Measure(name='supermarket_visits_week',
-                                               description='Number of visits to monitored supermarkets in the week')
-    supermarket_time = p_tables.Measure(name='supermarket_time', description='Time in seconds spent in monitored '
-                                                                             'supermarkets in the day')
-    supermarket_time_perc = p_tables.Measure(name='supermarket_time_perc',
-                                             description='Percentage of time spent in monitored supermarkets on total '
-                                                         'time spent in shops in the day')
-    pharmacy_visits = p_tables.Measure(name='pharmacy_visits',
-                                       description='Number of visits to monitored pharmacies in the day')
-    pharmacy_visits_week = p_tables(name='pharmacy_visits_week',
-                                    description='Number of visits to monitored pharmacies in the week')
-    pharmacy_visits_month = p_tables.Measure(name='pharmacy_visits_month',
-                                             description='Number of visits to monitored pharmacies in the month')
-    pharmacy_time = p_tables.Measure(name='pharmacy_times',
-                                     description='Time in seconds spent in monitored pharmacies in the day')
-
-    publictransport_time = p_tables.Measure(name='publictransport_time', description='Time in seconds spent in public '
-                                                                                     'transportation in the day')
-    publictransport_rides_month = p_tables.Measure(name='publictransport_rides_month',
-                                                   description='Number of times the user gets on the bus in a month')
-    publictransport_distance_month = p_tables.Measure(name='publictransport_distance_month',
-                                                      description='Distance in km travelled on the bus in a month')
-    restaurants_visits_month = p_tables.Measure(name='restaurans_visits_month',
-                                                description='number of visits to monitored restaurans in the month')
-    cinema_visits_month = p_tables.Measure(name='cinema_visits_month',
-                                           description='Number of visits to monitored cinema/theatres in the month')
-    cinema_city_time_perc_month = p_tables.Measure(name='cinema_city_time_perc_month',
-                                                   description='Percentage of time spent in monitored cinema/theatres '
-                                                               'with respect to time spent outside home in the month')
-    newshop_visits_month = p_tables.Measure(name='newshop_visits_month', description='Number of visits to monitored '
-                                                                                     'newshops in the month')
-    culturepoi_visits_month = p_tables.Measure(name='culturepoi_visits_month',
-                                               description='Number of visits to monitored cultural places')
-    culturepoi_city_time_perc_month = p_tables.Measure(name='culturepoi_city_time_perc_month',
-                                                       description='Percentage of time spent in monitored cultural '
-                                                                   'places with respect to time spent outside home '
-                                                                   'in the month')
-    tvwatching_time = p_tables.Measure(name='tvwatching_time', description='Time in seconds spent watching TV '
-                                                                           'in the day')
-    tvwatching_home_time_perc = p_tables.Measure(name='tvwatching_home_time_perc',
-                                                 description='Percentage of time spent watching TV with respect to '
-                                                             'time spent inside home in the day')
-    seniorcenter_visits = p_tables.Measure(name='seniorcenter_visits', description='Number of visits to SeniorCenter '
-                                                                                   'in the day')
-    seniorcenter_long_visits = p_tables.Measure(name='seniorcenter_long_visits',
-                                                description='Number of long visits to SeniorCenter in the day')
-    seniorcenter_time = p_tables.Measure(name='seniorcenter_time',
-                                         description='Time in seconds spent in SeniorCenter in the day')
-    seniorcenter_time_perc = p_tables.Measure(name='seniorcenter_time_perc',
-                                              description='Percentage of time spent in seniorCenter with respect '
-                                                          'to total time in the day')
-    seniorcenter_time_out_perc = p_tables.Measure(name='seniorcenter_time_out_perc',
-                                                  description='Percentage of time spent in Seniorcenter with respect '
-                                                              'to total time spent outside home in the day')
-    othersocial_visits = p_tables.Measure(name='othersocial_visits',
-                                          description='Number of visits to OtherSocialPlace in the day')
-    othersocial_long_visits = p_tables.Measure(name='othersocial_long_visits',
-                                               description='Number of long visits to OtherSocialPlace in the day')
-    othersocial_time = p_tables.Measure(name='othersocial_time',
-                                        description='Time in seconds spent in the OtherSocialPlace in the day')
-    othersocial_time_perc = p_tables.Measure(name='othersocial_time_perc',
-                                             description='Percentage of time spent in OtherSocialPlace with '
-                                                         'respect to total time in the day')
-    othersocial_time_out_perc = p_tables.Measure(name='othersocial_time_out_perc',
-                                                 description='Percentage of time spent in OtherSocialPlace with '
-                                                             'respect to total time spent outside home in the day')
-    visits_received_week = p_tables.Measure(name='visits_received_week',
-                                            description='Number of visits received in the week')
-    visits_payed_week = p_tables.Measure(name='visits_payed_week', description='Number of visits payed in the week')
-    visitors_week = p_tables.Measure(name='visitors_week', description='Number of visitors met in the week')
-    visits_lenght_week = p_tables.Measure(name='visits_lenght_week',
-                                          description='Total duration in seconds of visits in the week')
-    falls_month = p_tables.Measure(name='falls_month', description='Number of falls detected in the month')
-    sleep_time = p_tables.Measure(name='sleep_time', description='Total time in seconds spent sleeping in the day')
-    sleep_light_time = p_tables.Measure(name='sleep_light_time',
-                                        description='Total time in seconds spent in light sleeping in the day')
-    sleep_deep_time = p_tables.Measure(name='sleep_deep_time',
-                                       description='Total time in seconds spent in deep sleeping in the day')
-    sleep_rem_time = p_tables.Measure(name='sleep_rem_time',
-                                      description='Total time in seconds spent in REM sleeping in the day')
-    sleep_awake_time = p_tables.Measure(name='sleep_rem_time',
-                                        description='Total time in seconds spent awake while at rest in the day.')
-    sleep_wakeup_num = p_tables.Measure(name='sleep_wakeup_num',
-                                        description='Number of times the user woke up in the day.')
-    sleep_tosleep_time = p_tables.Measure(name='sleep_tosleep_time',
-                                          description='Total time in seconds the user spent falling asleep in the day.')
-    sleep_towakeup_time = p_tables.Measure(name='sleep_towakeup_time',
-                                            description='Total time in seconds the user spent waking up in the day.')
-    bed_time = p_tables.Measure(name='bed_time', description='Total time in seconds spent in bed in the day.')
-    good_sleep_time_perc = p_tables.Measure(name='good_sleep_time_perc',
-                                            description='Percentage of good sleeping time on total sleeping time in the day.')
-    gp_visits_month = p_tables.Measure(name='gp_visits_month', description='Number of visits to GP in the month.')
-    gp_time_month = p_tables.Measure(name='gp_time_month', description='Time spent at GP’s practice in the month')
-    healthplace_visits_month = p_tables.Measure(name='healthplace_visits_month',
-                                                description='Number of visits to health related places in the month.')
-    pain = p_tables.Measure(name='pain', description='Pain level reported in the day on a 1-5 scale')
-    appetite = p_tables.Measure(name='appetite', description='Appetite reported in the day on a 1-5 scale')
-    weight = p_tables.Measure(name='weight', description='User weight in kg sampled in the month.')
-    weakness = p_tables.Measure(name='weakness', description='Grip strength in <units> sampled in the month.')
-    exhaustion = p_tables.Measure(name='exhaustion', description='Exhaustion in <units> sampled in the month.')
-    memory = p_tables.Measure(name='memory', description='Memory performance reported in the day, as numerical '
-                                                         'indicator returned from the CANTAB system')
-    gooddays_perc = p_tables.Measure(name='gooddays_perc', description='Percentage of good mood days in the week.')
-    gooddays_num = p_tables.Measure(name='gooddays_num', description='Number of “pushed” good mood days in the week.')
-    baddays_num = p_tables.Measure(name='baddays_num', description='Number of bad mood days in the week.')
+    exhaustion = p_tables.CDDetectionVariable(detection_variable_name='exhaustion', base_unit='float',
+                                              detection_variable_type='mea')
+    falls_month = p_tables.CDDetectionVariable(detection_variable_name='falls_month', base_unit='integer',
+                                               detection_variable_type='mea')
+    foodcourt_time = p_tables.CDDetectionVariable(detection_variable_name='foodcourt_time', base_unit='integer',
+                                                  detection_variable_type='mea')
+    foodcourt_visits_month = p_tables.CDDetectionVariable(detection_variable_name='foodcourt_visits_month',
+                                                          base_unit='integer', detection_variable_type='mea')
+    foodcourt_visits_week = p_tables.CDDetectionVariable(detection_variable_name='foodcourt_visits_week',
+                                                         base_unit='integer', detection_variable_type='mea')
+    gp_time_month = p_tables.CDDetectionVariable(detection_variable_name='gp_time_month',
+                                                 base_unit='integer', detection_variable_type='mea')
+    gp_visits_month = p_tables.CDDetectionVariable(detection_variable_name='gp_visits_month',
+                                                   base_unit='integer', detection_variable_type='mea')
+    heart_rate = p_tables.CDDetectionVariable(detection_variable_name='heart_rate', base_unit='float',
+                                              detection_variable_type='mea')
+    home_time = p_tables.CDDetectionVariable(detection_variable_name='home_time', base_unit='integer',
+                                             detection_variable_type='mea')
+    kitchen_time = p_tables.CDDetectionVariable(detection_variable_name='kitchen_time', base_unit='integer',
+                                                detection_variable_type='mea')
+    kitchen_visits = p_tables.CDDetectionVariable(detection_variable_name='kitchen_visits', base_unit='integer',
+                                                  detection_variable_type='mea')
+    livingroom_time = p_tables.CDDetectionVariable(detection_variable_name='livingroom_time', base_unit='integer',
+                                                   detection_variable_type='mea')
+    livingroom_visits = p_tables.CDDetectionVariable(detection_variable_name='livingroom_visits', base_unit='integer',
+                                                     detection_variable_type='mea')
+    meals_num = p_tables.CDDetectionVariable(detection_variable_name='meals_num', base_unit='integer',
+                                             detection_variable_type='mea')
+    memory = p_tables.CDDetectionVariable(detection_variable_name='memory', base_unit='object',
+                                          detection_variable_type='mea')
+    othersocial_long_visits = p_tables.CDDetectionVariable(detection_variable_name='othersocial_long_visits',
+                                                           base_unit='integer', detection_variable_type='mea')
+    othersocial_time = p_tables.CDDetectionVariable(detection_variable_name='othersocial_time', base_unit='integer',
+                                                    detection_variable_type='mea')
+    othersocial_time_out_perc = p_tables.CDDetectionVariable(detection_variable_name='othersocial_time_out_perc',
+                                                             base_unit='float', detection_variable_type='mea')
+    othersocial_visits = p_tables.CDDetectionVariable(detection_variable_name='othersocial_visits',
+                                                      base_unit='integer', detection_variable_type='mea')
+    outdoor_num = p_tables.CDDetectionVariable(detection_variable_name='outdoor_num', base_unit='integer',
+                                               detection_variable_type='mea')
+    outdoor_time = p_tables.CDDetectionVariable(detection_variable_name='outdoor_time', base_unit='integer',
+                                                detection_variable_type='mea')
+    pain = p_tables.CDDetectionVariable(detection_variable_name='pain', base_unit='integer',
+                                        detection_variable_type='mea')
+    perceived_temperature = p_tables.CDDetectionVariable(detection_variable_name='perceived_temperature',
+                                                         base_unit='float', detection_variable_type='mea')
+    pharmacy_time = p_tables.CDDetectionVariable(detection_variable_name='pharmacy_time', base_unit='integer',
+                                                 detection_variable_type='mea')
+    pharmacy_visits_month = p_tables.CDDetectionVariable(detection_variable_name='pharmacy_visits_month',
+                                                         base_unit='integer', detection_variable_type='mea')
+    pharmacy_visits_week = p_tables.CDDetectionVariable(detection_variable_name='pharmacy_visits_week',
+                                                        base_unit='integer', detection_variable_type='mea')
+    pharmacy_visits = p_tables.CDDetectionVariable(detection_variable_name='pharmacy_visits', base_unit='integer',
+                                                   detection_variable_type='mea')
+    phonecalls_long_placed_perc = p_tables.CDDetectionVariable(detection_variable_name='phonecalls_long_placed_perc',
+                                                               base_unit='float', detection_variable_type='mea')
+    phonecalls_long_received_perc = p_tables.CDDetectionVariable(
+        detection_variable_name='phonecalls_long_received_perc',
+        base_unit='float', detection_variable_type='mea')
+    phonecalls_missed = p_tables.CDDetectionVariable(detection_variable_name='phonecalls_missed', base_unit='integer',
+                                                     detection_variable_type='mea')
+    phonecalls_placed = p_tables.CDDetectionVariable(detection_variable_name='phonecalls_placed', base_unit='integer',
+                                                     detection_variable_type='mea')
+    phonecalls_placed_perc = p_tables.CDDetectionVariable(detection_variable_name='phonecalls_placed_perc',
+                                                          base_unit='float', detection_variable_type='mea')
+    phonecalls_received = p_tables.CDDetectionVariable(detection_variable_name='phonecalls_received',
+                                                       base_unit='integer'
+                                                       , detection_variable_type='mea')
+    phonecalls_received_perc = p_tables.CDDetectionVariable(detection_variable_name='phonecalls_received_perc',
+                                                            base_unit='float', detection_variable_type='mea')
+    phonecalls_short_placed_perc = p_tables.CDDetectionVariable(detection_variable_name='phonecalls_short_placed_perc',
+                                                                base_unit='float', detection_variable_type='mea')
+    phonecalls_short_received_perc = p_tables.CDDetectionVariable(
+        detection_variable_name='phonecalls_short_received_perc', base_unit='float', detection_variable_type='mea')
+    physicalactivity_calories = p_tables.CDDetectionVariable(detection_variable_name='physicalactivity_calories',
+                                                             base_unit='float', detection_variable_type='mea')
+    physicalactivity_intense_time = p_tables.CDDetectionVariable(
+        detection_variable_name='physicalactivity_intense_time',
+        base_unit='integer', detection_variable_type='mea')
+    physicalactivity_moderate_time = p_tables.CDDetectionVariable(
+        detection_variable_name='physicalactivity_moderate_time', base_unit='integer', detection_variable_type='mea')
+    physicalactivity_num = p_tables.CDDetectionVariable(detection_variable_name='physicalactivity_num',
+                                                        base_unit='integer', detection_variable_type='mea')
+    physicalactivity_soft_time = p_tables.CDDetectionVariable(detection_variable_name='physicalactivity_soft_time',
+                                                              base_unit='integer', detection_variable_type='mea')
+    publicpark_time = p_tables.CDDetectionVariable(detection_variable_name='publicpark_time', base_unit='integer',
+                                                   detection_variable_type='mea')
+    publicpark_visits_month = p_tables.CDDetectionVariable(detection_variable_name='publicpark_visits_month',
+                                                           base_unit='integer', detection_variable_type='mea')
+    publicpark_visits = p_tables.CDDetectionVariable(detection_variable_name='publicpark_visits', base_unit='integer',
+                                                     detection_variable_type='mea')
+    publictransport_distance_month = p_tables.CDDetectionVariable(
+        detection_variable_name='publictransport_distance_month', base_unit='float', detection_variable_type='mea')
+    publictransport_rides_month = p_tables.CDDetectionVariable(detection_variable_name='publictransport_rides_month',
+                                                               base_unit='integer', detection_variable_type='mea')
+    publictransport_time = p_tables.CDDetectionVariable(detection_variable_name='publictransport_time',
+                                                        base_unit='integer', detection_variable_type='mea')
+    restaurants_time = p_tables.CDDetectionVariable(detection_variable_name='restaurants_time', base_unit='integer',
+                                                    detection_variable_type='mea')
+    restaurants_visits_month = p_tables.CDDetectionVariable(detection_variable_name='restaurants_visits_month',
+                                                            base_unit='integer', detection_variable_type='mea')
+    restaurants_visits_week = p_tables.CDDetectionVariable(detection_variable_name='restaurants_visits_week',
+                                                           base_unit='integer', detection_variable_type='mea')
+    restroom_time = p_tables.CDDetectionVariable(detection_variable_name='restroom_time', base_unit='integer',
+                                                 detection_variable_type='mea')
+    restroom_visits = p_tables.CDDetectionVariable(detection_variable_name='restroom_visits', base_unit='integer',
+                                                   detection_variable_type='mea')
+    room_changes = p_tables.CDDetectionVariable(detection_variable_name='room_changes', base_unit='integer',
+                                                detection_variable_type='mea')
+    seniorcenter_long_visits = p_tables.CDDetectionVariable(detection_variable_name='seniorcenter_long_visits',
+                                                            base_unit='integer', detection_variable_type='mea')
+    seniorcenter_time = p_tables.CDDetectionVariable(detection_variable_name='seniorcenter_time', base_unit='integer',
+                                                     detection_variable_type='mea')
+    seniorcenter_time_out_perc = p_tables.CDDetectionVariable(detection_variable_name='seniorcenter_time_out_perc',
+                                                              base_unit='float', detection_variable_type='mea')
+    seniorcenter_visits = p_tables.CDDetectionVariable(detection_variable_name='seniorcenter_visits',
+                                                       base_unit='integer', detection_variable_type='mea')
+    seniorcenter_visits_month = p_tables.CDDetectionVariable(detection_variable_name='seniorcenter_visits_month',
+                                                             base_unit='integer', detection_variable_type='mea')
+    seniorcenter_visits_week = p_tables.CDDetectionVariable(detection_variable_name='seniorcenter_visits_week',
+                                                            base_unit='integer', detection_variable_type='mea')
+    shops_outdoor_time_perc = p_tables.CDDetectionVariable(detection_variable_name='shops_outdoor_time_perc',
+                                                           base_unit='float', detection_variable_type='mea')
+    shops_time = p_tables.CDDetectionVariable(detection_variable_name='shops_time', base_unit='integer',
+                                              detection_variable_type='mea')
+    shops_visits = p_tables.CDDetectionVariable(detection_variable_name='shops_visits', base_unit='integer',
+                                                detection_variable_type='mea')
+    shops_visits_week = p_tables.CDDetectionVariable(detection_variable_name='shops_visits_week', base_unit='integer',
+                                                     detection_variable_type='mea')
+    sleep_awake_time = p_tables.CDDetectionVariable(detection_variable_name='sleep_awake_time', base_unit='integer',
+                                                    detection_variable_type='mea')
+    sleep_deep_time = p_tables.CDDetectionVariable(detection_variable_name='sleep_deep_time', base_unit='integer',
+                                                   detection_variable_type='mea')
+    sleep_light_time = p_tables.CDDetectionVariable(detection_variable_name='sleep_light_time', base_unit='integer',
+                                                    detection_variable_type='mea')
+    sleep_rem_time = p_tables.CDDetectionVariable(detection_variable_name='sleep_rem_time', base_unit='integer',
+                                                  detection_variable_type='mea')
+    sleep_time = p_tables.CDDetectionVariable(detection_variable_name='sleep_time', base_unit='integer',
+                                              detection_variable_type='mea')
+    sleep_tosleep_time = p_tables.CDDetectionVariable(detection_variable_name='sleep_tosleep_time', base_unit='integer',
+                                                      detection_variable_type='mea')
+    sleep_wakeup_num = p_tables.CDDetectionVariable(detection_variable_name='sleep_wakeup_num', base_unit='integer',
+                                                    detection_variable_type='mea')
+    stairs_floor_changes_up = p_tables.CDDetectionVariable(detection_variable_name='stairs_floor_changes_up',
+                                                           base_unit='integer', detection_variable_type='mea')
+    still_time = p_tables.CDDetectionVariable(detection_variable_name='still_time', base_unit='integer',
+                                              detection_variable_type='mea')
+    supermarket_time = p_tables.CDDetectionVariable(detection_variable_name='supermarket_time', base_unit='integer',
+                                                    detection_variable_type='mea')
+    supermarket_time_perc = p_tables.CDDetectionVariable(detection_variable_name='supermarket_time_perc',
+                                                         base_unit='float', detection_variable_type='mea')
+    supermarket_visits = p_tables.CDDetectionVariable(detection_variable_name='supermarket_visits', base_unit='integer',
+                                                      detection_variable_type='mea')
+    supermarket_visits_week = p_tables.CDDetectionVariable(detection_variable_name='supermarket_visits_week',
+                                                           base_unit='integer', detection_variable_type='mea')
+    transport_time = p_tables.CDDetectionVariable(detection_variable_name='transport_time', base_unit='integer',
+                                                  detection_variable_type='mea')
+    tvwatching_time = p_tables.CDDetectionVariable(detection_variable_name='tvwatching_time', base_unit='integer',
+                                                   detection_variable_type='mea')
+    tvwatching_time_perc = p_tables.CDDetectionVariable(detection_variable_name='tvwatching_time_perc',
+                                                        base_unit='float', detection_variable_type='mea')
+    visitors_week = p_tables.CDDetectionVariable(detection_variable_name='visitors_week', base_unit='integer',
+                                                 detection_variable_type='mea')
+    visits_payed_week = p_tables.CDDetectionVariable(detection_variable_name='visits_payed_week', base_unit='integer',
+                                                     detection_variable_type='mea')
+    visits_received_week = p_tables.CDDetectionVariable(detection_variable_name='visits_received_week',
+                                                        base_unit='integer', detection_variable_type='mea')
+    walk_distance = p_tables.CDDetectionVariable(detection_variable_name='walk_distance', base_unit='integer',
+                                                 detection_variable_type='mea')
+    walk_distance_outdoor = p_tables.CDDetectionVariable(detection_variable_name='walk_distance_outdoor',
+                                                         base_unit='integer', detection_variable_type='mea')
+    walk_distance_outdoor_fast_perc = p_tables.CDDetectionVariable(
+        detection_variable_name='walk_distance_outdoor_fast_perc', base_unit='float', detection_variable_type='mea')
+    walk_distance_outdoor_slow_perc = p_tables.CDDetectionVariable(
+        detection_variable_name='walk_distance_outdoor_slow_perc', base_unit='float', detection_variable_type='mea')
+    walk_speed_outdoor = p_tables.CDDetectionVariable(detection_variable_name='walk_speed_outdoor', base_unit='float',
+                                                      detection_variable_type='mea')
+    walk_steps = p_tables.CDDetectionVariable(detection_variable_name='walk_steps', base_unit='integer',
+                                              detection_variable_type='mea')
+    walk_steps_outdoor = p_tables.CDDetectionVariable(detection_variable_name='walk_steps_outdoor', base_unit='integer',
+                                                      detection_variable_type='mea')
+    walk_time_outdoor = p_tables.CDDetectionVariable(detection_variable_name='walk_time_outdoor', base_unit='integer',
+                                                     detection_variable_type='mea')
+    washingmachine_sessions = p_tables.CDDetectionVariable(detection_variable_name='washingmachine_sessions',
+                                                           base_unit='integer', detection_variable_type='mea')
+    weakness = p_tables.CDDetectionVariable(detection_variable_name='weakness', base_unit='float',
+                                            detection_variable_type='mea')
+    weight = p_tables.CDDetectionVariable(detection_variable_name='weight', base_unit='float',
+                                          detection_variable_type='mea')
 
     # Adding measures in the list
-    list_of_measures.extend([walk_steps, walk_steps_fast_perc, walk_steps_medium_perc, walk_steps_slow_perc,
-                             walk_steps_indoor, walk_steps_indoor_fast_perc, walk_steps_indoor_medium_perc,
-                             walk_steps_indoor_slow_perc, walk_steps_outdoor, walk_steps_outdoor_fast_perc,
-                             walk_steps_outdoor_medium_perc, walk_steps_outdoor_slow_perc, walk_distance,
-                             walk_distance_outdoor, walk_distance_outdoor_fast_perc, walk_distance_outdoor_slow_perc,
-                             walk_time_outdoor, walk_speed_outdoor, walk_elevation])
-
-    list_of_measures.extend([stairs_floor_changes_up, still_time, physicalactivity_num, physicalactivity_soft_time,
-                             physicalactivity_moderate_time, physicalactivity_intense_time, physicalactivity_calories])
-
-    list_of_measures.extend([room_changes, bedroom_visits, bedroom_time, bedroom_time_perc, livingroom_visits,
-                             livingroom_time, livingroom_time_perc, restroom_visits, restroom_time, restroom_time_perc,
-                             kitchen_visits, kitchen_time, kitchen_time_perc, bathroom_visits, bathroom_time])
-
-    list_of_measures.extend([meals_num, lunches_num, home_time, outdoor_num, outdoor_time, indoor_outdoor_time_perc,
-                             washingmachine_sessions, phonecalls_placed, phonecalls_received, phonecalls_missed,
-                             phonecalls_placed_perc, phonecalls_received_perc, phonecalls_long_received_perc,
-                             phonecalls_short_received_perc, phonecalls_long_placed_perc, phonecalls_short_placed_perc])
-
-    list_of_measures.extend([shops_visit, shops_visit_week, shops_time, shops_outdoor_time_perc, supermarket_visits,
-                             supermarket_visits_week, supermarket_time, supermarket_time_perc, pharmacy_visits,
-                             pharmacy_visits_week, pharmacy_visits_month, pharmacy_time])
-
-    list_of_measures.extend([publictransport_time, publictransport_rides_month, publictransport_distance_month,
-                             restaurants_visits_month, cinema_visits_month, cinema_city_time_perc_month,
-                             newshop_visits_month, culturepoi_visits_month, culturepoi_city_time_perc_month,
-                             tvwatching_time, tvwatching_home_time_perc])
-
-    list_of_measures.extend([seniorcenter_visits, seniorcenter_long_visits, seniorcenter_time, seniorcenter_time_perc,
-                             seniorcenter_time_out_perc, othersocial_visits, othersocial_long_visits, othersocial_time,
-                             othersocial_time_perc, othersocial_time_out_perc, visits_received_week, visits_payed_week,
-                             visitors_week, visits_lenght_week, falls_month])
-
-    list_of_measures.extend([sleep_time, sleep_light_time, sleep_deep_time, sleep_rem_time, sleep_awake_time,
-                             sleep_wakeup_num, sleep_tosleep_time, sleep_towakeup_time, bed_time, good_sleep_time_perc])
-
-    list_of_measures.extend([gp_visits_month, gp_time_month, healthplace_visits_month, pain, appetite, weight, weakness,
-                             exhaustion, memory, gooddays_perc, gooddays_num, baddays_num])
+    list_of_measures.extend([appetite, bathroom_time, bathroom_visits, bedroom_time, bedroom_visits, cinema_time,
+                             cinema_visits, cinema_visits_month, culturepoi_visits_month,
+                             culturepoi_visits_time_perc_month, exhaustion, falls_month, foodcourt_time,
+                             foodcourt_visits_month, foodcourt_visits_week, gp_time_month, gp_visits_month, heart_rate,
+                             home_time, kitchen_time, kitchen_visits, livingroom_time, livingroom_visits, meals_num,
+                             memory, othersocial_long_visits, othersocial_time, othersocial_time_out_perc,
+                             othersocial_visits, outdoor_num, outdoor_time, pain, perceived_temperature, pharmacy_time,
+                             pharmacy_visits_month, pharmacy_visits_week, pharmacy_visits, phonecalls_long_placed_perc,
+                             phonecalls_short_received_perc, phonecalls_missed, phonecalls_placed,
+                             phonecalls_placed_perc, phonecalls_received, phonecalls_received_perc,
+                             phonecalls_short_placed_perc, phonecalls_short_received_perc, physicalactivity_calories,
+                             physicalactivity_intense_time, physicalactivity_intense_time,
+                             physicalactivity_moderate_time, physicalactivity_num, physicalactivity_soft_time,
+                             publicpark_time, publicpark_visits_month, publicpark_visits,
+                             publictransport_distance_month,
+                             publictransport_rides_month, publictransport_time, restaurants_time,
+                             restaurants_visits_month, restaurants_visits_week, restroom_time, restroom_visits,
+                             room_changes, seniorcenter_long_visits, seniorcenter_time, seniorcenter_time_out_perc,
+                             seniorcenter_visits, seniorcenter_visits_month, seniorcenter_visits_week,
+                             shops_outdoor_time_perc, shops_time, shops_visits, shops_visits_week, sleep_awake_time,
+                             sleep_deep_time, sleep_light_time, sleep_rem_time, sleep_time, sleep_tosleep_time,
+                             sleep_wakeup_num, stairs_floor_changes_up, still_time, supermarket_time,
+                             supermarket_time_perc, supermarket_visits, supermarket_visits_week, publictransport_time,
+                             tvwatching_time, tvwatching_time_perc, visitors_week, visits_payed_week,
+                             visits_received_week, walk_distance, walk_distance_outdoor,
+                             walk_distance_outdoor_fast_perc, walk_distance_outdoor_slow_perc, walk_speed_outdoor,
+                             walk_steps, walk_steps_outdoor, walk_time_outdoor, washingmachine_sessions,
+                             weakness, weight, phonecalls_long_received_perc, transport_time])
 
     # Insert data, pending action
     p_orm.insert_all(list_of_measures)
+    # Commit changes
+    p_orm.commit()
 
 
 def create_actions(p_tables, p_orm):
@@ -614,3 +672,5 @@ def create_actions(p_tables, p_orm):
                             phone_in_missed, phone_out_start, phone_out_stop, visit_start, visit_stop])
     # Insert data, pending action
     p_orm.insert_all(list_of_actions)
+    # Commit changes
+    p_orm.commit()

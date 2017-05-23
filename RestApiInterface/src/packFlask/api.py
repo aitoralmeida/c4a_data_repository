@@ -334,7 +334,7 @@ def get_my_info(version=app.config['ACTUAL_API']):
 @app.route('/api/<version>/search', methods=['POST'])
 @limit_content_length(MAX_LENGHT)
 @auth.login_required
-@required_roles('administrator', 'geriatrician', 'researcher')
+@required_roles('administrator', 'system', 'Pilot source system')
 def search(version=app.config['ACTUAL_API']):
     """
     Return data based on specified search filters:
@@ -408,7 +408,7 @@ def search(version=app.config['ACTUAL_API']):
 @app.route('/api/<version>/add_action', methods=['POST'])
 @limit_content_length(MAX_LENGHT)
 @auth.login_required
-@required_roles('administrator', 'geriatrician', 'care_giver')
+@required_roles('administrator', 'system', 'Pilot source system')
 def add_action(version=app.config['ACTUAL_API']):
     """
     Add a new LEA (Low Elementary Action) into database.
@@ -416,18 +416,19 @@ def add_action(version=app.config['ACTUAL_API']):
     The JSON structure must be in a defined format called Common Data format as:
 
     {
-        "action": "eu:c4a:POI_ENTER",
-        "user": " eu:c4a:user:aaaaa",
-        "pilot": "ATH",
-        "location": "eu:c4a:Shop:Ermou96",
-        "position": "37.976908 23.724375",
-        "timestamp": "2014-05-20T07:08:41.013+03:00",
-        "payload": {
-            "instance_id": "124"
-        },
-        "extra": {
-        "data_source_type": ["sensors", "external_dataset"]
-        }
+            "action": "eu:c4a:POI_ENTER",
+            "user": "eu:c4a:user:1234523",
+            "pilot": "ATH",
+            "location": "eu:c4a:Shop:Ermou96",
+            "position": "37.976908 23.724375",
+            "timestamp": "2014-05-20T07:08:41.013+03:00",
+            "payload": {
+                "instance_id": "124"
+            },
+            "data_source_type": [ "sensors", "external_dataset" ],
+            "extra": {
+                "pilot_specific_field": "some value"
+            }
     }
     
     :param version: Api version
@@ -437,7 +438,7 @@ def add_action(version=app.config['ACTUAL_API']):
     if Utilities.check_connection(app, version):
         # We created a list of Python dict.
         data = _convert_to_dict(request.json)
-        res, msg = Utilities.check_add_action_data(data)
+        res, msg = Utilities.check_add_action_data(AR_DATABASE, data)
         if data and res and USER:
             # User and data are OK. save data into DB
             res = AR_DATABASE.add_action(data)
@@ -456,7 +457,7 @@ def add_action(version=app.config['ACTUAL_API']):
 @app.route('/api/<version>/add_activity', methods=['POST'])
 @limit_content_length(MAX_LENGHT)
 @auth.login_required
-@required_roles('administrator', 'geriatrician', 'researcher')
+@required_roles('administrator', 'system', 'Pilot source system')
 def add_activity(version=app.config['ACTUAL_API']):
     """
     Adds a new activity into the system
@@ -485,8 +486,9 @@ def add_activity(version=app.config['ACTUAL_API']):
         res, msg = Utilities.check_add_activity_data(AR_DATABASE, data)
         if data and res and USER:
             # User and data are OK. save data into DB
-            res = AR_DATABASE.add_activity(data)
-            if res:
+            res_ar = AR_DATABASE.add_activity(data)
+            res_sr = SR_DATABASE.add_activity(data)
+            if res_ar and res_sr:
                 Utilities.write_log_info(app, ("add_activity: the username: %s adds new activity into database" %
                                          USER.username))
                 return Response('Data stored in database OK\n'), 200
@@ -538,7 +540,7 @@ def add_new_user(version=app.config['ACTUAL_API']):
                 Utilities.write_log_info(app, ("add_new_user: the username: %s adds new user into database" %
                                          USER.username))
 
-                return Response('The user(s) are registered successfully in the system: ', jsonify(res_ar), 200)
+                return Response('The user(s) are registered successfully in the system', 200)
             else:
                 Utilities.write_log_error(app, ("add_new_user: the username: %s failed to store "
                                                 "data into database. 500" % USER.username))
@@ -550,7 +552,7 @@ def add_new_user(version=app.config['ACTUAL_API']):
 @app.route('/api/<version>/add_care_receiver', methods=['POST'])
 @limit_content_length(MAX_LENGHT)
 @auth.login_required
-@required_roles('application_developer', 'administrator')
+@required_roles('administrator', 'system', 'Pilot source system')
 def add_care_receiver(version=app.config['ACTUAL_API']):
     """
     This method allow to the Pilots (roletype: developers) to add new users in the system with the role
@@ -595,7 +597,7 @@ def add_care_receiver(version=app.config['ACTUAL_API']):
 @app.route('/api/<version>/clear_user', methods=['POST'])
 @limit_content_length(MAX_LENGHT)
 @auth.login_required
-@required_roles('administrator')
+@required_roles('administrator', 'system')
 def clear_user(version=app.config['ACTUAL_API']):
     """
     Clear all data related to a list of defined users. This is only can be performed by an administration
@@ -657,7 +659,7 @@ def clear_user(version=app.config['ACTUAL_API']):
 @app.route('/api/<version>/add_measure', methods=['POST'])
 @limit_content_length(MAX_LENGHT)
 @auth.login_required
-@required_roles('administrator', 'geriatrician')
+@required_roles('administrator', 'system', 'Pilot source system')
 def add_measure(version=app.config['ACTUAL_API']):
     """
     Adds a new measure into the system. This endpoint is sensible to different combinations of GEF/GES
@@ -687,7 +689,7 @@ def add_measure(version=app.config['ACTUAL_API']):
     if Utilities.check_connection(app, version):
         # We created a list of Python dict.
         data = _convert_to_dict(request.json)
-        res, msg = Utilities.check_add_measure_data(data)
+        res, msg = Utilities.check_add_measure_data(SR_DATABASE, data)
         if data and res and USER:
             # User and data are OK. save data into DB
             res = SR_DATABASE.add_measure(data)
@@ -706,7 +708,7 @@ def add_measure(version=app.config['ACTUAL_API']):
 @app.route('/api/<version>/add_eam', methods=['POST'])
 @limit_content_length(MAX_LENGHT)
 @auth.login_required
-@required_roles('researcher', 'application_developer', 'administrator')
+@required_roles('administrator', 'system', 'Pilot source system')
 def add_eam(version=app.config['ACTUAL_API']):
     """
     This endpoint allows to pilots insert information about related EAMS from different type of activities.
@@ -717,7 +719,7 @@ def add_eam(version=app.config['ACTUAL_API']):
     An example in JSON could be:
 
     {
-        "activity_name": "AnsweringPhone",
+        "activity_name": "AnsweringPhone",                      # This must exist previously
         "locations": ["Kitchen", "Office", "Bedroom"],
         "actions": ["KitchenPIR", "BedroomPIR"],
         "duration": 120,
