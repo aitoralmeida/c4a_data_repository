@@ -26,5 +26,5 @@ SQLAlchemy==1.0.12
 SQLAlchemy-Utils==0.32.14
 testfixtures==4.9.1
 urllib3==1.19
-uWSGI==2.0.12
+uWSGI==2.0.13
 Werkzeug==0.11.5
