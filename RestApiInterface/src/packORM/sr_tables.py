@@ -269,8 +269,7 @@ class ExecutedAction(Base):
     rating = Column(Integer)
     sensor_id = Column(Integer)
     position = Column(String(255))
-    # TODO and this table?¿ Maybe use the metric table or AR?
-    payload = Column(String(50))
+    data_source_type = Column(String(200))  # An "array" containing the data source
     extra_information = Column(String(1000))  # An "array" containing extra information
 
     # FK keys
@@ -323,6 +322,19 @@ class LocationActivityRel(Base):
     activity_id = Column(Integer, ForeignKey('activity.id'), primary_key=True)
     house_number = Column(Integer)
     activity = relationship("Activity")
+
+class CDActionMetric(Base):
+    """
+    Metric < -- > CDAction
+    """
+
+    __tablename__ = 'cd_action_metric'
+
+    metric_id = Column(Integer, ForeignKey('metric.id'), primary_key=True)
+    cd_action_id = Column(Integer, ForeignKey('cd_action.id'), primary_key=True)
+    date = Column(ArrowType(timezone=True), primary_key=True)
+    value = Column(String(50), nullable=False)
+    cd_action = relationship('CDAction')
 
 
 """
@@ -1062,3 +1074,22 @@ class UserAction(Base):
     status_code = Column(Integer)
     # One2Many
     user_in_system_id = Column(Integer, ForeignKey('user_in_system.id'))
+
+
+class Metric(Base):
+    """
+    Some actions has a random valued metrics. This metrics are an extra information that can be used for different
+    purposes. This table record each different metric in the sytem.
+
+    """
+
+    __tablename__ = 'metric'
+
+    # Generating the Sequence
+    metric_seq = Sequence('metric_seq', metadata=Base.metadata)
+    # Creating the columns
+    id = Column(Integer, server_default=metric_seq.next_value(), primary_key=True)
+    name = Column(String(50))
+    description = Column(String(255), nullable=True)
+    # M2M relationship
+    cd_action_metric = relationship('CDActionMetric')

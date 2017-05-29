@@ -300,10 +300,8 @@ def api(version=app.config['ACTUAL_API']):
             <li><b>add_activity</b>: Adds new Activity into database.</li>
             <li><b>add_measure</b>: Adds a new Measure into database.</li>
             <li><b>add_eam</b>: Adds information about EAM's in the API related to an activity.</li>
-            <li><b>search</b>: Search datasets in database due to some search criteria.</li>
             <li><b>add_care_receiver</b>: Allows to a Pilot add a new user 'care_receiver' in the API.</li>
             <li><b>add_new_user</b>: Adds a new registered user in the system (Administrator only).</li>
-            <li><b>clear_user</b>: Delete a user and all its related data from the system (Administrator only).</li>
             <li><b>get_my_info</b>: Returns user information about the actual client.</li>
         </ul>
 
@@ -441,8 +439,9 @@ def add_action(version=app.config['ACTUAL_API']):
         res, msg = Utilities.check_add_action_data(AR_DATABASE, data)
         if data and res and USER:
             # User and data are OK. save data into DB
-            res = AR_DATABASE.add_action(data)
-            if res:
+            res_ar = AR_DATABASE.add_action(data)
+            res_sr = SR_DATABASE.add_action(data)
+            if res_ar and res_sr:
                 Utilities.write_log_info(app, ("add_action: the username: %s adds new action into database" %
                                          USER.username))
                 return Response('Data stored in database OK\n'), 200

@@ -62,6 +62,56 @@ class SRPostORM(PostORM):
     ###################################################################################################
     ###################################################################################################
 
+    def add_action(self, p_data):
+        """
+        Adds a new action into the database.
+
+        This method divided all data in p_data parameter to create needed data and store it into database
+
+
+        :param p_data: a Python d
+        :return: True if everything is OK or False if there is a problem.
+        """
+
+        for data in p_data:
+            # Basic tables
+            # We are going to check if basic data exist in DB and insert it in case that is the first time.
+            cd_action = self._get_or_create(sr_tables.CDAction, action_name=data['action'].split(':')[-1].lower())
+            pilot = self._get_or_create(sr_tables.Pilot, code=data['pilot'].lower())
+            # Assuming the default value --> care_receiver
+            cd_role = self._get_or_create(sr_tables.CDRole, role_name='Care recipient')
+            user = self._get_or_create(sr_tables.UserInRole, id=int(data['user'].split(':')[-1]), pilot_code=pilot.code,
+                                       cd_role_id=cd_role.id)
+            # Adding the location
+            # location_type = self._get_or_create(sr_tables.LocationType,
+            #                                   location_type_name=data['location'].split(':')[-2].lower())
+            # location = self._get_or_create(sr_tables.Location, location_name=data['location'].split(':')[-1].lower(),
+            location = self._get_or_create(sr_tables.Location, location_name=data['location'].lower(),
+                                           indoor=True,
+                                           pilot_code=pilot.code)
+            # location_type_rel = self._get_or_create(sr_tables.LocationLocationTypeRel, location_id=location.id, location_type_id=location_type.id)
+
+            # Inserting the values attached with this action into database
+            for key, value in data['payload'].items():
+                metric = self._get_or_create(sr_tables.Metric, name=key)
+                self._get_or_create(sr_tables.CDActionMetric, metric_id=metric.id, cd_action_id=cd_action.id,
+                                    value=value,
+                                    date=data['timestamp'])
+            # Insert a new executed action
+            executed_action = sr_tables.ExecutedAction(execution_datetime=data['timestamp'],
+                                                       location_id=location.id,
+                                                       cd_action_id=cd_action.id,
+                                                       user_in_role_id=user.id,
+                                                       position=data['position'],
+                                                       data_source_type=' '.join(data.get('data_source_type',
+                                                                                          ['sensors'])),
+                                                       extra_information=' '.join(data.get('extra', None))
+                                                       )
+            # pending insert
+            self.insert_one(executed_action)
+        # Whe prepared all data, now we are going to commit it into DB.
+        return self.commit()
+
     def add_measure(self, p_data):
         """
         Adds a new measure into database according to the University of Salento guidelines.

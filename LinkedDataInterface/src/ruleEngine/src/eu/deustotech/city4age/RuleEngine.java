@@ -15,10 +15,7 @@ import de.fuberlin.wiwiss.d2rq.jena.ModelD2RQ;
 import sun.rmi.runtime.Log;
 
 import javax.xml.ws.http.HTTPException;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.StringWriter;
+import java.io.*;
 import java.lang.reflect.Array;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
@@ -108,13 +105,16 @@ public class RuleEngine {
                     finalResult.setNsPrefixes(instances.getNsPrefixMap());
                     finalResult.setNsPrefixes(inf.getDeductionsModel().getNsPrefixMap());
 
-                    // Obtaining knowledge from DBPEDIA about different cities to have a 5 start ontology.
-                    OntModel dbpediaCityModel = this.updateCityInformation(finalResult);
-                    // Adding information in our final result
-                    finalResult.add(dbpediaCityModel);
 
-                    // updated instances
-                    this.printResults(finalResult, inf, finalResult.getBaseModel());
+                    //TODO this part represent the needed calls to use the 5-start based Ontology
+
+                    // Obtaining knowledge from DBPEDIA about different cities to have a 5 start ontology.
+                    //OntModel dbpediaCityModel = this.updateCityInformation(finalResult);
+                    // Adding information in our final result
+                    //finalResult.add(dbpediaCityModel);
+
+                    // Print current data structure to stdout
+                    //this.printResults(finalResult, inf, finalResult.getBaseModel());
                     //Upload into Fuseki
                     if (this.oldOntModel == null || !this.checkAreEquals(this.oldOntModel, finalResult)) {
                         // If the base model is different (new data into DB) or if the inference model is different (new inference throught new rules
@@ -164,11 +164,20 @@ public class RuleEngine {
         // Convert pModel into a String to send it via curl
         StringWriter out = new StringWriter();
         pModel.write(out, "RDF/XML");
-        String result = out.toString();
-        // Launch curl to upload or current knowledge into Fuseki
-        ProcessBuilder p = new ProcessBuilder("curl", "-k", "-X", "POST", "--header", "Content-Type: application/rdf+xml",
-                "-d", result, "https://localhost:8443/city4age/data");
+        // String result = out.toString();
         try {
+            // Writing the output in a file
+            // Creating a temp file
+            File tempFile = File.createTempFile("./ruleEngineOutput", ".tmp");
+            // Write the output in the tempfile
+            BufferedWriter bw = new BufferedWriter(new FileWriter(tempFile));
+            bw.write(out.toString());
+            bw.close();
+            // Launch curl to upload or current knowledge into Fuseki
+            ProcessBuilder p = new ProcessBuilder("curl", "-k", "-X", "POST", "--header", "Content-Type: application/rdf+xml",
+                    "-d", "@"+tempFile.getAbsolutePath(), "https://localhost:8443/city4age/data");
+                    // This piece of code is used for server testing purposes
+                    //"-d", "@"+tempFile.getAbsolutePath(), "http://localhost:8080/fuseki/city4age/data");
             System.out.println("Uploading new Knowledge to Fuseki......................\n");
             LOGGER.info("Uploading data to Fuseki server");
             // Execute our command
@@ -191,7 +200,7 @@ public class RuleEngine {
                         + newLine + "Graph data uploaded is: " + pModel.write(System.out, "N-TRIPLES"));
 
             } else {
-                System.err.println("Some error happened. Is Fuseki activated?");
+                System.err.println("Some error happened. Is Fuseki activated? : " +output);
                 LOGGER.severe("Data can not upload to Fuseki, check if Fuseki is activated: " + output);
             }
         } catch (IOException e) {

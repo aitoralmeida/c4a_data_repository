@@ -266,7 +266,6 @@ class CDActionMetric(Base):
 
     metric_id = Column(Integer, ForeignKey('metric.id'), primary_key=True)
     cd_action_id = Column(Integer, ForeignKey('cd_action.id'), primary_key=True)
-    #date = Column(TIMESTAMP, primary_key=True)
     date = Column(ArrowType(timezone=True), primary_key=True)
     value = Column(String(50), nullable=False)
     cd_action = relationship('CDAction')

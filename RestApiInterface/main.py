@@ -45,4 +45,4 @@ if __name__ == '__main__':
     application.logger.setLevel(logging.INFO)
     application.logger.addHandler(logHandler)
     # Run the application
-    application.run(debug=True, host='0.0.0.0')
+    application.run(debug=False, host='0.0.0.0')
