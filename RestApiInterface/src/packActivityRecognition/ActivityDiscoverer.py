@@ -24,9 +24,16 @@ Transactions on Systems, Man, and Cybernetics, Part B, 2013.
 
 """
 
-import subprocess
 
+import os
+import inspect
+import subprocess
+import arrow
+import logging
 import KasterenDataTransformer as kas_transformer
+
+from packControllers import ar_post_orm
+from subprocess import CalledProcessError
 
 
 __author__ = 'Rubén Mulero'
@@ -39,12 +46,16 @@ __email__ = "ruben.mulero@deusto.es"
 __status__ = "Prototype"
 
 
+current_dir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+casas_config_dir = os.path.abspath(current_dir + '../../../al/bin/al')
+
+
 class ActivityDiscoverer(object):
 
     # Class constructor
     def __init__(self):
-        # Here we can initialize some values, like database?
-        pass
+        # Initialing database connector
+        self.database = ar_post_orm.ARPostORM()
 
     # Methods
     def lea_extractor(self, p_start_time, p_end_time):
@@ -58,27 +69,43 @@ class ActivityDiscoverer(object):
         
         :return: A list containing all LEAS between that time intervals. 
         """
+        list_leas = list()
+        # Checking the given dates
+        if p_end_time < p_start_time:
+            # This is not possible relaunch this method using an appropriate time intervals
+            logging.warn("get_action: The start date is greater than final date. Relaunch the method....")
+            self.lea_extractor(p_end_time, p_start_time)
+        else:
+            # Format data to UTC using arrow library
+            start_time = arrow.get(p_start_time)
+            final_date = arrow.get(p_end_time)
+            # Calling to the main method to extract leas
+            list_leas = self.database.get_action(start_time, final_date)
+            logging.info("get_action: Number of extracted leas is:", list_leas.count())
 
-        # Call to database to obtain the needed leas:
+        return list_leas
 
-        # CALL to database
-
-        # return leas
-
-        pass
-
-    def execute_casas(self, p_data):
+    def execute_casas(self, p_list_leas):
         """
-        By giving a set of data loaded from database, this method convers data into CSV format style to be used by the 
+        By giving a set of data loaded from database, this method convert data into CSV format style to be used by the
         CASAS AL and obtain new activity tagged patterns.
         
         
         :param p_data: A set of LEAS extracted from database
         :return: 
         """
+        # 1º I need to know exactly the casas FORMAT Before send any
+
+
+        # 2º Once data prepared use the converter, need to know the transformed.csv FILE
         # Convert data
-        kas_transformer.transformDataset(p_data, './transformed.csv')
+        kas_transformer.transformDataset(p_list_leas, './transformed.csv')
         # Having all needed data we can use it an transform this data into CSV
+
+
+
+
+
 
 
         # TODO check where is located the CONFIG_FILE to use with this AR system
@@ -92,8 +119,37 @@ class ActivityDiscoverer(object):
 
         # TODO use WAIT retval = p.wait()
 
-        output = subprocess.check_output(["al", "-p", "config", p_data])
+        try:
+
+            output = subprocess.check_output(["./al/bin/al", "-p", casas_config_dir, p_list_leas])
+
+
+        except CalledProcessError as e:
+            e.output()
+
+
+
 
         # The output contains the LOG of the program
 
-        
+
+
+    def inser_data(self, p_list_activity):
+        """
+        Giving a list of activities, this method uses the API mechanism
+
+
+        :param p_list_activity:
+        :return:
+        """
+
+        # TODO insert data thought API
+
+
+# TODO delete this dummy main class
+if __name__ == '__main__':
+    ar = ActivityDiscoverer()
+    # Setting some time intervals
+    start_date = '2014-05-23 06:08:41.013+02'
+    end_date = '2014-05-18 06:08:41.013+02'
+    data = ar.lea_extractor(start_date, end_date)

@@ -2,16 +2,20 @@ package eu.deustotech.city4age;
 
 import com.hp.hpl.jena.graph.Graph;
 import com.hp.hpl.jena.ontology.OntModel;
+import com.hp.hpl.jena.ontology.Ontology;
 import com.hp.hpl.jena.query.*;
 import com.hp.hpl.jena.rdf.model.*;
 import com.hp.hpl.jena.reasoner.Reasoner;
 import com.hp.hpl.jena.reasoner.ValidityReport;
 import com.hp.hpl.jena.reasoner.rulesys.GenericRuleReasoner;
 import com.hp.hpl.jena.reasoner.rulesys.Rule;
+import com.hp.hpl.jena.sparql.util.NodeFactory;
 import com.hp.hpl.jena.util.FileManager;
 
+import com.hp.hpl.jena.vocabulary.RDF;
 import com.sun.xml.internal.bind.v2.TODO;
 import de.fuberlin.wiwiss.d2rq.jena.ModelD2RQ;
+import de.fuberlin.wiwiss.d2rq.server.PageServlet;
 import sun.rmi.runtime.Log;
 
 import javax.xml.ws.http.HTTPException;
@@ -26,6 +30,8 @@ import java.util.logging.FileHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 
 /**
@@ -46,6 +52,8 @@ public class RuleEngine {
     private OntModel oldOntModel = null;
     private String newLine;
     private Logger LOGGER;
+    private static final String c4aBaseURI = "http://www.morelab.deusto.es/ontologies/city4age#";
+    private static final String owlBaseURI = "http://www.w3.org/2002/07/owl#";
     private static final String dbpedia = "https://dbpedia.org/sparql";
 
 
@@ -86,7 +94,7 @@ public class RuleEngine {
         List<Rule> listRules = Rule.rulesFromURL("file:" + this.rulesFile);
         // We check if we have usefull data
         if (!mapModel.isEmpty() && !listRules.isEmpty()) {
-            instances = new ModelD2RQ(mapModel, "http://www.morelab.deusto.es/ontologies/sorelcom#");
+            instances = new ModelD2RQ(mapModel, c4aBaseURI);
             // Create a new ontoloyModel
             final OntModel finalResult = ModelFactory.createOntologyModel();
             // Creating the reasoner based on previously loaded rules
@@ -104,17 +112,10 @@ public class RuleEngine {
                     // Set prefix map
                     finalResult.setNsPrefixes(instances.getNsPrefixMap());
                     finalResult.setNsPrefixes(inf.getDeductionsModel().getNsPrefixMap());
-
-
-                    //TODO this part represent the needed calls to use the 5-start based Ontology
-
-                    // Obtaining knowledge from DBPEDIA about different cities to have a 5 start ontology.
-                    //OntModel dbpediaCityModel = this.updateCityInformation(finalResult);
-                    // Adding information in our final result
-                    //finalResult.add(dbpediaCityModel);
-
+                    // Obtaining knowledge from Geocities API about different cities to have a 5 star-based Ontology.
+                    this.updateCityInformation(finalResult);
                     // Print current data structure to stdout
-                    //this.printResults(finalResult, inf, finalResult.getBaseModel());
+                    // this.printResults(finalResult, inf, finalResult.getBaseModel());
                     //Upload into Fuseki
                     if (this.oldOntModel == null || !this.checkAreEquals(this.oldOntModel, finalResult)) {
                         // If the base model is different (new data into DB) or if the inference model is different (new inference throught new rules
@@ -209,30 +210,26 @@ public class RuleEngine {
         }
     }
 
-
     /**
-     * This method checks the Final model to obtain cities and make SPARQL queries to dbpedia
-     * to update information about them
+     * This method detects if the loaded knowledge has some city information and calls to external
+     * Ontologies to link their data with the loaded knowledge.
      *
-     * @param pFinalResult The final model containing all inferred knowledge.
-     * @return A OntModel to be added to final loaded model.
-     *
+     * @param pFinalResult: The loaded and inferred knowledge.
      */
-    private OntModel updateCityInformation(OntModel pFinalResult) {
-        // TODO think about using the uppercase cases of the cities
+    private void updateCityInformation(OntModel pFinalResult) {
         // Defining the list of target cities to obtain desired information
-        final List<String> places = Arrays.asList("lecce", "singapore", "madrid", "birmingham", "montpellier", "athens");
-        // Creating response ontology
-        OntModel res = ModelFactory.createOntologyModel();
-        // Iterate data to search for cities
+        final List<String> places = Arrays.asList("lecce", "singapore", "madrid", "birmingham", "montpellier", "athens",
+                "LECCE", "SINGAPORE", "MADRID", "BIRMINGHAM", "MONTPELLIER", "ATHENS");
+        // Iterate loaded statements of the model.
         StmtIterator iter = pFinalResult.listStatements();
         try {
             while (iter.hasNext()) {
                 Statement stmt = iter.next();
                 // Obtain the data from resources
                 Resource s = stmt.getSubject();
-                Resource p = stmt.getPredicate();
+                Property p = stmt.getPredicate();
                 RDFNode o = stmt.getObject();
+
                 // Prepare some values for evaluations
                 String sURI = new String();
                 String pURI = new String();
@@ -254,48 +251,24 @@ public class RuleEngine {
                 } else if (o.isAnon()) {
                     System.out.print("blank");
                 } else if (o.isLiteral()) {
-                    // TODO verify how to get the appropriate value
                     oURI = o.asLiteral().getString();           // Getting the literal value (city name)
-
                 }
 
-                /* Once data is gathered, here is decided if the information matches the requirements
-                to call or not to DBPEDIA to extend knowledge with the city information.
-
-                # The idea is to use the following
-
-                    FROM:
-
-                    // Subj --> City4Age:City
-                    // Property --> hasName O DBPEDIA:CITY
-                    // LITERAL --> Lecce
-
-                    CREATE:
-
-                    // Sub --> City4Age:City
-                    // Predicado --> owl:sameAS
-                    // PRED --> DBpediaResource:LECCE  <-- AN URI
-
-                 */
-
-
-                // TODO define here what are the rules to check a city information
-                if (sURI.equals("City4Age:City") && pURI.equals("rdf:hasName") && oURI.toLowerCase().equals(places)) {
-                    Statement statement = this.obtainCityInformation(oURI.toLowerCase());
-                    if (statement != null) {
-                        // Adding new statmenet to our current model
-                        res.add(statement);
-                    }
+                if (sURI.equals(c4aBaseURI+"City") && pURI.equals("dbp:name") && oURI.toLowerCase().equals(places)) {
+                    LOGGER.info("--> updateCityInformation: Searching information from city: "+oURI.toLowerCase());
+                    // Obtaining aditional resources of external ontologies
+                    this.obtainCityInformation(oURI.toLowerCase(), pFinalResult);
                 }
             }
+        }catch (Exception e) {
+            // We are goingi to raise the default exception. It can be raised from the method obtainCityInformation
+            LOGGER.severe("--> updateCityInformation: An error happened when trying to update city information: ");
+            System.err.println("--> updateCityInformation: An error happened when trying to update city information: ");
+            e.printStackTrace();
         } finally {
             if (iter != null) iter.close();
         }
-        return res;
     }
-
-
-    /////////////////////////////////
 
     /**
      * This method search in geocitties Ontology to obtain a valid URI containing the city information
@@ -303,15 +276,15 @@ public class RuleEngine {
      * @param pCity The name of the city to search
      * @return A statmenet contianing the needed knowledge to link a city with its information
      */
+    private void obtainCityInformation(String pCity, OntModel pModel) {
 
-    private Statement obtainCityInformationv2(String pCity) {
-        Statement statement = null;
         // Making the call to geoname database
+        //TODO put this url as a static final value at top of this file
         String query = "http://api.geonames.org/search?name_equals="+pCity+"&featureClass=P&type=rdf&&username=elektro";
         ProcessBuilder p = new ProcessBuilder("curl", "-X", "POST", query);
         try {
-            System.out.println("Calling to geocitires about city information from: "+pCity +"\n");
-            LOGGER.info("Calling to geocities to obtain information from: "+ pCity);
+            System.out.println("Calling to geocities about city information from: "+pCity +"\n");
+            LOGGER.info("--> obtainCityInformation: Calling to geocities to obtain information from: "+ pCity);
             // Execute our command
             final Process shell = p.start();
             // catch output and see if all is ok
@@ -321,131 +294,34 @@ public class RuleEngine {
             String line = null;
             // Filling with information the string builder list
             while ((line = reader.readLine()) != null) {
-                builder.append(line);
-                builder.append(System.getProperty("line.separator"));
+                // with the actual line we need to extract a defiend pattern
+                if (line.contains("<gn:Feature rdf:about=") || line.contains("<rdfs:seeAlso rdf:resource=\"http://dbpedia.org/resour")) {
+                    // Regex pattern to extract the needed URI
+                    Pattern pattern = Pattern.compile("\"(.*?)\"");
+                    Matcher matcher = pattern.matcher(line);
+                    if (matcher.find()) {
+                        // Obtaining the needed resource
+                        Resource subject = pModel.getResource(c4aBaseURI+"City");
+                        // Obtaining the needed property
+                        Property predicate = pModel.getProperty("owl:sameAS");
+                        // Adding the URIS (They are not literal)
+                        Resource object = ResourceFactory.createResource(matcher.group(1));
+                        // Creating the logical statement
+                        //use add property
+                        pModel.add(subject, predicate, object);
+                    }else {
+                        // we are only to save the problem, but not raise any error.
+                        LOGGER.warning("--> obtainCityInformation: We found a possible resource but the Regex matcher" +
+                                "is failing for some reason: "+line);
+                    }
+                }
             }
-
-
-            // TODO Using this method you need to think about recover only the usefull data
-
-            // In builder object we have a lot of different lines of the needed URI. We need only to recover one
-            String output = builder.toString();
-
-
-
-
-
+            //System.out.println("Call succeeded. The size of new statement is: "+listStatements.size());
+            //LOGGER.info("Call successful. The size of new statements is: "+listStatements.size());
         } catch (IOException e) {
-            LOGGER.severe("Fatal IO error detected in ProcessBuilder call");
+            LOGGER.severe("--> obtainCityInformation: Fatal IO error detected in ProcessBuilder call");
             e.printStackTrace();
         }
-
-
-
-
-
-        return statement;
-    }
-
-    /////////////////////////////////
-
-
-
-
-
-
-
-    //////////////////////////////////////////////////////////////////////////////////////////
-    //////////////////////////////////////////////////////////////////////////////////////////
-    //////////////////////////////////////////////////////////////////////////////////////////
-    //////////////////////////////////////////////////////////////////////////////////////////
-    //////////////////////////////
-    //////////////////////////////
-    //////////////////////////////      OLD    STYLE
-    //////////////////////////////
-    //////////////////////////////////////////////////////////////////////////////////////////
-    //////////////////////////////////////////////////////////////////////////////////////////
-
-    /**
-     * This method receives information about a city and returns the required information to be added into the model
-     * if there is usefull city information.
-     *
-     * @param pCity The name of the city.
-     * @return A statement containing the N-Triple containing the city URI from dbpedia
-     */
-
-    private Statement obtainCityInformation(String pCity) {
-
-        // TODO An optional idea is to use the genonames API to obtain information ina XML format notation
-        /*
-        an example could be
-
-        Thi is a direct call, so there we need to use a SPARQL query to obtain the desired information
-
-        http://api.geonames.org/search?name_equals=lecce&featureClass=P&type=rdf&&username=elektro
-
-
-
-        @@@@@
-
-        <gn:Feature rdf:about="http://sws.geonames.org/3020251/">
-        <rdfs:isDefinedBy rdf:resource="http://sws.geonames.org/3020251/about.rdf"/>
-
-
-
-        @@@2
-
-
-
-         */
-
-
-
-        // Initialiting the statement
-        Statement statement = null;
-        // Define the structure of the SPARQL query
-        String queryString  =
-                "PREFIX xsd:     <http://www.w3.org/2001/XMLSchema#>\n" +
-                "PREFIX rdf:     <http://www.w3.org/1999/02/22-rdf-syntax-ns#> \n" +
-                "PREFIX rdfs:    <http://www.w3.org/2000/01/rdf-schema#>\n" +
-                "PREFIX owl:     <http://www.w3.org/2002/07/owl#>\n" +
-                "PREFIX fn:      <http://www.w3.org/2005/xpath-functions#>\n" +
-                "PREFIX apf:     <http://jena.hpl.hp.com/ARQ/property#>\n" +
-                "PREFIX dc:      <http://purl.org/dc/elements/1.1/>\n" +
-                "PREFIX dbo:     <http://dbpedia.org/ontology/>\n" +
-                "SELECT DISTINCT ?city  WHERE {?city rdf:type dbo:PopulatedPlace ; rdfs:label ?label FILTER regex(?label,'^"+ pCity+"$','i') }";
-        // now creating query object
-        Query query = QueryFactory.create(queryString);
-        // initializing queryExecution factory with remote service.
-        QueryExecution qexec = QueryExecutionFactory.sparqlService("https://dbpedia.org/sparql", query);
-        // Executing the query and see the results
-        try {
-            System.out.println("Requesting information from DBPedia");
-            LOGGER.info("Making a call to DBPedia requesting information for " + pCity);
-            ResultSet results = qexec.execSelect();
-
-            // TODO for the moment, we are assuming that we are receiving only 1 city. For future iterations
-
-            for (; results.hasNext();) {
-                // Getting the current data
-                QuerySolution q = results.next();
-                // Create a base model
-                Model model = ModelFactory.createDefaultModel();
-
-                // Create the needed resources
-                final Resource subject = ResourceFactory.createResource("City4Age:City");
-                final Property predicate = ResourceFactory.createProperty("owl:sameAs"); // owl base
-                final Resource object = q.getResource("city");     // URI of dbpedia resource
-                // Append the resources to the statement
-                statement = model.createStatement(subject,predicate,object);
-            }
-        } catch (Exception e) {
-            LOGGER.severe("There are some problems while the reasoner try to connect to Dbpedia");
-        }
-        finally {
-            qexec.close();
-        }
-        return statement;
     }
 
 

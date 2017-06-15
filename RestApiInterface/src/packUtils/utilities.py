@@ -98,7 +98,7 @@ class Utilities(object):
                     "type": "string",
                     "minLength": 3,
                     "maxLength": 50,
-                    "pattern": "^eu:c4a:[a-z,A-Z]{3,15}_[a-z,A-Z]{2,15}$",
+                    "pattern": "^(eu:c4a:[a-z,A-Z]{3,15}_[a-z,A-Z]{2,15}_[a-z,A-Z]{2,15}|eu:c4a:[a-z,A-Z]{3,15}_[a-z,A-Z]{2,15})$",
                 },
                 "user": {
                     "description": "The user in role who performs the registered action",

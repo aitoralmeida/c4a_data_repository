@@ -107,7 +107,7 @@ def create_system_role(p_tables, p_orm):
     # End-user roles
 
     care_recipient = p_tables.CDRole(role_name='Care recipient', role_abbreviation='cr',
-                                     role_description='Care recipient, senior citized observed')
+                                     role_description='Care recipient, senior citizen observed')
 
     informal_caregiver = p_tables.CDRole(role_name='Informal caregiver', role_abbreviation='ifc',
                                          role_description='Informal caregiver, family member, friend, volunteer')

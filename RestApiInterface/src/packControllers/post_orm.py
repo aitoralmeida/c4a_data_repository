@@ -60,9 +60,7 @@ else:
 class PostORM(object):
 
     def __init__(self, autoflush=True):
-        # TODO we will define the name of the schema for the next step.
-        # schema_name = schema
-        # Make basic connection and setup declatarive
+        # Make basic connection and setup declarative
         self.engine = create_engine(URL(**DATABASE))
         try:
             session_mark = sessionmaker(bind=self.engine)  # Bind session engine Test connection
@@ -115,10 +113,10 @@ class PostORM(object):
 
     def query(self, p_class, web_dict, limit=10, offset=0, order_by='asc'):
         """
-        Makes a query to the desired table of databse and filter the result based on user choice.
+        Makes a query to the desired table of database and filter the result based on user choice.
 
         :param p_class:  Name of the table to query
-        :param web_dict: A dict with colums and data to filter.
+        :param web_dict: A dict with columns and data to filter.
         :param limit: query limit (default is 10)
         :param offset: offset (default is 0)
         :param order_by: Set order of query (default is 'asc' on ID column)

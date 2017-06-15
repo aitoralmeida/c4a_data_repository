@@ -709,6 +709,13 @@ map:city4age_ar_user_action_status_code a d2rq:PropertyBridge;
 	d2rq:column "city4age_ar.user_action.status_code";
 	d2rq:datatype xsd:integer;
 	.
+map:city4age_ar_user_action_user_in_system_id__ref a d2rq:PropertyBridge;
+	d2rq:belongsToClassMap map:city4age_ar_user_action;
+	d2rq:property vocab:city4age_ar_user_action_user_in_system_id;
+	d2rq:refersToClassMap map:city4age_ar_user_in_system;
+	d2rq:join "city4age_ar.user_action.user_in_system_id => city4age_ar.user_in_system.id";
+	.
+
 # Table city4age_ar.user_in_role
 map:city4age_ar_user_in_role a d2rq:ClassMap;
 	d2rq:dataStorage map:database;
@@ -749,7 +756,12 @@ map:city4age_ar_user_in_role_pilot_source_user_id a d2rq:PropertyBridge;
 	d2rq:column "city4age_ar.user_in_role.pilot_source_user_id";
 	d2rq:datatype xsd:integer;
 	.
-
+map:city4age_ar_user_in_role_user_in_system_id__ref a d2rq:PropertyBridge;
+	d2rq:belongsToClassMap map:city4age_ar_user_in_role;
+	d2rq:property vocab:city4age_ar_user_in_role_user_in_system_id;
+	d2rq:refersToClassMap map:city4age_ar_user_in_system;
+	d2rq:join "city4age_ar.user_in_role.user_in_system_id => city4age_ar.user_in_system.id";
+	.
 map:city4age_ar_user_in_role_cd_role_id__ref a d2rq:PropertyBridge;
 	d2rq:belongsToClassMap map:city4age_ar_user_in_role;
 	d2rq:property vocab:city4age_ar_user_in_role_cd_role_id;
@@ -761,6 +773,51 @@ map:city4age_ar_user_in_role_pilot_code__ref a d2rq:PropertyBridge;
 	d2rq:property vocab:city4age_ar_user_in_role_pilot_code;
 	d2rq:refersToClassMap map:city4age_ar_pilot;
 	d2rq:join "city4age_ar.user_in_role.pilot_code => city4age_ar.pilot.code";
+	.
+
+# Table city4age_ar.user_in_system
+map:city4age_ar_user_in_system a d2rq:ClassMap;
+	d2rq:dataStorage map:database;
+	d2rq:uriPattern "city4age_ar/user_in_system/@@city4age_ar.user_in_system.id@@";
+	d2rq:class vocab:city4age_ar_user_in_system;
+	d2rq:classDefinitionLabel "city4age_ar.user_in_system";
+	.
+map:city4age_ar_user_in_system__label a d2rq:PropertyBridge;
+	d2rq:belongsToClassMap map:city4age_ar_user_in_system;
+	d2rq:property rdfs:label;
+	d2rq:pattern "user_in_system #@@city4age_ar.user_in_system.id@@";
+	.
+map:city4age_ar_user_in_system_id a d2rq:PropertyBridge;
+	d2rq:belongsToClassMap map:city4age_ar_user_in_system;
+	d2rq:property vocab:city4age_ar_user_in_system_id;
+	d2rq:propertyDefinitionLabel "user_in_system id";
+	d2rq:column "city4age_ar.user_in_system.id";
+	d2rq:datatype xsd:integer;
+	.
+map:city4age_ar_user_in_system_username a d2rq:PropertyBridge;
+	d2rq:belongsToClassMap map:city4age_ar_user_in_system;
+	d2rq:property vocab:city4age_ar_user_in_system_username;
+	d2rq:propertyDefinitionLabel "user_in_system username";
+	d2rq:column "city4age_ar.user_in_system.username";
+	.
+map:city4age_ar_user_in_system_password a d2rq:PropertyBridge;
+	d2rq:belongsToClassMap map:city4age_ar_user_in_system;
+	d2rq:property vocab:city4age_ar_user_in_system_password;
+	d2rq:propertyDefinitionLabel "user_in_system password";
+	d2rq:column "city4age_ar.user_in_system.password";
+	.
+map:city4age_ar_user_in_system_display_name a d2rq:PropertyBridge;
+	d2rq:belongsToClassMap map:city4age_ar_user_in_system;
+	d2rq:property vocab:city4age_ar_user_in_system_display_name;
+	d2rq:propertyDefinitionLabel "user_in_system display_name";
+	d2rq:column "city4age_ar.user_in_system.display_name";
+	.
+map:city4age_ar_user_in_system_created_date a d2rq:PropertyBridge;
+	d2rq:belongsToClassMap map:city4age_ar_user_in_system;
+	d2rq:property vocab:city4age_ar_user_in_system_created_date;
+	d2rq:propertyDefinitionLabel "user_in_system created_date";
+	d2rq:column "city4age_ar.user_in_system.created_date";
+	d2rq:datatype xsd:dateTime;
 	.
 
 # Table city4age_sr.activity
@@ -1048,6 +1105,44 @@ map:city4age_sr_cd_action_action_description a d2rq:PropertyBridge;
 	d2rq:property vocab:city4age_sr_cd_action_action_description;
 	d2rq:propertyDefinitionLabel "cd_action action_description";
 	d2rq:column "city4age_sr.cd_action.action_description";
+	.
+
+# Table city4age_sr.cd_action_metric
+map:city4age_sr_cd_action_metric a d2rq:ClassMap;
+	d2rq:dataStorage map:database;
+	d2rq:uriPattern "city4age_sr/cd_action_metric/@@city4age_sr.cd_action_metric.metric_id@@/@@city4age_sr.cd_action_metric.cd_action_id@@/@@city4age_sr.cd_action_metric.date@@";
+	d2rq:class vocab:city4age_sr_cd_action_metric;
+	d2rq:classDefinitionLabel "city4age_sr.cd_action_metric";
+	.
+map:city4age_sr_cd_action_metric__label a d2rq:PropertyBridge;
+	d2rq:belongsToClassMap map:city4age_sr_cd_action_metric;
+	d2rq:property rdfs:label;
+	d2rq:pattern "cd_action_metric #@@city4age_sr.cd_action_metric.metric_id@@/@@city4age_sr.cd_action_metric.cd_action_id@@/@@city4age_sr.cd_action_metric.date@@";
+	.
+map:city4age_sr_cd_action_metric_date a d2rq:PropertyBridge;
+	d2rq:belongsToClassMap map:city4age_sr_cd_action_metric;
+	d2rq:property vocab:city4age_sr_cd_action_metric_date;
+	d2rq:propertyDefinitionLabel "cd_action_metric date";
+	d2rq:column "city4age_sr.cd_action_metric.date";
+	d2rq:datatype xsd:dateTime;
+	.
+map:city4age_sr_cd_action_metric_value a d2rq:PropertyBridge;
+	d2rq:belongsToClassMap map:city4age_sr_cd_action_metric;
+	d2rq:property vocab:city4age_sr_cd_action_metric_value;
+	d2rq:propertyDefinitionLabel "cd_action_metric value";
+	d2rq:column "city4age_sr.cd_action_metric.value";
+	.
+map:city4age_sr_cd_action_metric_metric_id__ref a d2rq:PropertyBridge;
+	d2rq:belongsToClassMap map:city4age_sr_cd_action_metric;
+	d2rq:property vocab:city4age_sr_cd_action_metric_metric_id;
+	d2rq:refersToClassMap map:city4age_sr_metric;
+	d2rq:join "city4age_sr.cd_action_metric.metric_id => city4age_sr.metric.id";
+	.
+map:city4age_sr_cd_action_metric_cd_action_id__ref a d2rq:PropertyBridge;
+	d2rq:belongsToClassMap map:city4age_sr_cd_action_metric;
+	d2rq:property vocab:city4age_sr_cd_action_metric_cd_action_id;
+	d2rq:refersToClassMap map:city4age_sr_cd_action;
+	d2rq:join "city4age_sr.cd_action_metric.cd_action_id => city4age_sr.cd_action.id";
 	.
 
 # Table city4age_sr.cd_data_source_type
@@ -1549,11 +1644,11 @@ map:city4age_sr_executed_action_position a d2rq:PropertyBridge;
 	d2rq:propertyDefinitionLabel "executed_action position";
 	d2rq:column "city4age_sr.executed_action.position";
 	.
-map:city4age_sr_executed_action_payload a d2rq:PropertyBridge;
+map:city4age_sr_executed_action_data_source_type a d2rq:PropertyBridge;
 	d2rq:belongsToClassMap map:city4age_sr_executed_action;
-	d2rq:property vocab:city4age_sr_executed_action_payload;
-	d2rq:propertyDefinitionLabel "executed_action payload";
-	d2rq:column "city4age_sr.executed_action.payload";
+	d2rq:property vocab:city4age_sr_executed_action_data_source_type;
+	d2rq:propertyDefinitionLabel "executed_action data_source_type";
+	d2rq:column "city4age_sr.executed_action.data_source_type";
 	.
 map:city4age_sr_executed_action_extra_information a d2rq:PropertyBridge;
 	d2rq:belongsToClassMap map:city4age_sr_executed_action;
@@ -1876,6 +1971,38 @@ map:city4age_sr_location_type_location_type_name a d2rq:PropertyBridge;
 	d2rq:column "city4age_sr.location_type.location_type_name";
 	.
 
+# Table city4age_sr.metric
+map:city4age_sr_metric a d2rq:ClassMap;
+	d2rq:dataStorage map:database;
+	d2rq:uriPattern "city4age_sr/metric/@@city4age_sr.metric.id@@";
+	d2rq:class vocab:city4age_sr_metric;
+	d2rq:classDefinitionLabel "city4age_sr.metric";
+	.
+map:city4age_sr_metric__label a d2rq:PropertyBridge;
+	d2rq:belongsToClassMap map:city4age_sr_metric;
+	d2rq:property rdfs:label;
+	d2rq:pattern "metric #@@city4age_sr.metric.id@@";
+	.
+map:city4age_sr_metric_id a d2rq:PropertyBridge;
+	d2rq:belongsToClassMap map:city4age_sr_metric;
+	d2rq:property vocab:city4age_sr_metric_id;
+	d2rq:propertyDefinitionLabel "metric id";
+	d2rq:column "city4age_sr.metric.id";
+	d2rq:datatype xsd:integer;
+	.
+map:city4age_sr_metric_name a d2rq:PropertyBridge;
+	d2rq:belongsToClassMap map:city4age_sr_metric;
+	d2rq:property vocab:city4age_sr_metric_name;
+	d2rq:propertyDefinitionLabel "metric name";
+	d2rq:column "city4age_sr.metric.name";
+	.
+map:city4age_sr_metric_description a d2rq:PropertyBridge;
+	d2rq:belongsToClassMap map:city4age_sr_metric;
+	d2rq:property vocab:city4age_sr_metric_description;
+	d2rq:propertyDefinitionLabel "metric description";
+	d2rq:column "city4age_sr.metric.description";
+	.
+
 # Table city4age_sr.numeric_indicator_value
 map:city4age_sr_numeric_indicator_value a d2rq:ClassMap;
 	d2rq:dataStorage map:database;
@@ -2146,6 +2273,12 @@ map:city4age_sr_user_action_status_code a d2rq:PropertyBridge;
 	d2rq:column "city4age_sr.user_action.status_code";
 	d2rq:datatype xsd:integer;
 	.
+map:city4age_sr_user_action_user_in_system_id__ref a d2rq:PropertyBridge;
+	d2rq:belongsToClassMap map:city4age_sr_user_action;
+	d2rq:property vocab:city4age_sr_user_action_user_in_system_id;
+	d2rq:refersToClassMap map:city4age_sr_user_in_system;
+	d2rq:join "city4age_sr.user_action.user_in_system_id => city4age_sr.user_in_system.id";
+	.
 
 # Table city4age_sr.user_in_role
 map:city4age_sr_user_in_role a d2rq:ClassMap;
@@ -2186,6 +2319,12 @@ map:city4age_sr_user_in_role_pilot_source_user_id a d2rq:PropertyBridge;
 	d2rq:propertyDefinitionLabel "user_in_role pilot_source_user_id";
 	d2rq:column "city4age_sr.user_in_role.pilot_source_user_id";
 	.
+map:city4age_sr_user_in_role_user_in_system_id__ref a d2rq:PropertyBridge;
+	d2rq:belongsToClassMap map:city4age_sr_user_in_role;
+	d2rq:property vocab:city4age_sr_user_in_role_user_in_system_id;
+	d2rq:refersToClassMap map:city4age_sr_user_in_system;
+	d2rq:join "city4age_sr.user_in_role.user_in_system_id => city4age_sr.user_in_system.id";
+	.
 map:city4age_sr_user_in_role_cd_role_id__ref a d2rq:PropertyBridge;
 	d2rq:belongsToClassMap map:city4age_sr_user_in_role;
 	d2rq:property vocab:city4age_sr_user_in_role_cd_role_id;
@@ -2197,6 +2336,51 @@ map:city4age_sr_user_in_role_pilot_code__ref a d2rq:PropertyBridge;
 	d2rq:property vocab:city4age_sr_user_in_role_pilot_code;
 	d2rq:refersToClassMap map:city4age_sr_pilot;
 	d2rq:join "city4age_sr.user_in_role.pilot_code => city4age_sr.pilot.code";
+	.
+
+# Table city4age_sr.user_in_system
+map:city4age_sr_user_in_system a d2rq:ClassMap;
+	d2rq:dataStorage map:database;
+	d2rq:uriPattern "city4age_sr/user_in_system/@@city4age_sr.user_in_system.id@@";
+	d2rq:class vocab:city4age_sr_user_in_system;
+	d2rq:classDefinitionLabel "city4age_sr.user_in_system";
+	.
+map:city4age_sr_user_in_system__label a d2rq:PropertyBridge;
+	d2rq:belongsToClassMap map:city4age_sr_user_in_system;
+	d2rq:property rdfs:label;
+	d2rq:pattern "user_in_system #@@city4age_sr.user_in_system.id@@";
+	.
+map:city4age_sr_user_in_system_id a d2rq:PropertyBridge;
+	d2rq:belongsToClassMap map:city4age_sr_user_in_system;
+	d2rq:property vocab:city4age_sr_user_in_system_id;
+	d2rq:propertyDefinitionLabel "user_in_system id";
+	d2rq:column "city4age_sr.user_in_system.id";
+	d2rq:datatype xsd:integer;
+	.
+map:city4age_sr_user_in_system_username a d2rq:PropertyBridge;
+	d2rq:belongsToClassMap map:city4age_sr_user_in_system;
+	d2rq:property vocab:city4age_sr_user_in_system_username;
+	d2rq:propertyDefinitionLabel "user_in_system username";
+	d2rq:column "city4age_sr.user_in_system.username";
+	.
+map:city4age_sr_user_in_system_password a d2rq:PropertyBridge;
+	d2rq:belongsToClassMap map:city4age_sr_user_in_system;
+	d2rq:property vocab:city4age_sr_user_in_system_password;
+	d2rq:propertyDefinitionLabel "user_in_system password";
+	d2rq:column "city4age_sr.user_in_system.password";
+	.
+map:city4age_sr_user_in_system_display_name a d2rq:PropertyBridge;
+	d2rq:belongsToClassMap map:city4age_sr_user_in_system;
+	d2rq:property vocab:city4age_sr_user_in_system_display_name;
+	d2rq:propertyDefinitionLabel "user_in_system display_name";
+	d2rq:column "city4age_sr.user_in_system.display_name";
+	.
+map:city4age_sr_user_in_system_created_date a d2rq:PropertyBridge;
+	d2rq:belongsToClassMap map:city4age_sr_user_in_system;
+	d2rq:property vocab:city4age_sr_user_in_system_created_date;
+	d2rq:propertyDefinitionLabel "user_in_system created_date";
+	d2rq:column "city4age_sr.user_in_system.created_date";
+	d2rq:datatype xsd:dateTime;
 	.
 
 # Table city4age_sr.variation_measure_value

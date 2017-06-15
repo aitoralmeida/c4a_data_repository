@@ -11,7 +11,7 @@ import datetime
 import logging
 import arrow
 from sqlalchemy import MetaData
-from src.packORM import ar_tables
+from packORM import ar_tables
 from post_orm import PostORM
 
 __author__ = 'Rubén Mulero'
@@ -255,7 +255,6 @@ class ARPostORM(PostORM):
                 # Insert EAM location REL and locationType
                 location = self._get_or_create(ar_tables.Location, location_name=location.lower())
 
-
                 # # Getting the location type or creating a default one
                 # location_type = self.session.query(ar_tables.LocationLocationTypeRel).filter_by(location_id=location.id)
                 # if location_type.count() == 0:
@@ -380,6 +379,40 @@ class ARPostORM(PostORM):
         for action in list_of_actions:
             actions.append(action[0])
         return actions
+
+    def get_action(self, p_start_time, p_end_time):
+        """
+        By giving a start and end time, this method extracts from database the stores leas and inserts in in a
+        Python dict.
+
+
+        :param p_start_time: The interval start date of the extraction
+        :param p_end_time: The final end date of the extraction
+        :return:  A list containing a Python dictionaries with the needed LEAS.
+        """
+
+        list_of_leas = list()
+
+        # Dates are ok, we are going to extract needed LEAS from executed action table
+        query = self.session.query(ar_tables.ExecutedAction).filter(
+            ar_tables.ExecutedAction.execution_datetime.between(p_start_time, p_end_time))
+        logging.info("Total founded LEAS in database: ", query.count())
+        for q in query:
+            # Extracting the needed data and obtaining additional values
+            location_name = self.session.query(ar_tables.Location).filter_by(id=q.location_id)[0].location_name
+            action_name = self.session.query(ar_tables.CDAction).filter_by(id=q.location_id)[0].action_name
+            lea = {
+                'executed_action_id': q.id,
+                'execution_datetime': q.execution_datetime,
+                'position': q.position,
+                'data_source_type': q.data_source_type,
+                'location_name': location_name,
+                'action_name': action_name
+            }
+            # Adding the dict to the final list
+            list_of_leas.append(lea)
+
+        return list_of_leas
 
     # TODO find a solution to this workaround
     def get_table_object_by_name(self, p_table_name):
