@@ -43,6 +43,7 @@ void AD()
    // Multiple discovery iterations are performed.  In each iteration the
    // best sequence pattern (according to MDL value) is found and used to
    // compress the original dataset.
+   printf("AD: NumIterations = %d", NumIterations);
    for (iteration=0; iteration<NumIterations || NumIterations==-1; iteration++)
    {
       if (EVALUATE == 0)     // Data size can include or ignore pattern sizes
@@ -328,6 +329,8 @@ void AD_ReadData(FILE *fp)
       hour = ComputeHour(time);
 
       sid = MapSensors(sensorid);      // Map sensor name to integer value
+
+      
       if (strcmp(sensorvalue, "OFF") == 0)
          svalue = 0;
       else svalue = 1;

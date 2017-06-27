@@ -101,7 +101,7 @@ void ClusterPatterns(FILE *fp)
          }
       }
    }
-    
+
    for (i=numPatterns-1; i>0; i--)   // Merge patterns if sufficiently similar
    {
       merged = 0;
@@ -115,6 +115,7 @@ void ClusterPatterns(FILE *fp)
          }
       }
    }
+
    return;
 }
 

@@ -1,0 +1,135 @@
+Discovered patterns
+
+0: BrushTeeth (variant 1) (468 events, 2942 numnewevents)
+   event (11) brusherSens [12 12]
+   event (12) toothpasteSens [13 13]
+   event (13) btapSens [14 14]
+   event (14) towelSens [15 15]
+
+1: MakePasta (mix of variant 1 and 2) (378 events, 2564 numnewevents)
+   event (4) storeSens [296 296]
+   event (5) potSens [297 297]
+   event (25) ktapSens [298 298]
+   event (6) cookerSens [299 299]
+   event (26) macaroniSens [300 300]
+   event (27) drainerSens [301 301]
+   event (29) ftomatoSens [302 302]
+   event (3) baconSens [303 303]
+
+2: MakeChocolate (variant 1 + baconSens) (392 events, 2172 numnewevents)
+   event (3) baconSens [4 4]
+   event (4) storeSens [5 5]
+   event (5) potSens [6 6]
+   event (6) cookerSens [7 7]
+   event (7) fridgeSens [8 8]
+   event (8) wmilkSens [9 9]
+   event (9) chocoSens [10 10]
+   event (10) mugSens [11 11]
+
+3: BrushTeeth(Pat_0) + WashHands (174 events, 1998 numnewevents)
+   event (33) Pat_0 [12 15] 
+   event (13) btapSens [16 16]
+   event (15) bsoapSens [17 17]
+   event (14) towelSens [18 18]
+
+4: WatchTelevision (variant 1) (78 events, 1920 numnewevents)
+   event (1) rcontrolSens [171 171]
+   event (24) tvSens [172 172]
+   event (18) sofaSens [173 173]
+
+5: BrushTeeth(Pat_0) + ReadBook (variant 1) (72 events, 1848 numnewevents)
+   event (33) Pat_0 [73 76]
+   event (17) bedSens [77 77]
+   event (22) blampSens [78 78]
+   event (23) bookbSens [79 79]
+
+6: MakeCoffee (variant 2) + creamSens (102 events, 1746 numnewevents)
+   event (28) creamSens [433 433]
+   event (30) coffeePotSens [434 434]
+   event (25) ktapSens [435 435]
+   event (31) afcoffeeSens [436 436]
+   event (6) cookerSens [437 437]
+   event (2) cupSens [438 438]
+   event (21) wsugarSens [439 439]
+
+7: MakeChocolate + BrushTeeth + WashHands (35 events, 1711 numnewevents)
+   event (35) Pat_2 [4 11]
+   event (36) Pat_3 [12 18]
+
+8: Non-sense (23 events, 1688 numnewevents)
+   event (4) storeSens [348 348]
+   event (1) rcontrolSens [349 349]
+
+9: MakeCoffee (variant 3) + BrushTeeth (63 events, 1625 numnewevents)
+   event (25) ktapSens [360 360]
+   event (31) afcoffeeSens [361 361]
+   event (6) cookerSens [362 362]
+   event (2) cupSens [363 363]
+   event (7) fridgeSens [364 364]
+   event (32) smilkSens [365 365]
+   event (21) wsugarSens [366 366]
+   event (33) Pat_0 [367 370]
+
+10: ReadBook (variant 2) (38 events, 1587 numnewevents)
+   event (18) sofaSens [35 35]
+   event (20) llampSens [36 36]
+   event (19) bookaSens [37 37]
+
+11: Non-sense (19 events, 1568 numnewevents)
+
+13: MakePasta + creamSens (17 events, 1534 numnewevents)
+   event (34) Pat_1 [350 357]
+   event (28) creamSens [358 358]
+
+19: ReadBook (variant 1) (22 events, 1445 numnewevents)
+   event (17) bedSens [201 201]
+   event (22) blampSens [202 202]
+   event (23) bookbSens [203 203]
+
+20: MakePasta(Pat_1) + MakeCoffee (Pat_6) (21 events, 1424 numnewevents)
+   event (34) Pat_1 [493 500]
+   event (39) Pat_6 [501 507]
+   event (32) smilkSens [508 508]
+   event (21) wsugarSens [509 509]
+
+21: MakePasta (variant 2 missing sensors) (21 events, 1403 numnewevents)
+   event (5) potSens [185 185]
+   event (25) ktapSens [186 186]
+   event (6) cookerSens [187 187]
+   event (26) macaroniSens [188 188]
+
+26: MakeChocolate(Pat_2) + WatchTelevision(Pat_4) + BrushTeeth(Pat_0) (12 events, 1350 numnewevents)
+
+28: MakePasta(Pat_21) + missing sensors + BrushTeeth(Pat_0) (20 events, 1321 numnewevents)
+   event (54) Pat_21 [185 188]
+   event (27) drainerSens [189 189]
+   event (7) fridgeSens [190 190]
+   event (3) baconSens [191 191]
+   event (28) creamSens [192 192]
+   event (33) Pat_0 [193 196]
+
+35: BrushTeeth(Pat_0) + ReadBook(Pat_10) (8 events, 1265 numnewevents)
+   event (33) Pat_0 [31 34]
+   event (43) Pat_10 [35 37]
+
+41: MakePasta(Pat_13) + (BrushTeeth + ReadBook)(Pat_5) (7 events, 1222 numnewevents)
+   event (46) Pat_13 [451 459]
+   event (38) Pat_5 [460 466]
+
+----------------------------------------------------
+
+Clusters (very interesting)
+
+0: BrushTeeth
+1: MakePasta (some patterns mixed with BrushTeeth)
+2: MakeChocolate (mixed with BrushTeeth, WashHands and noise)
+3: BrushTeeth + WashHands
+4: WatchTelevision
+5: ReadBook (mixed with BrushTeeth)
+6: MakeCoffee (mixed with BrushTeeth, MakePasta, 
+7: Non-sense
+8: ReadBook 
+9 - 28: Non-sense
+29: Popurri
+30 - 87: Non-sense
+

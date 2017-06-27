@@ -73,7 +73,7 @@
 #define CABINET 3
 #define TEMPERATURE 4
 #define LIGHTLEVEL 5
-#define K 3
+#define K 10 //default 3
 #define CLEANUP FALSE
 #define CLASSIFYTHRESHOLD 0.8
 #define PREFIX "/net/files/home/cook/vis/"
@@ -123,7 +123,7 @@
 #define BEFORE 0
 #define AFTER 1
 #define BEST 3               // Default is 3
-#define TWEIGHT 0.01         // Default is 0.01
+#define TWEIGHT 0.01         // Default is 0.01 // Gorka: not used
 #define EXACT 0
 #define INEXACT 1
 #define MATCHTHRESHOLD 0.2   // Default is 0.1

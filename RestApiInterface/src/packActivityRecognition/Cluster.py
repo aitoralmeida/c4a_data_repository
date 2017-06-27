@@ -1,10 +1,16 @@
 # -*- coding: utf-8 -
-"""
-Created on Wed Apr 27 15:07:22 2016
 
-@author: gazkune
-"""
 from Pattern import Pattern
+
+__author__ = 'Gorka Azkune'
+__copyright__ = "Copyright 2017, City4Age project"
+__credits__ = ["Rubén Mulero", "Aitor Almeida", "Gorka Azkune", "David Buján"]
+__license__ = "GPL"
+__version__ = "0.1"
+__maintainer__ = "Gorka Azkune"
+__email__ = "gorka.azkune@deusto.es"
+__status__ = "Prototype"
+
 
 class Cluster:
     def __init__(self):

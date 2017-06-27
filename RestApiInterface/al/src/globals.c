@@ -27,7 +27,7 @@ int Mode = TRAIN;          // 0=train, 1=test, 2=both (cross-validation)
 int TopN = 1;              // Report top n classes
 int Weight = NONE;         // 0=none, 1=time, 2=mutual info, 3=time+mutual info
 int Translate = FALSE;
-int OutputLevel = 1;       // Ranges from 0 to 2
+int OutputLevel = 1;       // Ranges from 0 to 2 // Gorka: original 1
 int IgnoreOther = FALSE;   // TRUE=ignore OtherActivity
 int NumActivities = 0;     // total number of activities
 int NumData = 0;           // total number of discrete event data entries
@@ -146,6 +146,6 @@ int origLabels = 0;
 int iteration = 0;
 int **sim = NULL;
 int numsim = 0;
-int NumIterations = 1;
+int NumIterations = -1; // Gorka: original 1 
 float **mi = NULL;
 Event *events = NULL;

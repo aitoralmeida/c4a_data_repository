@@ -263,10 +263,10 @@ class ExecutedAction(Base):
     executed_action_id_seq = Sequence('executed_action_id_seq', metadata=Base.metadata)
     # Creating the columns
     id = Column(Integer, server_default=executed_action_id_seq.next_value(), primary_key=True)
-    # Asociated information
+    # Associated information
     acquisition_datetime = Column(ArrowType(timezone=True), default=arrow.utcnow())
     execution_datetime = Column(ArrowType(timezone=True))
-    rating = Column(Integer)
+    rating = Column(Numeric(precision=5, scale=2))
     sensor_id = Column(Integer)
     position = Column(String(255))
     data_source_type = Column(String(200))  # An "array" containing the data source
@@ -332,7 +332,8 @@ class CDActionMetric(Base):
 
     metric_id = Column(Integer, ForeignKey('metric.id'), primary_key=True)
     cd_action_id = Column(Integer, ForeignKey('cd_action.id'), primary_key=True)
-    date = Column(ArrowType(timezone=True), primary_key=True)
+    date = Column(ArrowType(timezone=True), primary_key=True, default=arrow.utcnow())
+    execution_datetime = Column(ArrowType(timezone=True), nullable=False)
     value = Column(String(50), nullable=False)
     cd_action = relationship('CDAction')
 

@@ -105,6 +105,8 @@ class ARPostORM(PostORM):
             pilot = self._get_or_create(ar_tables.Pilot, code=data['pilot'].lower())
             # Assuming the default value --> care_receiver
             cd_role = self._get_or_create(ar_tables.CDRole, role_name='Care recipient')
+
+            # TODO avoid the creation of new users. The user MUST exsit previously in DB
             user = self._get_or_create(ar_tables.UserInRole, id=int(data['user'].split(':')[-1]), pilot_code=pilot.code,
                                        cd_role_id=cd_role.id)
             # Adding the location
@@ -121,7 +123,7 @@ class ARPostORM(PostORM):
                 metric = self._get_or_create(ar_tables.Metric, name=key)
                 self._get_or_create(ar_tables.CDActionMetric, metric_id=metric.id, cd_action_id=cd_action.id,
                                     value=value,
-                                    date=data['timestamp'])
+                                    execution_datetime=data['timestamp'])
             # Insert a new executed action
             executed_action = ar_tables.ExecutedAction(execution_datetime=data['timestamp'],
                                                        location_id=location.id,
@@ -404,8 +406,6 @@ class ARPostORM(PostORM):
             lea = {
                 'executed_action_id': q.id,
                 'execution_datetime': q.execution_datetime,
-                'position': q.position,
-                'data_source_type': q.data_source_type,
                 'location_name': location_name,
                 'action_name': action_name
             }
@@ -468,12 +468,13 @@ class ARPostORM(PostORM):
         
         :param p_user_id: The user id of the system 
         :param p_pilot: The given Pilot to compare
-        :return: 
+        :return:    False -> If the User doesn't exist in database of if the Pilot is different
+                    True -> If everything is OK
         """
         res = False
         user_in_role = self.session.query(ar_tables.UserInRole).filter_by(id=p_user_id) or None
-        if user_in_role and user_in_role.count() == 0 or user_in_role and user_in_role.count() == 1 and \
-                        user_in_role[0].id == int(p_user_id) and user_in_role[0].pilot_code == p_pilot:
+        if user_in_role and user_in_role.count() == 1 and user_in_role[0].id == int(p_user_id) and \
+                        user_in_role[0].pilot_code == p_pilot:
             res = True
         return res
 

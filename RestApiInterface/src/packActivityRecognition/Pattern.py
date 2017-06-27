@@ -1,13 +1,18 @@
 # -*- coding: utf-8 -*-
 """
-Created on Wed Apr 27 12:24:45 2016
-
-@author: gazkune
-"""
-
-"""
 Class Pattern to represent a pattern found by AD
 """
+
+__author__ = 'Gorka Azkune'
+__copyright__ = "Copyright 2017, City4Age project"
+__credits__ = ["Rubén Mulero", "Aitor Almeida", "Gorka Azkune", "David Buján"]
+__license__ = "GPL"
+__version__ = "0.1"
+__maintainer__ = "Gorka Azkune"
+__email__ = "gorka.azkune@deusto.es"
+__status__ = "Prototype"
+
+
 
 class Pattern:
     

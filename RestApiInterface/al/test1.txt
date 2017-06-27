@@ -1,0 +1,318 @@
+Reading the config file...done
+2010 events and 27 labels in data set
+
+Discovering patterns...AD: NumIterations = -1
+------- Iteration 0, 2010 events, 2010 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.300129, number of instances = 156
+   meantime = 14.185898, stddevtime = 5.700659
+ Sequence(4):
+   event (10) brusherSens [11 11]
+   event (11) toothpasteSens [12 12]
+   event (12) btapSens [13 13]
+   event (13) towelSens [14 14]
+Marked 468 events to compress, 0 duplicates, 1542 numnewevents
+
+------- Iteration 1, 1542 events, 1542 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.364602, number of instances = 60
+   meantime = 7.700000, stddevtime = 0.953939
+ Sequence(8):
+   event (0) storeSens [1 1]
+   event (1) potSens [2 2]
+   event (2) cookerSens [3 3]
+   event (3) fridgeSens [4 4]
+   event (4) wmilkSens [5 5]
+   event (5) chocoSens [6 6]
+   event (6) mugSens [7 7]
+   event (7) rcontrolSens [8 8]
+Marked 420 events to compress, 0 duplicates, 1122 numnewevents
+
+------- Iteration 2, 1122 events, 1122 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.116418, number of instances = 60
+   meantime = 12.250000, stddevtime = 7.154544
+ Sequence(3):
+   event (12) btapSens [36 36]
+   event (21) bsoapSens [37 37]
+   event (13) towelSens [38 38]
+Marked 120 events to compress, 0 duplicates, 1002 numnewevents
+
+------- Iteration 3, 1002 events, 1002 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.534456, number of instances = 51
+   meantime = 15.039216, stddevtime = 5.844256
+ Sequence(8):
+   event (27) Pat_0 [11 14]
+   event (0) storeSens [15 15]
+   event (1) potSens [16 16]
+   event (14) ktapSens [17 17]
+   event (2) cookerSens [18 18]
+   event (15) macaroniSens [19 19]
+   event (16) drainerSens [20 20]
+   event (17) ftomatoSens [21 21]
+Marked 357 events to compress, 0 duplicates, 645 numnewevents
+
+------- Iteration 4, 645 events, 645 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.399132, number of instances = 38
+   meantime = 16.868422, stddevtime = 6.354324
+ Sequence(6):
+   event (29) Pat_2 [50 52]
+   event (27) Pat_0 [53 56]
+   event (18) bedSens [57 57]
+   event (19) blampSens [58 58]
+   event (20) bookbSens [59 59]
+   event (28) Pat_1 [60 67]
+Marked 190 events to compress, 0 duplicates, 455 numnewevents
+
+------- Iteration 5, 455 events, 455 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.378788, number of instances = 19
+   meantime = 16.526316, stddevtime = 6.418464
+ Sequence(8):
+   event (28) Pat_1 [1 8]
+   event (8) tvSens [9 9]
+   event (9) sofaSens [10 10]
+   event (30) Pat_3 [11 21]
+   event (27) Pat_0 [22 25]
+   event (7) rcontrolSens [26 26]
+   event (8) tvSens [27 27]
+   event (9) sofaSens [28 28]
+Marked 133 events to compress, 0 duplicates, 322 numnewevents
+
+------- Iteration 6, 322 events, 322 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.759563, number of instances = 15
+   meantime = 19.799999, stddevtime = 4.400000
+ Sequence(11):
+   event (29) Pat_2 [92 94]
+   event (28) Pat_1 [95 102]
+   event (30) Pat_3 [106 115]
+   event (22) coffeePotSens [116 116]
+   event (14) ktapSens [117 117]
+   event (23) afcoffeeSens [118 118]
+   event (2) cookerSens [119 119]
+   event (24) cupSens [120 120]
+   event (3) fridgeSens [121 121]
+   event (25) smilkSens [122 122]
+   event (26) wsugarSens [123 123]
+Marked 150 events to compress, 0 duplicates, 172 numnewevents
+
+------- Iteration 7, 172 events, 172 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.457627, number of instances = 12
+   meantime = 9.000000, stddevtime = 0.000000
+ Sequence(6):
+   event (32) Pat_5 [1 28]
+   event (18) bedSens [29 29]
+   event (19) blampSens [30 30]
+   event (20) bookbSens [31 31]
+   event (27) Pat_0 [32 35]
+   event (29) Pat_2 [36 38]
+Marked 60 events to compress, 0 duplicates, 112 numnewevents
+
+------- Iteration 8, 112 events, 112 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.217391, number of instances = 8
+   meantime = 22.000000, stddevtime = 0.000000
+ Sequence(4):
+   event (33) Pat_6 [338 367]
+   event (27) Pat_0 [388 391]
+   event (7) rcontrolSens [392 392]
+   event (8) tvSens [393 393]
+Marked 24 events to compress, 0 duplicates, 88 numnewevents
+
+------- Iteration 9, 88 events, 88 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.060241, number of instances = 7
+   meantime = 9.000000, stddevtime = 0.000000
+ Sequence(2):
+   event (32) Pat_5 [50 77]
+   event (27) Pat_0 [88 91]
+Marked 7 events to compress, 0 duplicates, 81 numnewevents
+
+------- Iteration 10, 81 events, 81 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.038462, number of instances = 5
+   meantime = 22.000000, stddevtime = 0.000000
+ Sequence(2):
+   event (31) Pat_4 [124 141]
+   event (31) Pat_4 [153 170]
+Marked 5 events to compress, 0 duplicates, 76 numnewevents
+
+------- Iteration 11, 76 events, 76 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.041096, number of instances = 3
+   meantime = 9.000000, stddevtime = 0.000000
+ Sequence(3):
+   event (34) Pat_7 [740 777]
+   event (27) Pat_0 [807 810]
+   event (7) rcontrolSens [811 811]
+Marked 6 events to compress, 0 duplicates, 70 numnewevents
+
+------- Iteration 12, 70 events, 70 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.029412, number of instances = 4
+   meantime = 9.000000, stddevtime = 0.000000
+ Sequence(2):
+   event (34) Pat_7 [1 38]
+   event (28) Pat_1 [39 46]
+Marked 4 events to compress, 0 duplicates, 66 numnewevents
+
+------- Iteration 13, 66 events, 66 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.031250, number of instances = 4
+   meantime = 9.000000, stddevtime = 0.000000
+ Sequence(2):
+   event (36) Pat_9 [705 736]
+   event (29) Pat_2 [737 739]
+Marked 4 events to compress, 0 duplicates, 62 numnewevents
+
+------- Iteration 14, 62 events, 62 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.016393, number of instances = 3
+   meantime = 22.000000, stddevtime = 0.000000
+ Sequence(2):
+   event (37) Pat_10 [124 159]
+   event (31) Pat_4 [174 191]
+Marked 3 events to compress, 0 duplicates, 59 numnewevents
+
+------- Iteration 15, 59 events, 59 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.113208, number of instances = 2
+   meantime = 22.000000, stddevtime = 0.000000
+ Sequence(8):
+   event (41) Pat_14 [254 307]
+   event (8) tvSens [314 314]
+   event (9) sofaSens [315 315]
+   event (30) Pat_3 [316 326]
+   event (27) Pat_0 [327 330]
+   event (27) Pat_0 [331 334]
+   event (29) Pat_2 [335 337]
+   event (35) Pat_8 [338 373]
+Marked 14 events to compress, 0 duplicates, 45 numnewevents
+
+------- Iteration 16, 45 events, 45 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.022727, number of instances = 3
+   meantime = 9.000000, stddevtime = 0.000000
+ Sequence(2):
+   event (36) Pat_9 [50 81]
+   event (33) Pat_6 [92 121]
+Marked 3 events to compress, 0 duplicates, 42 numnewevents
+
+------- Iteration 17, 42 events, 42 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.000000, number of instances = 2
+   meantime = 9.000000, stddevtime = 0.000000
+ Sequence(2):
+   event (34) Pat_7 [458 495]
+   event (34) Pat_7 [535 572]
+Marked 2 events to compress, 0 duplicates, 40 numnewevents
+
+------- Iteration 18, 40 events, 40 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.000000, number of instances = 2
+   meantime = 9.000000, stddevtime = 0.000000
+ Sequence(2):
+   event (40) Pat_13 [705 739]
+   event (38) Pat_11 [740 782]
+Marked 2 events to compress, 0 duplicates, 38 numnewevents
+
+------- Iteration 19, 38 events, 38 size -------
+
+No more compression can be achieved.	Done.
+
+Clustering patterns...
+Pattern (0): (10) brusherSens (11) toothpasteSens (12) btapSens (13) towelSens 
+Pattern (1): (0) storeSens (1) potSens (2) cookerSens (3) fridgeSens (4) wmilkSens (5) chocoSens (6) mugSens (7) rcontrolSens 
+Pattern (2): (12) btapSens (21) bsoapSens (13) towelSens 
+Pattern (3): (10) brusherSens (11) toothpasteSens (12) btapSens (13) towelSens (0) storeSens (1) potSens (14) ktapSens (2) cookerSens (15) macaroniSens (16) drainerSens (17) ftomatoSens 
+Pattern (4): (12) btapSens (21) bsoapSens (13) towelSens (10) brusherSens (11) toothpasteSens (12) btapSens (13) towelSens (18) bedSens (19) blampSens (20) bookbSens (0) storeSens (1) potSens (2) cookerSens (3) fridgeSens (4) wmilkSens (5) chocoSens (6) mugSens (7) rcontrolSens 
+Pattern (5): (0) storeSens (1) potSens (2) cookerSens (3) fridgeSens (4) wmilkSens (5) chocoSens (6) mugSens (7) rcontrolSens (8) tvSens (9) sofaSens (10) brusherSens (11) toothpasteSens (12) btapSens (13) towelSens (0) storeSens (1) potSens (14) ktapSens (2) cookerSens (15) macaroniSens (16) drainerSens (17) ftomatoSens (10) brusherSens (11) toothpasteSens (12) btapSens (13) towelSens (7) rcontrolSens (8) tvSens (9) sofaSens 
+Pattern (6): (12) btapSens (21) bsoapSens (13) towelSens (0) storeSens (1) potSens (2) cookerSens (3) fridgeSens (4) wmilkSens (5) chocoSens (6) mugSens (7) rcontrolSens (10) brusherSens (11) toothpasteSens (12) btapSens (13) towelSens (0) storeSens (1) potSens (14) ktapSens (2) cookerSens (15) macaroniSens (16) drainerSens (17) ftomatoSens (22) coffeePotSens (14) ktapSens (23) afcoffeeSens (2) cookerSens (24) cupSens (3) fridgeSens (25) smilkSens (26) wsugarSens 
+Pattern (7): (0) storeSens (1) potSens (2) cookerSens (3) fridgeSens (4) wmilkSens (5) chocoSens (6) mugSens (7) rcontrolSens (8) tvSens (9) sofaSens (10) brusherSens (11) toothpasteSens (12) btapSens (13) towelSens (0) storeSens (1) potSens (14) ktapSens (2) cookerSens (15) macaroniSens (16) drainerSens (17) ftomatoSens (10) brusherSens (11) toothpasteSens (12) btapSens (13) towelSens (7) rcontrolSens (8) tvSens (9) sofaSens (18) bedSens (19) blampSens (20) bookbSens (10) brusherSens (11) toothpasteSens (12) btapSens (13) towelSens (12) btapSens (21) bsoapSens (13) towelSens 
+Pattern (8): (12) btapSens (21) bsoapSens (13) towelSens (0) storeSens (1) potSens (2) cookerSens (3) fridgeSens (4) wmilkSens (5) chocoSens (6) mugSens (7) rcontrolSens (10) brusherSens (11) toothpasteSens (12) btapSens (13) towelSens (0) storeSens (1) potSens (14) ktapSens (2) cookerSens (15) macaroniSens (16) drainerSens (17) ftomatoSens (22) coffeePotSens (14) ktapSens (23) afcoffeeSens (2) cookerSens (24) cupSens (3) fridgeSens (25) smilkSens (26) wsugarSens (10) brusherSens (11) toothpasteSens (12) btapSens (13) towelSens (7) rcontrolSens (8) tvSens 
+Pattern (9): (0) storeSens (1) potSens (2) cookerSens (3) fridgeSens (4) wmilkSens (5) chocoSens (6) mugSens (7) rcontrolSens (8) tvSens (9) sofaSens (10) brusherSens (11) toothpasteSens (12) btapSens (13) towelSens (0) storeSens (1) potSens (14) ktapSens (2) cookerSens (15) macaroniSens (16) drainerSens (17) ftomatoSens (10) brusherSens (11) toothpasteSens (12) btapSens (13) towelSens (7) rcontrolSens (8) tvSens (9) sofaSens (10) brusherSens (11) toothpasteSens (12) btapSens (13) towelSens 
+Pattern (10): (12) btapSens (21) bsoapSens (13) towelSens (10) brusherSens (11) toothpasteSens (12) btapSens (13) towelSens (18) bedSens (19) blampSens (20) bookbSens (0) storeSens (1) potSens (2) cookerSens (3) fridgeSens (4) wmilkSens (5) chocoSens (6) mugSens (7) rcontrolSens (12) btapSens (21) bsoapSens (13) towelSens (10) brusherSens (11) toothpasteSens (12) btapSens (13) towelSens (18) bedSens (19) blampSens (20) bookbSens (0) storeSens (1) potSens (2) cookerSens (3) fridgeSens (4) wmilkSens (5) chocoSens (6) mugSens (7) rcontrolSens 
+Pattern (11): (0) storeSens (1) potSens (2) cookerSens (3) fridgeSens (4) wmilkSens (5) chocoSens (6) mugSens (7) rcontrolSens (8) tvSens (9) sofaSens (10) brusherSens (11) toothpasteSens (12) btapSens (13) towelSens (0) storeSens (1) potSens (14) ktapSens (2) cookerSens (15) macaroniSens (16) drainerSens (17) ftomatoSens (10) brusherSens (11) toothpasteSens (12) btapSens (13) towelSens (7) rcontrolSens (8) tvSens (9) sofaSens (18) bedSens (19) blampSens (20) bookbSens (10) brusherSens (11) toothpasteSens (12) btapSens (13) towelSens (12) btapSens (21) bsoapSens (13) towelSens (10) brusherSens (11) toothpasteSens (12) btapSens (13) towelSens (7) rcontrolSens 
+Pattern (12): (0) storeSens (1) potSens (2) cookerSens (3) fridgeSens (4) wmilkSens (5) chocoSens (6) mugSens (7) rcontrolSens (8) tvSens (9) sofaSens (10) brusherSens (11) toothpasteSens (12) btapSens (13) towelSens (0) storeSens (1) potSens (14) ktapSens (2) cookerSens (15) macaroniSens (16) drainerSens (17) ftomatoSens (10) brusherSens (11) toothpasteSens (12) btapSens (13) towelSens (7) rcontrolSens (8) tvSens (9) sofaSens (18) bedSens (19) blampSens (20) bookbSens (10) brusherSens (11) toothpasteSens (12) btapSens (13) towelSens (12) btapSens (21) bsoapSens (13) towelSens (0) storeSens (1) potSens (2) cookerSens (3) fridgeSens (4) wmilkSens (5) chocoSens (6) mugSens (7) rcontrolSens 
+Pattern (13): (0) storeSens (1) potSens (2) cookerSens (3) fridgeSens (4) wmilkSens (5) chocoSens (6) mugSens (7) rcontrolSens (8) tvSens (9) sofaSens (10) brusherSens (11) toothpasteSens (12) btapSens (13) towelSens (0) storeSens (1) potSens (14) ktapSens (2) cookerSens (15) macaroniSens (16) drainerSens (17) ftomatoSens (10) brusherSens (11) toothpasteSens (12) btapSens (13) towelSens (7) rcontrolSens (8) tvSens (9) sofaSens (10) brusherSens (11) toothpasteSens (12) btapSens (13) towelSens (12) btapSens (21) bsoapSens (13) towelSens 
+Pattern (14): (12) btapSens (21) bsoapSens (13) towelSens (10) brusherSens (11) toothpasteSens (12) btapSens (13) towelSens (18) bedSens (19) blampSens (20) bookbSens (0) storeSens (1) potSens (2) cookerSens (3) fridgeSens (4) wmilkSens (5) chocoSens (6) mugSens (7) rcontrolSens (12) btapSens (21) bsoapSens (13) towelSens (10) brusherSens (11) toothpasteSens (12) btapSens (13) towelSens (18) bedSens (19) blampSens (20) bookbSens (0) storeSens (1) potSens (2) cookerSens (3) fridgeSens (4) wmilkSens (5) chocoSens (6) mugSens (7) rcontrolSens (12) btapSens (21) bsoapSens (13) towelSens (10) brusherSens (11) toothpasteSens (12) btapSens (13) towelSens (18) bedSens (19) blampSens (20) bookbSens (0) storeSens (1) potSens (2) cookerSens (3) fridgeSens (4) wmilkSens (5) chocoSens (6) mugSens (7) rcontrolSens 
+Pattern (15): (12) btapSens (21) bsoapSens (13) towelSens (10) brusherSens (11) toothpasteSens (12) btapSens (13) towelSens (18) bedSens (19) blampSens (20) bookbSens (0) storeSens (1) potSens (2) cookerSens (3) fridgeSens (4) wmilkSens (5) chocoSens (6) mugSens (7) rcontrolSens (12) btapSens (21) bsoapSens (13) towelSens (10) brusherSens (11) toothpasteSens (12) btapSens (13) towelSens (18) bedSens (19) blampSens (20) bookbSens (0) storeSens (1) potSens (2) cookerSens (3) fridgeSens (4) wmilkSens (5) chocoSens (6) mugSens (7) rcontrolSens (12) btapSens (21) bsoapSens (13) towelSens (10) brusherSens (11) toothpasteSens (12) btapSens (13) towelSens (18) bedSens (19) blampSens (20) bookbSens (0) storeSens (1) potSens (2) cookerSens (3) fridgeSens (4) wmilkSens (5) chocoSens (6) mugSens (7) rcontrolSens (8) tvSens (9) sofaSens (10) brusherSens (11) toothpasteSens (12) btapSens (13) towelSens (0) storeSens (1) potSens (14) ktapSens (2) cookerSens (15) macaroniSens (16) drainerSens (17) ftomatoSens (10) brusherSens (11) toothpasteSens (12) btapSens (13) towelSens (10) brusherSens (11) toothpasteSens (12) btapSens (13) towelSens (12) btapSens (21) bsoapSens (13) towelSens (12) btapSens (21) bsoapSens (13) towelSens (0) storeSens (1) potSens (2) cookerSens (3) fridgeSens (4) wmilkSens (5) chocoSens (6) mugSens (7) rcontrolSens (10) brusherSens (11) toothpasteSens (12) btapSens (13) towelSens (0) storeSens (1) potSens (14) ktapSens (2) cookerSens (15) macaroniSens (16) drainerSens (17) ftomatoSens (22) coffeePotSens (14) ktapSens (23) afcoffeeSens (2) cookerSens (24) cupSens (3) fridgeSens (25) smilkSens (26) wsugarSens (10) brusherSens (11) toothpasteSens (12) btapSens (13) towelSens (7) rcontrolSens (8) tvSens 
+Pattern (16): (0) storeSens (1) potSens (2) cookerSens (3) fridgeSens (4) wmilkSens (5) chocoSens (6) mugSens (7) rcontrolSens (8) tvSens (9) sofaSens (10) brusherSens (11) toothpasteSens (12) btapSens (13) towelSens (0) storeSens (1) potSens (14) ktapSens (2) cookerSens (15) macaroniSens (16) drainerSens (17) ftomatoSens (10) brusherSens (11) toothpasteSens (12) btapSens (13) towelSens (7) rcontrolSens (8) tvSens (9) sofaSens (10) brusherSens (11) toothpasteSens (12) btapSens (13) towelSens (12) btapSens (21) bsoapSens (13) towelSens (0) storeSens (1) potSens (2) cookerSens (3) fridgeSens (4) wmilkSens (5) chocoSens (6) mugSens (7) rcontrolSens (10) brusherSens (11) toothpasteSens (12) btapSens (13) towelSens (0) storeSens (1) potSens (14) ktapSens (2) cookerSens (15) macaroniSens (16) drainerSens (17) ftomatoSens (22) coffeePotSens (14) ktapSens (23) afcoffeeSens (2) cookerSens (24) cupSens (3) fridgeSens (25) smilkSens (26) wsugarSens 
+Pattern (17): (0) storeSens (1) potSens (2) cookerSens (3) fridgeSens (4) wmilkSens (5) chocoSens (6) mugSens (7) rcontrolSens (8) tvSens (9) sofaSens (10) brusherSens (11) toothpasteSens (12) btapSens (13) towelSens (0) storeSens (1) potSens (14) ktapSens (2) cookerSens (15) macaroniSens (16) drainerSens (17) ftomatoSens (10) brusherSens (11) toothpasteSens (12) btapSens (13) towelSens (7) rcontrolSens (8) tvSens (9) sofaSens (18) bedSens (19) blampSens (20) bookbSens (10) brusherSens (11) toothpasteSens (12) btapSens (13) towelSens (12) btapSens (21) bsoapSens (13) towelSens (0) storeSens (1) potSens (2) cookerSens (3) fridgeSens (4) wmilkSens (5) chocoSens (6) mugSens (7) rcontrolSens (8) tvSens (9) sofaSens (10) brusherSens (11) toothpasteSens (12) btapSens (13) towelSens (0) storeSens (1) potSens (14) ktapSens (2) cookerSens (15) macaroniSens (16) drainerSens (17) ftomatoSens (10) brusherSens (11) toothpasteSens (12) btapSens (13) towelSens (7) rcontrolSens (8) tvSens (9) sofaSens (18) bedSens (19) blampSens (20) bookbSens (10) brusherSens (11) toothpasteSens (12) btapSens (13) towelSens (12) btapSens (21) bsoapSens (13) towelSens 
+Pattern (18): (0) storeSens (1) potSens (2) cookerSens (3) fridgeSens (4) wmilkSens (5) chocoSens (6) mugSens (7) rcontrolSens (8) tvSens (9) sofaSens (10) brusherSens (11) toothpasteSens (12) btapSens (13) towelSens (0) storeSens (1) potSens (14) ktapSens (2) cookerSens (15) macaroniSens (16) drainerSens (17) ftomatoSens (10) brusherSens (11) toothpasteSens (12) btapSens (13) towelSens (7) rcontrolSens (8) tvSens (9) sofaSens (10) brusherSens (11) toothpasteSens (12) btapSens (13) towelSens (12) btapSens (21) bsoapSens (13) towelSens (0) storeSens (1) potSens (2) cookerSens (3) fridgeSens (4) wmilkSens (5) chocoSens (6) mugSens (7) rcontrolSens (8) tvSens (9) sofaSens (10) brusherSens (11) toothpasteSens (12) btapSens (13) towelSens (0) storeSens (1) potSens (14) ktapSens (2) cookerSens (15) macaroniSens (16) drainerSens (17) ftomatoSens (10) brusherSens (11) toothpasteSens (12) btapSens (13) towelSens (7) rcontrolSens (8) tvSens (9) sofaSens (18) bedSens (19) blampSens (20) bookbSens (10) brusherSens (11) toothpasteSens (12) btapSens (13) towelSens (12) btapSens (21) bsoapSens (13) towelSens (10) brusherSens (11) toothpasteSens (12) btapSens (13) towelSens (7) rcontrolSens 
+
+Learning Markov models...
+computing distance between patterns...
+Cluster 0
+   [0]: (10) brusherSens (11) toothpasteSens (12) btapSens (13) towelSens 
+Cluster 1
+   [1]: (0) storeSens (1) potSens (2) cookerSens (3) fridgeSens (4) wmilkSens (5) chocoSens (6) mugSens (7) rcontrolSens 
+Cluster 2
+   [2]: (12) btapSens (21) bsoapSens (13) towelSens 
+Cluster 3
+   [3]: (10) brusherSens (11) toothpasteSens (12) btapSens (13) towelSens (0) storeSens (1) potSens (14) ktapSens (2) cookerSens (15) macaroniSens (16) drainerSens (17) ftomatoSens 
+   [5]: (0) storeSens (1) potSens (2) cookerSens (3) fridgeSens (4) wmilkSens (5) chocoSens (6) mugSens (7) rcontrolSens (8) tvSens (9) sofaSens (10) brusherSens (11) toothpasteSens (12) btapSens (13) towelSens (0) storeSens (1) potSens (14) ktapSens (2) cookerSens (15) macaroniSens (16) drainerSens (17) ftomatoSens (10) brusherSens (11) toothpasteSens (12) btapSens (13) towelSens (7) rcontrolSens (8) tvSens (9) sofaSens 
+   [6]: (12) btapSens (21) bsoapSens (13) towelSens (0) storeSens (1) potSens (2) cookerSens (3) fridgeSens (4) wmilkSens (5) chocoSens (6) mugSens (7) rcontrolSens (10) brusherSens (11) toothpasteSens (12) btapSens (13) towelSens (0) storeSens (1) potSens (14) ktapSens (2) cookerSens (15) macaroniSens (16) drainerSens (17) ftomatoSens (22) coffeePotSens (14) ktapSens (23) afcoffeeSens (2) cookerSens (24) cupSens (3) fridgeSens (25) smilkSens (26) wsugarSens 
+   [9]: (0) storeSens (1) potSens (2) cookerSens (3) fridgeSens (4) wmilkSens (5) chocoSens (6) mugSens (7) rcontrolSens (8) tvSens (9) sofaSens (10) brusherSens (11) toothpasteSens (12) btapSens (13) towelSens (0) storeSens (1) potSens (14) ktapSens (2) cookerSens (15) macaroniSens (16) drainerSens (17) ftomatoSens (10) brusherSens (11) toothpasteSens (12) btapSens (13) towelSens (7) rcontrolSens (8) tvSens (9) sofaSens (10) brusherSens (11) toothpasteSens (12) btapSens (13) towelSens 
+Cluster 4
+   [4]: (12) btapSens (21) bsoapSens (13) towelSens (10) brusherSens (11) toothpasteSens (12) btapSens (13) towelSens (18) bedSens (19) blampSens (20) bookbSens (0) storeSens (1) potSens (2) cookerSens (3) fridgeSens (4) wmilkSens (5) chocoSens (6) mugSens (7) rcontrolSens 
+   [10]: (12) btapSens (21) bsoapSens (13) towelSens (10) brusherSens (11) toothpasteSens (12) btapSens (13) towelSens (18) bedSens (19) blampSens (20) bookbSens (0) storeSens (1) potSens (2) cookerSens (3) fridgeSens (4) wmilkSens (5) chocoSens (6) mugSens (7) rcontrolSens (12) btapSens (21) bsoapSens (13) towelSens (10) brusherSens (11) toothpasteSens (12) btapSens (13) towelSens (18) bedSens (19) blampSens (20) bookbSens (0) storeSens (1) potSens (2) cookerSens (3) fridgeSens (4) wmilkSens (5) chocoSens (6) mugSens (7) rcontrolSens 
+Cluster 5
+   [7]: (0) storeSens (1) potSens (2) cookerSens (3) fridgeSens (4) wmilkSens (5) chocoSens (6) mugSens (7) rcontrolSens (8) tvSens (9) sofaSens (10) brusherSens (11) toothpasteSens (12) btapSens (13) towelSens (0) storeSens (1) potSens (14) ktapSens (2) cookerSens (15) macaroniSens (16) drainerSens (17) ftomatoSens (10) brusherSens (11) toothpasteSens (12) btapSens (13) towelSens (7) rcontrolSens (8) tvSens (9) sofaSens (18) bedSens (19) blampSens (20) bookbSens (10) brusherSens (11) toothpasteSens (12) btapSens (13) towelSens (12) btapSens (21) bsoapSens (13) towelSens 
+   [12]: (0) storeSens (1) potSens (2) cookerSens (3) fridgeSens (4) wmilkSens (5) chocoSens (6) mugSens (7) rcontrolSens (8) tvSens (9) sofaSens (10) brusherSens (11) toothpasteSens (12) btapSens (13) towelSens (0) storeSens (1) potSens (14) ktapSens (2) cookerSens (15) macaroniSens (16) drainerSens (17) ftomatoSens (10) brusherSens (11) toothpasteSens (12) btapSens (13) towelSens (7) rcontrolSens (8) tvSens (9) sofaSens (18) bedSens (19) blampSens (20) bookbSens (10) brusherSens (11) toothpasteSens (12) btapSens (13) towelSens (12) btapSens (21) bsoapSens (13) towelSens (0) storeSens (1) potSens (2) cookerSens (3) fridgeSens (4) wmilkSens (5) chocoSens (6) mugSens (7) rcontrolSens 
+   [13]: (0) storeSens (1) potSens (2) cookerSens (3) fridgeSens (4) wmilkSens (5) chocoSens (6) mugSens (7) rcontrolSens (8) tvSens (9) sofaSens (10) brusherSens (11) toothpasteSens (12) btapSens (13) towelSens (0) storeSens (1) potSens (14) ktapSens (2) cookerSens (15) macaroniSens (16) drainerSens (17) ftomatoSens (10) brusherSens (11) toothpasteSens (12) btapSens (13) towelSens (7) rcontrolSens (8) tvSens (9) sofaSens (10) brusherSens (11) toothpasteSens (12) btapSens (13) towelSens (12) btapSens (21) bsoapSens (13) towelSens 
+   [16]: (0) storeSens (1) potSens (2) cookerSens (3) fridgeSens (4) wmilkSens (5) chocoSens (6) mugSens (7) rcontrolSens (8) tvSens (9) sofaSens (10) brusherSens (11) toothpasteSens (12) btapSens (13) towelSens (0) storeSens (1) potSens (14) ktapSens (2) cookerSens (15) macaroniSens (16) drainerSens (17) ftomatoSens (10) brusherSens (11) toothpasteSens (12) btapSens (13) towelSens (7) rcontrolSens (8) tvSens (9) sofaSens (10) brusherSens (11) toothpasteSens (12) btapSens (13) towelSens (12) btapSens (21) bsoapSens (13) towelSens (0) storeSens (1) potSens (2) cookerSens (3) fridgeSens (4) wmilkSens (5) chocoSens (6) mugSens (7) rcontrolSens (10) brusherSens (11) toothpasteSens (12) btapSens (13) towelSens (0) storeSens (1) potSens (14) ktapSens (2) cookerSens (15) macaroniSens (16) drainerSens (17) ftomatoSens (22) coffeePotSens (14) ktapSens (23) afcoffeeSens (2) cookerSens (24) cupSens (3) fridgeSens (25) smilkSens (26) wsugarSens 
+   [17]: (0) storeSens (1) potSens (2) cookerSens (3) fridgeSens (4) wmilkSens (5) chocoSens (6) mugSens (7) rcontrolSens (8) tvSens (9) sofaSens (10) brusherSens (11) toothpasteSens (12) btapSens (13) towelSens (0) storeSens (1) potSens (14) ktapSens (2) cookerSens (15) macaroniSens (16) drainerSens (17) ftomatoSens (10) brusherSens (11) toothpasteSens (12) btapSens (13) towelSens (7) rcontrolSens (8) tvSens (9) sofaSens (18) bedSens (19) blampSens (20) bookbSens (10) brusherSens (11) toothpasteSens (12) btapSens (13) towelSens (12) btapSens (21) bsoapSens (13) towelSens (0) storeSens (1) potSens (2) cookerSens (3) fridgeSens (4) wmilkSens (5) chocoSens (6) mugSens (7) rcontrolSens (8) tvSens (9) sofaSens (10) brusherSens (11) toothpasteSens (12) btapSens (13) towelSens (0) storeSens (1) potSens (14) ktapSens (2) cookerSens (15) macaroniSens (16) drainerSens (17) ftomatoSens (10) brusherSens (11) toothpasteSens (12) btapSens (13) towelSens (7) rcontrolSens (8) tvSens (9) sofaSens (18) bedSens (19) blampSens (20) bookbSens (10) brusherSens (11) toothpasteSens (12) btapSens (13) towelSens (12) btapSens (21) bsoapSens (13) towelSens 
+Cluster 6
+   [8]: (12) btapSens (21) bsoapSens (13) towelSens (0) storeSens (1) potSens (2) cookerSens (3) fridgeSens (4) wmilkSens (5) chocoSens (6) mugSens (7) rcontrolSens (10) brusherSens (11) toothpasteSens (12) btapSens (13) towelSens (0) storeSens (1) potSens (14) ktapSens (2) cookerSens (15) macaroniSens (16) drainerSens (17) ftomatoSens (22) coffeePotSens (14) ktapSens (23) afcoffeeSens (2) cookerSens (24) cupSens (3) fridgeSens (25) smilkSens (26) wsugarSens (10) brusherSens (11) toothpasteSens (12) btapSens (13) towelSens (7) rcontrolSens (8) tvSens 
+   [14]: (12) btapSens (21) bsoapSens (13) towelSens (10) brusherSens (11) toothpasteSens (12) btapSens (13) towelSens (18) bedSens (19) blampSens (20) bookbSens (0) storeSens (1) potSens (2) cookerSens (3) fridgeSens (4) wmilkSens (5) chocoSens (6) mugSens (7) rcontrolSens (12) btapSens (21) bsoapSens (13) towelSens (10) brusherSens (11) toothpasteSens (12) btapSens (13) towelSens (18) bedSens (19) blampSens (20) bookbSens (0) storeSens (1) potSens (2) cookerSens (3) fridgeSens (4) wmilkSens (5) chocoSens (6) mugSens (7) rcontrolSens (12) btapSens (21) bsoapSens (13) towelSens (10) brusherSens (11) toothpasteSens (12) btapSens (13) towelSens (18) bedSens (19) blampSens (20) bookbSens (0) storeSens (1) potSens (2) cookerSens (3) fridgeSens (4) wmilkSens (5) chocoSens (6) mugSens (7) rcontrolSens 
+Cluster 7
+   [11]: (0) storeSens (1) potSens (2) cookerSens (3) fridgeSens (4) wmilkSens (5) chocoSens (6) mugSens (7) rcontrolSens (8) tvSens (9) sofaSens (10) brusherSens (11) toothpasteSens (12) btapSens (13) towelSens (0) storeSens (1) potSens (14) ktapSens (2) cookerSens (15) macaroniSens (16) drainerSens (17) ftomatoSens (10) brusherSens (11) toothpasteSens (12) btapSens (13) towelSens (7) rcontrolSens (8) tvSens (9) sofaSens (18) bedSens (19) blampSens (20) bookbSens (10) brusherSens (11) toothpasteSens (12) btapSens (13) towelSens (12) btapSens (21) bsoapSens (13) towelSens (10) brusherSens (11) toothpasteSens (12) btapSens (13) towelSens (7) rcontrolSens 
+   [18]: (0) storeSens (1) potSens (2) cookerSens (3) fridgeSens (4) wmilkSens (5) chocoSens (6) mugSens (7) rcontrolSens (8) tvSens (9) sofaSens (10) brusherSens (11) toothpasteSens (12) btapSens (13) towelSens (0) storeSens (1) potSens (14) ktapSens (2) cookerSens (15) macaroniSens (16) drainerSens (17) ftomatoSens (10) brusherSens (11) toothpasteSens (12) btapSens (13) towelSens (7) rcontrolSens (8) tvSens (9) sofaSens (10) brusherSens (11) toothpasteSens (12) btapSens (13) towelSens (12) btapSens (21) bsoapSens (13) towelSens (0) storeSens (1) potSens (2) cookerSens (3) fridgeSens (4) wmilkSens (5) chocoSens (6) mugSens (7) rcontrolSens (8) tvSens (9) sofaSens (10) brusherSens (11) toothpasteSens (12) btapSens (13) towelSens (0) storeSens (1) potSens (14) ktapSens (2) cookerSens (15) macaroniSens (16) drainerSens (17) ftomatoSens (10) brusherSens (11) toothpasteSens (12) btapSens (13) towelSens (7) rcontrolSens (8) tvSens (9) sofaSens (18) bedSens (19) blampSens (20) bookbSens (10) brusherSens (11) toothpasteSens (12) btapSens (13) towelSens (12) btapSens (21) bsoapSens (13) towelSens (10) brusherSens (11) toothpasteSens (12) btapSens (13) towelSens (7) rcontrolSens 
+Cluster 8
+   [15]: (12) btapSens (21) bsoapSens (13) towelSens (10) brusherSens (11) toothpasteSens (12) btapSens (13) towelSens (18) bedSens (19) blampSens (20) bookbSens (0) storeSens (1) potSens (2) cookerSens (3) fridgeSens (4) wmilkSens (5) chocoSens (6) mugSens (7) rcontrolSens (12) btapSens (21) bsoapSens (13) towelSens (10) brusherSens (11) toothpasteSens (12) btapSens (13) towelSens (18) bedSens (19) blampSens (20) bookbSens (0) storeSens (1) potSens (2) cookerSens (3) fridgeSens (4) wmilkSens (5) chocoSens (6) mugSens (7) rcontrolSens (12) btapSens (21) bsoapSens (13) towelSens (10) brusherSens (11) toothpasteSens (12) btapSens (13) towelSens (18) bedSens (19) blampSens (20) bookbSens (0) storeSens (1) potSens (2) cookerSens (3) fridgeSens (4) wmilkSens (5) chocoSens (6) mugSens (7) rcontrolSens (8) tvSens (9) sofaSens (10) brusherSens (11) toothpasteSens (12) btapSens (13) towelSens (0) storeSens (1) potSens (14) ktapSens (2) cookerSens (15) macaroniSens (16) drainerSens (17) ftomatoSens (10) brusherSens (11) toothpasteSens (12) btapSens (13) towelSens (10) brusherSens (11) toothpasteSens (12) btapSens (13) towelSens (12) btapSens (21) bsoapSens (13) towelSens (12) btapSens (21) bsoapSens (13) towelSens (0) storeSens (1) potSens (2) cookerSens (3) fridgeSens (4) wmilkSens (5) chocoSens (6) mugSens (7) rcontrolSens (10) brusherSens (11) toothpasteSens (12) btapSens (13) towelSens (0) storeSens (1) potSens (14) ktapSens (2) cookerSens (15) macaroniSens (16) drainerSens (17) ftomatoSens (22) coffeePotSens (14) ktapSens (23) afcoffeeSens (2) cookerSens (24) cupSens (3) fridgeSens (25) smilkSens (26) wsugarSens (10) brusherSens (11) toothpasteSens (12) btapSens (13) towelSens (7) rcontrolSens (8) tvSens 
+Done.
+
+Annotating data...Done.

@@ -111,6 +111,14 @@ class PostORM(object):
         """
         self.session.add_all(p_list_data)  # Multiple users, pending action
 
+    def count(self, p_table):
+        """
+        Counts the total row of a defined table in database
+
+        :return: The number of elements of a table
+        """
+        #number_elements = self.session.
+
     def query(self, p_class, web_dict, limit=10, offset=0, order_by='asc'):
         """
         Makes a query to the desired table of database and filter the result based on user choice.

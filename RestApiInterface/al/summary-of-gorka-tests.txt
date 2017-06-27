@@ -1,0 +1,95 @@
+DATASET: ds1
+
+-----------------------------------------------------------
+TEST 1
+
+Train AL ignoring OTHER activities and using an annotated dataset
+
+   - ds1.config: mode 0 | ignoreother
+   - command: ./bin/al -r datasets/ds1.config
+
+Test performance -> command: ./bin/al -r model/model.config datasets/ds1
+
+        Sle[0] Oth[1] Per[2] Lea[3] Ent[4] Coo[5] Tak[6] Eat[7] Bed[8]
+Sle[0]:  2544      0      0      0      0      2      0      0      1 
+Oth[1]:     0      0      0      0      0      0      0      0      0 
+Per[2]:     0      0   8159      1      0      0      2      0      0 
+Lea[3]:     0      0      0    954      0      2      0      0      0 
+Ent[4]:     0      0      0      1    796      4      0      1      0 
+Coo[5]:     0      0      1      1      1  21275     39      2      0 
+Tak[6]:     0      0     13      0      0    104   4084     20      0 
+Eat[7]:     0      0      0      1      2     10     14   4738      1 
+Bed[8]:     2      0      0      0      0      0      0      0    755 
+Activity recognition accuracy = 0.994831
+
+Test performance (3-fold cross-validation):
+   
+   - ds1.config: mode 2
+   - command: ./bin/al -r datasets/ds1.config
+   - Accuracy = 0.991776
+
+-----------------------------------------------------------
+TEST 2
+
+Train AL taking OTHER activities into account and using an annotated dataset
+
+   - ds1.config: mode 0 | remove ignoreother
+   - command: ./bin/al -r datasets/ds1.config
+
+Test performance -> command: ./bin/al -r model/model.config datasets/ds1
+
+        Sle[0] Oth[1] Per[2] Lea[3] Ent[4] Coo[5] Tak[6] Eat[7] Bed[8]
+Sle[0]:  2538      8      0      0      0      0      0      0      1 
+Oth[1]:     9  55838     91     21     18    344     26     61      4 
+Per[2]:     0     87   8097      0      0      0      0      1      0 
+Lea[3]:     0     56      0    904      0      0      0      1      0 
+Ent[4]:     0     28      0      0    771      3      0      1      0 
+Coo[5]:     1    218      0      0      2  21087     10      1      0 
+Tak[6]:     0    316     10      0      0    195   3690     10      0 
+Eat[7]:     0    116      0      0      1      3      0   4646      0 
+Bed[8]:     2      5      0      0      0      0      0      0    750 
+Activity recognition accuracy = 0.983495
+
+Test performance (3-fold cross-validation):
+
+   - ds1.config: mode 2
+   - command: ./bin/al -r datasets/ds1.config
+   - Accuracy = 0.970652
+
+-----------------------------------------------------------
+TEST 2
+
+Combine AR and AD on an annotated dataset where OTHER activities exist
+
+   - ds1.config: mode 3
+   - command: ./bin/al -r datasets/ds1.config
+   - The result is saved (I guess; should be tested with other created files) in ds1.annotated
+
+Now, use AR in this new dataset and check its performance
+
+   - ds1.config: mode 0 | data datasets/ds1.annotated
+   - command: ./bin/al -r datasets/ds1.config
+
+Test performance -> command: ./bin/al -r model/model.config datasets/ds1.annotated
+
+        Sle[0] Oth[1] Per[2] Lea[3] Ent[4] Coo[5] Pat[6] Tak[7] Eat[8] Bed[9]
+Sle[0]:  2540      6      0      0      0      0      0      0      0      1 
+Oth[1]:     9  42750     57     25     22    339    468     33     65      4 
+Per[2]:     0    141   8043      1      0      0      0      0      0      0 
+Lea[3]:     0     71      0    889      1      0      0      0      0      0 
+Ent[4]:     0     42      0      0    756      3      0      0      2      0 
+Coo[5]:     1    215      0      0      2  21087      4      9      1      0 
+Pat[6]:     0     64      0      0      0      4  12571      0      1      0 
+Tak[7]:     0    317     10      0      0    194      2   3683     15      0 
+Eat[8]:     0     84      0      0      0      4     59      4   4615      0 
+Bed[9]:     2      4      0      0      0      0      0      0      0    751 
+Activity recognition accuracy = 0.977133
+
+Test performance (3-fold cross-validation):
+
+   - ds1.config: mode 2 | data datasets/ds1.annotated
+   - command: ./bin/al -r datasets/ds1.config
+   - Accuracy = 0.953276
+
+* Fast test done with ds1.ann.annotated and mode 2. Accuracy = 0.952486
+* Fast test done with ds1.ann and mode 2. Accuracy = 0.957128

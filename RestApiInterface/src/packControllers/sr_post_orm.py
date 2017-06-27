@@ -10,7 +10,7 @@ calls into the SR database. This class is directly inherited from PostORM superc
 import arrow
 import logging
 
-from src.packORM import sr_tables
+from packORM import sr_tables
 from post_orm import PostORM
 from sqlalchemy import MetaData
 
@@ -96,7 +96,7 @@ class SRPostORM(PostORM):
                 metric = self._get_or_create(sr_tables.Metric, name=key)
                 self._get_or_create(sr_tables.CDActionMetric, metric_id=metric.id, cd_action_id=cd_action.id,
                                     value=value,
-                                    date=data['timestamp'])
+                                    execution_datetime=data['timestamp'])
             # Insert a new executed action
             executed_action = sr_tables.ExecutedAction(execution_datetime=data['timestamp'],
                                                        location_id=location.id,
@@ -164,7 +164,7 @@ class SRPostORM(PostORM):
                     # Admin measures values
                     variation_measure_value = self._get_or_create(sr_tables.VariationMeasureValue,
                                                                   user_in_role_id=user_in_role.id,
-                                                                  measure_value=value.get('value', 0),
+                                                                  measure_value=round(value.get('value', 0), 2),
                                                                   measure_type_id=measure_cd_detection_variable.id,
                                                                   time_interval_id=time_interval.id,
                                                                   data_source_type=' '.join(
@@ -233,7 +233,6 @@ class SRPostORM(PostORM):
         self.commit()
         return user_in_role_ids
 
-
     def add_new_care_receiver(self, p_data, p_user_id):
         """
 
@@ -250,7 +249,7 @@ class SRPostORM(PostORM):
             user_in_system = self._get_or_create(sr_tables.UserInSystem, username=data['username'].lower(),
                                                  password=data['password'])
             # Gettig the CD role id of care_receiver
-            cd_role = self._get_or_create(sr_tables.CDRole, role_name='care_receiver')
+            cd_role = self._get_or_create(sr_tables.CDRole, role_name='Care recipient')
             # Obtaining Pilot ID through the Pilot credentials
             pilot_code = self._get_or_create(sr_tables.UserInRole, user_in_system_id=p_user_id).pilot_code
             # Creating the user_in_role table for the new user in the system
@@ -368,11 +367,12 @@ class SRPostORM(PostORM):
 
         :param p_user_id: The user id of the system 
         :param p_pilot: The given Pilot to compare
-        :return: 
+        :return:    False -> If the User doesn't exist in database of if the Pilot is different
+                    True -> If everything is OK
         """
         res = False
         user_in_role = self.session.query(sr_tables.UserInRole).filter_by(id=p_user_id) or None
-        if user_in_role and user_in_role.count() == 0 or user_in_role and user_in_role.count() == 1 and \
-                        user_in_role[0].id == int(p_user_id) and user_in_role[0].pilot_code == p_pilot:
+        if user_in_role and user_in_role.count() == 1 and user_in_role[0].id == int(p_user_id) and \
+                        user_in_role[0].pilot_code == p_pilot:
             res = True
         return res

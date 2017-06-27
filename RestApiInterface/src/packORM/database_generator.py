@@ -249,7 +249,7 @@ def create_pilots_accounts(p_tables, p_orm):
                                      cd_role_id=pilot_source_system_id, pilot_code='mad')
 
     montpellier_uir = p_tables.UserInRole(valid_from=None, valid_to=None, user_in_system_id=montpellier.id,
-                                          cd_role_id=pilot_source_system_id, pilot_code='mlp')
+                                          cd_role_id=pilot_source_system_id, pilot_code='mpl')
 
     singapore_uir = p_tables.UserInRole(valid_from=None, valid_to=None, user_in_system_id=singapore.id,
                                         cd_role_id=pilot_source_system_id, pilot_code='sin')
@@ -273,7 +273,7 @@ def create_pilot(p_tables, p_orm):
     madrid = p_tables.Pilot(pilot_name='madrid', code='mad', population_size=3141991)
     lecce = p_tables.Pilot(pilot_name='lecce', code='lcc', population_size=89839)
     singapore = p_tables.Pilot(pilot_name='singapore', code='sin', population_size=5610000)
-    montpellier = p_tables.Pilot(pilot_name='montpellier', code='mlp', population_size=268456)
+    montpellier = p_tables.Pilot(pilot_name='montpellier', code='mpl', population_size=268456)
     athens = p_tables.Pilot(pilot_name='athens', code='ath', population_size=3090508)
     birmingham = p_tables.Pilot(pilot_name='birmingham', code='bhx', population_size=1101360)
     list_of_pilots.extend([madrid, lecce, singapore, montpellier, athens, birmingham])

@@ -254,6 +254,19 @@ public class RuleEngine {
                     oURI = o.asLiteral().getString();           // Getting the literal value (city name)
                 }
 
+                // baseuri:pilot:pilot_name/23232  hasPilotname "lecce";
+
+
+                // SUJETO
+                // baseURI + /city4age_ar/pilot/*
+                // base URI /city4age_sr/pilot/*
+
+                // Predicado
+                // dbp:name
+
+                // Objeto
+                // Literal que sea una lista de ciudades
+
                 if (sURI.equals(c4aBaseURI+"City") && pURI.equals("dbp:name") && oURI.toLowerCase().equals(places)) {
                     LOGGER.info("--> updateCityInformation: Searching information from city: "+oURI.toLowerCase());
                     // Obtaining aditional resources of external ontologies
@@ -301,6 +314,10 @@ public class RuleEngine {
                     Matcher matcher = pattern.matcher(line);
                     if (matcher.find()) {
                         // Obtaining the needed resource
+
+                        // CAmbiar por el mimso sujeto de arriba que /City4age_ar/pilot/***
+                        // y SR -_-
+
                         Resource subject = pModel.getResource(c4aBaseURI+"City");
                         // Obtaining the needed property
                         Property predicate = pModel.getProperty("owl:sameAS");
@@ -309,6 +326,7 @@ public class RuleEngine {
                         // Creating the logical statement
                         //use add property
                         pModel.add(subject, predicate, object);
+                        //pModel.add(subject2, predicate, object);
                     }else {
                         // we are only to save the problem, but not raise any error.
                         LOGGER.warning("--> obtainCityInformation: We found a possible resource but the Regex matcher" +

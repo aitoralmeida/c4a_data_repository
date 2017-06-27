@@ -930,6 +930,7 @@ void AR_AnnModel()
 
 /* Test the decision tree model using current fold
    for every node in the hierarchy. */
+
 void AR_TestKModel(int cvnum)
 {
    int i, cval=0, small;
@@ -944,6 +945,7 @@ void AR_TestKModel(int cvnum)
 
 	 // Decision tree value
          cval = DTClassify(data[i], dt, AR_MINNUMCLASS, &small);
+	 //printf("%i, %i\n", cval, labels[i]);
 	 // If empty leaf label Other_Activity
          if (cval == labels[i])
             NumRight++;

@@ -10,6 +10,7 @@ from __future__ import print_function
 
 import os
 import logging
+import simplejson as json
 from datetime import timedelta
 from functools import wraps
 from json import dumps, loads
@@ -39,7 +40,12 @@ SECRET_KEY = '\xc2O\xd1\xbb\xd6\xb2\xc2pxRS\x12l\xee8X\xcb\xc3(\xeer\xc5\x08s'
 AR_DATABASE = 'Database'
 SR_DATABASE = 'Database'
 USER = None
-MAX_LENGHT = 8 * 1024 * 1024  # in bytes
+MAX_LENGHT = 1398101  # in bytes        ~~ 500 LEAS OR up to 16MB? check if it whort it
+
+
+#MAX_LENGHT = 8 * 1024 * 1024 # in bytes
+
+
 
 # Create application and load config.
 app = Flask(__name__)

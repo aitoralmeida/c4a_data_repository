@@ -184,8 +184,9 @@ class Utilities(object):
                         raise ValidationError("The action inserted doesn't exist in the system: %s" % data['action'])
                     elif not Utilities.validate_user_pilot(p_database, data['user'].split(':')[-1].lower(),
                                                            data['pilot'].lower()):
-                        logging.error("The entered user pilot is incorrect: %s", data['user'])
-                        raise ValidationError("The entered user pilot is incorrect: %s", data['user'])
+                        logging.error("The entered user pilot is incorrect or the user doesn't exist: %s", data['user'])
+                        raise ValidationError("The entered user pilot is incorrect or the user doesn't exist: %s" %
+                                              data['user'])
             else:
                 validate(p_data, schema, format_checker=FormatChecker())
                 # We are going to validate if inserted actions are OK
@@ -195,9 +196,9 @@ class Utilities(object):
                     raise ValidationError("The action inserted doesn't exist in the system: %s" % p_data['action'])
                 elif not Utilities.validate_user_pilot(p_database, p_data['user'].split(':')[-1].lower(),
                                                        p_data['pilot'].lower()):
-                    logging.error("The entered user pilot is incorrect: %s", p_data['user'])
-                    raise ValidationError("The entered user pilot is incorrect: %s", p_data['user'])
-
+                    logging.error("The entered user pilot is incorrect or the user doesn't exist: %s", p_data['user'])
+                    raise ValidationError("The entered user pilot is incorrect or the user doesn't exist: %s" %
+                                          p_data['user'])
             res = True
         except ValidationError as e:
             logging.error("The schema entered by the user is invalid")
@@ -632,7 +633,7 @@ class Utilities(object):
                                     "maximum": 1000000,
                                     "exclusiveMinimum": True,
                                     "exclusiveMaximum": True,
-                                    "multipleOf": 0.01
+                                    #"multipleOf": 0.01
                                 },
                                 "data_source_type": {
                                     "description": "how the action has been decided or imported",
@@ -686,8 +687,10 @@ class Utilities(object):
                     # Validating the user with its pilot
                     if not Utilities.validate_user_pilot(p_database, data['user'].split(':')[-1].lower(),
                                                            data['pilot'].lower()):
-                        logging.error("The entered user pilot is incorrect: %s", data['user'])
-                        raise ValidationError("The entered user pilot is incorrect: %s", data['user'])
+                        logging.error("The entered user pilot is incorrect or the user doesn't exist: %s",
+                                      data['user'])
+                        raise ValidationError("The entered user pilot is incorrect or the user doesn't exist: %s" %
+                                              data['user'])
             else:
                 validate(p_data, schema, format_checker=FormatChecker())
                 # Validating measures
@@ -699,8 +702,9 @@ class Utilities(object):
                 # Validating the user with its pilot
                 if not Utilities.validate_user_pilot(p_database, p_data['user'].split(':')[-1].lower(),
                                                        p_data['pilot'].lower()):
-                    logging.error("The entered user pilot is incorrect: %s", p_data['user'])
-                    raise ValidationError("The entered user pilot is incorrect: %s", p_data['user'])
+                    logging.error("The entered user pilot is incorrect or the user doesn't exist: %s", p_data['user'])
+                    raise ValidationError("The entered user pilot is incorrect or the user doesn't exist: %s" %
+                                          p_data['user'])
 
             res = True
         except ValidationError as e:
@@ -947,7 +951,7 @@ class Utilities(object):
     @staticmethod
     def validate_user_pilot(p_database, p_user, p_pilot):
         """
-        Giving a User and Pilot, this method checks if the users exist in database and if exsit, it checks its pilot 
+        Giving a User and Pilot, this method checks if the users exist in database and if exist, it checks its pilot
         code
                 
         :param p_database: The database instance 

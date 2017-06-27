@@ -163,7 +163,7 @@ class ExecutedAction(Base):
     """
     Multi relationship table.
 
-    User - Action -- Activity -- Location
+    User - CDAction -- Activity -- Location
     """
 
     __tablename__ = 'executed_action'
@@ -266,7 +266,8 @@ class CDActionMetric(Base):
 
     metric_id = Column(Integer, ForeignKey('metric.id'), primary_key=True)
     cd_action_id = Column(Integer, ForeignKey('cd_action.id'), primary_key=True)
-    date = Column(ArrowType(timezone=True), primary_key=True)
+    date = Column(ArrowType(timezone=True), primary_key=True, default=arrow.utcnow())
+    execution_datetime = Column(ArrowType(timezone=True), nullable=False)
     value = Column(String(50), nullable=False)
     cd_action = relationship('CDAction')
 

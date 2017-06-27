@@ -1,0 +1,2440 @@
+Reading the config file...done
+3410 events and 33 labels in data set
+
+Discovering patterns...AD: NumIterations = -1
+------- Iteration 0, 3410 events, 3410 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.157502, number of instances = 156
+   meantime = 13.871795, stddevtime = 5.640648
+ Sequence(4):
+   event (11) brusherSens [12 12]
+   event (12) toothpasteSens [13 13]
+   event (13) btapSens [14 14]
+   event (14) towelSens [15 15]
+Marked 468 events to compress, 0 duplicates, 2942 numnewevents
+
+------- Iteration 1, 2942 events, 2942 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.143857, number of instances = 54
+   meantime = 16.314816, stddevtime = 3.430927
+ Sequence(8):
+   event (4) storeSens [296 296]
+   event (5) potSens [297 297]
+   event (25) ktapSens [298 298]
+   event (6) cookerSens [299 299]
+   event (26) macaroniSens [300 300]
+   event (27) drainerSens [301 301]
+   event (29) ftomatoSens [302 302]
+   event (3) baconSens [303 303]
+Marked 378 events to compress, 0 duplicates, 2564 numnewevents
+
+------- Iteration 2, 2564 events, 2564 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.176147, number of instances = 56
+   meantime = 6.250000, stddevtime = 1.366042
+ Sequence(8):
+   event (3) baconSens [4 4]
+   event (4) storeSens [5 5]
+   event (5) potSens [6 6]
+   event (6) cookerSens [7 7]
+   event (7) fridgeSens [8 8]
+   event (8) wmilkSens [9 9]
+   event (9) chocoSens [10 10]
+   event (10) mugSens [11 11]
+Marked 392 events to compress, 0 duplicates, 2172 numnewevents
+
+------- Iteration 3, 2172 events, 2172 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.084915, number of instances = 58
+   meantime = 7.000000, stddevtime = 0.000000
+ Sequence(4):
+   event (33) Pat_0 [12 15]
+   event (13) btapSens [16 16]
+   event (15) bsoapSens [17 17]
+   event (14) towelSens [18 18]
+Marked 174 events to compress, 0 duplicates, 1998 numnewevents
+
+------- Iteration 4, 1998 events, 1998 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.039002, number of instances = 39
+   meantime = 15.512820, stddevtime = 3.754462
+ Sequence(3):
+   event (1) rcontrolSens [171 171]
+   event (24) tvSens [172 172]
+   event (18) sofaSens [173 173]
+Marked 78 events to compress, 0 duplicates, 1920 numnewevents
+
+------- Iteration 5, 1920 events, 1920 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.036717, number of instances = 24
+   meantime = 7.000000, stddevtime = 0.000000
+ Sequence(4):
+   event (33) Pat_0 [73 76]
+   event (17) bedSens [77 77]
+   event (22) blampSens [78 78]
+   event (23) bookbSens [79 79]
+Marked 72 events to compress, 0 duplicates, 1848 numnewevents
+
+------- Iteration 6, 1848 events, 1848 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.054193, number of instances = 17
+   meantime = 13.000000, stddevtime = 0.000000
+ Sequence(7):
+   event (28) creamSens [433 433]
+   event (30) coffeePotSens [434 434]
+   event (25) ktapSens [435 435]
+   event (31) afcoffeeSens [436 436]
+   event (6) cookerSens [437 437]
+   event (2) cupSens [438 438]
+   event (21) wsugarSens [439 439]
+Marked 102 events to compress, 0 duplicates, 1746 numnewevents
+
+------- Iteration 7, 1746 events, 1746 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.019264, number of instances = 35
+   meantime = 7.000000, stddevtime = 0.000000
+ Sequence(2):
+   event (35) Pat_2 [4 11]
+   event (36) Pat_3 [12 18]
+Marked 35 events to compress, 0 duplicates, 1711 numnewevents
+
+------- Iteration 8, 1711 events, 1711 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.012426, number of instances = 23
+   meantime = 9.173913, stddevtime = 6.617843
+ Sequence(2):
+   event (4) storeSens [348 348]
+   event (1) rcontrolSens [349 349]
+Marked 23 events to compress, 0 duplicates, 1688 numnewevents
+
+------- Iteration 9, 1688 events, 1688 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.033680, number of instances = 9
+   meantime = 13.000000, stddevtime = 0.000000
+ Sequence(8):
+   event (25) ktapSens [360 360]
+   event (31) afcoffeeSens [361 361]
+   event (6) cookerSens [362 362]
+   event (2) cupSens [363 363]
+   event (7) fridgeSens [364 364]
+   event (32) smilkSens [365 365]
+   event (21) wsugarSens [366 366]
+   event (33) Pat_0 [367 370]
+Marked 63 events to compress, 0 duplicates, 1625 numnewevents
+
+------- Iteration 10, 1625 events, 1625 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.022013, number of instances = 19
+   meantime = 19.947369, stddevtime = 0.393859
+ Sequence(3):
+   event (18) sofaSens [35 35]
+   event (20) llampSens [36 36]
+   event (19) bookaSens [37 37]
+Marked 38 events to compress, 0 duplicates, 1587 numnewevents
+
+------- Iteration 11, 1587 events, 1587 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.010828, number of instances = 19
+   meantime = 10.947369, stddevtime = 7.416012
+ Sequence(2):
+   event (16) bsugarSens [273 273]
+   event (3) baconSens [274 274]
+Marked 19 events to compress, 0 duplicates, 1568 numnewevents
+
+------- Iteration 12, 1568 events, 1568 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.009659, number of instances = 17
+   meantime = 9.588235, stddevtime = 6.598207
+ Sequence(2):
+   event (3) baconSens [59 59]
+   event (4) storeSens [60 60]
+Marked 17 events to compress, 0 duplicates, 1551 numnewevents
+
+------- Iteration 13, 1551 events, 1551 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.009766, number of instances = 17
+   meantime = 14.000000, stddevtime = 0.000000
+ Sequence(2):
+   event (34) Pat_1 [350 357]
+   event (28) creamSens [358 358]
+Marked 17 events to compress, 0 duplicates, 1534 numnewevents
+
+------- Iteration 14, 1534 events, 1534 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.009210, number of instances = 16
+   meantime = 11.687500, stddevtime = 6.151410
+ Sequence(2):
+   event (1) rcontrolSens [81 81]
+   event (21) wsugarSens [82 82]
+Marked 16 events to compress, 0 duplicates, 1518 numnewevents
+
+------- Iteration 15, 1518 events, 1518 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.008638, number of instances = 15
+   meantime = 11.933333, stddevtime = 4.959391
+ Sequence(2):
+   event (16) bsugarSens [24 24]
+   event (4) storeSens [25 25]
+Marked 15 events to compress, 0 duplicates, 1503 numnewevents
+
+------- Iteration 16, 1503 events, 1503 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.007373, number of instances = 13
+   meantime = 13.846154, stddevtime = 6.383225
+ Sequence(2):
+   event (16) bsugarSens [19 19]
+   event (1) rcontrolSens [20 20]
+Marked 13 events to compress, 0 duplicates, 1490 numnewevents
+
+------- Iteration 17, 1490 events, 1490 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.006757, number of instances = 12
+   meantime = 8.750000, stddevtime = 6.326202
+ Sequence(2):
+   event (3) baconSens [400 400]
+   event (21) wsugarSens [401 401]
+Marked 12 events to compress, 0 duplicates, 1478 numnewevents
+
+------- Iteration 18, 1478 events, 1478 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.006127, number of instances = 11
+   meantime = 14.363636, stddevtime = 6.183155
+ Sequence(2):
+   event (1) rcontrolSens [128 128]
+   event (3) baconSens [129 129]
+Marked 11 events to compress, 0 duplicates, 1467 numnewevents
+
+------- Iteration 19, 1467 events, 1467 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.013122, number of instances = 11
+   meantime = 19.636364, stddevtime = 0.642824
+ Sequence(3):
+   event (17) bedSens [201 201]
+   event (22) blampSens [202 202]
+   event (23) bookbSens [203 203]
+Marked 22 events to compress, 0 duplicates, 1445 numnewevents
+
+------- Iteration 20, 1445 events, 1445 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.011905, number of instances = 7
+   meantime = 14.000000, stddevtime = 0.000000
+ Sequence(4):
+   event (34) Pat_1 [493 500]
+   event (39) Pat_6 [501 507]
+   event (32) smilkSens [508 508]
+   event (21) wsugarSens [509 509]
+Marked 21 events to compress, 0 duplicates, 1424 numnewevents
+
+------- Iteration 21, 1424 events, 1424 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.012082, number of instances = 7
+   meantime = 15.142858, stddevtime = 3.090472
+ Sequence(4):
+   event (5) potSens [185 185]
+   event (25) ktapSens [186 186]
+   event (6) cookerSens [187 187]
+   event (26) macaroniSens [188 188]
+Marked 21 events to compress, 0 duplicates, 1403 numnewevents
+
+------- Iteration 22, 1403 events, 1403 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.006456, number of instances = 11
+   meantime = 11.363636, stddevtime = 7.654740
+ Sequence(2):
+   event (16) bsugarSens [219 219]
+   event (21) wsugarSens [220 220]
+Marked 11 events to compress, 0 duplicates, 1392 numnewevents
+
+------- Iteration 23, 1392 events, 1392 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.005780, number of instances = 10
+   meantime = 9.600000, stddevtime = 8.296988
+ Sequence(2):
+   event (0) saucepanSens [1 1]
+   event (1) rcontrolSens [2 2]
+Marked 10 events to compress, 0 duplicates, 1382 numnewevents
+
+------- Iteration 24, 1382 events, 1382 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.005822, number of instances = 10
+   meantime = 8.400000, stddevtime = 5.122499
+ Sequence(2):
+   event (21) wsugarSens [1082 1082]
+   event (2) cupSens [1083 1083]
+Marked 10 events to compress, 0 duplicates, 1372 numnewevents
+
+------- Iteration 25, 1372 events, 1372 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.005865, number of instances = 10
+   meantime = 11.000000, stddevtime = 5.585696
+ Sequence(2):
+   event (18) sofaSens [572 572]
+   event (16) bsugarSens [573 573]
+Marked 10 events to compress, 0 duplicates, 1362 numnewevents
+
+------- Iteration 26, 1362 events, 1362 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.006652, number of instances = 6
+   meantime = 7.000000, stddevtime = 0.000000
+ Sequence(3):
+   event (35) Pat_2 [163 170]
+   event (37) Pat_4 [171 173]
+   event (33) Pat_0 [174 177]
+Marked 12 events to compress, 0 duplicates, 1350 numnewevents
+
+------- Iteration 27, 1350 events, 1350 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.005212, number of instances = 9
+   meantime = 11.666667, stddevtime = 7.164728
+ Sequence(2):
+   event (4) storeSens [920 920]
+   event (21) wsugarSens [921 921]
+Marked 9 events to compress, 0 duplicates, 1341 numnewevents
+
+------- Iteration 28, 1341 events, 1341 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.010550, number of instances = 4
+   meantime = 15.000000, stddevtime = 2.915476
+ Sequence(6):
+   event (54) Pat_21 [185 188]
+   event (27) drainerSens [189 189]
+   event (7) fridgeSens [190 190]
+   event (3) baconSens [191 191]
+   event (28) creamSens [192 192]
+   event (33) Pat_0 [193 196]
+Marked 20 events to compress, 0 duplicates, 1321 numnewevents
+
+------- Iteration 29, 1321 events, 1321 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.004563, number of instances = 8
+   meantime = 12.875000, stddevtime = 8.695365
+ Sequence(2):
+   event (3) baconSens [84 84]
+   event (1) rcontrolSens [85 85]
+Marked 8 events to compress, 0 duplicates, 1313 numnewevents
+
+------- Iteration 30, 1313 events, 1313 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.004591, number of instances = 8
+   meantime = 6.125000, stddevtime = 3.854786
+ Sequence(2):
+   event (0) saucepanSens [222 222]
+   event (4) storeSens [223 223]
+Marked 8 events to compress, 0 duplicates, 1305 numnewevents
+
+------- Iteration 31, 1305 events, 1305 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.004619, number of instances = 8
+   meantime = 12.125000, stddevtime = 8.328228
+ Sequence(2):
+   event (3) baconSens [38 38]
+   event (16) bsugarSens [39 39]
+Marked 8 events to compress, 0 duplicates, 1297 numnewevents
+
+------- Iteration 32, 1297 events, 1297 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.004648, number of instances = 8
+   meantime = 13.250000, stddevtime = 5.494315
+ Sequence(2):
+   event (11) brusherSens [199 199]
+   event (4) storeSens [200 200]
+Marked 8 events to compress, 0 duplicates, 1289 numnewevents
+
+------- Iteration 33, 1289 events, 1289 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.004677, number of instances = 8
+   meantime = 12.000000, stddevtime = 7.382411
+ Sequence(2):
+   event (11) brusherSens [916 916]
+   event (17) bedSens [917 917]
+Marked 8 events to compress, 0 duplicates, 1281 numnewevents
+
+------- Iteration 34, 1281 events, 1281 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.004706, number of instances = 8
+   meantime = 9.375000, stddevtime = 7.952004
+ Sequence(2):
+   event (0) saucepanSens [275 275]
+   event (21) wsugarSens [276 276]
+Marked 8 events to compress, 0 duplicates, 1273 numnewevents
+
+------- Iteration 35, 1273 events, 1273 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.004736, number of instances = 8
+   meantime = 7.000000, stddevtime = 0.000000
+ Sequence(2):
+   event (33) Pat_0 [31 34]
+   event (43) Pat_10 [35 37]
+Marked 8 events to compress, 0 duplicates, 1265 numnewevents
+
+------- Iteration 36, 1265 events, 1265 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.004766, number of instances = 8
+   meantime = 10.750000, stddevtime = 2.904737
+ Sequence(2):
+   event (5) potSens [942 942]
+   event (6) cookerSens [943 943]
+Marked 8 events to compress, 0 duplicates, 1257 numnewevents
+
+------- Iteration 37, 1257 events, 1257 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.003994, number of instances = 7
+   meantime = 14.714286, stddevtime = 7.795865
+ Sequence(2):
+   event (18) sofaSens [871 871]
+   event (1) rcontrolSens [872 872]
+Marked 7 events to compress, 0 duplicates, 1250 numnewevents
+
+------- Iteration 38, 1250 events, 1250 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.004016, number of instances = 7
+   meantime = 12.142858, stddevtime = 3.642157
+ Sequence(2):
+   event (3) baconSens [826 826]
+   event (34) Pat_1 [827 834]
+Marked 7 events to compress, 0 duplicates, 1243 numnewevents
+
+------- Iteration 39, 1243 events, 1243 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.004039, number of instances = 7
+   meantime = 14.714286, stddevtime = 5.006118
+ Sequence(2):
+   event (4) storeSens [178 178]
+   event (16) bsugarSens [179 179]
+Marked 7 events to compress, 0 duplicates, 1236 numnewevents
+
+------- Iteration 40, 1236 events, 1236 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.004062, number of instances = 7
+   meantime = 7.142857, stddevtime = 6.916411
+ Sequence(2):
+   event (17) bedSens [70 70]
+   event (19) bookaSens [71 71]
+Marked 7 events to compress, 0 duplicates, 1229 numnewevents
+
+------- Iteration 41, 1229 events, 1229 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.004085, number of instances = 7
+   meantime = 14.000000, stddevtime = 0.000000
+ Sequence(2):
+   event (46) Pat_13 [451 459]
+   event (38) Pat_5 [460 466]
+Marked 7 events to compress, 0 duplicates, 1222 numnewevents
+
+------- Iteration 42, 1222 events, 1222 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.003284, number of instances = 6
+   meantime = 11.833333, stddevtime = 7.127802
+ Sequence(2):
+   event (2) cupSens [181 181]
+   event (4) storeSens [182 182]
+Marked 6 events to compress, 0 duplicates, 1216 numnewevents
+
+------- Iteration 43, 1216 events, 1216 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.003300, number of instances = 6
+   meantime = 13.333333, stddevtime = 7.866949
+ Sequence(2):
+   event (11) brusherSens [1213 1213]
+   event (1) rcontrolSens [1214 1214]
+Marked 6 events to compress, 0 duplicates, 1210 numnewevents
+
+------- Iteration 44, 1210 events, 1210 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.003317, number of instances = 6
+   meantime = 14.666667, stddevtime = 7.738791
+ Sequence(2):
+   event (18) sofaSens [40 40]
+   event (2) cupSens [41 41]
+Marked 6 events to compress, 0 duplicates, 1204 numnewevents
+
+------- Iteration 45, 1204 events, 1204 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.003333, number of instances = 6
+   meantime = 5.833333, stddevtime = 4.017323
+ Sequence(2):
+   event (3) baconSens [1113 1113]
+   event (19) bookaSens [1114 1114]
+Marked 6 events to compress, 0 duplicates, 1198 numnewevents
+
+------- Iteration 46, 1198 events, 1198 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.003350, number of instances = 6
+   meantime = 10.833333, stddevtime = 7.057305
+ Sequence(2):
+   event (3) baconSens [216 216]
+   event (17) bedSens [217 217]
+Marked 6 events to compress, 0 duplicates, 1192 numnewevents
+
+------- Iteration 47, 1192 events, 1192 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.003367, number of instances = 6
+   meantime = 7.500000, stddevtime = 5.649484
+ Sequence(2):
+   event (0) saucepanSens [64 64]
+   event (17) bedSens [65 65]
+Marked 6 events to compress, 0 duplicates, 1186 numnewevents
+
+------- Iteration 48, 1186 events, 1186 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.003384, number of instances = 6
+   meantime = 13.000000, stddevtime = 0.000000
+ Sequence(2):
+   event (39) Pat_6 [433 439]
+   event (33) Pat_0 [440 443]
+Marked 6 events to compress, 0 duplicates, 1180 numnewevents
+
+------- Iteration 49, 1180 events, 1180 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.002549, number of instances = 5
+   meantime = 7.000000, stddevtime = 0.000000
+ Sequence(2):
+   event (40) Pat_7 [332 346]
+   event (1) rcontrolSens [347 347]
+Marked 5 events to compress, 0 duplicates, 1175 numnewevents
+
+------- Iteration 50, 1175 events, 1175 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.002560, number of instances = 5
+   meantime = 13.800000, stddevtime = 6.013319
+ Sequence(2):
+   event (2) cupSens [543 543]
+   event (21) wsugarSens [544 544]
+Marked 5 events to compress, 0 duplicates, 1170 numnewevents
+
+------- Iteration 51, 1170 events, 1170 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.002571, number of instances = 5
+   meantime = 7.000000, stddevtime = 0.000000
+ Sequence(2):
+   event (33) Pat_0 [249 252]
+   event (1) rcontrolSens [253 253]
+Marked 5 events to compress, 0 duplicates, 1165 numnewevents
+
+------- Iteration 52, 1165 events, 1165 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.002582, number of instances = 5
+   meantime = 11.400000, stddevtime = 5.953150
+ Sequence(2):
+   event (4) storeSens [900 900]
+   event (4) storeSens [901 901]
+Marked 5 events to compress, 0 duplicates, 1160 numnewevents
+
+------- Iteration 53, 1160 events, 1160 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.002593, number of instances = 5
+   meantime = 13.000000, stddevtime = 2.966480
+ Sequence(2):
+   event (11) brusherSens [110 110]
+   event (16) bsugarSens [111 111]
+Marked 5 events to compress, 0 duplicates, 1155 numnewevents
+
+------- Iteration 54, 1155 events, 1155 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.002604, number of instances = 5
+   meantime = 8.800000, stddevtime = 6.400000
+ Sequence(2):
+   event (19) bookaSens [87 87]
+   event (2) cupSens [88 88]
+Marked 5 events to compress, 0 duplicates, 1150 numnewevents
+
+------- Iteration 55, 1150 events, 1150 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.002616, number of instances = 5
+   meantime = 3.000000, stddevtime = 0.000000
+ Sequence(2):
+   event (44) Pat_11 [823 824]
+   event (21) wsugarSens [825 825]
+Marked 5 events to compress, 0 duplicates, 1145 numnewevents
+
+------- Iteration 56, 1145 events, 1145 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.002627, number of instances = 5
+   meantime = 12.000000, stddevtime = 6.899275
+ Sequence(2):
+   event (19) bookaSens [104 104]
+   event (18) sofaSens [105 105]
+Marked 5 events to compress, 0 duplicates, 1140 numnewevents
+
+------- Iteration 57, 1140 events, 1140 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.002639, number of instances = 5
+   meantime = 12.000000, stddevtime = 9.402127
+ Sequence(2):
+   event (3) baconSens [1041 1041]
+   event (0) saucepanSens [1042 1042]
+Marked 5 events to compress, 0 duplicates, 1135 numnewevents
+
+------- Iteration 58, 1135 events, 1135 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.002650, number of instances = 5
+   meantime = 12.000000, stddevtime = 0.000000
+ Sequence(2):
+   event (41) Pat_8 [649 650]
+   event (21) wsugarSens [651 651]
+Marked 5 events to compress, 0 duplicates, 1130 numnewevents
+
+------- Iteration 59, 1130 events, 1130 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.002662, number of instances = 5
+   meantime = 9.000000, stddevtime = 0.000000
+ Sequence(2):
+   event (37) Pat_4 [2356 2358]
+   event (34) Pat_1 [2359 2366]
+Marked 5 events to compress, 0 duplicates, 1125 numnewevents
+
+------- Iteration 60, 1125 events, 1125 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.001781, number of instances = 4
+   meantime = 9.500000, stddevtime = 4.500000
+ Sequence(2):
+   event (1) rcontrolSens [1523 1523]
+   event (19) bookaSens [1524 1524]
+Marked 4 events to compress, 0 duplicates, 1121 numnewevents
+
+------- Iteration 61, 1121 events, 1121 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.001787, number of instances = 4
+   meantime = 19.000000, stddevtime = 2.738613
+ Sequence(2):
+   event (2) cupSens [1828 1828]
+   event (16) bsugarSens [1829 1829]
+Marked 4 events to compress, 0 duplicates, 1117 numnewevents
+
+------- Iteration 62, 1117 events, 1117 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.001794, number of instances = 4
+   meantime = 15.000000, stddevtime = 4.949748
+ Sequence(2):
+   event (11) brusherSens [22 22]
+   event (18) sofaSens [23 23]
+Marked 4 events to compress, 0 duplicates, 1113 numnewevents
+
+------- Iteration 63, 1113 events, 1113 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.001800, number of instances = 4
+   meantime = 9.000000, stddevtime = 0.000000
+ Sequence(2):
+   event (37) Pat_4 [704 706]
+   event (16) bsugarSens [707 707]
+Marked 4 events to compress, 0 duplicates, 1109 numnewevents
+
+------- Iteration 64, 1109 events, 1109 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.001807, number of instances = 4
+   meantime = 13.000000, stddevtime = 4.743416
+ Sequence(2):
+   event (17) bedSens [108 108]
+   event (16) bsugarSens [109 109]
+Marked 4 events to compress, 0 duplicates, 1105 numnewevents
+
+------- Iteration 65, 1105 events, 1105 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.001813, number of instances = 4
+   meantime = 7.000000, stddevtime = 0.000000
+ Sequence(2):
+   event (33) Pat_0 [767 770]
+   event (4) storeSens [771 771]
+Marked 4 events to compress, 0 duplicates, 1101 numnewevents
+
+------- Iteration 66, 1101 events, 1101 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.004562, number of instances = 4
+   meantime = 13.000000, stddevtime = 0.000000
+ Sequence(3):
+   event (27) drainerSens [1004 1004]
+   event (7) fridgeSens [1005 1005]
+   event (3) baconSens [1006 1006]
+Marked 8 events to compress, 0 duplicates, 1093 numnewevents
+
+------- Iteration 67, 1093 events, 1093 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.001833, number of instances = 4
+   meantime = 7.000000, stddevtime = 0.000000
+ Sequence(2):
+   event (40) Pat_7 [2504 2518]
+   event (18) sofaSens [2519 2519]
+Marked 4 events to compress, 0 duplicates, 1089 numnewevents
+
+------- Iteration 68, 1089 events, 1089 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.001840, number of instances = 4
+   meantime = 15.750000, stddevtime = 6.456586
+ Sequence(2):
+   event (18) sofaSens [669 669]
+   event (4) storeSens [670 670]
+Marked 4 events to compress, 0 duplicates, 1085 numnewevents
+
+------- Iteration 69, 1085 events, 1085 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.001847, number of instances = 4
+   meantime = 9.000000, stddevtime = 0.000000
+ Sequence(2):
+   event (37) Pat_4 [232 234]
+   event (4) storeSens [235 235]
+Marked 4 events to compress, 0 duplicates, 1081 numnewevents
+
+------- Iteration 70, 1081 events, 1081 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.001854, number of instances = 4
+   meantime = 14.000000, stddevtime = 0.000000
+ Sequence(2):
+   event (48) Pat_15 [999 1000]
+   event (69) Pat_36 [1001 1002]
+Marked 4 events to compress, 0 duplicates, 1077 numnewevents
+
+------- Iteration 71, 1077 events, 1077 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.004664, number of instances = 4
+   meantime = 7.000000, stddevtime = 0.000000
+ Sequence(3):
+   event (7) fridgeSens [1290 1290]
+   event (8) wmilkSens [1291 1291]
+   event (9) chocoSens [1292 1292]
+Marked 8 events to compress, 0 duplicates, 1069 numnewevents
+
+------- Iteration 72, 1069 events, 1069 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.001874, number of instances = 4
+   meantime = 12.000000, stddevtime = 0.000000
+ Sequence(2):
+   event (71) Pat_38 [1457 1465]
+   event (42) Pat_9 [1466 1476]
+Marked 4 events to compress, 0 duplicates, 1065 numnewevents
+
+------- Iteration 73, 1065 events, 1065 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.001881, number of instances = 4
+   meantime = 16.750000, stddevtime = 3.269174
+ Sequence(2):
+   event (27) drainerSens [247 247]
+   event (29) ftomatoSens [248 248]
+Marked 4 events to compress, 0 duplicates, 1061 numnewevents
+
+------- Iteration 74, 1061 events, 1061 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.000943, number of instances = 3
+   meantime = 16.333334, stddevtime = 4.496912
+ Sequence(2):
+   event (17) bedSens [1695 1695]
+   event (1) rcontrolSens [1696 1696]
+Marked 3 events to compress, 0 duplicates, 1058 numnewevents
+
+------- Iteration 75, 1058 events, 1058 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.000946, number of instances = 3
+   meantime = 5.333333, stddevtime = 0.942809
+ Sequence(2):
+   event (2) cupSens [2056 2056]
+   event (35) Pat_2 [2057 2064]
+Marked 3 events to compress, 0 duplicates, 1055 numnewevents
+
+------- Iteration 76, 1055 events, 1055 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.000949, number of instances = 3
+   meantime = 12.333333, stddevtime = 7.586538
+ Sequence(2):
+   event (1) rcontrolSens [1558 1558]
+   event (11) brusherSens [1559 1559]
+Marked 3 events to compress, 0 duplicates, 1052 numnewevents
+
+------- Iteration 77, 1052 events, 1052 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.000952, number of instances = 3
+   meantime = 7.000000, stddevtime = 0.000000
+ Sequence(2):
+   event (40) Pat_7 [1048 1062]
+   event (21) wsugarSens [1063 1063]
+Marked 3 events to compress, 0 duplicates, 1049 numnewevents
+
+------- Iteration 78, 1049 events, 1049 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.000954, number of instances = 3
+   meantime = 9.000000, stddevtime = 4.320494
+ Sequence(2):
+   event (2) cupSens [510 510]
+   event (17) bedSens [511 511]
+Marked 3 events to compress, 0 duplicates, 1046 numnewevents
+
+------- Iteration 79, 1046 events, 1046 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.000957, number of instances = 3
+   meantime = 4.666667, stddevtime = 2.357023
+ Sequence(2):
+   event (1) rcontrolSens [628 628]
+   event (18) sofaSens [629 629]
+Marked 3 events to compress, 0 duplicates, 1043 numnewevents
+
+------- Iteration 80, 1043 events, 1043 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.000960, number of instances = 3
+   meantime = 11.666667, stddevtime = 7.717225
+ Sequence(2):
+   event (21) wsugarSens [1023 1023]
+   event (4) storeSens [1024 1024]
+Marked 3 events to compress, 0 duplicates, 1040 numnewevents
+
+------- Iteration 81, 1040 events, 1040 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.000962, number of instances = 3
+   meantime = 11.333333, stddevtime = 6.128259
+ Sequence(2):
+   event (3) baconSens [1550 1550]
+   event (36) Pat_3 [1551 1557]
+Marked 3 events to compress, 0 duplicates, 1037 numnewevents
+
+------- Iteration 82, 1037 events, 1037 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.000965, number of instances = 3
+   meantime = 15.666667, stddevtime = 6.128259
+ Sequence(2):
+   event (11) brusherSens [2815 2815]
+   event (12) toothpasteSens [2816 2816]
+Marked 3 events to compress, 0 duplicates, 1034 numnewevents
+
+------- Iteration 83, 1034 events, 1034 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.000968, number of instances = 3
+   meantime = 11.333333, stddevtime = 5.436502
+ Sequence(2):
+   event (3) baconSens [373 373]
+   event (2) cupSens [374 374]
+Marked 3 events to compress, 0 duplicates, 1031 numnewevents
+
+------- Iteration 84, 1031 events, 1031 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.000971, number of instances = 3
+   meantime = 2.000000, stddevtime = 0.000000
+ Sequence(2):
+   event (55) Pat_22 [219 220]
+   event (1) rcontrolSens [221 221]
+Marked 3 events to compress, 0 duplicates, 1028 numnewevents
+
+------- Iteration 85, 1028 events, 1028 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.000974, number of instances = 3
+   meantime = 11.333333, stddevtime = 0.942809
+ Sequence(2):
+   event (19) bookaSens [749 749]
+   event (53) Pat_20 [750 766]
+Marked 3 events to compress, 0 duplicates, 1025 numnewevents
+
+------- Iteration 86, 1025 events, 1025 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.000977, number of instances = 3
+   meantime = 19.000000, stddevtime = 0.000000
+ Sequence(2):
+   event (52) Pat_19 [962 964]
+   event (21) wsugarSens [965 965]
+Marked 3 events to compress, 0 duplicates, 1022 numnewevents
+
+------- Iteration 87, 1022 events, 1022 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.000979, number of instances = 3
+   meantime = 14.000000, stddevtime = 3.559026
+ Sequence(2):
+   event (11) brusherSens [1239 1239]
+   event (34) Pat_1 [1240 1247]
+Marked 3 events to compress, 0 duplicates, 1019 numnewevents
+
+------- Iteration 88, 1019 events, 1019 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.000982, number of instances = 3
+   meantime = 9.000000, stddevtime = 0.000000
+ Sequence(2):
+   event (37) Pat_4 [308 310]
+   event (2) cupSens [311 311]
+Marked 3 events to compress, 0 duplicates, 1016 numnewevents
+
+------- Iteration 89, 1016 events, 1016 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.000985, number of instances = 3
+   meantime = 7.000000, stddevtime = 0.000000
+ Sequence(2):
+   event (38) Pat_5 [153 159]
+   event (1) rcontrolSens [160 160]
+Marked 3 events to compress, 0 duplicates, 1013 numnewevents
+
+------- Iteration 90, 1013 events, 1013 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.000988, number of instances = 3
+   meantime = 13.000000, stddevtime = 0.000000
+ Sequence(2):
+   event (57) Pat_24 [1974 1975]
+   event (17) bedSens [1976 1976]
+Marked 3 events to compress, 0 duplicates, 1010 numnewevents
+
+------- Iteration 91, 1010 events, 1010 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.000991, number of instances = 3
+   meantime = 7.666667, stddevtime = 6.236096
+ Sequence(2):
+   event (19) bookaSens [277 277]
+   event (4) storeSens [278 278]
+Marked 3 events to compress, 0 duplicates, 1007 numnewevents
+
+------- Iteration 92, 1007 events, 1007 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.000994, number of instances = 3
+   meantime = 5.000000, stddevtime = 0.816497
+ Sequence(2):
+   event (21) wsugarSens [880 880]
+   event (40) Pat_7 [881 895]
+Marked 3 events to compress, 0 duplicates, 1004 numnewevents
+
+------- Iteration 93, 1004 events, 1004 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.000997, number of instances = 3
+   meantime = 12.333333, stddevtime = 6.798693
+ Sequence(2):
+   event (3) baconSens [571 571]
+   event (58) Pat_25 [572 573]
+Marked 3 events to compress, 0 duplicates, 1001 numnewevents
+
+------- Iteration 94, 1001 events, 1001 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.001000, number of instances = 3
+   meantime = 11.666667, stddevtime = 6.599663
+ Sequence(2):
+   event (11) brusherSens [734 734]
+   event (36) Pat_3 [735 741]
+Marked 3 events to compress, 0 duplicates, 998 numnewevents
+
+------- Iteration 95, 998 events, 998 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.001003, number of instances = 3
+   meantime = 8.000000, stddevtime = 0.000000
+ Sequence(2):
+   event (49) Pat_16 [19 20]
+   event (17) bedSens [21 21]
+Marked 3 events to compress, 0 duplicates, 995 numnewevents
+
+------- Iteration 96, 995 events, 995 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.001006, number of instances = 3
+   meantime = 8.000000, stddevtime = 3.741657
+ Sequence(2):
+   event (18) sofaSens [240 240]
+   event (45) Pat_12 [241 242]
+Marked 3 events to compress, 0 duplicates, 992 numnewevents
+
+------- Iteration 97, 992 events, 992 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.001009, number of instances = 3
+   meantime = 13.000000, stddevtime = 9.626352
+ Sequence(2):
+   event (11) brusherSens [325 325]
+   event (3) baconSens [326 326]
+Marked 3 events to compress, 0 duplicates, 989 numnewevents
+
+------- Iteration 98, 989 events, 989 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.001012, number of instances = 3
+   meantime = 7.000000, stddevtime = 0.000000
+ Sequence(2):
+   event (40) Pat_7 [1504 1518]
+   event (4) storeSens [1519 1519]
+Marked 3 events to compress, 0 duplicates, 986 numnewevents
+
+------- Iteration 99, 986 events, 986 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.001015, number of instances = 3
+   meantime = 14.000000, stddevtime = 0.000000
+ Sequence(2):
+   event (46) Pat_13 [2623 2631]
+   event (33) Pat_0 [2632 2635]
+Marked 3 events to compress, 0 duplicates, 983 numnewevents
+
+------- Iteration 100, 983 events, 983 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.002039, number of instances = 2
+   meantime = 13.000000, stddevtime = 0.000000
+ Sequence(4):
+   event (26) macaroniSens [1070 1070]
+   event (99) Pat_66 [1071 1073]
+   event (39) Pat_6 [1074 1080]
+   event (32) smilkSens [1081 1081]
+Marked 6 events to compress, 0 duplicates, 977 numnewevents
+
+------- Iteration 101, 977 events, 977 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.001025, number of instances = 3
+   meantime = 7.000000, stddevtime = 0.000000
+ Sequence(2):
+   event (10) mugSens [1294 1294]
+   event (36) Pat_3 [1295 1301]
+Marked 3 events to compress, 0 duplicates, 974 numnewevents
+
+------- Iteration 102, 974 events, 974 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.001028, number of instances = 3
+   meantime = 14.000000, stddevtime = 0.000000
+ Sequence(2):
+   event (34) Pat_1 [2150 2157]
+   event (42) Pat_9 [2158 2168]
+Marked 3 events to compress, 0 duplicates, 971 numnewevents
+
+------- Iteration 103, 971 events, 971 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.000000, number of instances = 2
+   meantime = 10.500000, stddevtime = 8.500000
+ Sequence(2):
+   event (16) bsugarSens [2030 2030]
+   event (17) bedSens [2031 2031]
+Marked 2 events to compress, 0 duplicates, 969 numnewevents
+
+------- Iteration 104, 969 events, 969 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.000000, number of instances = 2
+   meantime = 20.500000, stddevtime = 0.500000
+ Sequence(2):
+   event (19) bookaSens [1940 1940]
+   event (16) bsugarSens [1941 1941]
+Marked 2 events to compress, 0 duplicates, 967 numnewevents
+
+------- Iteration 105, 967 events, 967 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.000000, number of instances = 2
+   meantime = 12.000000, stddevtime = 9.000000
+ Sequence(2):
+   event (16) bsugarSens [1439 1439]
+   event (56) Pat_23 [1440 1441]
+Marked 2 events to compress, 0 duplicates, 965 numnewevents
+
+------- Iteration 106, 965 events, 965 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.000000, number of instances = 2
+   meantime = 14.000000, stddevtime = 7.000000
+ Sequence(2):
+   event (2) cupSens [1655 1655]
+   event (36) Pat_3 [1656 1662]
+Marked 2 events to compress, 0 duplicates, 963 numnewevents
+
+------- Iteration 107, 963 events, 963 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.001040, number of instances = 2
+   meantime = 7.000000, stddevtime = 0.000000
+ Sequence(3):
+   event (35) Pat_2 [1329 1336]
+   event (1) rcontrolSens [1337 1337]
+   event (24) tvSens [1338 1338]
+Marked 4 events to compress, 0 duplicates, 959 numnewevents
+
+------- Iteration 108, 959 events, 959 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.000000, number of instances = 2
+   meantime = 8.500000, stddevtime = 0.500000
+ Sequence(2):
+   event (19) bookaSens [1520 1520]
+   event (21) wsugarSens [1521 1521]
+Marked 2 events to compress, 0 duplicates, 957 numnewevents
+
+------- Iteration 109, 957 events, 957 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.000000, number of instances = 2
+   meantime = 10.500000, stddevtime = 1.500000
+ Sequence(2):
+   event (16) bsugarSens [748 748]
+   event (118) Pat_85 [749 766]
+Marked 2 events to compress, 0 duplicates, 955 numnewevents
+
+------- Iteration 110, 955 events, 955 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.001048, number of instances = 2
+   meantime = 20.500000, stddevtime = 1.500000
+ Sequence(3):
+   event (3) baconSens [2747 2747]
+   event (62) Pat_29 [2748 2749]
+   event (0) saucepanSens [2750 2750]
+Marked 4 events to compress, 0 duplicates, 951 numnewevents
+
+------- Iteration 111, 951 events, 951 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.000000, number of instances = 2
+   meantime = 7.000000, stddevtime = 0.000000
+ Sequence(2):
+   event (33) Pat_0 [1339 1342]
+   event (2) cupSens [1343 1343]
+Marked 2 events to compress, 0 duplicates, 949 numnewevents
+
+------- Iteration 112, 949 events, 949 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.000000, number of instances = 2
+   meantime = 5.500000, stddevtime = 0.500000
+ Sequence(2):
+   event (1) rcontrolSens [2641 2641]
+   event (40) Pat_7 [2642 2656]
+Marked 2 events to compress, 0 duplicates, 947 numnewevents
+
+------- Iteration 113, 947 events, 947 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.000000, number of instances = 2
+   meantime = 16.500000, stddevtime = 5.500000
+ Sequence(2):
+   event (18) sofaSens [1373 1373]
+   event (21) wsugarSens [1374 1374]
+Marked 2 events to compress, 0 duplicates, 945 numnewevents
+
+------- Iteration 114, 945 events, 945 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.000000, number of instances = 2
+   meantime = 14.000000, stddevtime = 0.000000
+ Sequence(2):
+   event (48) Pat_15 [608 609]
+   event (16) bsugarSens [610 610]
+Marked 2 events to compress, 0 duplicates, 943 numnewevents
+
+------- Iteration 115, 943 events, 943 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.000000, number of instances = 2
+   meantime = 12.500000, stddevtime = 2.500000
+ Sequence(2):
+   event (0) saucepanSens [2478 2478]
+   event (50) Pat_17 [2479 2480]
+Marked 2 events to compress, 0 duplicates, 941 numnewevents
+
+------- Iteration 116, 941 events, 941 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.000000, number of instances = 2
+   meantime = 4.500000, stddevtime = 4.500000
+ Sequence(2):
+   event (17) bedSens [1152 1152]
+   event (2) cupSens [1153 1153]
+Marked 2 events to compress, 0 duplicates, 939 numnewevents
+
+------- Iteration 117, 939 events, 939 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.000000, number of instances = 2
+   meantime = 13.000000, stddevtime = 5.000000
+ Sequence(2):
+   event (19) bookaSens [780 780]
+   event (1) rcontrolSens [781 781]
+Marked 2 events to compress, 0 duplicates, 937 numnewevents
+
+------- Iteration 118, 937 events, 937 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.000000, number of instances = 2
+   meantime = 10.000000, stddevtime = 1.000000
+ Sequence(2):
+   event (11) brusherSens [2475 2475]
+   event (58) Pat_25 [2476 2477]
+Marked 2 events to compress, 0 duplicates, 935 numnewevents
+
+------- Iteration 119, 935 events, 935 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.000000, number of instances = 2
+   meantime = 9.000000, stddevtime = 0.000000
+ Sequence(2):
+   event (37) Pat_4 [523 525]
+   event (21) wsugarSens [526 526]
+Marked 2 events to compress, 0 duplicates, 933 numnewevents
+
+------- Iteration 120, 933 events, 933 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.000000, number of instances = 2
+   meantime = 18.000000, stddevtime = 4.000000
+ Sequence(2):
+   event (16) bsugarSens [545 545]
+   event (18) sofaSens [546 546]
+Marked 2 events to compress, 0 duplicates, 931 numnewevents
+
+------- Iteration 121, 931 events, 931 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.000000, number of instances = 2
+   meantime = 0.000000, stddevtime = 0.000000
+ Sequence(2):
+   event (66) Pat_33 [2445 2446]
+   event (0) saucepanSens [2447 2447]
+Marked 2 events to compress, 0 duplicates, 929 numnewevents
+
+------- Iteration 122, 929 events, 929 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.000000, number of instances = 2
+   meantime = 9.000000, stddevtime = 5.000000
+ Sequence(2):
+   event (2) cupSens [549 549]
+   event (3) baconSens [550 550]
+Marked 2 events to compress, 0 duplicates, 927 numnewevents
+
+------- Iteration 123, 927 events, 927 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.000000, number of instances = 2
+   meantime = 5.000000, stddevtime = 0.000000
+ Sequence(2):
+   event (67) Pat_34 [490 491]
+   event (1) rcontrolSens [492 492]
+Marked 2 events to compress, 0 duplicates, 925 numnewevents
+
+------- Iteration 124, 925 events, 925 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.000000, number of instances = 2
+   meantime = 11.500000, stddevtime = 11.500000
+ Sequence(2):
+   event (19) bookaSens [2195 2195]
+   event (11) brusherSens [2196 2196]
+Marked 2 events to compress, 0 duplicates, 923 numnewevents
+
+------- Iteration 125, 923 events, 923 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.000000, number of instances = 2
+   meantime = 22.000000, stddevtime = 0.000000
+ Sequence(2):
+   event (47) Pat_14 [112 113]
+   event (21) wsugarSens [114 114]
+Marked 2 events to compress, 0 duplicates, 921 numnewevents
+
+------- Iteration 126, 921 events, 921 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.000000, number of instances = 2
+   meantime = 0.000000, stddevtime = 0.000000
+ Sequence(2):
+   event (16) bsugarSens [271 271]
+   event (11) brusherSens [272 272]
+Marked 2 events to compress, 0 duplicates, 919 numnewevents
+
+------- Iteration 127, 919 events, 919 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.000000, number of instances = 2
+   meantime = 15.500000, stddevtime = 6.500000
+ Sequence(2):
+   event (0) saucepanSens [870 870]
+   event (70) Pat_37 [871 872]
+Marked 2 events to compress, 0 duplicates, 917 numnewevents
+
+------- Iteration 128, 917 events, 917 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.000000, number of instances = 2
+   meantime = 20.000000, stddevtime = 1.000000
+ Sequence(2):
+   event (0) saucepanSens [260 260]
+   event (2) cupSens [261 261]
+Marked 2 events to compress, 0 duplicates, 915 numnewevents
+
+------- Iteration 129, 915 events, 915 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.000000, number of instances = 2
+   meantime = 13.500000, stddevtime = 2.500000
+ Sequence(2):
+   event (2) cupSens [257 257]
+   event (1) rcontrolSens [258 258]
+Marked 2 events to compress, 0 duplicates, 913 numnewevents
+
+------- Iteration 130, 913 events, 913 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.000000, number of instances = 2
+   meantime = 22.000000, stddevtime = 0.000000
+ Sequence(2):
+   event (47) Pat_14 [873 874]
+   event (18) sofaSens [875 875]
+Marked 2 events to compress, 0 duplicates, 911 numnewevents
+
+------- Iteration 131, 911 events, 911 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.000000, number of instances = 2
+   meantime = 1.000000, stddevtime = 0.000000
+ Sequence(2):
+   event (56) Pat_23 [1830 1831]
+   event (17) bedSens [1832 1832]
+Marked 2 events to compress, 0 duplicates, 909 numnewevents
+
+------- Iteration 132, 909 events, 909 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.000000, number of instances = 2
+   meantime = 7.000000, stddevtime = 0.000000
+ Sequence(2):
+   event (104) Pat_71 [1290 1292]
+   event (3) baconSens [1293 1293]
+Marked 2 events to compress, 0 duplicates, 907 numnewevents
+
+------- Iteration 133, 907 events, 907 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.000000, number of instances = 2
+   meantime = 5.000000, stddevtime = 0.000000
+ Sequence(2):
+   event (51) Pat_18 [2171 2172]
+   event (19) bookaSens [2173 2173]
+Marked 2 events to compress, 0 duplicates, 905 numnewevents
+
+------- Iteration 134, 905 events, 905 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.000000, number of instances = 2
+   meantime = 7.000000, stddevtime = 0.000000
+ Sequence(2):
+   event (36) Pat_3 [2467 2473]
+   event (4) storeSens [2474 2474]
+Marked 2 events to compress, 0 duplicates, 903 numnewevents
+
+------- Iteration 135, 903 events, 903 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.000000, number of instances = 2
+   meantime = 21.500000, stddevtime = 0.500000
+ Sequence(2):
+   event (16) bsugarSens [205 205]
+   event (36) Pat_3 [206 212]
+Marked 2 events to compress, 0 duplicates, 901 numnewevents
+
+------- Iteration 136, 901 events, 901 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.000000, number of instances = 2
+   meantime = 19.000000, stddevtime = 0.000000
+ Sequence(2):
+   event (52) Pat_19 [201 203]
+   event (1) rcontrolSens [204 204]
+Marked 2 events to compress, 0 duplicates, 899 numnewevents
+
+------- Iteration 137, 899 events, 899 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.000000, number of instances = 2
+   meantime = 9.500000, stddevtime = 0.500000
+ Sequence(2):
+   event (3) baconSens [652 652]
+   event (18) sofaSens [653 653]
+Marked 2 events to compress, 0 duplicates, 897 numnewevents
+
+------- Iteration 138, 897 events, 897 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.000000, number of instances = 2
+   meantime = 1.500000, stddevtime = 0.500000
+ Sequence(2):
+   event (17) bedSens [1281 1281]
+   event (57) Pat_24 [1282 1283]
+Marked 2 events to compress, 0 duplicates, 895 numnewevents
+
+------- Iteration 139, 895 events, 895 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.000000, number of instances = 2
+   meantime = 3.000000, stddevtime = 1.000000
+ Sequence(2):
+   event (19) bookaSens [1844 1844]
+   event (40) Pat_7 [1845 1859]
+Marked 2 events to compress, 0 duplicates, 893 numnewevents
+
+------- Iteration 140, 893 events, 893 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.000000, number of instances = 2
+   meantime = 22.000000, stddevtime = 0.000000
+ Sequence(2):
+   event (76) Pat_43 [1213 1214]
+   event (4) storeSens [1215 1215]
+Marked 2 events to compress, 0 duplicates, 891 numnewevents
+
+------- Iteration 141, 891 events, 891 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.000000, number of instances = 2
+   meantime = 8.000000, stddevtime = 0.000000
+ Sequence(2):
+   event (49) Pat_16 [1260 1261]
+   event (11) brusherSens [1262 1262]
+Marked 2 events to compress, 0 duplicates, 889 numnewevents
+
+------- Iteration 142, 889 events, 889 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.000000, number of instances = 2
+   meantime = 14.500000, stddevtime = 0.500000
+ Sequence(2):
+   event (16) bsugarSens [197 197]
+   event (2) cupSens [198 198]
+Marked 2 events to compress, 0 duplicates, 887 numnewevents
+
+------- Iteration 143, 887 events, 887 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.000000, number of instances = 2
+   meantime = 14.500000, stddevtime = 7.500000
+ Sequence(2):
+   event (18) sofaSens [641 641]
+   event (36) Pat_3 [642 648]
+Marked 2 events to compress, 0 duplicates, 885 numnewevents
+
+------- Iteration 144, 885 events, 885 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.000000, number of instances = 2
+   meantime = 12.000000, stddevtime = 0.000000
+ Sequence(2):
+   event (95) Pat_62 [1020 1021]
+   event (17) bedSens [1022 1022]
+Marked 2 events to compress, 0 duplicates, 883 numnewevents
+
+------- Iteration 145, 883 events, 883 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.000000, number of instances = 2
+   meantime = 12.000000, stddevtime = 0.000000
+ Sequence(2):
+   event (41) Pat_8 [605 606]
+   event (3) baconSens [607 607]
+Marked 2 events to compress, 0 duplicates, 881 numnewevents
+
+------- Iteration 146, 881 events, 881 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.000000, number of instances = 2
+   meantime = 13.500000, stddevtime = 8.500000
+ Sequence(2):
+   event (19) bookaSens [623 623]
+   event (45) Pat_12 [624 625]
+Marked 2 events to compress, 0 duplicates, 879 numnewevents
+
+------- Iteration 147, 879 events, 879 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.000000, number of instances = 2
+   meantime = 8.000000, stddevtime = 0.000000
+ Sequence(2):
+   event (49) Pat_16 [1045 1046]
+   event (4) storeSens [1047 1047]
+Marked 2 events to compress, 0 duplicates, 877 numnewevents
+
+------- Iteration 148, 877 events, 877 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.000000, number of instances = 2
+   meantime = 3.000000, stddevtime = 0.000000
+ Sequence(2):
+   event (44) Pat_11 [485 486]
+   event (11) brusherSens [487 487]
+Marked 2 events to compress, 0 duplicates, 875 numnewevents
+
+------- Iteration 149, 875 events, 875 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.000000, number of instances = 2
+   meantime = 0.000000, stddevtime = 0.000000
+ Sequence(2):
+   event (62) Pat_29 [84 85]
+   event (16) bsugarSens [86 86]
+Marked 2 events to compress, 0 duplicates, 873 numnewevents
+
+------- Iteration 150, 873 events, 873 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.000000, number of instances = 2
+   meantime = 10.000000, stddevtime = 0.000000
+ Sequence(2):
+   event (72) Pat_39 [178 179]
+   event (2) cupSens [180 180]
+Marked 2 events to compress, 0 duplicates, 871 numnewevents
+
+------- Iteration 151, 871 events, 871 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.000000, number of instances = 2
+   meantime = 7.000000, stddevtime = 0.000000
+ Sequence(2):
+   event (82) Pat_49 [468 483]
+   event (17) bedSens [484 484]
+Marked 2 events to compress, 0 duplicates, 869 numnewevents
+
+------- Iteration 152, 869 events, 869 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.000000, number of instances = 2
+   meantime = 7.000000, stddevtime = 0.000000
+ Sequence(2):
+   event (40) Pat_7 [406 420]
+   event (41) Pat_8 [421 422]
+Marked 2 events to compress, 0 duplicates, 867 numnewevents
+
+------- Iteration 153, 867 events, 867 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.000000, number of instances = 2
+   meantime = 10.000000, stddevtime = 0.000000
+ Sequence(2):
+   event (72) Pat_39 [581 582]
+   event (19) bookaSens [583 583]
+Marked 2 events to compress, 0 duplicates, 865 numnewevents
+
+------- Iteration 154, 865 events, 865 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.000000, number of instances = 2
+   meantime = 18.500000, stddevtime = 1.500000
+ Sequence(2):
+   event (4) storeSens [72 72]
+   event (38) Pat_5 [73 79]
+Marked 2 events to compress, 0 duplicates, 863 numnewevents
+
+------- Iteration 155, 863 events, 863 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.000000, number of instances = 2
+   meantime = 8.000000, stddevtime = 6.000000
+ Sequence(2):
+   event (11) brusherSens [66 66]
+   event (45) Pat_12 [67 68]
+Marked 2 events to compress, 0 duplicates, 861 numnewevents
+
+------- Iteration 156, 861 events, 861 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.000000, number of instances = 2
+   meantime = 14.000000, stddevtime = 0.000000
+ Sequence(2):
+   event (34) Pat_1 [1637 1644]
+   event (37) Pat_4 [1648 1650]
+Marked 2 events to compress, 0 duplicates, 859 numnewevents
+
+------- Iteration 157, 859 events, 859 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.000000, number of instances = 2
+   meantime = 6.500000, stddevtime = 5.500000
+ Sequence(2):
+   event (2) cupSens [63 63]
+   event (80) Pat_47 [64 65]
+Marked 2 events to compress, 0 duplicates, 857 numnewevents
+
+------- Iteration 158, 857 events, 857 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.000000, number of instances = 2
+   meantime = 14.000000, stddevtime = 0.000000
+ Sequence(2):
+   event (34) Pat_1 [296 303]
+   event (33) Pat_0 [304 307]
+Marked 2 events to compress, 0 duplicates, 855 numnewevents
+
+------- Iteration 159, 855 events, 855 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.000000, number of instances = 2
+   meantime = 9.000000, stddevtime = 0.000000
+ Sequence(2):
+   event (37) Pat_4 [1193 1195]
+   event (74) Pat_41 [1196 1211]
+Marked 2 events to compress, 0 duplicates, 853 numnewevents
+
+------- Iteration 160, 853 events, 853 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.000000, number of instances = 2
+   meantime = 1.000000, stddevtime = 0.000000
+ Sequence(2):
+   event (56) Pat_23 [1 2]
+   event (2) cupSens [3 3]
+Marked 2 events to compress, 0 duplicates, 851 numnewevents
+
+------- Iteration 161, 851 events, 851 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.001176, number of instances = 2
+   meantime = 5.000000, stddevtime = 0.000000
+ Sequence(3):
+   event (51) Pat_18 [2354 2355]
+   event (92) Pat_59 [2356 2366]
+   event (43) Pat_10 [2370 2372]
+Marked 4 events to compress, 0 duplicates, 847 numnewevents
+
+------- Iteration 162, 847 events, 847 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.000000, number of instances = 2
+   meantime = 15.000000, stddevtime = 0.000000
+ Sequence(2):
+   event (126) Pat_93 [571 573]
+   event (38) Pat_5 [574 580]
+Marked 2 events to compress, 0 duplicates, 845 numnewevents
+
+------- Iteration 163, 845 events, 845 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.000000, number of instances = 2
+   meantime = 7.000000, stddevtime = 0.000000
+ Sequence(2):
+   event (40) Pat_7 [1442 1456]
+   event (105) Pat_72 [1457 1476]
+Marked 2 events to compress, 0 duplicates, 843 numnewevents
+
+------- Iteration 164, 843 events, 843 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.000000, number of instances = 2
+   meantime = 7.000000, stddevtime = 0.000000
+ Sequence(2):
+   event (35) Pat_2 [726 733]
+   event (127) Pat_94 [734 741]
+Marked 2 events to compress, 0 duplicates, 841 numnewevents
+
+------- Iteration 165, 841 events, 841 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.000000, number of instances = 2
+   meantime = 14.000000, stddevtime = 0.000000
+ Sequence(2):
+   event (34) Pat_1 [783 790]
+   event (43) Pat_10 [794 796]
+Marked 2 events to compress, 0 duplicates, 839 numnewevents
+
+------- Iteration 166, 839 events, 839 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.000000, number of instances = 2
+   meantime = 14.000000, stddevtime = 0.000000
+ Sequence(2):
+   event (46) Pat_13 [854 862]
+   event (68) Pat_35 [863 869]
+Marked 2 events to compress, 0 duplicates, 837 numnewevents
+
+------- Iteration 167, 837 events, 837 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.000000, number of instances = 2
+   meantime = 18.000000, stddevtime = 0.000000
+ Sequence(2):
+   event (73) Pat_40 [1633 1634]
+   event (64) Pat_31 [1635 1636]
+Marked 2 events to compress, 0 duplicates, 835 numnewevents
+
+------- Iteration 168, 835 events, 835 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.000000, number of instances = 2
+   meantime = 8.000000, stddevtime = 0.000000
+ Sequence(2):
+   event (63) Pat_30 [1710 1711]
+   event (69) Pat_36 [1712 1713]
+Marked 2 events to compress, 0 duplicates, 833 numnewevents
+
+------- Iteration 169, 833 events, 833 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.000000, number of instances = 2
+   meantime = 13.000000, stddevtime = 0.000000
+ Sequence(2):
+   event (54) Pat_21 [382 385]
+   event (61) Pat_28 [386 394]
+Marked 2 events to compress, 0 duplicates, 831 numnewevents
+
+------- Iteration 170, 831 events, 831 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.000000, number of instances = 2
+   meantime = 20.000000, stddevtime = 0.000000
+ Sequence(2):
+   event (14) towelSens [3096 3096]
+   event (52) Pat_19 [3097 3099]
+Marked 2 events to compress, 0 duplicates, 829 numnewevents
+
+------- Iteration 171, 829 events, 829 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.001208, number of instances = 2
+   meantime = 7.000000, stddevtime = 0.000000
+ Sequence(3):
+   event (13) btapSens [55 55]
+   event (15) bsoapSens [56 56]
+   event (14) towelSens [57 57]
+Marked 4 events to compress, 0 duplicates, 825 numnewevents
+
+------- Iteration 172, 825 events, 825 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.000000, number of instances = 2
+   meantime = 14.000000, stddevtime = 0.000000
+ Sequence(2):
+   event (46) Pat_13 [350 358]
+   event (30) coffeePotSens [359 359]
+Marked 2 events to compress, 0 duplicates, 823 numnewevents
+
+------- Iteration 173, 823 events, 823 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.000000, number of instances = 2
+   meantime = 14.000000, stddevtime = 0.000000
+ Sequence(2):
+   event (103) Pat_70 [999 1002]
+   event (26) macaroniSens [1003 1003]
+Marked 2 events to compress, 0 duplicates, 821 numnewevents
+
+------- Iteration 174, 821 events, 821 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.000000, number of instances = 2
+   meantime = 9.000000, stddevtime = 0.000000
+ Sequence(2):
+   event (92) Pat_59 [2853 2863]
+   event (52) Pat_19 [2867 2869]
+Marked 2 events to compress, 0 duplicates, 819 numnewevents
+
+------- Iteration 175, 819 events, 819 size -------
+
+Best discovered sequence
+
+Pattern: value = 1.000000, number of instances = 2
+   meantime = 13.000000, stddevtime = 0.000000
+ Sequence(2):
+   event (25) ktapSens [2012 2012]
+   event (31) afcoffeeSens [2013 2013]
+Marked 2 events to compress, 0 duplicates, 817 numnewevents
+
+------- Iteration 176, 817 events, 817 size -------
+
+No more compression can be achieved.	Done.
+
+Clustering patterns...
+Pattern (0): (11) brusherSens (12) toothpasteSens (13) btapSens (14) towelSens 
+Pattern (1): (4) storeSens (5) potSens (25) ktapSens (6) cookerSens (26) macaroniSens (27) drainerSens (29) ftomatoSens (3) baconSens 
+Pattern (2): (3) baconSens (4) storeSens (5) potSens (6) cookerSens (7) fridgeSens (8) wmilkSens (9) chocoSens (10) mugSens 
+Pattern (3): (11) brusherSens (12) toothpasteSens (13) btapSens (14) towelSens (13) btapSens (15) bsoapSens (14) towelSens 
+Pattern (4): (1) rcontrolSens (24) tvSens (18) sofaSens 
+Pattern (5): (11) brusherSens (12) toothpasteSens (13) btapSens (14) towelSens (17) bedSens (22) blampSens (23) bookbSens 
+Pattern (6): (28) creamSens (30) coffeePotSens (25) ktapSens (31) afcoffeeSens (6) cookerSens (2) cupSens (21) wsugarSens 
+Pattern (7): (3) baconSens (4) storeSens (5) potSens (6) cookerSens (7) fridgeSens (8) wmilkSens (9) chocoSens (10) mugSens (11) brusherSens (12) toothpasteSens (13) btapSens (14) towelSens (13) btapSens (15) bsoapSens (14) towelSens 
+Pattern (8): (4) storeSens (1) rcontrolSens 
+Pattern (9): (25) ktapSens (31) afcoffeeSens (6) cookerSens (2) cupSens (7) fridgeSens (32) smilkSens (21) wsugarSens (11) brusherSens (12) toothpasteSens (13) btapSens (14) towelSens 
+Pattern (10): (18) sofaSens (20) llampSens (19) bookaSens 
+Pattern (11): (16) bsugarSens (3) baconSens 
+Pattern (12): (3) baconSens (4) storeSens 
+Pattern (13): (4) storeSens (5) potSens (25) ktapSens (6) cookerSens (26) macaroniSens (27) drainerSens (29) ftomatoSens (3) baconSens (28) creamSens 
+Pattern (14): (1) rcontrolSens (21) wsugarSens 
+Pattern (15): (16) bsugarSens (4) storeSens 
+Pattern (16): (16) bsugarSens (1) rcontrolSens 
+Pattern (17): (3) baconSens (21) wsugarSens 
+Pattern (18): (1) rcontrolSens (3) baconSens 
+Pattern (19): (17) bedSens (22) blampSens (23) bookbSens 
+Pattern (20): (4) storeSens (5) potSens (25) ktapSens (6) cookerSens (26) macaroniSens (27) drainerSens (29) ftomatoSens (3) baconSens (28) creamSens (30) coffeePotSens (25) ktapSens (31) afcoffeeSens (6) cookerSens (2) cupSens (21) wsugarSens (32) smilkSens (21) wsugarSens 
+Pattern (21): (5) potSens (25) ktapSens (6) cookerSens (26) macaroniSens 
+Pattern (22): (16) bsugarSens (21) wsugarSens 
+Pattern (23): (0) saucepanSens (1) rcontrolSens 
+Pattern (24): (21) wsugarSens (2) cupSens 
+Pattern (25): (18) sofaSens (16) bsugarSens 
+Pattern (26): (3) baconSens (4) storeSens (5) potSens (6) cookerSens (7) fridgeSens (8) wmilkSens (9) chocoSens (10) mugSens (1) rcontrolSens (24) tvSens (18) sofaSens (11) brusherSens (12) toothpasteSens (13) btapSens (14) towelSens 
+Pattern (27): (4) storeSens (21) wsugarSens 
+Pattern (28): (5) potSens (25) ktapSens (6) cookerSens (26) macaroniSens (27) drainerSens (7) fridgeSens (3) baconSens (28) creamSens (11) brusherSens (12) toothpasteSens (13) btapSens (14) towelSens 
+Pattern (29): (3) baconSens (1) rcontrolSens 
+Pattern (30): (0) saucepanSens (4) storeSens 
+Pattern (31): (3) baconSens (16) bsugarSens 
+Pattern (32): (11) brusherSens (4) storeSens 
+Pattern (33): (11) brusherSens (17) bedSens 
+Pattern (34): (0) saucepanSens (21) wsugarSens 
+Pattern (35): (11) brusherSens (12) toothpasteSens (13) btapSens (14) towelSens (18) sofaSens (20) llampSens (19) bookaSens 
+Pattern (36): (5) potSens (6) cookerSens 
+Pattern (37): (18) sofaSens (1) rcontrolSens 
+Pattern (38): (3) baconSens (4) storeSens (5) potSens (25) ktapSens (6) cookerSens (26) macaroniSens (27) drainerSens (29) ftomatoSens (3) baconSens 
+Pattern (39): (4) storeSens (16) bsugarSens 
+Pattern (40): (17) bedSens (19) bookaSens 
+Pattern (41): (4) storeSens (5) potSens (25) ktapSens (6) cookerSens (26) macaroniSens (27) drainerSens (29) ftomatoSens (3) baconSens (28) creamSens (11) brusherSens (12) toothpasteSens (13) btapSens (14) towelSens (17) bedSens (22) blampSens (23) bookbSens 
+Pattern (42): (2) cupSens (4) storeSens 
+Pattern (43): (11) brusherSens (1) rcontrolSens 
+Pattern (44): (18) sofaSens (2) cupSens 
+Pattern (45): (3) baconSens (19) bookaSens 
+Pattern (46): (3) baconSens (17) bedSens 
+Pattern (47): (0) saucepanSens (17) bedSens 
+Pattern (48): (28) creamSens (30) coffeePotSens (25) ktapSens (31) afcoffeeSens (6) cookerSens (2) cupSens (21) wsugarSens (11) brusherSens (12) toothpasteSens (13) btapSens (14) towelSens 
+Pattern (49): (3) baconSens (4) storeSens (5) potSens (6) cookerSens (7) fridgeSens (8) wmilkSens (9) chocoSens (10) mugSens (11) brusherSens (12) toothpasteSens (13) btapSens (14) towelSens (13) btapSens (15) bsoapSens (14) towelSens (1) rcontrolSens 
+Pattern (50): (2) cupSens (21) wsugarSens 
+Pattern (51): (11) brusherSens (12) toothpasteSens (13) btapSens (14) towelSens (1) rcontrolSens 
+Pattern (52): (4) storeSens (4) storeSens 
+Pattern (53): (11) brusherSens (16) bsugarSens 
+Pattern (54): (19) bookaSens (2) cupSens 
+Pattern (55): (16) bsugarSens (3) baconSens (21) wsugarSens 
+Pattern (56): (19) bookaSens (18) sofaSens 
+Pattern (57): (3) baconSens (0) saucepanSens 
+Pattern (58): (4) storeSens (1) rcontrolSens (21) wsugarSens 
+Pattern (59): (1) rcontrolSens (24) tvSens (18) sofaSens (4) storeSens (5) potSens (25) ktapSens (6) cookerSens (26) macaroniSens (27) drainerSens (29) ftomatoSens (3) baconSens 
+Pattern (60): (1) rcontrolSens (19) bookaSens 
+Pattern (61): (2) cupSens (16) bsugarSens 
+Pattern (62): (11) brusherSens (18) sofaSens 
+Pattern (63): (1) rcontrolSens (24) tvSens (18) sofaSens (16) bsugarSens 
+Pattern (64): (17) bedSens (16) bsugarSens 
+Pattern (65): (11) brusherSens (12) toothpasteSens (13) btapSens (14) towelSens (4) storeSens 
+Pattern (66): (27) drainerSens (7) fridgeSens (3) baconSens 
+Pattern (67): (3) baconSens (4) storeSens (5) potSens (6) cookerSens (7) fridgeSens (8) wmilkSens (9) chocoSens (10) mugSens (11) brusherSens (12) toothpasteSens (13) btapSens (14) towelSens (13) btapSens (15) bsoapSens (14) towelSens (18) sofaSens 
+Pattern (68): (18) sofaSens (4) storeSens 
+Pattern (69): (1) rcontrolSens (24) tvSens (18) sofaSens (4) storeSens 
+Pattern (70): (16) bsugarSens (4) storeSens (5) potSens (6) cookerSens 
+Pattern (71): (7) fridgeSens (8) wmilkSens (9) chocoSens 
+Pattern (72): (3) baconSens (4) storeSens (5) potSens (25) ktapSens (6) cookerSens (26) macaroniSens (27) drainerSens (29) ftomatoSens (3) baconSens (25) ktapSens (31) afcoffeeSens (6) cookerSens (2) cupSens (7) fridgeSens (32) smilkSens (21) wsugarSens (11) brusherSens (12) toothpasteSens (13) btapSens (14) towelSens 
+Pattern (73): (27) drainerSens (29) ftomatoSens 
+Pattern (74): (17) bedSens (1) rcontrolSens 
+Pattern (75): (2) cupSens (3) baconSens (4) storeSens (5) potSens (6) cookerSens (7) fridgeSens (8) wmilkSens (9) chocoSens (10) mugSens 
+Pattern (76): (1) rcontrolSens (11) brusherSens 
+Pattern (77): (3) baconSens (4) storeSens (5) potSens (6) cookerSens (7) fridgeSens (8) wmilkSens (9) chocoSens (10) mugSens (11) brusherSens (12) toothpasteSens (13) btapSens (14) towelSens (13) btapSens (15) bsoapSens (14) towelSens (21) wsugarSens 
+Pattern (78): (2) cupSens (17) bedSens 
+Pattern (79): (1) rcontrolSens (18) sofaSens 
+Pattern (80): (21) wsugarSens (4) storeSens 
+Pattern (81): (3) baconSens (11) brusherSens (12) toothpasteSens (13) btapSens (14) towelSens (13) btapSens (15) bsoapSens (14) towelSens 
+Pattern (82): (11) brusherSens (12) toothpasteSens 
+Pattern (83): (3) baconSens (2) cupSens 
+Pattern (84): (16) bsugarSens (21) wsugarSens (1) rcontrolSens 
+Pattern (85): (19) bookaSens (4) storeSens (5) potSens (25) ktapSens (6) cookerSens (26) macaroniSens (27) drainerSens (29) ftomatoSens (3) baconSens (28) creamSens (30) coffeePotSens (25) ktapSens (31) afcoffeeSens (6) cookerSens (2) cupSens (21) wsugarSens (32) smilkSens (21) wsugarSens 
+Pattern (86): (17) bedSens (22) blampSens (23) bookbSens (21) wsugarSens 
+Pattern (87): (11) brusherSens (4) storeSens (5) potSens (25) ktapSens (6) cookerSens (26) macaroniSens (27) drainerSens (29) ftomatoSens (3) baconSens 
+Pattern (88): (1) rcontrolSens (24) tvSens (18) sofaSens (2) cupSens 
+Pattern (89): (11) brusherSens (12) toothpasteSens (13) btapSens (14) towelSens (17) bedSens (22) blampSens (23) bookbSens (1) rcontrolSens 
+Pattern (90): (21) wsugarSens (2) cupSens (17) bedSens 
+Pattern (91): (19) bookaSens (4) storeSens 
+Pattern (92): (21) wsugarSens (3) baconSens (4) storeSens (5) potSens (6) cookerSens (7) fridgeSens (8) wmilkSens (9) chocoSens (10) mugSens (11) brusherSens (12) toothpasteSens (13) btapSens (14) towelSens (13) btapSens (15) bsoapSens (14) towelSens 
+Pattern (93): (3) baconSens (18) sofaSens (16) bsugarSens 
+Pattern (94): (11) brusherSens (11) brusherSens (12) toothpasteSens (13) btapSens (14) towelSens (13) btapSens (15) bsoapSens (14) towelSens 
+Pattern (95): (16) bsugarSens (1) rcontrolSens (17) bedSens 
+Pattern (96): (18) sofaSens (3) baconSens (4) storeSens 
+Pattern (97): (11) brusherSens (3) baconSens 
+Pattern (98): (3) baconSens (4) storeSens (5) potSens (6) cookerSens (7) fridgeSens (8) wmilkSens (9) chocoSens (10) mugSens (11) brusherSens (12) toothpasteSens (13) btapSens (14) towelSens (13) btapSens (15) bsoapSens (14) towelSens (4) storeSens 
+Pattern (99): (4) storeSens (5) potSens (25) ktapSens (6) cookerSens (26) macaroniSens (27) drainerSens (29) ftomatoSens (3) baconSens (28) creamSens (11) brusherSens (12) toothpasteSens (13) btapSens (14) towelSens 
+Pattern (100): (26) macaroniSens (27) drainerSens (7) fridgeSens (3) baconSens (28) creamSens (30) coffeePotSens (25) ktapSens (31) afcoffeeSens (6) cookerSens (2) cupSens (21) wsugarSens (32) smilkSens 
+Pattern (101): (10) mugSens (11) brusherSens (12) toothpasteSens (13) btapSens (14) towelSens (13) btapSens (15) bsoapSens (14) towelSens 
+Pattern (102): (4) storeSens (5) potSens (25) ktapSens (6) cookerSens (26) macaroniSens (27) drainerSens (29) ftomatoSens (3) baconSens (25) ktapSens (31) afcoffeeSens (6) cookerSens (2) cupSens (7) fridgeSens (32) smilkSens (21) wsugarSens (11) brusherSens (12) toothpasteSens (13) btapSens (14) towelSens 
+Pattern (103): (16) bsugarSens (17) bedSens 
+Pattern (104): (19) bookaSens (16) bsugarSens 
+Pattern (105): (16) bsugarSens (0) saucepanSens (1) rcontrolSens 
+Pattern (106): (2) cupSens (11) brusherSens (12) toothpasteSens (13) btapSens (14) towelSens (13) btapSens (15) bsoapSens (14) towelSens 
+Pattern (107): (3) baconSens (4) storeSens (5) potSens (6) cookerSens (7) fridgeSens (8) wmilkSens (9) chocoSens (10) mugSens (1) rcontrolSens (24) tvSens 
+Pattern (108): (19) bookaSens (21) wsugarSens 
+Pattern (109): (16) bsugarSens (19) bookaSens (4) storeSens (5) potSens (25) ktapSens (6) cookerSens (26) macaroniSens (27) drainerSens (29) ftomatoSens (3) baconSens (28) creamSens (30) coffeePotSens (25) ktapSens (31) afcoffeeSens (6) cookerSens (2) cupSens (21) wsugarSens (32) smilkSens (21) wsugarSens 
+Pattern (110): (3) baconSens (3) baconSens (1) rcontrolSens (0) saucepanSens 
+Pattern (111): (11) brusherSens (12) toothpasteSens (13) btapSens (14) towelSens (2) cupSens 
+Pattern (112): (1) rcontrolSens (3) baconSens (4) storeSens (5) potSens (6) cookerSens (7) fridgeSens (8) wmilkSens (9) chocoSens (10) mugSens (11) brusherSens (12) toothpasteSens (13) btapSens (14) towelSens (13) btapSens (15) bsoapSens (14) towelSens 
+Pattern (113): (18) sofaSens (21) wsugarSens 
+Pattern (114): (16) bsugarSens (4) storeSens (16) bsugarSens 
+Pattern (115): (0) saucepanSens (3) baconSens (21) wsugarSens 
+Pattern (116): (17) bedSens (2) cupSens 
+Pattern (117): (19) bookaSens (1) rcontrolSens 
+Pattern (118): (11) brusherSens (18) sofaSens (16) bsugarSens 
+Pattern (119): (1) rcontrolSens (24) tvSens (18) sofaSens (21) wsugarSens 
+Pattern (120): (16) bsugarSens (18) sofaSens 
+Pattern (121): (11) brusherSens (17) bedSens (0) saucepanSens 
+Pattern (122): (2) cupSens (3) baconSens 
+Pattern (123): (0) saucepanSens (21) wsugarSens (1) rcontrolSens 
+Pattern (124): (19) bookaSens (11) brusherSens 
+Pattern (125): (1) rcontrolSens (21) wsugarSens (21) wsugarSens 
+Pattern (126): (16) bsugarSens (11) brusherSens 
+Pattern (127): (0) saucepanSens (18) sofaSens (1) rcontrolSens 
+Pattern (128): (0) saucepanSens (2) cupSens 
+Pattern (129): (2) cupSens (1) rcontrolSens 
+Pattern (130): (1) rcontrolSens (21) wsugarSens (18) sofaSens 
+Pattern (131): (0) saucepanSens (1) rcontrolSens (17) bedSens 
+Pattern (132): (7) fridgeSens (8) wmilkSens (9) chocoSens (3) baconSens 
+Pattern (133): (1) rcontrolSens (3) baconSens (19) bookaSens 
+Pattern (134): (11) brusherSens (12) toothpasteSens (13) btapSens (14) towelSens (13) btapSens (15) bsoapSens (14) towelSens (4) storeSens 
+Pattern (135): (16) bsugarSens (11) brusherSens (12) toothpasteSens (13) btapSens (14) towelSens (13) btapSens (15) bsoapSens (14) towelSens 
+Pattern (136): (17) bedSens (22) blampSens (23) bookbSens (1) rcontrolSens 
+Pattern (137): (3) baconSens (18) sofaSens 
+Pattern (138): (17) bedSens (21) wsugarSens (2) cupSens 
+Pattern (139): (19) bookaSens (3) baconSens (4) storeSens (5) potSens (6) cookerSens (7) fridgeSens (8) wmilkSens (9) chocoSens (10) mugSens (11) brusherSens (12) toothpasteSens (13) btapSens (14) towelSens (13) btapSens (15) bsoapSens (14) towelSens 
+Pattern (140): (11) brusherSens (1) rcontrolSens (4) storeSens 
+Pattern (141): (16) bsugarSens (1) rcontrolSens (11) brusherSens 
+Pattern (142): (16) bsugarSens (2) cupSens 
+Pattern (143): (18) sofaSens (11) brusherSens (12) toothpasteSens (13) btapSens (14) towelSens (13) btapSens (15) bsoapSens (14) towelSens 
+Pattern (144): (11) brusherSens (18) sofaSens (17) bedSens 
+Pattern (145): (4) storeSens (1) rcontrolSens (3) baconSens 
+Pattern (146): (19) bookaSens (3) baconSens (4) storeSens 
+Pattern (147): (16) bsugarSens (1) rcontrolSens (4) storeSens 
+Pattern (148): (16) bsugarSens (3) baconSens (11) brusherSens 
+Pattern (149): (3) baconSens (1) rcontrolSens (16) bsugarSens 
+Pattern (150): (4) storeSens (16) bsugarSens (2) cupSens 
+Pattern (151): (3) baconSens (4) storeSens (5) potSens (6) cookerSens (7) fridgeSens (8) wmilkSens (9) chocoSens (10) mugSens (11) brusherSens (12) toothpasteSens (13) btapSens (14) towelSens (13) btapSens (15) bsoapSens (14) towelSens (1) rcontrolSens (17) bedSens 
+Pattern (152): (3) baconSens (4) storeSens (5) potSens (6) cookerSens (7) fridgeSens (8) wmilkSens (9) chocoSens (10) mugSens (11) brusherSens (12) toothpasteSens (13) btapSens (14) towelSens (13) btapSens (15) bsoapSens (14) towelSens (4) storeSens (1) rcontrolSens 
+Pattern (153): (4) storeSens (16) bsugarSens (19) bookaSens 
+Pattern (154): (4) storeSens (11) brusherSens (12) toothpasteSens (13) btapSens (14) towelSens (17) bedSens (22) blampSens (23) bookbSens 
+Pattern (155): (11) brusherSens (3) baconSens (4) storeSens 
+Pattern (156): (4) storeSens (5) potSens (25) ktapSens (6) cookerSens (26) macaroniSens (27) drainerSens (29) ftomatoSens (3) baconSens (1) rcontrolSens (24) tvSens (18) sofaSens 
+Pattern (157): (2) cupSens (0) saucepanSens (17) bedSens 
+Pattern (158): (4) storeSens (5) potSens (25) ktapSens (6) cookerSens (26) macaroniSens (27) drainerSens (29) ftomatoSens (3) baconSens (11) brusherSens (12) toothpasteSens (13) btapSens (14) towelSens 
+Pattern (159): (1) rcontrolSens (24) tvSens (18) sofaSens (4) storeSens (5) potSens (25) ktapSens (6) cookerSens (26) macaroniSens (27) drainerSens (29) ftomatoSens (3) baconSens (28) creamSens (11) brusherSens (12) toothpasteSens (13) btapSens (14) towelSens (17) bedSens (22) blampSens (23) bookbSens 
+Pattern (160): (0) saucepanSens (1) rcontrolSens (2) cupSens 
+Pattern (161): (1) rcontrolSens (3) baconSens (1) rcontrolSens (24) tvSens (18) sofaSens (4) storeSens (5) potSens (25) ktapSens (6) cookerSens (26) macaroniSens (27) drainerSens (29) ftomatoSens (3) baconSens (18) sofaSens (20) llampSens (19) bookaSens 
+Pattern (162): (3) baconSens (18) sofaSens (16) bsugarSens (11) brusherSens (12) toothpasteSens (13) btapSens (14) towelSens (17) bedSens (22) blampSens (23) bookbSens 
+Pattern (163): (3) baconSens (4) storeSens (5) potSens (6) cookerSens (7) fridgeSens (8) wmilkSens (9) chocoSens (10) mugSens (11) brusherSens (12) toothpasteSens (13) btapSens (14) towelSens (13) btapSens (15) bsoapSens (14) towelSens (3) baconSens (4) storeSens (5) potSens (25) ktapSens (6) cookerSens (26) macaroniSens (27) drainerSens (29) ftomatoSens (3) baconSens (25) ktapSens (31) afcoffeeSens (6) cookerSens (2) cupSens (7) fridgeSens (32) smilkSens (21) wsugarSens (11) brusherSens (12) toothpasteSens (13) btapSens (14) towelSens 
+Pattern (164): (3) baconSens (4) storeSens (5) potSens (6) cookerSens (7) fridgeSens (8) wmilkSens (9) chocoSens (10) mugSens (11) brusherSens (11) brusherSens (12) toothpasteSens (13) btapSens (14) towelSens (13) btapSens (15) bsoapSens (14) towelSens 
+Pattern (165): (4) storeSens (5) potSens (25) ktapSens (6) cookerSens (26) macaroniSens (27) drainerSens (29) ftomatoSens (3) baconSens (18) sofaSens (20) llampSens (19) bookaSens 
+Pattern (166): (4) storeSens (5) potSens (25) ktapSens (6) cookerSens (26) macaroniSens (27) drainerSens (29) ftomatoSens (3) baconSens (28) creamSens (11) brusherSens (12) toothpasteSens (13) btapSens (14) towelSens (18) sofaSens (20) llampSens (19) bookaSens 
+Pattern (167): (17) bedSens (19) bookaSens (3) baconSens (16) bsugarSens 
+Pattern (168): (0) saucepanSens (4) storeSens (5) potSens (6) cookerSens 
+Pattern (169): (5) potSens (25) ktapSens (6) cookerSens (26) macaroniSens (5) potSens (25) ktapSens (6) cookerSens (26) macaroniSens (27) drainerSens (7) fridgeSens (3) baconSens (28) creamSens (11) brusherSens (12) toothpasteSens (13) btapSens (14) towelSens 
+Pattern (170): (14) towelSens (17) bedSens (22) blampSens (23) bookbSens 
+Pattern (171): (13) btapSens (15) bsoapSens (14) towelSens 
+Pattern (172): (4) storeSens (5) potSens (25) ktapSens (6) cookerSens (26) macaroniSens (27) drainerSens (29) ftomatoSens (3) baconSens (28) creamSens (30) coffeePotSens 
+Pattern (173): (16) bsugarSens (4) storeSens (5) potSens (6) cookerSens (26) macaroniSens 
+Pattern (174): (1) rcontrolSens (24) tvSens (18) sofaSens (4) storeSens (5) potSens (25) ktapSens (6) cookerSens (26) macaroniSens (27) drainerSens (29) ftomatoSens (3) baconSens (17) bedSens (22) blampSens (23) bookbSens 
+Pattern (175): (25) ktapSens (31) afcoffeeSens 
+
+Learning Markov models...
+computing distance between patterns...
+Cluster 0
+   [0]: (11) brusherSens (12) toothpasteSens (13) btapSens (14) towelSens 
+   [51]: (11) brusherSens (12) toothpasteSens (13) btapSens (14) towelSens (1) rcontrolSens 
+   [65]: (11) brusherSens (12) toothpasteSens (13) btapSens (14) towelSens (4) storeSens 
+   [111]: (11) brusherSens (12) toothpasteSens (13) btapSens (14) towelSens (2) cupSens 
+Cluster 1
+   [1]: (4) storeSens (5) potSens (25) ktapSens (6) cookerSens (26) macaroniSens (27) drainerSens (29) ftomatoSens (3) baconSens 
+   [13]: (4) storeSens (5) potSens (25) ktapSens (6) cookerSens (26) macaroniSens (27) drainerSens (29) ftomatoSens (3) baconSens (28) creamSens 
+   [38]: (3) baconSens (4) storeSens (5) potSens (25) ktapSens (6) cookerSens (26) macaroniSens (27) drainerSens (29) ftomatoSens (3) baconSens 
+   [87]: (11) brusherSens (4) storeSens (5) potSens (25) ktapSens (6) cookerSens (26) macaroniSens (27) drainerSens (29) ftomatoSens (3) baconSens 
+   [99]: (4) storeSens (5) potSens (25) ktapSens (6) cookerSens (26) macaroniSens (27) drainerSens (29) ftomatoSens (3) baconSens (28) creamSens (11) brusherSens (12) toothpasteSens (13) btapSens (14) towelSens 
+   [158]: (4) storeSens (5) potSens (25) ktapSens (6) cookerSens (26) macaroniSens (27) drainerSens (29) ftomatoSens (3) baconSens (11) brusherSens (12) toothpasteSens (13) btapSens (14) towelSens 
+   [169]: (5) potSens (25) ktapSens (6) cookerSens (26) macaroniSens (5) potSens (25) ktapSens (6) cookerSens (26) macaroniSens (27) drainerSens (7) fridgeSens (3) baconSens (28) creamSens (11) brusherSens (12) toothpasteSens (13) btapSens (14) towelSens 
+Cluster 2
+   [2]: (3) baconSens (4) storeSens (5) potSens (6) cookerSens (7) fridgeSens (8) wmilkSens (9) chocoSens (10) mugSens 
+   [7]: (3) baconSens (4) storeSens (5) potSens (6) cookerSens (7) fridgeSens (8) wmilkSens (9) chocoSens (10) mugSens (11) brusherSens (12) toothpasteSens (13) btapSens (14) towelSens (13) btapSens (15) bsoapSens (14) towelSens 
+   [26]: (3) baconSens (4) storeSens (5) potSens (6) cookerSens (7) fridgeSens (8) wmilkSens (9) chocoSens (10) mugSens (1) rcontrolSens (24) tvSens (18) sofaSens (11) brusherSens (12) toothpasteSens (13) btapSens (14) towelSens 
+   [49]: (3) baconSens (4) storeSens (5) potSens (6) cookerSens (7) fridgeSens (8) wmilkSens (9) chocoSens (10) mugSens (11) brusherSens (12) toothpasteSens (13) btapSens (14) towelSens (13) btapSens (15) bsoapSens (14) towelSens (1) rcontrolSens 
+   [67]: (3) baconSens (4) storeSens (5) potSens (6) cookerSens (7) fridgeSens (8) wmilkSens (9) chocoSens (10) mugSens (11) brusherSens (12) toothpasteSens (13) btapSens (14) towelSens (13) btapSens (15) bsoapSens (14) towelSens (18) sofaSens 
+   [75]: (2) cupSens (3) baconSens (4) storeSens (5) potSens (6) cookerSens (7) fridgeSens (8) wmilkSens (9) chocoSens (10) mugSens 
+   [77]: (3) baconSens (4) storeSens (5) potSens (6) cookerSens (7) fridgeSens (8) wmilkSens (9) chocoSens (10) mugSens (11) brusherSens (12) toothpasteSens (13) btapSens (14) towelSens (13) btapSens (15) bsoapSens (14) towelSens (21) wsugarSens 
+   [92]: (21) wsugarSens (3) baconSens (4) storeSens (5) potSens (6) cookerSens (7) fridgeSens (8) wmilkSens (9) chocoSens (10) mugSens (11) brusherSens (12) toothpasteSens (13) btapSens (14) towelSens (13) btapSens (15) bsoapSens (14) towelSens 
+   [98]: (3) baconSens (4) storeSens (5) potSens (6) cookerSens (7) fridgeSens (8) wmilkSens (9) chocoSens (10) mugSens (11) brusherSens (12) toothpasteSens (13) btapSens (14) towelSens (13) btapSens (15) bsoapSens (14) towelSens (4) storeSens 
+   [107]: (3) baconSens (4) storeSens (5) potSens (6) cookerSens (7) fridgeSens (8) wmilkSens (9) chocoSens (10) mugSens (1) rcontrolSens (24) tvSens 
+   [112]: (1) rcontrolSens (3) baconSens (4) storeSens (5) potSens (6) cookerSens (7) fridgeSens (8) wmilkSens (9) chocoSens (10) mugSens (11) brusherSens (12) toothpasteSens (13) btapSens (14) towelSens (13) btapSens (15) bsoapSens (14) towelSens 
+   [139]: (19) bookaSens (3) baconSens (4) storeSens (5) potSens (6) cookerSens (7) fridgeSens (8) wmilkSens (9) chocoSens (10) mugSens (11) brusherSens (12) toothpasteSens (13) btapSens (14) towelSens (13) btapSens (15) bsoapSens (14) towelSens 
+   [151]: (3) baconSens (4) storeSens (5) potSens (6) cookerSens (7) fridgeSens (8) wmilkSens (9) chocoSens (10) mugSens (11) brusherSens (12) toothpasteSens (13) btapSens (14) towelSens (13) btapSens (15) bsoapSens (14) towelSens (1) rcontrolSens (17) bedSens 
+   [152]: (3) baconSens (4) storeSens (5) potSens (6) cookerSens (7) fridgeSens (8) wmilkSens (9) chocoSens (10) mugSens (11) brusherSens (12) toothpasteSens (13) btapSens (14) towelSens (13) btapSens (15) bsoapSens (14) towelSens (4) storeSens (1) rcontrolSens 
+   [164]: (3) baconSens (4) storeSens (5) potSens (6) cookerSens (7) fridgeSens (8) wmilkSens (9) chocoSens (10) mugSens (11) brusherSens (11) brusherSens (12) toothpasteSens (13) btapSens (14) towelSens (13) btapSens (15) bsoapSens (14) towelSens 
+Cluster 3
+   [3]: (11) brusherSens (12) toothpasteSens (13) btapSens (14) towelSens (13) btapSens (15) bsoapSens (14) towelSens 
+   [81]: (3) baconSens (11) brusherSens (12) toothpasteSens (13) btapSens (14) towelSens (13) btapSens (15) bsoapSens (14) towelSens 
+   [94]: (11) brusherSens (11) brusherSens (12) toothpasteSens (13) btapSens (14) towelSens (13) btapSens (15) bsoapSens (14) towelSens 
+   [106]: (2) cupSens (11) brusherSens (12) toothpasteSens (13) btapSens (14) towelSens (13) btapSens (15) bsoapSens (14) towelSens 
+   [134]: (11) brusherSens (12) toothpasteSens (13) btapSens (14) towelSens (13) btapSens (15) bsoapSens (14) towelSens (4) storeSens 
+   [135]: (16) bsugarSens (11) brusherSens (12) toothpasteSens (13) btapSens (14) towelSens (13) btapSens (15) bsoapSens (14) towelSens 
+   [143]: (18) sofaSens (11) brusherSens (12) toothpasteSens (13) btapSens (14) towelSens (13) btapSens (15) bsoapSens (14) towelSens 
+Cluster 4
+   [4]: (1) rcontrolSens (24) tvSens (18) sofaSens 
+   [69]: (1) rcontrolSens (24) tvSens (18) sofaSens (4) storeSens 
+   [88]: (1) rcontrolSens (24) tvSens (18) sofaSens (2) cupSens 
+   [119]: (1) rcontrolSens (24) tvSens (18) sofaSens (21) wsugarSens 
+Cluster 5
+   [5]: (11) brusherSens (12) toothpasteSens (13) btapSens (14) towelSens (17) bedSens (22) blampSens (23) bookbSens 
+   [19]: (17) bedSens (22) blampSens (23) bookbSens 
+   [86]: (17) bedSens (22) blampSens (23) bookbSens (21) wsugarSens 
+   [89]: (11) brusherSens (12) toothpasteSens (13) btapSens (14) towelSens (17) bedSens (22) blampSens (23) bookbSens (1) rcontrolSens 
+   [104]: (19) bookaSens (16) bsugarSens 
+   [136]: (17) bedSens (22) blampSens (23) bookbSens (1) rcontrolSens 
+   [154]: (4) storeSens (11) brusherSens (12) toothpasteSens (13) btapSens (14) towelSens (17) bedSens (22) blampSens (23) bookbSens 
+   [162]: (3) baconSens (18) sofaSens (16) bsugarSens (11) brusherSens (12) toothpasteSens (13) btapSens (14) towelSens (17) bedSens (22) blampSens (23) bookbSens 
+   [170]: (14) towelSens (17) bedSens (22) blampSens (23) bookbSens 
+Cluster 6
+   [6]: (28) creamSens (30) coffeePotSens (25) ktapSens (31) afcoffeeSens (6) cookerSens (2) cupSens (21) wsugarSens 
+   [9]: (25) ktapSens (31) afcoffeeSens (6) cookerSens (2) cupSens (7) fridgeSens (32) smilkSens (21) wsugarSens (11) brusherSens (12) toothpasteSens (13) btapSens (14) towelSens 
+   [20]: (4) storeSens (5) potSens (25) ktapSens (6) cookerSens (26) macaroniSens (27) drainerSens (29) ftomatoSens (3) baconSens (28) creamSens (30) coffeePotSens (25) ktapSens (31) afcoffeeSens (6) cookerSens (2) cupSens (21) wsugarSens (32) smilkSens (21) wsugarSens 
+   [28]: (5) potSens (25) ktapSens (6) cookerSens (26) macaroniSens (27) drainerSens (7) fridgeSens (3) baconSens (28) creamSens (11) brusherSens (12) toothpasteSens (13) btapSens (14) towelSens 
+   [48]: (28) creamSens (30) coffeePotSens (25) ktapSens (31) afcoffeeSens (6) cookerSens (2) cupSens (21) wsugarSens (11) brusherSens (12) toothpasteSens (13) btapSens (14) towelSens 
+   [72]: (3) baconSens (4) storeSens (5) potSens (25) ktapSens (6) cookerSens (26) macaroniSens (27) drainerSens (29) ftomatoSens (3) baconSens (25) ktapSens (31) afcoffeeSens (6) cookerSens (2) cupSens (7) fridgeSens (32) smilkSens (21) wsugarSens (11) brusherSens (12) toothpasteSens (13) btapSens (14) towelSens 
+   [85]: (19) bookaSens (4) storeSens (5) potSens (25) ktapSens (6) cookerSens (26) macaroniSens (27) drainerSens (29) ftomatoSens (3) baconSens (28) creamSens (30) coffeePotSens (25) ktapSens (31) afcoffeeSens (6) cookerSens (2) cupSens (21) wsugarSens (32) smilkSens (21) wsugarSens 
+   [100]: (26) macaroniSens (27) drainerSens (7) fridgeSens (3) baconSens (28) creamSens (30) coffeePotSens (25) ktapSens (31) afcoffeeSens (6) cookerSens (2) cupSens (21) wsugarSens (32) smilkSens 
+   [102]: (4) storeSens (5) potSens (25) ktapSens (6) cookerSens (26) macaroniSens (27) drainerSens (29) ftomatoSens (3) baconSens (25) ktapSens (31) afcoffeeSens (6) cookerSens (2) cupSens (7) fridgeSens (32) smilkSens (21) wsugarSens (11) brusherSens (12) toothpasteSens (13) btapSens (14) towelSens 
+   [109]: (16) bsugarSens (19) bookaSens (4) storeSens (5) potSens (25) ktapSens (6) cookerSens (26) macaroniSens (27) drainerSens (29) ftomatoSens (3) baconSens (28) creamSens (30) coffeePotSens (25) ktapSens (31) afcoffeeSens (6) cookerSens (2) cupSens (21) wsugarSens (32) smilkSens (21) wsugarSens 
+   [156]: (4) storeSens (5) potSens (25) ktapSens (6) cookerSens (26) macaroniSens (27) drainerSens (29) ftomatoSens (3) baconSens (1) rcontrolSens (24) tvSens (18) sofaSens 
+   [172]: (4) storeSens (5) potSens (25) ktapSens (6) cookerSens (26) macaroniSens (27) drainerSens (29) ftomatoSens (3) baconSens (28) creamSens (30) coffeePotSens 
+Cluster 7
+   [8]: (4) storeSens (1) rcontrolSens 
+Cluster 8
+   [10]: (18) sofaSens (20) llampSens (19) bookaSens 
+   [35]: (11) brusherSens (12) toothpasteSens (13) btapSens (14) towelSens (18) sofaSens (20) llampSens (19) bookaSens 
+   [128]: (0) saucepanSens (2) cupSens 
+Cluster 9
+   [11]: (16) bsugarSens (3) baconSens 
+   [31]: (3) baconSens (16) bsugarSens 
+   [97]: (11) brusherSens (3) baconSens 
+Cluster 10
+   [12]: (3) baconSens (4) storeSens 
+   [96]: (18) sofaSens (3) baconSens (4) storeSens 
+Cluster 11
+   [14]: (1) rcontrolSens (21) wsugarSens 
+Cluster 12
+   [15]: (16) bsugarSens (4) storeSens 
+   [39]: (4) storeSens (16) bsugarSens 
+   [114]: (16) bsugarSens (4) storeSens (16) bsugarSens 
+Cluster 13
+   [16]: (16) bsugarSens (1) rcontrolSens 
+Cluster 14
+   [17]: (3) baconSens (21) wsugarSens 
+   [55]: (16) bsugarSens (3) baconSens (21) wsugarSens 
+Cluster 15
+   [18]: (1) rcontrolSens (3) baconSens 
+   [29]: (3) baconSens (1) rcontrolSens 
+   [145]: (4) storeSens (1) rcontrolSens (3) baconSens 
+Cluster 16
+   [21]: (5) potSens (25) ktapSens (6) cookerSens (26) macaroniSens 
+Cluster 17
+   [22]: (16) bsugarSens (21) wsugarSens 
+Cluster 18
+   [23]: (0) saucepanSens (1) rcontrolSens 
+Cluster 19
+   [24]: (21) wsugarSens (2) cupSens 
+   [50]: (2) cupSens (21) wsugarSens 
+Cluster 20
+   [25]: (18) sofaSens (16) bsugarSens 
+   [120]: (16) bsugarSens (18) sofaSens 
+Cluster 21
+   [27]: (4) storeSens (21) wsugarSens 
+   [80]: (21) wsugarSens (4) storeSens 
+Cluster 22
+   [30]: (0) saucepanSens (4) storeSens 
+Cluster 23
+   [32]: (11) brusherSens (4) storeSens 
+   [140]: (11) brusherSens (1) rcontrolSens (4) storeSens 
+Cluster 24
+   [33]: (11) brusherSens (17) bedSens 
+   [46]: (3) baconSens (17) bedSens 
+Cluster 25
+   [34]: (0) saucepanSens (21) wsugarSens 
+Cluster 26
+   [36]: (5) potSens (6) cookerSens 
+   [70]: (16) bsugarSens (4) storeSens (5) potSens (6) cookerSens 
+   [168]: (0) saucepanSens (4) storeSens (5) potSens (6) cookerSens 
+Cluster 27
+   [37]: (18) sofaSens (1) rcontrolSens 
+   [130]: (1) rcontrolSens (21) wsugarSens (18) sofaSens 
+Cluster 28
+   [40]: (17) bedSens (19) bookaSens 
+Cluster 29
+   [41]: (4) storeSens (5) potSens (25) ktapSens (6) cookerSens (26) macaroniSens (27) drainerSens (29) ftomatoSens (3) baconSens (28) creamSens (11) brusherSens (12) toothpasteSens (13) btapSens (14) towelSens (17) bedSens (22) blampSens (23) bookbSens 
+   [59]: (1) rcontrolSens (24) tvSens (18) sofaSens (4) storeSens (5) potSens (25) ktapSens (6) cookerSens (26) macaroniSens (27) drainerSens (29) ftomatoSens (3) baconSens 
+   [159]: (1) rcontrolSens (24) tvSens (18) sofaSens (4) storeSens (5) potSens (25) ktapSens (6) cookerSens (26) macaroniSens (27) drainerSens (29) ftomatoSens (3) baconSens (28) creamSens (11) brusherSens (12) toothpasteSens (13) btapSens (14) towelSens (17) bedSens (22) blampSens (23) bookbSens 
+   [161]: (1) rcontrolSens (3) baconSens (1) rcontrolSens (24) tvSens (18) sofaSens (4) storeSens (5) potSens (25) ktapSens (6) cookerSens (26) macaroniSens (27) drainerSens (29) ftomatoSens (3) baconSens (18) sofaSens (20) llampSens (19) bookaSens 
+   [165]: (4) storeSens (5) potSens (25) ktapSens (6) cookerSens (26) macaroniSens (27) drainerSens (29) ftomatoSens (3) baconSens (18) sofaSens (20) llampSens (19) bookaSens 
+   [166]: (4) storeSens (5) potSens (25) ktapSens (6) cookerSens (26) macaroniSens (27) drainerSens (29) ftomatoSens (3) baconSens (28) creamSens (11) brusherSens (12) toothpasteSens (13) btapSens (14) towelSens (18) sofaSens (20) llampSens (19) bookaSens 
+   [174]: (1) rcontrolSens (24) tvSens (18) sofaSens (4) storeSens (5) potSens (25) ktapSens (6) cookerSens (26) macaroniSens (27) drainerSens (29) ftomatoSens (3) baconSens (17) bedSens (22) blampSens (23) bookbSens 
+Cluster 30
+   [42]: (2) cupSens (4) storeSens 
+Cluster 31
+   [43]: (11) brusherSens (1) rcontrolSens 
+   [124]: (19) bookaSens (11) brusherSens 
+Cluster 32
+   [44]: (18) sofaSens (2) cupSens 
+   [56]: (19) bookaSens (18) sofaSens 
+Cluster 33
+   [45]: (3) baconSens (19) bookaSens 
+Cluster 34
+   [47]: (0) saucepanSens (17) bedSens 
+Cluster 35
+   [52]: (4) storeSens (4) storeSens 
+Cluster 36
+   [53]: (11) brusherSens (16) bsugarSens 
+Cluster 37
+   [54]: (19) bookaSens (2) cupSens 
+Cluster 38
+   [57]: (3) baconSens (0) saucepanSens 
+Cluster 39
+   [58]: (4) storeSens (1) rcontrolSens (21) wsugarSens 
+Cluster 40
+   [60]: (1) rcontrolSens (19) bookaSens 
+Cluster 41
+   [61]: (2) cupSens (16) bsugarSens 
+Cluster 42
+   [62]: (11) brusherSens (18) sofaSens 
+Cluster 43
+   [63]: (1) rcontrolSens (24) tvSens (18) sofaSens (16) bsugarSens 
+Cluster 44
+   [64]: (17) bedSens (16) bsugarSens 
+   [95]: (16) bsugarSens (1) rcontrolSens (17) bedSens 
+Cluster 45
+   [66]: (27) drainerSens (7) fridgeSens (3) baconSens 
+Cluster 46
+   [68]: (18) sofaSens (4) storeSens 
+Cluster 47
+   [71]: (7) fridgeSens (8) wmilkSens (9) chocoSens 
+   [132]: (7) fridgeSens (8) wmilkSens (9) chocoSens (3) baconSens 
+Cluster 48
+   [73]: (27) drainerSens (29) ftomatoSens 
+Cluster 49
+   [74]: (17) bedSens (1) rcontrolSens 
+Cluster 50
+   [76]: (1) rcontrolSens (11) brusherSens 
+Cluster 51
+   [78]: (2) cupSens (17) bedSens 
+   [90]: (21) wsugarSens (2) cupSens (17) bedSens 
+   [116]: (17) bedSens (2) cupSens 
+Cluster 52
+   [79]: (1) rcontrolSens (18) sofaSens 
+Cluster 53
+   [82]: (11) brusherSens (12) toothpasteSens 
+Cluster 54
+   [83]: (3) baconSens (2) cupSens 
+   [122]: (2) cupSens (3) baconSens 
+Cluster 55
+   [84]: (16) bsugarSens (21) wsugarSens (1) rcontrolSens 
+   [105]: (16) bsugarSens (0) saucepanSens (1) rcontrolSens 
+   [149]: (3) baconSens (1) rcontrolSens (16) bsugarSens 
+Cluster 56
+   [91]: (19) bookaSens (4) storeSens 
+Cluster 57
+   [93]: (3) baconSens (18) sofaSens (16) bsugarSens 
+Cluster 58
+   [101]: (10) mugSens (11) brusherSens (12) toothpasteSens (13) btapSens (14) towelSens (13) btapSens (15) bsoapSens (14) towelSens 
+   [171]: (13) btapSens (15) bsoapSens (14) towelSens 
+Cluster 59
+   [103]: (16) bsugarSens (17) bedSens 
+Cluster 60
+   [108]: (19) bookaSens (21) wsugarSens 
+Cluster 61
+   [110]: (3) baconSens (3) baconSens (1) rcontrolSens (0) saucepanSens 
+Cluster 62
+   [113]: (18) sofaSens (21) wsugarSens 
+Cluster 63
+   [115]: (0) saucepanSens (3) baconSens (21) wsugarSens 
+Cluster 64
+   [117]: (19) bookaSens (1) rcontrolSens 
+Cluster 65
+   [118]: (11) brusherSens (18) sofaSens (16) bsugarSens 
+   [141]: (16) bsugarSens (1) rcontrolSens (11) brusherSens 
+   [144]: (11) brusherSens (18) sofaSens (17) bedSens 
+   [148]: (16) bsugarSens (3) baconSens (11) brusherSens 
+Cluster 66
+   [121]: (11) brusherSens (17) bedSens (0) saucepanSens 
+Cluster 67
+   [123]: (0) saucepanSens (21) wsugarSens (1) rcontrolSens 
+Cluster 68
+   [125]: (1) rcontrolSens (21) wsugarSens (21) wsugarSens 
+Cluster 69
+   [126]: (16) bsugarSens (11) brusherSens 
+Cluster 70
+   [127]: (0) saucepanSens (18) sofaSens (1) rcontrolSens 
+Cluster 71
+   [129]: (2) cupSens (1) rcontrolSens 
+Cluster 72
+   [131]: (0) saucepanSens (1) rcontrolSens (17) bedSens 
+Cluster 73
+   [133]: (1) rcontrolSens (3) baconSens (19) bookaSens 
+Cluster 74
+   [137]: (3) baconSens (18) sofaSens 
+Cluster 75
+   [138]: (17) bedSens (21) wsugarSens (2) cupSens 
+Cluster 76
+   [142]: (16) bsugarSens (2) cupSens 
+Cluster 77
+   [146]: (19) bookaSens (3) baconSens (4) storeSens 
+Cluster 78
+   [147]: (16) bsugarSens (1) rcontrolSens (4) storeSens 
+Cluster 79
+   [150]: (4) storeSens (16) bsugarSens (2) cupSens 
+Cluster 80
+   [153]: (4) storeSens (16) bsugarSens (19) bookaSens 
+Cluster 81
+   [155]: (11) brusherSens (3) baconSens (4) storeSens 
+Cluster 82
+   [157]: (2) cupSens (0) saucepanSens (17) bedSens 
+Cluster 83
+   [160]: (0) saucepanSens (1) rcontrolSens (2) cupSens 
+Cluster 84
+   [163]: (3) baconSens (4) storeSens (5) potSens (6) cookerSens (7) fridgeSens (8) wmilkSens (9) chocoSens (10) mugSens (11) brusherSens (12) toothpasteSens (13) btapSens (14) towelSens (13) btapSens (15) bsoapSens (14) towelSens (3) baconSens (4) storeSens (5) potSens (25) ktapSens (6) cookerSens (26) macaroniSens (27) drainerSens (29) ftomatoSens (3) baconSens (25) ktapSens (31) afcoffeeSens (6) cookerSens (2) cupSens (7) fridgeSens (32) smilkSens (21) wsugarSens (11) brusherSens (12) toothpasteSens (13) btapSens (14) towelSens 
+Cluster 85
+   [167]: (17) bedSens (19) bookaSens (3) baconSens (16) bsugarSens 
+Cluster 86
+   [173]: (16) bsugarSens (4) storeSens (5) potSens (6) cookerSens (26) macaroniSens 
+Cluster 87
+   [175]: (25) ktapSens (31) afcoffeeSens 
+Done.
+
+Annotating data...Done.
