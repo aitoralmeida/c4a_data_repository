@@ -147,6 +147,9 @@ def when_request_finished(sender, response, **extra):
         route = request.url_rule and request.url_rule.endpoint or "Bad route or method"
         ip = request.remote_addr or "Can read user Ip Address"
         agent = request.user_agent.string or "User is not sending its agent"
+
+        # TODO change this part to detect if a user SENDS OR NO A JSON TO THE SERVER
+
         data = "User entered an JSON with length of: %s" % request.content_length or "No data found"
         status_code = response.status_code or "No status code. Check estrange behavior"
         # Inserting data into database
@@ -315,6 +318,10 @@ def api(version=app.config['ACTUAL_API']):
     else:
         return "You have entered an invalid api version", 404
 
+
+
+
+# TODO extend this class to obtain users, Pilot and ROLE.
 
 @app.route("/api/<version>/get_my_info", methods=["GET"])
 def get_my_info(version=app.config['ACTUAL_API']):
@@ -581,7 +588,7 @@ def add_care_receiver(version=app.config['ACTUAL_API']):
         data = _convert_to_dict(request.json)
         # Checking if INPUT json is OK
         res, msg = Utilities.check_add_care_receiver_data(AR_DATABASE, data)
-        if data and res and USER:
+        if data and res and USER and not msg:
             # User and entered data are OK. save new user into DB
             res_ar = AR_DATABASE.add_new_care_receiver(data, USER.id)
             res_sr = SR_DATABASE.add_new_care_receiver(data, USER.id)
@@ -590,12 +597,15 @@ def add_care_receiver(version=app.config['ACTUAL_API']):
                                                "into database" % USER.username))
                 # We only return one value, because both database has the same IDS
                 return jsonify(res_ar)
-
             else:
                 Utilities.write_log_error(app, ("add_care_receiver: the username: %s failed to store "
                                                 "data into database. 500" % USER.username))
                 return Response("There is an error in DB"), 500
         else:
+            # Data is not valid, check the problem
+
+            # TODO maybe detect here the source of message???
+
             return Response(msg), 400
 
 

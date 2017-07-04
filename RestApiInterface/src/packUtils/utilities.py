@@ -81,8 +81,9 @@ class Utilities(object):
         """
         Check if data is ok and if the not nullable values are filled.
 
-
+        :param p_database: Database instance.
         :param p_data: data from the user.
+
         :return: True or False if data is ok.
         """
 
@@ -121,8 +122,8 @@ class Utilities(object):
                     "description": "Semantic location of the performed action",
                     "type": "string",
                     "minLength": 3,
-                    "maxLength": 50,
-                    "pattern": "^eu:c4a:[a-z,A-Z,0-9]{3,25}:[a-z,A-Z,0-9]{1,30}$",
+                    "maxLength": 100,
+                    "pattern": "^(eu:c4a:[a-z,A-Z,0-9]{3,25}:[a-z,A-Z,0-9]{1,30}|eu:c4a:[a-z,A-Z,0-9]{3,25}:[a-z,A-Z,0-9]{1,35}:[a-z,A-Z,0-9]{1,35})$",
                 },
                 "position": {
                     "description": "The exact position given in Lat/Long format",
@@ -142,7 +143,15 @@ class Utilities(object):
                     "type": "object",
                     "additionalProperties": True
                 },
-
+                "rating": {
+                    "description": "Value defining the uncertainty of the inferred action",
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1,
+                    "exclusiveMinimum": False,
+                    "exclusiveMaximum": False,
+                    # "multipleOf": 0.01
+                },
                 "data_source_type": {
                     "description": "how the action has been decided or imported",
                     "type": "array",
@@ -157,14 +166,14 @@ class Utilities(object):
                         ],
                     },
                 },
-
                 "extra": {
                     "description": "Additional information given by the Pilot in the LEA",
                     "type": "object",
                     "additionalProperties": True,
                 },
             },
-            "required": ["action", "user", "pilot", "location", "position", "timestamp", "payload", "data_source_type"],
+            "required": ["action", "user", "pilot", "location", "position", "timestamp", "payload", "rating",
+                         "data_source_type"],
             "additionalProperties": False,
         }
 
@@ -241,7 +250,7 @@ class Utilities(object):
                 "house_number": {
                     "description": "The number of house in case of indoor is true",
                     "type": "integer",
-                    "minimum": 0
+                    "minimum": 0,
                 },
                 "location": {
                     "description": "Semantic location of the performed action",
@@ -495,8 +504,15 @@ class Utilities(object):
                     validate(data, schema, format_checker=FormatChecker())
                     if Utilities.validate_user_registered(p_database, data):
                         # The user exist in the system
+
+
+
+                        # TODO find a solution to return a 409 conflict
+
+
+
                         logging.error("The entered username is duplicated: %s", data['username'])
-                        raise ValidationError("Duplicate username: %s" % data["username"])
+                        raise ValidationError("The entered username is duplicated: %s" % data["username"])
                     # adding the username to the list
                     list_of_usernames.append(data['username'])
                 # We are going to search for duplicated users in the json list sent by the user
@@ -631,8 +647,8 @@ class Utilities(object):
                                     "type": "number",
                                     "minimum": 0,
                                     "maximum": 1000000,
-                                    "exclusiveMinimum": True,
-                                    "exclusiveMaximum": True,
+                                    "exclusiveMinimum": False,
+                                    "exclusiveMaximum": False,
                                     #"multipleOf": 0.01
                                 },
                                 "data_source_type": {
@@ -665,8 +681,8 @@ class Utilities(object):
             },
             "additionalProperties": False,
             "oneOf": [
-                {"required": ["user", "pilot", "interval_start", "extra", "duration"]},
-                {"required": ["user", "pilot", "interval_start", "extra", "interval_end"]}
+                {"required": ["user", "pilot", "interval_start", "duration"]},
+                {"required": ["user", "pilot", "interval_start", "interval_end"]}
             ]
         }
 

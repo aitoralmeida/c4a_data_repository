@@ -267,7 +267,7 @@ public class RuleEngine {
                 // Objeto
                 // Literal que sea una lista de ciudades
 
-                if (sURI.equals(c4aBaseURI+"City") && pURI.equals("dbp:name") && oURI.toLowerCase().equals(places)) {
+                if (sURI.equals(c4aBaseURI+"Pilot") && pURI.equals("dbp:name") && oURI.toLowerCase().equals(places)) {
                     LOGGER.info("--> updateCityInformation: Searching information from city: "+oURI.toLowerCase());
                     // Obtaining aditional resources of external ontologies
                     this.obtainCityInformation(oURI.toLowerCase(), pFinalResult);

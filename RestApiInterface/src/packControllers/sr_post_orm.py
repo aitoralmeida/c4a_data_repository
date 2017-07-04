@@ -103,6 +103,7 @@ class SRPostORM(PostORM):
                                                        cd_action_id=cd_action.id,
                                                        user_in_role_id=user.id,
                                                        position=data['position'],
+                                                       rating=round(data.get('rating', 0), 1),
                                                        data_source_type=' '.join(data.get('data_source_type',
                                                                                           ['sensors'])),
                                                        extra_information=' '.join(data.get('extra', None))
