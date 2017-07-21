@@ -184,62 +184,176 @@ class ExecutedAction(Base):
     # FK keys
     user_in_role_id = Column(Integer, ForeignKey('user_in_role.id'))
     cd_action_id = Column(Integer, ForeignKey('cd_action.id'))
-    activity_id = Column(Integer, ForeignKey('activity.id'), nullable=True)
     location_id = Column(Integer, ForeignKey('location.id'))
 
     # Relationship with other TABLES
     cd_action = relationship("CDAction")
-    activity = relationship("Activity")
     location = relationship("Location")
 
+    def __repr__(self):
+        return "<ExecutedAction(id='%s', acquisition_datetime='%s', execution_datetime='%s', rating='%s')>" % (self.id,
+                                                       self.acquisition_datetime, self.execution_datetime, self.rating)
 
-class EAMStartRangeRel(Base):
+
+class ExecutedActivity(Base):
     """
-    EAM < -- > StartRange
+    Multi relationship table
+
+    User - CDActivity - Location
     """
 
-    __tablename__ = 'eam_start_range_rel'
+    __tablename__ = 'executed_activity'
 
-    eam_id = Column(Integer, ForeignKey('eam.id'), primary_key=True)
+    # Generating the Sequence
+    executed_activity_id_seq = Sequence('executed_activity_id_seq', metadata=Base.metadata)
+    # Creating the columns
+    id = Column(Integer, server_default=executed_activity_id_seq.next_value(), primary_key=True)
+    start_time = Column(ArrowType(timezone=True), nullable=False) # These two fields are calculated thought executed action
+    end_time = Column(ArrowType(timezone=True), nullable=False)
+    duration = Column(Integer, nullable=True)
+    data_source_type = Column(String(200))
+
+    # FK keys
+    user_in_role_id = Column(Integer, ForeignKey('user_in_role.id'))
+    cd_activity_id = Column(Integer, ForeignKey('cd_activity.id'), nullable=True)
+
+    # Relationship with other tables
+    executed_activity_executed_action_rel = relationship("ExecutedActivityExecutedActionRel",
+                                                         cascade="all, delete-orphan")
+
+    cd_location_type_executed_activity_rel = relationship("CDLocationTypeExecutedActivityRel",
+                                                          cascade="all, delete-orphan")
+
+    def __repr__(self):
+        return "<ExecutedActivity(id='%s', start_time='%s', end_time='%s', duration='%s')>" % (self.id,
+                                                       self.start_time, self.end_time, self.duration)
+
+
+class ExecutedTransformedAction(Base):
+    """
+    Multi relationship table
+
+    USER - CDTransformedAction - CDEAM
+    """
+
+    __tablename__ = 'executed_transformed_action'
+
+    # Generating the Sequence
+    executed_activity_id_seq = Sequence('executed_activity_id_seq', metadata=Base.metadata)
+    # Creating the columns
+    id = Column(Integer, server_default=executed_activity_id_seq.next_value(), primary_key=True)
+    transformed_acquisition_datetime = Column(ArrowType(timezone=True), default=arrow.utcnow())
+    transformed_execution_datetime = Column(ArrowType(timezone=True))
+
+    # FK keys
+    executed_action_id = Column(Integer, ForeignKey('executed_action.id'))
+    cd_transformed_action_id = Column(Integer, ForeignKey('cd_transformed_action.id'))
+    user_in_role_id = Column(Integer, ForeignKey('user_in_role.id'))
+
+    # Relationships with other tables
+    cd_transformed_action = relationship('CDTransformedAction')
+    executed_action = relationship('ExecutedAction')
+
+    def __repr__(self):
+        return "<ExecutedTransformedAction(id='%s', transformed_acquisition_datetime='%s', " \
+               "transformed_execution_datetime='%s')>" % (self.id, self.transformed_acquisition_datetime,
+                                                          self.transformed_execution_datetime)
+
+class UserInEAM(Base):
+    """
+    Multi relationship table
+
+    User -- CDActivity -- CDEAM
+    """
+
+    __tablename__ = 'user_in_eam'
+
+    cd_activity_id = Column(Integer, ForeignKey('cd_activity.id'), primary_key=True)
+    user_in_role_id = Column(Integer, ForeignKey('user_in_role.id'), primary_key=True)
+    cd_eam_id = Column(Integer, ForeignKey('cd_eam.id'), primary_key=True)
+    date = Column(ArrowType(timezone=True), default=arrow.utcnow(), nullable=True)
+
+    # Relationship with other tables
+    cd_eam = relationship('CDEAM')
+    cd_activity = relationship('CDActivity')
+
+    def __repr__(self):
+        return "<UserInEAM(cd_activity_id='%s', user_in_role_id='%s', " \
+               "cd_eam_id='%s', date='%s')>" % (self.cd_activity_id, self.user_in_role_id, self.cd_eam_id, self.date)
+
+
+class ExecutedActivityExecutedActionRel(Base):
+    """
+    ExecutedActivity < -- > ExecutedAction
+    """
+
+    __tablename__ = 'executed_activity_executed_action_rel'
+
+    executed_activity_id = Column(Integer, ForeignKey('executed_activity.id'), primary_key=True)
+    executed_action_id = Column(Integer, ForeignKey('executed_action.id'), primary_key=True)
+    executed_action = relationship('ExecutedAction')
+
+
+class CDEAMStartRangeRel(Base):
+    """
+    CDEAM < -- > StartRange
+    """
+
+    __tablename__ = 'cd_eam_start_range_rel'
+
+    cd_eam_id = Column(Integer, ForeignKey('cd_eam.id'), primary_key=True)
     start_range_id = Column(Integer, ForeignKey('start_range.id'), primary_key=True)
     start_range = relationship("StartRange")
 
 
-class EAMLocationRel(Base):
+class CDEAMCDTransformedActionRel(Base):
     """
-    EAM < -- > Location
+    CDEAM < -- > CDTransformedAction
     """
 
-    __tablename__ = 'eam_location_rel'
+    __tablename__ = 'cd_eam_cd_transformed_action_rel'
 
-    eam_id = Column(Integer, ForeignKey('eam.id'), primary_key=True)
+    cd_eam_id = Column(Integer, ForeignKey('cd_eam.id'), primary_key=True)
+    cd_transformed_action_id = Column(Integer, ForeignKey('cd_transformed_action.id'), primary_key=True)
+    transformed_action = relationship("CDTransformedAction")
+
+
+class CDEAMLocationRel(Base):
+    """
+    CDEAM < -- > Location
+
+    """
+
+    __tablename__ = 'cd_eam_location_rel'
+
+    cd_eam_id = Column(Integer, ForeignKey('cd_eam.id'), primary_key=True)
     location_id = Column(Integer, ForeignKey('location.id'), primary_key=True)
-    location = relationship("Location")
+    location = relationship('Location')
 
 
-class EAMCDActionRel(Base):
+class CDEAMUserInRoleRel(Base):
     """
-    EAM < -- > CDAction
-    """
-
-    __tablename__ = 'eam_cd_action_rel'
-
-    eam_id = Column(Integer, ForeignKey('eam.id'), primary_key=True)
-    cd_action_id = Column(Integer, ForeignKey('cd_action.id'), primary_key=True)
-    cd_action = relationship("CDAction")
-
-
-class LocationActivityRel(Base):
-    """
-    Activity < -- > Location
+    CDEAM < -- > UserInRole
     """
 
-    __tablename__ = 'location_activity_rel'
+    __tablename__ = 'cd_eam_user_in_role_rel'
 
-    location_id = Column(Integer, ForeignKey('location.id'), primary_key=True)
-    activity_id = Column(Integer, ForeignKey('activity.id'), primary_key=True)
+    cd_eam_id = Column(Integer, ForeignKey('cd_eam.id'), primary_key=True)
+    user_in_role_id = Column(Integer, ForeignKey('user_in_role.id'), primary_key=True)
+    user_in_role = relationship('UserInRole')
+
+
+class CDLocationTypeExecutedActivityRel(Base):
+    """
+    ExecutedActivity < -- > Location
+    """
+
+    __tablename__ = 'cd_location_type_executed_activity_rel'
+
+    cd_location_type_id = Column(Integer, ForeignKey('cd_location_type.id'), primary_key=True)
+    executed_activity_id = Column(Integer, ForeignKey('executed_activity.id'), primary_key=True)
     house_number = Column(Integer)
-    activity = relationship("Activity")
+    executed_activity = relationship("CDLocationType")
 
 
 class LocationCDLocationTypeRel(Base):
@@ -257,22 +371,22 @@ class LocationCDLocationTypeRel(Base):
     location = relationship('Location')
 
 
-class CDActionMetric(Base):
+class CDActionMetricRel(Base):
     """
     Metric < -- > CDAction
     """
 
-    __tablename__ = 'cd_action_metric'
+    __tablename__ = 'cd_action_metric_rel'
 
     metric_id = Column(Integer, ForeignKey('metric.id'), primary_key=True)
     cd_action_id = Column(Integer, ForeignKey('cd_action.id'), primary_key=True)
-    date = Column(ArrowType(timezone=True), primary_key=True, default=arrow.utcnow())
+    date = Column(ArrowType(timezone=True), primary_key=True, default=arrow.utcnow())   # Same as executed_action registered time
     execution_datetime = Column(ArrowType(timezone=True), nullable=False)
     value = Column(String(50), nullable=False)
     cd_action = relationship('CDAction')
 
 
-# Tables
+# Basic Tables
 class UserInRole(Base):
     """
     This table allows to store all related data from User who makes the executed_action
@@ -295,6 +409,9 @@ class UserInRole(Base):
 
     # m2m
     action = relationship("ExecutedAction", cascade="all, delete-orphan")
+    executed_activity = relationship("ExecutedActivity", cascade="all, delete-orphan")
+    executed_transformed_action = relationship("ExecutedTransformedAction", cascade="all, delete-orphan")
+    user_in_eam = relationship("UserInEAM", cascade="all, delete-orphan")
 
     def __repr__(self):
         return "<UserInRole(id='%s', valid_from='%s'. valid_to='%s')>" % (self.id, self.valid_from, self.valid_to)
@@ -400,12 +517,9 @@ class Location(Base):
     # One2Many
     pilot_code = Column(String(4), ForeignKey('pilot.code'), nullable=True)
 
-    # many2many
-    activity = relationship("LocationActivityRel")
-
     def __repr__(self):
-        return "<Location(location_name='%s', indoor='%s', urn='%s', latitude='%s', longitude='%s')>" % (
-            self.location_name, self.indoor, self.urn, self.latitude, self.longitude)
+        return "<Location(location_name='%s', indoor='%s')>" % (
+            self.location_name, self.indoor)
 
 
 class CDLocationType(Base):
@@ -428,36 +542,41 @@ class CDLocationType(Base):
                                                      foreign_keys='LocationCDLocationTypeRel.parent_location_type_id')
 
 
-class Activity(Base):
+class CDActivity(Base):
     """
-    Activity is a collection of different actions. For example "Make breakfast is an activity and could have some actions
-    like:
+    CDActivity contains the codebook of possible Activities in the project.
 
-        --> Put the milk in the bowl
+    An activity is set of different performed actions:
+
         --> Open the fridge
+        --> Put the milk in the bowl
         --> .....
+
     """
-    __tablename__ = 'activity'
+
+    __tablename__ = 'cd_activity'
 
     # Generating the Sequence
-    activity_id_seq = Sequence('activity_id_seq', metadata=Base.metadata)
+    activity_id_seq = Sequence('cd_activity_id_seq', metadata=Base.metadata)
     # Creating the columns
     id = Column(Integer, server_default=activity_id_seq.next_value(), primary_key=True)
-    activity_name = Column(String(50))
-    activity_description = Column(String(200))
+    activity_name = Column(String(50), unique=True)
+    activity_description = Column(String(200), nullable=True)
     creation_date = Column(ArrowType(timezone=True), default=arrow.utcnow())
-    instrumental = Column(Boolean, default=False, nullable=False)
-    data_source_type = Column(String(200))
+    instrumental = Column(Boolean, default=False, nullable=False)   # Default value set to False --> Normal Activities
 
     # One2one
-    eam = relationship("EAM", uselist=False, back_populates="activity")
+    # user_in_eam = relationship("UserInEAM", uselist=False, back_populates="cd_activity")
+
+    # One2Many
+    executed_activity = relationship("ExecutedActivity", cascade="all, delete-orphan")
 
     # one2many
-    expected_inter_behaviour = relationship("InterBehaviour", foreign_keys='InterBehaviour.expected_activity_id')
-    real_inter_behaviour = relationship("InterBehaviour", foreign_keys='InterBehaviour.real_activity_id')
+    #expected_inter_behaviour = relationship("InterBehaviour", foreign_keys='InterBehaviour.expected_activity_id')
+    #real_inter_behaviour = relationship("InterBehaviour", foreign_keys='InterBehaviour.real_activity_id')
 
     def __repr__(self):
-        return "<Activity(activity_name='%s')>" % self.activity_name
+        return "<CDActivity(activity_name='%s')>" % self.activity_name
 
 
 class Pilot(Base):
@@ -497,7 +616,7 @@ class Stakeholder(Base):
     cd_role = relationship('CDRole')
 
     def __rep__(self):
-        return "<CDRole(abbreviation='%s', stakeholder_name='%s', stakeholder_description='%s', " \
+        return "<Stakeholder(abbreviation='%s', stakeholder_name='%s', stakeholder_description='%s', " \
                "valid_from='%s', valid_to='%s')>" % (self.abbreviation, self.stakeholder_name,
                                                      self.stakeholder_description,
                                                      self.valid_from, self.valid_to)
@@ -534,48 +653,28 @@ class CDRole(Base):
                                                      self.valid_to)
 
 
-class InterBehaviour(Base):
-    """
-    This table contains all data related to InterBehaviours. Here we are going to store some data about what is
-    expected activity. What is the real activity and what is the deviation value.
-    """
-
-    __tablename__ = 'inter_behaviour'
-
-    # Generating the Sequence
-    inter_behaviour_seq = Sequence('inter_behaviour_seq', metadata=Base.metadata)
-    # Creating the columns
-    id = Column(Integer, server_default=inter_behaviour_seq.next_value(), primary_key=True)
-    deviation = Column(Float(10))
-    # many2one relationships
-    expected_activity_id = Column(Integer, ForeignKey('activity.id'))
-    real_activity_id = Column(Integer, ForeignKey('activity.id'))
-
-    def __repr__(self):
-        return "<InterBehaviour(deviation='%s')>" % self.deviation
-
-
-# EAM Related Tables
-class EAM(Base):
+class CDEAM(Base):
     """
     This table stores the duration of each related action/activity in a location
     """
 
-    __tablename__ = 'eam'
+    __tablename__ = 'cd_eam'
 
     # Generating the Sequence
-    eam_seq = Sequence('eam_seq', metadata=Base.metadata)
+    cd_eam_seq = Sequence('cd_eam_seq', metadata=Base.metadata)
     # Creating the columns
-    id = Column(Integer, server_default=eam_seq.next_value(), primary_key=True)
+    id = Column(Integer, server_default=cd_eam_seq.next_value(), primary_key=True)
     duration = Column(Integer)
     #one2one
-    activity_id = Column(Integer, ForeignKey('activity.id'))
-    activity = relationship("Activity", back_populates="eam")
+
+    #activity_id = Column(Integer, ForeignKey('activity.id'))
+    #activity = relationship("Activity", back_populates="cd_eam")
 
     # many2many
-    start_range = relationship("EAMStartRangeRel")
-    location = relationship("EAMLocationRel")
-    cd_action = relationship("EAMCDActionRel")
+    start_range = relationship("CDEAMStartRangeRel")
+    cd_transformed_action = relationship("CDEAMCDTransformedActionRel")
+    location = relationship("CDEAMLocationRel")
+    user_in_role = relationship("CDEAMUserInRoleRel")
 
     def __repr__(self):
         return "<EAM(duration='%s')>" % self.duration
@@ -593,11 +692,11 @@ class StartRange(Base):
     start_range_seq = Sequence('start_range_seq', metadata=Base.metadata)
     # Creating the columns
     id = Column(Integer, server_default=start_range_seq.next_value(), primary_key=True)
-    start_hour = Column(String(10))
-    end_hour = Column(String(10))
+    start_time = Column(String(10))
+    end_time = Column(String(10))
 
     def __repr__(self):
-        return "<StartRange(start_hour='%s', end_hour='%s')>" % (self.start_hour, self.end_hour)
+        return "<StartRange(start_time='%s', end_time='%s')>" % (self.start_time, self.end_time)
 
 
 class UserAction(Base):
@@ -621,6 +720,10 @@ class UserAction(Base):
     # One2Many
     user_in_system_id = Column(Integer, ForeignKey('user_in_system.id'))
 
+    def __repr__(self):
+        return "<UserAction(route='%s', data='%s', ip='%s', agent='%s', date='%s', satus_code='%s')>" % (
+            self.route, self.date, self.ip, self.agent, self.date, self.status_code)
+
 
 class Metric(Base):
     """
@@ -635,7 +738,24 @@ class Metric(Base):
     metric_seq = Sequence('metric_seq', metadata=Base.metadata)
     # Creating the columns
     id = Column(Integer, server_default=metric_seq.next_value(), primary_key=True)
-    name = Column(String(50))
+    name = Column(String(50), nullable=False)
     description = Column(String(255), nullable=True)
     # M2M relationship
-    cd_action_metric = relationship('CDActionMetric')
+    cd_action_metric = relationship('CDActionMetricRel')
+
+
+class CDTransformedAction(Base):
+    """
+    This table is used to convert the executed actions of a user to EAM readable actions that can be used to infer
+    new activities.
+    """
+
+    __tablename__ = 'cd_transformed_action'
+
+    # Generating the Sequence
+    cd_transformed_action_seq = Sequence('cd_transformed_action_seq', metadata=Base.metadata)
+    # Creating the columns
+    id = Column(Integer, server_default=cd_transformed_action_seq.next_value(), primary_key=True)
+    transformed_action_name = Column(String(255), unique=True)
+    transformed_action_description = Column(String(255), nullable=True)
+

@@ -34,12 +34,14 @@ if __name__ == '__main__':
         os.makedirs('./log')
     # Check if database is created and inserts data if it is necessary
     database_generator.generate_database(ar_post_orm.ARPostORM(), sr_post_orm.SRPostORM())
+
+    # TODO think about performance with several users
     # Setting logging handlers
     logHandler = RotatingFileHandler('./log/info.log', maxBytes=1024 * 1024 * 100, backupCount=20)
     # set the log handler level
     logHandler.setLevel(logging.INFO)
     # set the formatter
-    formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+    formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
     logHandler.setFormatter(formatter)
     # set the app logger level
     application.logger.setLevel(logging.INFO)

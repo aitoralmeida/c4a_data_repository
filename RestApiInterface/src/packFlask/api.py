@@ -7,10 +7,7 @@ for Flask and manage error codes.
 """
 
 from __future__ import print_function
-
-import os
 import logging
-import simplejson as json
 from datetime import timedelta
 from functools import wraps
 from json import dumps, loads
@@ -20,11 +17,11 @@ from flask_httpauth import HTTPBasicAuth
 from sqlalchemy.orm import class_mapper
 from src.packUtils.utilities import Utilities
 from itsdangerous import Signer, BadSignature
-
 from src.packControllers import ar_post_orm, sr_post_orm
 
+
 __author__ = 'Rubén Mulero'
-__copyright__ = "Copyright 2016, City4Age project"
+__copyright__ = "Copyright 2017, City4Age project"
 __credits__ = ["Rubén Mulero", "Aitor Almeida", "Gorka Azkune", "David Buján"]
 __license__ = "GPL"
 __version__ = "0.2"
@@ -78,7 +75,7 @@ def limit_content_length(max_length):
         def wrapper(*args, **kwargs):
             cl = request.content_length
             if cl is not None and cl > max_length:
-                Utilities.write_log_error(app, "The users sends a too large request data to the server")
+                logging.error("The users sends a too large request data to the server")
                 abort(413)
             return f(*args, **kwargs)
 
@@ -100,7 +97,7 @@ def required_roles(*roles):
         def wrapped(*args, **kwargs):
             user_role = AR_DATABASE.get_user_role(USER.id) or None
             if user_role not in roles:
-                Utilities.write_log_error(app, "The uses doesn't have permissions to enter to this resource")
+                logging.error("The uses doesn't have permissions to enter to this resource")
                 abort(403)
             return f(*args, **kwargs)
         return wrapped
@@ -139,8 +136,37 @@ def teardown_request(exception):
         SR_DATABASE.close()
 
 
+@app.after_request
+def after_request(response):
+    """
+    This signal is used to write information in the INFO log
+
+    :param response: The needed information
+    :return:
+    """
+    # If the action is succesfull we write into INFO log file
+    route = request.url_rule and request.url_rule.endpoint or "No route provided"
+    method = request.method or "No method provided"
+    ip = request.remote_addr or "No IP provided"
+    agent = request.user_agent.string or "No user_agent provided"
+    status = response.status or "No Status provided"
+    # Writing into log file
+    app.logger.info("%s - %s - %s- %s - %s" % (ip, agent, method, route, status))
+    return response
+
+
 @request_finished.connect_via(app)
 def when_request_finished(sender, response, **extra):
+    """
+    When all the process is finished, we write into database the user performed command with its response and
+    relevant data
+
+    :param sender: The sender data
+    :param response: The server response data
+    :param extra: Extra data from the server
+    :return:
+    """
+
     # We want to check if it is a registered user POST call.
     if USER:
         # There is a registered user sending DATA so we will register the event
@@ -163,6 +189,7 @@ def when_request_finished(sender, response, **extra):
                           "\n User Agent: %s"
                           "\n Data: %s"
                           "\n Status code?: %s", USER.id, route, ip, agent, data, status_code)
+
 
 
 ###################################################################################################
@@ -198,15 +225,12 @@ def verify_password(username_or_token, password):
         # Validating user with username/password.
         user = AR_DATABASE.verify_user_login(username_or_token, password, app)
         if not user:
-            Utilities.write_log_error(app, "login: User entered an invalid username or password. 401")
             # If there are some user session, the system will clear all data to force user to make a successful login.
             session.pop('token', None)
             USER = None
             return False
     # Put the user id in a global stage
     USER = user
-    # Writing the log
-    Utilities.write_log_info(app, ("login: User login successfully with username or token: %s" % username_or_token))
     return True
 
 
@@ -229,7 +253,7 @@ def login(version=app.config['ACTUAL_API']):
             session['token'] = token
             return jsonify({'token': token.decode('ascii')})
     else:
-        Utilities.write_log_error(app, "logout: User entered an invalid api version, 404")
+        logging.error("logout: User entered an invalid api version, 404")
         return "You have entered an invalid api version", 404
 
 
@@ -247,12 +271,38 @@ def logout(version=app.config['ACTUAL_API']):
         if USER:
             session.pop('token', None)
             USER = None
-            Utilities.write_log_info(app, "logout: User logout successfully")
+            logging.info("logout: User logout successfully")
             flash('You were logged out')
             return redirect(url_for('api', version=app.config['ACTUAL_API']))
     else:
-        Utilities.write_log_error(app, "logout: User entered an invalid api version, 404")
+        logging.error("logout: User entered an invalid api version, 404")
         return "You have entered an invalid api version", 404
+
+
+###################################################################################################
+###################################################################################################
+######                              Error handlers
+###################################################################################################
+###################################################################################################
+
+@app.errorhandler(500)
+def data_sent_error(error):
+    resp = make_response("Data entered is invalid, please check your JSON\n", 500)
+    return resp
+
+
+@app.errorhandler(400)
+def data_sent_error(error):
+    resp = make_response("You have sent a bad request. If your request contains a JSON based structure"
+                         "check it might be bad formatted.", 400)
+    return resp
+
+
+@app.errorhandler(413)
+def data_sent_too_long(error):
+    msg = "Data entered is too long, please send data with max length of %d bytes \n" % MAX_LENGHT
+    resp = make_response(msg, 413)
+    return resp
 
 
 
@@ -319,21 +369,33 @@ def api(version=app.config['ACTUAL_API']):
         return "You have entered an invalid api version", 404
 
 
-
-
-# TODO extend this class to obtain users, Pilot and ROLE.
-
 @app.route("/api/<version>/get_my_info", methods=["GET"])
+@auth.login_required
 def get_my_info(version=app.config['ACTUAL_API']):
     """
-    A simple endpoint to obtain user agent information if the user request it
+    This endpoint returns user information given its login credentials
 
     :param version: Api version
-    :return:
+    :return: The Pilot of the user and its role in the system
     """
-    return jsonify({'ip': request.remote_addr,
-                    'platform': request.user_agent.string,
-                    }), 200
+    if USER:
+        # Obtaining user information
+        pilot = AR_DATABASE.get_user_pilot(USER.id)
+        role = AR_DATABASE.get_user_role(USER.id)
+
+        # Writing the log and returning data
+        logging.info("get_my_info: the username: %s get it's personal info" % USER.username)
+
+        return jsonify({'ip': request.remote_addr,
+                        'platform': request.user_agent.string,
+                        'pilot': pilot or "n/a",
+                        'role': role or "n/a"
+                        }), 200
+    else:
+        # There isn't' any global user, estrange error
+        logging.error("get_my_info: Something estrange happened with the USER global parameter.")
+        return Response("Some estrange error happened in the server, contact with administrator", 500)
+
 
 ###################################################################################################
 ###################################################################################################
@@ -449,21 +511,26 @@ def add_action(version=app.config['ACTUAL_API']):
     if Utilities.check_connection(app, version):
         # We created a list of Python dict.
         data = _convert_to_dict(request.json)
-        res, msg = Utilities.check_add_action_data(AR_DATABASE, data)
-        if data and res and USER:
+        msg = Utilities.check_add_action_data(AR_DATABASE, data)
+        if data and not msg and USER:
             # User and data are OK. save data into DB
             res_ar = AR_DATABASE.add_action(data)
             res_sr = SR_DATABASE.add_action(data)
             if res_ar and res_sr:
-                Utilities.write_log_info(app, ("add_action: the username: %s adds new action into database" %
-                                         USER.username))
+                logging.info("add_action: the username: %s adds new action into database" % USER.username)
                 return Response('Data stored in database OK\n'), 200
             else:
-                Utilities.write_log_error(app, ("add_action: the username: %s failed to store data into database. 500" %
-                                          USER.username))
+                logging.error("add_action: the username: %s failed to store data into database. 500" % USER.username)
                 return "There is an error in DB", 500
         else:
-            return Response(msg), 400
+            logging.error("add_action: there is a problem with entered data")
+            # Data is not valid, check the problem
+            if "duplicated" in msg:
+                # Data sent is duplicated.
+                return Response(msg), 409
+            else:
+                # Standard Error
+                return Response(msg), 400
 
 
 @app.route('/api/<version>/add_activity', methods=['POST'])
@@ -495,21 +562,26 @@ def add_activity(version=app.config['ACTUAL_API']):
     """
     if Utilities.check_connection(app, version):
         data = _convert_to_dict(request.json)
-        res, msg = Utilities.check_add_activity_data(AR_DATABASE, data)
-        if data and res and USER:
+        msg = Utilities.check_add_activity_data(AR_DATABASE, data)
+        if data and not msg and USER:
             # User and data are OK. save data into DB
             res_ar = AR_DATABASE.add_activity(data)
             res_sr = SR_DATABASE.add_activity(data)
             if res_ar and res_sr:
-                Utilities.write_log_info(app, ("add_activity: the username: %s adds new activity into database" %
-                                         USER.username))
+                logging.info("add_activity: the username: %s adds new activity into database" % USER.username)
                 return Response('Data stored in database OK\n'), 200
             else:
-                Utilities.write_log_error(app, ("add_activity: the username: %s failed to store "
-                                                "data into database. 500" % USER.username))
+                logging.error("add_activity: the username: %s failed to store data into database. 500" % USER.username)
                 return Response("There is an error in DB"), 500
         else:
-            return Response(msg), 400
+            logging.error("add_activity: there is a problem with entered data")
+            # Data is not valid, check the problem
+            if "duplicated" in msg:
+                # Data sent is duplicated.
+                return Response(msg), 409
+            else:
+                # Standard Error
+                return Response(msg), 400
 
 
 @app.route('/api/<version>/add_new_user', methods=['POST'])
@@ -540,25 +612,33 @@ def add_new_user(version=app.config['ACTUAL_API']):
     :param version: Api version
     :return:
     """
+
+    # TODO think about put pilot as an optional field.
+
     if Utilities.check_connection(app, version):
         data = _convert_to_dict(request.json)
         # check the JSON data
-        res, msg = Utilities.check_add_new_user_data(AR_DATABASE, data)
-        if data and res and USER:
+        msg = Utilities.check_add_new_user_data(AR_DATABASE, data)
+        if data and not msg and USER:
             # User and entered data are OK. save new user into DB
             res_ar = AR_DATABASE.add_new_user_in_system(data)
             res_sr = SR_DATABASE.add_new_user_in_system(data)
             if res_ar and res_sr:
-                Utilities.write_log_info(app, ("add_new_user: the username: %s adds new user into database" %
-                                         USER.username))
+                logging.info("add_new_user: the username: %s adds new user into database" % USER.username)
 
                 return Response('The user(s) are registered successfully in the system', 200)
             else:
-                Utilities.write_log_error(app, ("add_new_user: the username: %s failed to store "
-                                                "data into database. 500" % USER.username))
+                logging.error("add_new_user: the username: %s failed to store data into database. 500" % USER.username)
                 return Response("There is an error in DB"), 500
         else:
-            return Response(msg), 400
+            logging.error("add_new_user: there is a problem with entered data")
+            # Data is not valid, check the problem
+            if "duplicated" in msg:
+                # Data sent is duplicated.
+                return Response(msg), 409
+            else:
+                # Standard Error
+                return Response(msg), 400
 
 
 @app.route('/api/<version>/add_care_receiver', methods=['POST'])
@@ -583,30 +663,27 @@ def add_care_receiver(version=app.config['ACTUAL_API']):
     :param version: 
     :return: A urn with --> eu:c4a:user:{city4AgeId}
     """
-
     if Utilities.check_connection(app, version):
         data = _convert_to_dict(request.json)
         # Checking if INPUT json is OK
-        res, msg = Utilities.check_add_care_receiver_data(AR_DATABASE, data)
-        if data and res and USER and not msg:
+        msg = Utilities.check_add_care_receiver_data(AR_DATABASE, data)
+        if data and not msg and USER:
             # User and entered data are OK. save new user into DB
             res_ar = AR_DATABASE.add_new_care_receiver(data, USER.id)
             res_sr = SR_DATABASE.add_new_care_receiver(data, USER.id)
             if res_ar and res_sr:
-                Utilities.write_log_info(app, ("add_care_receiver: the username: %s adds new care receiver "
-                                               "into database" % USER.username))
                 # We only return one value, because both database has the same IDS
                 return jsonify(res_ar)
             else:
-                Utilities.write_log_error(app, ("add_care_receiver: the username: %s failed to store "
-                                                "data into database. 500" % USER.username))
                 return Response("There is an error in DB"), 500
         else:
             # Data is not valid, check the problem
-
-            # TODO maybe detect here the source of message???
-
-            return Response(msg), 400
+            if "duplicated" in msg:
+                # Data sent is duplicated.
+                return Response(msg), 409
+            else:
+                # Standard Error
+                return Response(msg), 400
 
 
 @app.route('/api/<version>/clear_user', methods=['POST'])
@@ -704,20 +781,25 @@ def add_measure(version=app.config['ACTUAL_API']):
     if Utilities.check_connection(app, version):
         # We created a list of Python dict.
         data = _convert_to_dict(request.json)
-        res, msg = Utilities.check_add_measure_data(SR_DATABASE, data)
-        if data and res and USER:
+        msg = Utilities.check_add_measure_data(SR_DATABASE, data)
+        if data and not msg and USER:
             # User and data are OK. save data into DB
             res = SR_DATABASE.add_measure(data)
             if res:
-                Utilities.write_log_info(app, ("add_measure: the username: %s adds new action into database" %
-                                         USER.username))
+                logging.info("add_measure: the username: %s adds new action into database" % USER.username)
                 return Response('add_measure: data stored in database OK\n'), 200
             else:
-                Utilities.write_log_error(app, ("add_measure: the username: %s failed to store data into database. 500" %
-                                          USER.username))
+                logging.error("add_measure: the username: %s failed to store data into database. 500" % USER.username)
                 return "There is an error in DB", 500
         else:
-            return Response(msg), 400
+            logging.error("add_measure: there is a problem with entered data")
+            # Data is not valid, check the problem
+            if "duplicated" in msg:
+                # Data sent is duplicated.
+                return Response(msg), 409
+            else:
+                # Standard Error
+                return Response(msg), 400
 
 
 @app.route('/api/<version>/add_eam', methods=['POST'])
@@ -751,52 +833,25 @@ def add_eam(version=app.config['ACTUAL_API']):
     if Utilities.check_connection(app, version):
         # We created a list of Python dict.
         data = _convert_to_dict(request.json)
-        res, msg = Utilities.check_add_eam_data(AR_DATABASE, data)
-        if data and res and USER:
+        msg = Utilities.check_add_eam_data(AR_DATABASE, data)
+        if data and not msg and USER:
             # The user data are correct. We proceed to insert it into DB
             res = AR_DATABASE.add_eam(data)
             if res:
-                Utilities.write_log_info(app, ("add_eam: the username: %s adds new EAM into database" %
-                                         USER.username))
+                logging.info("add_eam: the username: %s adds new EAM into database" % USER.username)
                 return Response('add_eam: data stored in database OK\n'), 200
             else:
-                Utilities.write_log_error(app, ("add_eam: the username: %s failed to store data into database. 500" %
-                                          USER.username))
+                logging.error("add_eam: the username: %s failed to store data into database. 500" % USER.username)
                 return "There is an error in DB", 500
         else:
-            return Response(msg), 400
-
-
-###################################################################################################
-###################################################################################################
-######                              Error handlers
-###################################################################################################
-###################################################################################################
-
-
-@app.errorhandler(500)
-def data_sent_error(error):
-    error_msg = "An error 500 is happened with the following error msg: %s" % error
-    logging.error(error_msg)
-    resp = make_response("Data entered is invalid, please check your JSON\n", 500)
-    return resp
-
-
-@app.errorhandler(400)
-def data_sent_error(error):
-    error_msg = "An error 400 is happened with the following error msg: %s" % error
-    logging.error(error_msg)
-    resp = make_response("You have sent a bad request. If your request contains a JSON based structure"
-                         "check it might be bad formatted.", 400)
-    return resp
-
-@app.errorhandler(413)
-def data_sent_too_long(error):
-    error_msg = "An error 413 is happened with the following error msg: %s" % error
-    logging.error(error_msg)
-    msg = "Data entered is too long, please send data with max length of %d bytes \n" % MAX_LENGHT
-    resp = make_response(msg, 413)
-    return resp
+            logging.error("add_eam: there is a problem with entered data")
+            # Data is not valid, check the problem
+            if "duplicated" in msg:
+                # Data sent is duplicated.
+                return Response(msg), 409
+            else:
+                # Standard Error
+                return Response(msg), 400
 
 
 ###################################################################################################

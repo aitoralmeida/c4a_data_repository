@@ -10,6 +10,7 @@ calls into the AR database. This class is directly inherited from PostORM superc
 import datetime
 import logging
 import arrow
+import inspect
 from sqlalchemy import MetaData
 from packORM import ar_tables
 from post_orm import PostORM
@@ -26,7 +27,8 @@ __status__ = "Prototype"
 
 class ARPostORM(PostORM):
     def __init__(self, autoflush=True):
-        PostORM.__init__(self, autoflush)
+        # Using AR tables instance
+        PostORM.__init__(self, ar_tables, autoflush)
 
     def create_tables(self):
         """
@@ -87,158 +89,6 @@ class ARPostORM(PostORM):
     ###################################################################################################
     ###################################################################################################
 
-    def add_action(self, p_data):
-        """
-        Adds a new action into the database.
-    
-        This method divided all data in p_data parameter to create needed data and store it into database
-
-    
-        :param p_data: a Python d
-        :return: True if everything is OK or False if there is a problem.
-        """
-
-        for data in p_data:
-            # Basic tables
-            # We are going to check if basic data exist in DB and insert it in case that is the first time.
-            cd_action = self._get_or_create(ar_tables.CDAction, action_name=data['action'].split(':')[-1].lower())
-            pilot = self._get_or_create(ar_tables.Pilot, code=data['pilot'].lower())
-            # Assuming the default value --> care_receiver
-            cd_role = self._get_or_create(ar_tables.CDRole, role_name='Care recipient')
-
-            # TODO avoid the creation of new users. The user MUST exsit previously in DB
-            user = self._get_or_create(ar_tables.UserInRole, id=int(data['user'].split(':')[-1]), pilot_code=pilot.code,
-                                       cd_role_id=cd_role.id)
-            # Adding the location
-            # location_type = self._get_or_create(ar_tables.LocationType,
-            #                                   location_type_name=data['location'].split(':')[-2].lower())
-            # location = self._get_or_create(ar_tables.Location, location_name=data['location'].split(':')[-1].lower(),
-            location = self._get_or_create(ar_tables.Location, location_name=data['location'].lower(),
-                                           indoor=True,
-                                           pilot_code=pilot.code)
-            # location_type_rel = self._get_or_create(ar_tables.LocationLocationTypeRel, location_id=location.id, location_type_id=location_type.id)
-
-            # Inserting the values attached with this action into database
-            for key, value in data['payload'].items():
-                metric = self._get_or_create(ar_tables.Metric, name=key)
-                self._get_or_create(ar_tables.CDActionMetric, metric_id=metric.id, cd_action_id=cd_action.id,
-                                    value=value,
-                                    execution_datetime=data['timestamp'])
-            # Insert a new executed action
-            executed_action = ar_tables.ExecutedAction(execution_datetime=data['timestamp'],
-                                                       location_id=location.id,
-                                                       cd_action_id=cd_action.id,
-                                                       user_in_role_id=user.id,
-                                                       position=data['position'],
-                                                       rating=round(data.get('rating', 0), 1),
-                                                       data_source_type=' '.join(data.get('data_source_type',
-                                                                                          ['sensors'])),
-                                                       extra_information=' '.join(data.get('extra', None))
-                                                       )
-            # pending insert
-            self.insert_one(executed_action)
-        # Whe prepared all data, now we are going to commit it into DB.
-        return self.commit()
-
-    def add_activity(self, p_data):
-        """
-        Adds a new activity into the database by finding first if the location exists or not into DB
-    
-        :param p_data:
-        :return: True if everything goes well.
-                False if there are any problem
-    
-        """
-        for data in p_data:
-            # Adding the new activity
-            activity = self._get_or_create(ar_tables.Activity, activity_name=data['activity_name'].lower(),
-                                           activity_description=data.get('activity_description', None),
-                                           instrumental=data.get('instrumental', False))
-            # Optionally insert location
-            if data.get('location', False) and data.get('pilot', False):
-                location = self._get_or_create(ar_tables.Location, location_name=data['location'].lower(),
-                                               indoor=data.get('indoor', True),
-                                               pilot_code=data.get('pilot', None).lower())
-                # Intermediate table Location - Activity
-                self._get_or_create(ar_tables.LocationActivityRel, location_id=location.id, activity_id=activity.id,
-                                    house_number=data.get('house_number', None))
-
-        return self.commit()
-
-    def add_new_user_in_system(self, p_data):
-
-        """
-        This method allow to an administrative user insert a new registered user in the system or update the credentials
-        of an already registered user_in_role in the system
-        
-        :param p_data The needed data to add a new user in the system
-        :return A dict containing the data of the registered user
-    
-        """
-
-        user_in_role_ids = {}
-        for data in p_data:
-            # Creating the user information in the system
-            user_in_system = self._get_or_create(ar_tables.UserInSystem, username=data['username'].lower(),
-                                                 password=data['password'])
-            # Getting the user information to know if is an update or a new user in the system
-            user = data.get('user', False)
-            if user:
-                # We have already user information in the system, giving access to the user.
-                # Obtaining the user instance in the system and giving it the access.
-                user_in_role = self._get_or_create(ar_tables.UserInRole, id=int(data['user'].split(':')[-1]))
-                user_in_role.user_in_system_id = user_in_system.id
-            else:
-                # The user is not registered in the system, so we need to create it
-                cd_role = self._get_or_create(ar_tables.CDRole, role_name=data['roletype'])
-                pilot = self._get_or_create(ar_tables.Pilot, code=data['pilot'].lower())
-                user_in_role = self._get_or_create(ar_tables.UserInRole,
-                                                   valid_from=data.get('valid_from', arrow.utcnow()),
-                                                   valid_to=data.get('valid_to', None),
-                                                   cd_role_id=cd_role.id,
-                                                   user_in_system_id=user_in_system.id,
-                                                   pilot_code=pilot.code)
-                # Adding City4Age ID to the return value
-                user_in_role_ids[data['username'].lower()] = user_in_role.id
-
-        self.commit()
-        return user_in_role_ids
-
-    def add_new_care_receiver(self, p_data, p_user_id):
-        """
-        
-        This method allow to a Pilot user, adds a new care receiver in the system. With its user credentials and so on.
-        
-        :param p_data: The data containing the new care receiver information
-        :param p_user_id: The Pilot registration access id
-        :return: The City4Age ID value (user_in_role table ID)
-        """
-
-        user_in_role_ids = {}
-        for data in p_data:
-            # Registering the actual user in the system
-            user_in_system = self._get_or_create(ar_tables.UserInSystem, username=data['username'].lower(),
-                                                 password=data['password'])
-            # Gettig the CD role id of care_receiver
-            cd_role = self._get_or_create(ar_tables.CDRole, role_name='Care recipient')
-            # Obtaining Pilot ID through the Pilot credentials
-            pilot_code = self._get_or_create(ar_tables.UserInRole, user_in_system_id=p_user_id).pilot_code
-            # Creating the user_in_role table for the new user in the system
-            user_in_role = self._get_or_create(ar_tables.UserInRole,
-                                               valid_from=data.get('valid_from', arrow.utcnow()),
-                                               valid_to=data.get('valid_to', None),
-                                               cd_role_id=cd_role.id,
-                                               pilot_code=pilot_code,
-                                               pilot_source_user_id=data.get('pilot_source_id', None),
-                                               user_in_system_id=user_in_system.id)
-            # Getting the new ID
-            self.flush()
-            # Adding City4Age ID to the return value
-            user_in_role_ids[data['username'].lower()] = user_in_role.id
-
-        # Return the dictionary containing the care_recievers IDs
-        return user_in_role_ids
-
     def add_eam(self, p_data):
         """
         Giving EAM information data, this method insert the needed data into DB.
@@ -247,6 +97,8 @@ class ARPostORM(PostORM):
         :param p_data: A list containing instances of JSON data with the needed information
         :return:  True if everything is ok
         """
+
+        # TODO, review tables to the new version of database
 
         for data in p_data:
             # Getting activity id from DB
@@ -284,28 +136,9 @@ class ARPostORM(PostORM):
                 # Insert the m2m table
                 self._get_or_create(ar_tables.EAMCDActionRel, cd_action_id=action.id, eam_id=eam.id)
 
+        logging.info(inspect.stack()[0][3], "data entered successfully")
         return self.commit()
 
-    def add_user_action(self, p_user_id, p_route, p_ip, p_agent, p_data, p_status_code):
-        """
-    
-        Adds a new entry in the historical database to record user action performed in the API.
-    
-        :param p_user_id: The Id of the registered user in the system
-        :param p_route: The route that has been executed.
-        :param p_ip: The ip of the user's machine
-        :param p_agent: Information about the client (Browner, platform, operating system and so on)
-        :param p_data: The JSON data sended by the user.
-        :param p_status_code: If the response of the command is True (200 ok) or False (400, 401, 404, 500....)
-    
-        :return: True if data is stored in database
-                False if there are some problems
-        """
-        new_user_action = ar_tables.UserAction(route=p_route, data=p_data, ip=p_ip, agent=p_agent,
-                                               status_code=p_status_code,
-                                               user_in_system_id=p_user_id)
-        self.insert_one(new_user_action)
-        return self.commit()
 
     ###################################################################################################
     ###################################################################################################
@@ -338,6 +171,21 @@ class ARPostORM(PostORM):
         m.reflect(self.engine, schema='city4age_ar')
         return m.tables.keys()
 
+    def get_user_pilot(self, p_user_id):
+        """
+        Giving a registered user id. This method returns it's Pilot name
+
+        :param p_user_id: The user_in_system id in the system
+        :return: The Pilot name of the registered user
+        """
+        res = None
+        user_in_role = self.session.query(ar_tables.UserInRole).filter_by(user_in_system_id=p_user_id)[0].pilot_code \
+                       or None
+        if user_in_role is not None:
+            # We obtain the role name based on FK key obtained in the above filter
+            res = self.session.query(ar_tables.Pilot).get(user_in_role).pilot_name or None
+        return res
+
     def get_user_role(self, p_user_id):
         """
         Giving user id, this method retrieves the user role in the system.
@@ -347,14 +195,25 @@ class ARPostORM(PostORM):
         """
         res = None
 
-        # TODO think of using abbreviations
-
         user_in_role = self.session.query(ar_tables.UserInRole).filter_by(user_in_system_id=p_user_id)[0].cd_role_id \
                        or None
         if user_in_role is not None:
             # We obtain the role name based on FK key obtained in the above filter
             res = self.session.query(ar_tables.CDRole).get(user_in_role).role_name or None
         return res
+
+    def get_users_pilots(self):
+        """
+        Thi method recovers a list of different pilots from database
+
+        :return: A list containing the different user pilots in the system
+        """
+        list_of_pilots = self.session.query(ar_tables.Pilot.pilot_name).all()
+        # Extracted list of pilots
+        pilots = []
+        for pilot in list_of_pilots:
+            pilots.append(pilot[0])
+        return pilots
 
     def get_users_roles(self):
         """
@@ -399,7 +258,7 @@ class ARPostORM(PostORM):
         # Dates are ok, we are going to extract needed LEAS from executed action table
         query = self.session.query(ar_tables.ExecutedAction).filter(
             ar_tables.ExecutedAction.execution_datetime.between(p_start_time, p_end_time))
-        logging.info("Total founded LEAS in database: ", query.count())
+        logging.info(inspect.stack()[0][3], "Total founded LEAS in database: ", query.count())
         for q in query:
             # Extracting the needed data and obtaining additional values
             location_name = self.session.query(ar_tables.Location).filter_by(id=q.location_id)[0].location_name
@@ -412,34 +271,7 @@ class ARPostORM(PostORM):
             }
             # Adding the dict to the final list
             list_of_leas.append(lea)
-
         return list_of_leas
-
-    # TODO find a solution to this workaround
-    def get_table_object_by_name(self, p_table_name):
-        """
-        Using a table name, this class search an retrieves, Table Object Class.
-    
-        :param p_table_name: The named of target table
-        :return:  A table class object.
-        """
-        all_tables = {
-            'action': ar_tables.Action,
-            'activity': ar_tables.Activity,
-            'eam': ar_tables.EAM,
-            'executed_action': ar_tables.ExecutedAction,
-            'inter_behaviour': ar_tables.InterBehaviour,
-            'location': ar_tables.Location,
-            'pilot': ar_tables.Pilot,
-            'simple_location': ar_tables.SimpleLocation,
-            'user_in_role': ar_tables.UserInRole,
-            'user_in_system': ar_tables.UserInSystem,
-            'user_action': ar_tables.UserAction,
-            'metric': ar_tables.Metric,
-            'action_value': ar_tables.ActionValue,
-        }
-        # We instantiate desired table
-        return all_tables[p_table_name]
 
     ###################################################################################################
     ###################################################################################################

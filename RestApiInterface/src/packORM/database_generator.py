@@ -87,6 +87,9 @@ def generate_database(p_ar_post_orm, p_sr_post_orm):
         # Creating CDDetectionVariable Table
         create_measure(sr_tables, sr_orm)
         logging.info("Created CDDetectionVariable for Shared Repository schema")
+        # Creating CDTypicalPeriod Table
+        create_typical_period(sr_tables, sr_orm)
+        logging.info("Created CDTypicalPeriod for Shared Repository schema")
         # Commit and closing connection
         sr_orm.commit()
         sr_orm.close()
@@ -672,5 +675,37 @@ def create_actions(p_tables, p_orm):
                             phone_in_missed, phone_out_start, phone_out_stop, visit_start, visit_stop])
     # Insert data, pending action
     p_orm.insert_all(list_of_actions)
+    # Commit changes
+    p_orm.commit()
+
+
+def create_typical_period(p_tables, p_orm):
+    """
+    Creating the needed tables of typical duration when the user send a duration valaue rather than interval_end in the
+    measure CDF.
+
+    :param p_tables the instantiation of the tables in database
+    :param p_orm the orm connection to the database
+
+    """
+    list_of_typical_period = []
+
+    one_day = p_tables.CDTypicalPeriod(typical_period="day", period_description="One day", typical_duration=86400)
+    one_week = p_tables.CDTypicalPeriod(typical_period="wk", period_description="One week", typical_duration=604800)
+    two_weeks = p_tables.CDTypicalPeriod(typical_period="2wk", period_description="Two weeks (14 days, fortnight)", typical_duration=1210000)
+    one_month = p_tables.CDTypicalPeriod(typical_period="mon", period_description="One calendar month", typical_duration=2628000)
+    quarter = p_tables.CDTypicalPeriod(typical_period="qtr", period_description="Quarter year (3 months)", typical_duration=7884000)
+    semester = p_tables.CDTypicalPeriod(typical_period="sem", period_description="Semester, half a year, 6 months", typical_duration=15768000)
+    one_year = p_tables.CDTypicalPeriod(typical_period="1yr", period_description="One year", typical_duration=31540000)
+    two_years = p_tables.CDTypicalPeriod(typical_period="2yr", period_description="Two years", typical_duration=63070000)
+    three_years = p_tables.CDTypicalPeriod(typical_period="3yr", period_description="Three years", typical_duration=94610000)
+    five_years = p_tables.CDTypicalPeriod(typical_period="5yr", period_description="Five years", typical_duration=157700000)
+
+    # Filling the list
+    list_of_typical_period.extend([one_day, one_week, two_weeks, one_month, quarter, semester,one_year,two_years,
+                                   three_years, five_years])
+
+    # Insert data, pending action
+    p_orm.insert_all(list_of_typical_period)
     # Commit changes
     p_orm.commit()

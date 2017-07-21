@@ -12,6 +12,7 @@ from collections import Counter
 from flask import abort, session, request
 from jsonschema import validate, ValidationError, FormatChecker
 
+
 __author__ = 'Rubén Mulero'
 __copyright__ = "Copyright 2016, City4Age project"
 __credits__ = ["Rubén Mulero", "Aitor Almeida", "Gorka Azkune", "David Buján"]
@@ -23,7 +24,14 @@ __status__ = "Prototype"
 
 
 class Utilities(object):
-    # CHECKS RELATED
+
+
+    ###################################################################################################
+    ###################################################################################################
+    ######                              Checker functions
+    ###################################################################################################
+    ###################################################################################################
+
     @staticmethod
     def check_connection(app, p_ver):
         """
@@ -84,10 +92,10 @@ class Utilities(object):
         :param p_database: Database instance.
         :param p_data: data from the user.
 
-        :return: True or False if data is ok.
+        :return:  --> None: If all is OK
+                  --> Message: A message containing the encountered error
         """
 
-        res = False
         msg = None
         # Defining schema to be compared with entered data
         schema = {
@@ -208,11 +216,10 @@ class Utilities(object):
                     logging.error("The entered user pilot is incorrect or the user doesn't exist: %s", p_data['user'])
                     raise ValidationError("The entered user pilot is incorrect or the user doesn't exist: %s" %
                                           p_data['user'])
-            res = True
         except ValidationError as e:
             logging.error("The schema entered by the user is invalid")
             msg = e.message
-        return res, msg
+        return msg
 
     @staticmethod
     def check_add_activity_data(p_database, p_data):
@@ -224,10 +231,10 @@ class Utilities(object):
 
         :param p_data: User sent data
 
-        :return: True or False if data is ok
+        :return: --> None: If all is OK
+                  --> Message: A message containing the encountered error
         """
 
-        res = False
         msg = None
         # Defining schema to be compared with entered data
         schema = {
@@ -306,11 +313,10 @@ class Utilities(object):
                     # The activity exist already in database
                     logging.error("The entered activity is duplicated: %s", p_data['activity_name'])
                     raise ValidationError("The entered activity is duplicated: %s" % p_data['activity_name'])
-            res = True
         except ValidationError as e:
             logging.error("The schema entered by the user is invalid")
             msg = e.message
-        return res, msg
+        return msg
 
     @staticmethod
     def check_add_new_user_data(p_database, p_data):
@@ -320,10 +326,11 @@ class Utilities(object):
         :param p_database: The database instance to call
         :param p_data: User sent data
 
-        :return:  True or False if data is ok
+        :return:  --> None: If all is OK
+                  --> Message: A message containing the encountered error
         """
-        res = False
-        msg = None  # A return message containing useful information
+
+        msg = None
         schema = {
             "title": "Add new user in system schema",
             "type": "object",
@@ -429,11 +436,10 @@ class Utilities(object):
                                           "in the system: %s" % p_data['username'])
                     raise ValidationError("The user entered has already a username and password " \
                                           "in the system: %s" % p_data['username'])
-            res = True
         except ValidationError as e:
             logging.error("The schema entered by the user is invalid")
             msg = e.message
-        return res, msg
+        return msg
 
     @staticmethod
     def check_add_care_receiver_data(p_database, p_data):
@@ -443,11 +449,10 @@ class Utilities(object):
     
         :param p_database: A database instance 
         :param p_data: The needed data 
-        :return: True if everything is OK
-                 False is something is  KO
+        :return:  --> None: If all is OK
+                  --> Message: A message containing the encountered error
         """
 
-        res = False
         msg = None
         schema = {
             "title": "Add a new care receiver in the system",
@@ -504,13 +509,6 @@ class Utilities(object):
                     validate(data, schema, format_checker=FormatChecker())
                     if Utilities.validate_user_registered(p_database, data):
                         # The user exist in the system
-
-
-
-                        # TODO find a solution to return a 409 conflict
-
-
-
                         logging.error("The entered username is duplicated: %s", data['username'])
                         raise ValidationError("The entered username is duplicated: %s" % data["username"])
                     # adding the username to the list
@@ -519,21 +517,20 @@ class Utilities(object):
                 duplicated = [k for k, v in Counter(list_of_usernames).items() if v > 1]
                 if len(duplicated) > 0:
                     # Raise an error for duplicated values
-                    logging.error("The user entered two or more username in the input data")
-                    raise ValidationError("The user entered two or more username in the input data")
+                    logging.error("There are duplicated usernames in your JSON: %s" % duplicated)
+                    raise ValidationError("There are duplicated usernames in your JSON: %s" % duplicated)
             else:
                 # single user to be registered in database
                 validate(p_data, schema, format_checker=FormatChecker())
                 if Utilities.validate_user_registered(p_database, p_data):
                     # The user exist in the system
                     logging.error("The entered username is duplicated: %s", p_data['username'])
-                    raise ValidationError("Duplicate username: %s" % p_data["username"])
-            res = True
+                    raise ValidationError("The entered username is duplicated: %s", p_data['username'])
         except ValidationError as e:
             logging.error("The schema entered by the user is invalid")
             msg = e.message
 
-        return res, msg
+        return msg
 
     @staticmethod
     def check_clear_user_data(p_data):
@@ -542,10 +539,10 @@ class Utilities(object):
 
         :param p_data: User sent data
 
-        :return:  True or False if data is ok
+        :return:  --> None: If all is OK
+                  --> Message: A message containing the encountered error
         """
 
-        res = False
         msg = None
         schema = {
             "title": "Clear all data related to user in the system",
@@ -573,11 +570,10 @@ class Utilities(object):
                     validate(data, schema, format_checker=FormatChecker())
             else:
                 validate(p_data, schema, format_checker=FormatChecker())
-            res = True
         except ValidationError as e:
             logging.error("The schema entered by the user is invalid")
             msg = e.message
-        return res, msg
+        return msg
 
     @staticmethod
     def check_add_measure_data(p_database, p_data):
@@ -586,9 +582,10 @@ class Utilities(object):
         Check if add_measure data is entered ok with required values
 
         :param p_data: User data
-        :return:
+        :return:  --> None: If all is OK
+                  --> Message: A message containing the encountered error
         """
-        res = False
+
         msg = None
 
         schema = {
@@ -722,11 +719,10 @@ class Utilities(object):
                     raise ValidationError("The entered user pilot is incorrect or the user doesn't exist: %s" %
                                           p_data['user'])
 
-            res = True
         except ValidationError as e:
             logging.error("The schema entered by the user is invalid")
             msg = e.message
-        return res, msg
+        return msg
 
     @staticmethod
     def check_search_data(p_database, p_data):
@@ -736,10 +732,10 @@ class Utilities(object):
         :param p_database: The database instantiation of SQL Alchemy
         :param p_data: User sent data
 
-        :return:    True if all is OK
-                    False if there is a problem
+        :return:   --> None: If all is OK
+                  --> Message: A message containing the encountered error
         """
-        res = False
+
         msg = None
         schema = {
             "title": "Search datasets schema validator",
@@ -793,11 +789,10 @@ class Utilities(object):
                     logging.error("User entered an invalid table name: %s" % p_database.get_tables)
                     raise ValidationError("Invalid table name: %s" % p_data['table'])
 
-            res = True
         except ValidationError as e:
             logging.error("The schema entered by the user is invalid")
             msg = e.message
-        return res, msg
+        return msg
 
     @staticmethod
     def check_add_eam_data(p_database, p_data):
@@ -808,10 +803,10 @@ class Utilities(object):
         :param p_database: The database instance
         :param p_data: The data sent by the user
 
-        :return: True is the data is OK
-                False and error state if the data is KO
+        :return:  --> None: If all is OK
+                  --> Message: A message containing the encountered error
         """
-        res = False
+
         msg = None
         schema = {
             "title": "Eam database additional data validator",
@@ -896,11 +891,18 @@ class Utilities(object):
                 if not res:
                     logging.error("The activity, action or location doesn't exist in database")
                     raise ValidationError("The activity, action or location doesn't exist in database")
-            res = True
         except ValidationError as e:
             logging.error("The schema entered by the user is invalid")
             msg = e.message
-        return res, msg
+        return msg
+
+
+
+    ###################################################################################################
+    ###################################################################################################
+    ######                              Validation functions
+    ###################################################################################################
+    ###################################################################################################
 
     # TODO review this search method
     @staticmethod
@@ -921,6 +923,9 @@ class Utilities(object):
                 res = True
         return res
 
+
+    # TODO some of this methods are repetet. check to unify it
+
     @staticmethod
     def validate_user_registered(p_database, p_one_data):
         """
@@ -938,6 +943,8 @@ class Utilities(object):
             # Get current registered users
             res = p_database.check_username(username)
         return res
+
+
 
     # TODO this method needs more changes.
 
@@ -1071,37 +1078,3 @@ class Utilities(object):
         """
         list_of_roles = p_database.get_users_roles()
         return list_of_roles
-
-
-    @staticmethod
-    def write_log_info(app, p_message):
-        """
-        Write info log into a file
-
-        :param app: Flask application
-        :param p_message: Message to send to log file
-
-        """
-        app.logger.info(p_message)
-
-    @staticmethod
-    def write_log_warning(app, p_message):
-        """
-        Write info log into a file
-
-        :param app: Flask application
-        :param p_message: Message to send to log file
-
-        """
-        app.logger.warning(p_message)
-
-    @staticmethod
-    def write_log_error(app, p_message):
-        """
-        Write info log into a file
-
-        :param app: Flask application
-        :param p_message: Message to send to log file
-
-        """
-        app.logger.error(p_message)

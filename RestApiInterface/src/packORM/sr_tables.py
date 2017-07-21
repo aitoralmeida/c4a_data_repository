@@ -714,10 +714,10 @@ class TimeInterval(Base):
     # Creating the columns
     id = Column(Integer, server_default=time_interval_seq.next_value(), primary_key=True)
     interval_start = Column(ArrowType(timezone=True), nullable=False)
-    interval_end = Column(ArrowType(timezone=True), nullable=False)  # Calculated by the period
+    interval_end = Column(ArrowType(timezone=True), nullable=True)
 
     # Many2One
-    typical_period = Column(String(3), ForeignKey('cd_typical_period.typical_period'))
+    typical_period = Column(String(3), ForeignKey('cd_typical_period.typical_period'), nullable=True)
 
     # Relationships
     variation_measure_value = relationship('VariationMeasureValue')
@@ -740,7 +740,7 @@ class CDTypicalPeriod(Base):
 
     typical_period = Column(String(3), primary_key=True)
     period_description = Column(String(50), nullable=False)
-    typical_duration = Column(ArrowType(timezone=True))
+    typical_duration = Column(Integer, nullable=False)       # Time in seconds
 
     # One2Many
     time_interval = relationship('TimeInterval')
