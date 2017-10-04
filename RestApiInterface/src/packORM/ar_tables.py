@@ -34,7 +34,6 @@ __maintainer__ = "Rubén Mulero"
 __email__ = "ruben.mulero@deusto.es"
 __status__ = "Prototype"
 
-
 DEFAULT_KEY = '2070711C879178C93CD3DB09FC4EADC6'
 
 # Key encryption configuration
@@ -167,19 +166,21 @@ class ExecutedAction(Base):
     """
 
     __tablename__ = 'executed_action'
+    # __searchable__ = ['acquisition_datetime']
+
 
     # Generating the Sequence
     executed_action_id_seq = Sequence('executed_action_id_seq', metadata=Base.metadata)
     # Creating the columns
     id = Column(Integer, server_default=executed_action_id_seq.next_value(), primary_key=True)
     # Associated information
-    acquisition_datetime = Column(ArrowType(timezone=True), default=arrow.utcnow())
-    execution_datetime = Column(ArrowType(timezone=True))
+    acquisition_datetime = Column(ArrowType(timezone=True), default=arrow.utcnow())  # Time of item registered in db
+    execution_datetime = Column(ArrowType(timezone=True))  # Time of registered action
     rating = Column(Numeric(precision=5, scale=2))
     sensor_id = Column(Integer)
-    position = Column(String(255))
-    data_source_type = Column(String(200))      # An "array" containing the data source
-    extra_information = Column(String(1000))    # An "array" containing extra information
+    position = Column(String(25))
+    data_source_type = Column(String(1000))  # An "array" containing the data source
+    extra_information = Column(String(1000))  # An "array" containing extra information
 
     # FK keys
     user_in_role_id = Column(Integer, ForeignKey('user_in_role.id'))
@@ -191,9 +192,11 @@ class ExecutedAction(Base):
     location = relationship("Location")
 
     def __repr__(self):
-        return "<ExecutedAction(id='%s', acquisition_datetime='%s', execution_datetime='%s', rating='%s')>" % (self.id,
-                                                       self.acquisition_datetime, self.execution_datetime, self.rating)
+        return "<ExecutedAction(id='%s', acquisition_datetime='%s', execution_datetime='%s', " \
+               "rating='%s')>" % (self.id, self.acquisition_datetime, self.execution_datetime, self.rating)
 
+
+# TODO in this table it is importat to define better the location fields.
 
 class ExecutedActivity(Base):
     """
@@ -203,12 +206,14 @@ class ExecutedActivity(Base):
     """
 
     __tablename__ = 'executed_activity'
+    # __searchable__ = ['data_source_type', 'start_time', 'end_time', 'duration']
 
     # Generating the Sequence
     executed_activity_id_seq = Sequence('executed_activity_id_seq', metadata=Base.metadata)
     # Creating the columns
     id = Column(Integer, server_default=executed_activity_id_seq.next_value(), primary_key=True)
-    start_time = Column(ArrowType(timezone=True), nullable=False) # These two fields are calculated thought executed action
+    start_time = Column(ArrowType(timezone=True),
+                        nullable=False)  # These two fields are calculated thought executed action
     end_time = Column(ArrowType(timezone=True), nullable=False)
     duration = Column(Integer, nullable=True)
     data_source_type = Column(String(200))
@@ -226,7 +231,9 @@ class ExecutedActivity(Base):
 
     def __repr__(self):
         return "<ExecutedActivity(id='%s', start_time='%s', end_time='%s', duration='%s')>" % (self.id,
-                                                       self.start_time, self.end_time, self.duration)
+                                                                                               self.start_time,
+                                                                                               self.end_time,
+                                                                                               self.duration)
 
 
 class ExecutedTransformedAction(Base):
@@ -246,7 +253,7 @@ class ExecutedTransformedAction(Base):
     transformed_execution_datetime = Column(ArrowType(timezone=True))
 
     # FK keys
-    executed_action_id = Column(Integer, ForeignKey('executed_action.id'))
+    executed_action_id = Column(Integer, ForeignKey('executed_action.id'), nullable=True)
     cd_transformed_action_id = Column(Integer, ForeignKey('cd_transformed_action.id'))
     user_in_role_id = Column(Integer, ForeignKey('user_in_role.id'))
 
@@ -258,6 +265,7 @@ class ExecutedTransformedAction(Base):
         return "<ExecutedTransformedAction(id='%s', transformed_acquisition_datetime='%s', " \
                "transformed_execution_datetime='%s')>" % (self.id, self.transformed_acquisition_datetime,
                                                           self.transformed_execution_datetime)
+
 
 class UserInEAM(Base):
     """
@@ -370,17 +378,17 @@ class LocationCDLocationTypeRel(Base):
     # Relationship
     location = relationship('Location')
 
-
-class CDActionMetricRel(Base):
+# Rename to payload_value
+class PayloadValue(Base):
     """
     Metric < -- > CDAction
     """
 
-    __tablename__ = 'cd_action_metric_rel'
+    __tablename__ = 'payload_value'
 
-    metric_id = Column(Integer, ForeignKey('metric.id'), primary_key=True)
+    cd_metric_id = Column(Integer, ForeignKey('cd_metric.id'), primary_key=True)
     cd_action_id = Column(Integer, ForeignKey('cd_action.id'), primary_key=True)
-    date = Column(ArrowType(timezone=True), primary_key=True, default=arrow.utcnow())   # Same as executed_action registered time
+    acquisition_datetime = Column(ArrowType(timezone=True), primary_key=True)  # Same as executed_action registered time
     execution_datetime = Column(ArrowType(timezone=True), nullable=False)
     value = Column(String(50), nullable=False)
     cd_action = relationship('CDAction')
@@ -393,6 +401,7 @@ class UserInRole(Base):
     """
 
     __tablename__ = 'user_in_role'
+    # __searchable__ = ['pilot_source_user_id']
 
     # Generating the Sequence
     user_in_role_seq = Sequence('user_in_role_seq', metadata=Base.metadata)
@@ -400,12 +409,12 @@ class UserInRole(Base):
     id = Column(Integer, server_default=user_in_role_seq.next_value(), primary_key=True)
     valid_from = Column(ArrowType(timezone=True), default=arrow.utcnow())
     valid_to = Column(ArrowType(timezone=True))
-    pilot_source_user_id = Column(Integer, unique=False)
+    pilot_source_user_id = Column(String(20))
 
     # one2many
     user_in_system_id = Column(Integer, ForeignKey('user_in_system.id'))
     cd_role_id = Column(Integer, ForeignKey('cd_role.id'))
-    pilot_code = Column(String(4), ForeignKey('pilot.code'))
+    pilot_code = Column(String(4), ForeignKey('pilot.pilot_code'))
 
     # m2m
     action = relationship("ExecutedAction", cascade="all, delete-orphan")
@@ -488,17 +497,19 @@ class CDAction(Base):
     Action registration
     """
     __tablename__ = 'cd_action'
+    #__searchable__ = ['action_name']
 
     # Generating the Sequence
     cd_action_id_seq = Sequence('cd_action_id_seq', metadata=Base.metadata)
     # Creating the columns
     id = Column(Integer, server_default=cd_action_id_seq.next_value(), primary_key=True)
     action_name = Column(String(50), unique=True)
-    action_description = Column(String(250))
+    action_category = Column(String(25))
+    action_description = Column(String(250), nullable=False)
 
     def __repr__(self):
-        return "<CDAction(action_name='%s', action_description='%s')>" % (
-            self.action_name, self.action_description)
+        return "<CDAction(action_name='%s', action_category='%s', action_description='%s')>" % \
+               (self.action_name, self.action_description, self.action_category)
 
 
 class Location(Base):
@@ -507,15 +518,16 @@ class Location(Base):
     """
 
     __tablename__ = 'location'
+    #__searchable__ = ['location_name']
 
     # Generating the Sequence
     location_id_seq = Sequence('location_id_seq', metadata=Base.metadata)
     # Creating the columns
     id = Column(Integer, server_default=location_id_seq.next_value(), primary_key=True)
-    location_name = Column(String(50), unique=True, nullable=False)
+    location_name = Column(String(500), unique=True, nullable=False)
     indoor = Column(Boolean)
     # One2Many
-    pilot_code = Column(String(4), ForeignKey('pilot.code'), nullable=True)
+    pilot_code = Column(String(4), ForeignKey('pilot.pilot_code'), nullable=True)
 
     def __repr__(self):
         return "<Location(location_name='%s', indoor='%s')>" % (
@@ -555,6 +567,7 @@ class CDActivity(Base):
     """
 
     __tablename__ = 'cd_activity'
+    #__searchable__ = ['activity_name']
 
     # Generating the Sequence
     activity_id_seq = Sequence('cd_activity_id_seq', metadata=Base.metadata)
@@ -563,7 +576,7 @@ class CDActivity(Base):
     activity_name = Column(String(50), unique=True)
     activity_description = Column(String(200), nullable=True)
     creation_date = Column(ArrowType(timezone=True), default=arrow.utcnow())
-    instrumental = Column(Boolean, default=False, nullable=False)   # Default value set to False --> Normal Activities
+    instrumental = Column(Boolean, default=False, nullable=False)  # Default value set to False --> Normal Activities
 
     # One2one
     # user_in_eam = relationship("UserInEAM", uselist=False, back_populates="cd_activity")
@@ -572,8 +585,8 @@ class CDActivity(Base):
     executed_activity = relationship("ExecutedActivity", cascade="all, delete-orphan")
 
     # one2many
-    #expected_inter_behaviour = relationship("InterBehaviour", foreign_keys='InterBehaviour.expected_activity_id')
-    #real_inter_behaviour = relationship("InterBehaviour", foreign_keys='InterBehaviour.real_activity_id')
+    # expected_inter_behaviour = relationship("InterBehaviour", foreign_keys='InterBehaviour.expected_activity_id')
+    # real_inter_behaviour = relationship("InterBehaviour", foreign_keys='InterBehaviour.real_activity_id')
 
     def __repr__(self):
         return "<CDActivity(activity_name='%s')>" % self.activity_name
@@ -585,8 +598,9 @@ class Pilot(Base):
     """
 
     __tablename__ = 'pilot'
+    #__searchable__ = ['pilot_name']
 
-    code = Column(String(4), unique=True, nullable=False, primary_key=True)
+    pilot_code = Column(String(3), unique=True, nullable=False, primary_key=True)
     pilot_name = Column(String(50), unique=True, nullable=False)
     population_size = Column(BigInteger)
     # One2Many
@@ -594,8 +608,8 @@ class Pilot(Base):
     location = relationship('Location')
 
     def __repr__(self):
-        return "<Pilot(name='%s', pilot_code='%s', population_size='%s')>" % (self.name, self.code,
-                                                                              self.population_size)
+        return "<Pilot(pilot_code='%s', pilot_name='%s', population_size='%s')>" % \
+               (self.pilot_code, self.pilot_name, self.population_size)
 
 
 class Stakeholder(Base):
@@ -615,7 +629,7 @@ class Stakeholder(Base):
     # One2many relationship
     cd_role = relationship('CDRole')
 
-    def __rep__(self):
+    def __repr__(self):
         return "<Stakeholder(abbreviation='%s', stakeholder_name='%s', stakeholder_description='%s', " \
                "valid_from='%s', valid_to='%s')>" % (self.abbreviation, self.stakeholder_name,
                                                      self.stakeholder_description,
@@ -629,6 +643,7 @@ class CDRole(Base):
     """
 
     __tablename__ = 'cd_role'
+    # __searchable__ = ['role_name']
 
     # Generating the Sequence
     cd_role_seq = Sequence('cd_role_seq', metadata=Base.metadata)
@@ -652,7 +667,6 @@ class CDRole(Base):
                                                      self.role_abbreviation, self.role_description, self.valid_from,
                                                      self.valid_to)
 
-
 class CDEAM(Base):
     """
     This table stores the duration of each related action/activity in a location
@@ -665,10 +679,11 @@ class CDEAM(Base):
     # Creating the columns
     id = Column(Integer, server_default=cd_eam_seq.next_value(), primary_key=True)
     duration = Column(Integer)
-    #one2one
+    creation_date = Column(ArrowType(timezone=True), default=arrow.utcnow())
+    # one2one
 
-    #activity_id = Column(Integer, ForeignKey('activity.id'))
-    #activity = relationship("Activity", back_populates="cd_eam")
+    # activity_id = Column(Integer, ForeignKey('activity.id'))
+    # activity = relationship("Activity", back_populates="cd_eam")
 
     # many2many
     start_range = relationship("CDEAMStartRangeRel")
@@ -725,23 +740,24 @@ class UserAction(Base):
             self.route, self.date, self.ip, self.agent, self.date, self.status_code)
 
 
-class Metric(Base):
+class CDMetric(Base):
     """
     Some actions has a random valued metrics. This metrics are an extra information that can be used for different
     purposes. This table record each different metric in the sytem.
 
     """
 
-    __tablename__ = 'metric'
+    __tablename__ = 'cd_metric'
 
     # Generating the Sequence
-    metric_seq = Sequence('metric_seq', metadata=Base.metadata)
+    cd_metric_seq = Sequence('cd_metric_seq', metadata=Base.metadata)
     # Creating the columns
-    id = Column(Integer, server_default=metric_seq.next_value(), primary_key=True)
-    name = Column(String(50), nullable=False)
-    description = Column(String(255), nullable=True)
+    id = Column(Integer, server_default=cd_metric_seq.next_value(), primary_key=True)
+    metric_name = Column(String(50), nullable=False)
+    metric_description = Column(String(255), nullable=True)
+    metric_base_unit = Column(String(50), nullable=True)
     # M2M relationship
-    cd_action_metric = relationship('CDActionMetricRel')
+    payload_value = relationship('PayloadValue')
 
 
 class CDTransformedAction(Base):
@@ -751,6 +767,7 @@ class CDTransformedAction(Base):
     """
 
     __tablename__ = 'cd_transformed_action'
+    #__searchable__ = ['transformed_action_name']
 
     # Generating the Sequence
     cd_transformed_action_seq = Sequence('cd_transformed_action_seq', metadata=Base.metadata)
@@ -758,4 +775,3 @@ class CDTransformedAction(Base):
     id = Column(Integer, server_default=cd_transformed_action_seq.next_value(), primary_key=True)
     transformed_action_name = Column(String(255), unique=True)
     transformed_action_description = Column(String(255), nullable=True)
-

@@ -25,17 +25,14 @@ if not os.path.exists(os.path.join(basedir, "main.py")):
         basedir = cwd
 sys.path.insert(0, basedir)
 
-
-
 # main execution
 if __name__ == '__main__':
     # Create the log folder if not exists
     if not os.path.exists('./log'):
         os.makedirs('./log')
     # Check if database is created and inserts data if it is necessary
+    logging.debug("Checking if database is created and creating it if it is necessary")
     database_generator.generate_database(ar_post_orm.ARPostORM(), sr_post_orm.SRPostORM())
-
-    # TODO think about performance with several users
     # Setting logging handlers
     logHandler = RotatingFileHandler('./log/info.log', maxBytes=1024 * 1024 * 100, backupCount=20)
     # set the log handler level
@@ -47,4 +44,4 @@ if __name__ == '__main__':
     application.logger.setLevel(logging.INFO)
     application.logger.addHandler(logHandler)
     # Run the application
-    application.run(debug=False, host='0.0.0.0')
+    application.run(debug=True, host='0.0.0.0')     # TODO change this to false in prod

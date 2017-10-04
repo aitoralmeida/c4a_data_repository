@@ -1,3 +1,5 @@
+limit_req_zone $binary_remote_addr zone=mylimit:10m rate=10r/s;
+
 server {
     listen 443 ssl;
     server_name localhost;
@@ -5,9 +7,13 @@ server {
     ssl_certificate /etc/nginx/ssl/nginx.crt;
     ssl_certificate_key /etc/nginx/ssl/nginx.key;
 
+    client_max_body_size 20m;
+
     location / {
+        limit_req zone=mylimit burst=20 nodelay;
         include uwsgi_params;
         uwsgi_pass unix:<project path>/city4ageAPI.sock;
+        uwsgi_read_timeout 300;
     }
 }
 

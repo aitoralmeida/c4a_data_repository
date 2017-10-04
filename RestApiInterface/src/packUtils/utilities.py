@@ -12,7 +12,6 @@ from collections import Counter
 from flask import abort, session, request
 from jsonschema import validate, ValidationError, FormatChecker
 
-
 __author__ = 'Rubén Mulero'
 __copyright__ = "Copyright 2016, City4Age project"
 __credits__ = ["Rubén Mulero", "Aitor Almeida", "Gorka Azkune", "David Buján"]
@@ -24,8 +23,6 @@ __status__ = "Prototype"
 
 
 class Utilities(object):
-
-
     ###################################################################################################
     ###################################################################################################
     ######                              Checker functions
@@ -186,6 +183,7 @@ class Utilities(object):
         }
 
         try:
+            # TODO use a method to check actions name
             # Obtaining the list of action from database
             list_of_actions = p_database.get_action_name()
             # Extracting actions from the two level lists
@@ -201,10 +199,12 @@ class Utilities(object):
                         raise ValidationError("The action inserted doesn't exist in the system: %s" % data['action'])
                     elif not Utilities.validate_user_pilot(p_database, data['user'].split(':')[-1].lower(),
                                                            data['pilot'].lower()):
-                        logging.error("The entered user pilot is incorrect or the user doesn't exist: %s", data['user'])
+                        logging.error("The entered user pilot is incorrect or the user doesn't exist: %s" %
+                                      data['user'])
                         raise ValidationError("The entered user pilot is incorrect or the user doesn't exist: %s" %
                                               data['user'])
             else:
+                # TODO review this part: Maybe we don't need it
                 validate(p_data, schema, format_checker=FormatChecker())
                 # We are going to validate if inserted actions are OK
                 if not p_data['action'].split(':')[-1].lower() in list_of_actions:
@@ -213,7 +213,7 @@ class Utilities(object):
                     raise ValidationError("The action inserted doesn't exist in the system: %s" % p_data['action'])
                 elif not Utilities.validate_user_pilot(p_database, p_data['user'].split(':')[-1].lower(),
                                                        p_data['pilot'].lower()):
-                    logging.error("The entered user pilot is incorrect or the user doesn't exist: %s", p_data['user'])
+                    logging.error("The entered user pilot is incorrect or the user doesn't exist: %s" % p_data['user'])
                     raise ValidationError("The entered user pilot is incorrect or the user doesn't exist: %s" %
                                           p_data['user'])
         except ValidationError as e:
@@ -229,6 +229,7 @@ class Utilities(object):
         The user needs to send all data, if the location values are indoor it  must provide a valid house number, otherwise
         it must send a house number with zero value. The idea is to avoid nullable values in DB.
 
+        :param p_database: Database instance
         :param p_data: User sent data
 
         :return: --> None: If all is OK
@@ -241,34 +242,18 @@ class Utilities(object):
             "title": "Add activity schema",
             "type": "object",
             "properties": {
-                "activity_name": {
+                "activity": {
                     "description": "The name of the current activity",
                     "type": "string",
                     "minLength": 3,
                     "maxLength": 50
                 },
-                "activity_description": {
-                    "description": "The description of the activity"
-                },
-                "instrumental": {
-                    "description": "Defines if an activity is a Basic or a instrumental Activity",
-                    "type": "boolean"
-                },
-                "house_number": {
-                    "description": "The number of house in case of indoor is true",
-                    "type": "integer",
-                    "minimum": 0,
-                },
-                "location": {
-                    "description": "Semantic location of the performed action",
+                "user": {
+                    "description": "The user in role who performs the registered action",
                     "type": "string",
                     "minLength": 3,
                     "maxLength": 50,
-                    "pattern": "^eu:c4a:[a-z,A-Z,0-9]{3,25}:[a-z,A-Z,0-9]{1,30}$",
-                },
-                "indoor": {
-                    "description": "Defines if the activity is inside a building or not",
-                    "type": "boolean",
+                    "pattern": "^eu:c4a:user:[0-9]{1,15}$",
                 },
                 "pilot": {
                     "description": "the name of the city where is the location",
@@ -280,39 +265,132 @@ class Utilities(object):
                         "ath", "bhx", "lcc", "mad", "mpl", "sin",
                     ]
                 },
+                "start_time": {
+                    "description": "The start time when the activity is recorded",
+                    "type": "string",
+                    "format": "date-time",
+                    "minLength": 3,
+                    "maxLength": 45
+                },
+                "end_time": {
+                    "description": "The end time when the activity is recorded",
+                    "type": "string",
+                    "format": "date-time",
+                    "minLength": 3,
+                    "maxLength": 45
+                },
+                "duration": {
+                    "description": "The total duration in seconds of the performed activity",
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 99999999,
+                },
+                "payload": {
+                    "description": "Additional values like action",
+                    "type": "object",
+                    "patternProperties": {
+                        "^[a-z, A-Z]": {
+                            "type": "object",
+                            "properties": {
+                                "location": {
+                                    "description": "Semantic location of the performed action",
+                                    "type": "string",
+                                    "minLength": 3,
+                                    "maxLength": 50,
+                                    "pattern": "^eu:c4a:[a-z,A-Z,0-9]{3,25}:[a-z,A-Z,0-9]{1,30}$",
+                                },
+                                "timestamp": {
+                                    "description": "The time when de action was performed",
+                                    "type": "string",
+                                    "format": "date-time",
+                                    "minLength": 3,
+                                    "maxLength": 45
+                                },
+                                "position": {
+                                    "description": "The exact position given in Lat/Long format",
+                                    "type": "string",
+                                    "minLength": 3,
+                                    "maxLength": 50
+                                },
+                            },
+                            "additionalProperties": False,
+                            "required": ["location", "timestamp"]
+                        },
+                    },
+                    "additionalProperties": False,
+                },
+                "data_source_type": {
+                    "description": "how the action has been decided or imported",
+                    "type": "array",
+                    "uniqueItems": True,
+                    "items": {
+                        "type": "string",
+                        "enum": [
+                            "sensors",
+                            "city_dataset",
+                            "external_dataset",
+                            "manual_input",
+                        ],
+                    },
+                },
             },
-            "required": ["activity_name"],
+            "required": ["activity", "user", "pilot", "start_time", "end_time", "duration", "data_source_type"],
             "additionalProperties": False
         }
 
-        # TODO modify the validator when the user decide to use spatio-temporal activities (House, location...)
-
         try:
-            if type(p_data) is list:
-                # We have a list of dicts
-                list_of_activities = []
-                for data in p_data:
-                    validate(data, schema, format_checker=FormatChecker())
-                    # check if the activity exist in database or not
-                    if Utilities.validate_activity(p_database, data):
-                        # The activity exist already in database
-                        logging.error("The entered activity is duplicated: %s", data['activity_name'])
-                        raise ValidationError("The entered activity is duplicated: %s" % data['activity_name'])
-                    # Appending the activity
-                    list_of_activities.append(data['activity_name'])
-                # We are going to search for duplicated users in the json list sent by the user
-                duplicated = [k for k, v in Counter(list_of_activities).items() if v > 1]
-                if len(duplicated) > 0:
-                    # Raise an error for duplicated values
-                    logging.error("There are are duplicated activity names in the JSON: %s" % duplicated)
-                    raise ValidationError("There are are duplicated activity names in the JSON: %s" % duplicated)
-            else:
-                validate(p_data, schema, format_checker=FormatChecker())
+            # if type(p_data) is list:
+            # We have a list of dicts
+            # list_of_activities = []
+            for data in p_data:
+                validate(data, schema, format_checker=FormatChecker())
                 # check if the activity exist in database or not
-                if Utilities.validate_activity(p_database, p_data):
+                if not Utilities.validate_activity(p_database, data):
                     # The activity exist already in database
-                    logging.error("The entered activity is duplicated: %s", p_data['activity_name'])
-                    raise ValidationError("The entered activity is duplicated: %s" % p_data['activity_name'])
+                    logging.error("The entered activity doesn't exist: %s" % data['activity'])
+                    raise ValidationError("The entered activity doesn't exist: %s" % data['activity'])
+                # Appending the activity
+                # list_of_activities.append(data['activity'])
+                elif not Utilities.validate_user_pilot(p_database, data['user'], data['pilot']):
+                    logging.error("The entered user doesn't exist or its Pilot is incorrect: %s -- %s" %
+                                  (data['user'], data['pilot']))
+                    raise ValidationError("The entered user doesn't exist or its Pilot is incorrect: %s -- %s" %
+                                          (data['user'], data['pilot']))
+                elif data['start_time'] > data['end_time']:
+                    logging.error("Start time is greater than end time. Start_time: %s -- End_time_ %s" %
+                                  (data['start_time'], data['end_time']))
+                    raise ValidationError("Start time is greater than end time. Start_time: %s -- End_time_ %s" %
+                                          (data['start_time'], data['end_time']))
+                ###
+                if data.get('payload', False):
+                    # The user entered a payload of actions, we are going to check if data is consistent or not
+                    for key, value in data['payload'].items():
+                        # Validating entered action
+                        if not Utilities.validate_action(p_database, key):
+                            logging.error("The given action in the payload doesn't exists in database: %s" % key)
+                            raise ValidationError("The given action in the payload doesn't exists in database: %s" % key)
+                        elif value.get('location', False) and not Utilities.validate_location(p_database, value):
+                            logging.error(
+                                "The given location of the performed action doesn't exist in database: %s" % data['payload'][
+                                    'location'])
+                            raise ValidationError("The given location of the performed action "
+                                                  "doesn't exist in database: %s" %
+                                                  data['payload']['location'])
+
+                    # We are going to search for duplicated users in the json list sent by the user
+                    # duplicated = [k for k, v in Counter(list_of_activities).items() if v > 1]
+                    # if len(duplicated) > 0:
+                    #    # Raise an error for duplicated values
+                    #    logging.error("There are are duplicated activity names in the JSON: %s" % duplicated)
+                    #    raise ValidationError("There are are duplicated activity names in the JSON: %s" % duplicated)
+
+                    # else:
+                    #     validate(p_data, schema, format_checker=FormatChecker())
+                    #     # check if the activity exist in database or not
+                    #     if Utilities.validate_activity(p_database, p_data):
+                    #         # The activity exist already in database
+                    #         logging.error("The entered activity is duplicated: %s" % p_data['activity'])
+                    #         raise ValidationError("The entered activity is duplicated: %s" % p_data['activity'])
         except ValidationError as e:
             logging.error("The schema entered by the user is invalid")
             msg = e.message
@@ -395,7 +473,6 @@ class Utilities(object):
             "additionalProperties": False
         }
 
-
         # Todo think about using a filtered list of active users to avoid for structures
 
         try:
@@ -407,12 +484,12 @@ class Utilities(object):
                     # Validating if the user exists already in the system
                     if Utilities.validate_user_registered(p_database, data):
                         # The user exist in the system
-                        logging.error("The entered username is duplicated: %s", data['username'])
+                        logging.error("The entered username is duplicated: %s" % data['username'])
                         raise ValidationError("The entered username is duplicated: %s" % data['username'])
                     if data.get('user', False) and Utilities.validate_user_access(p_database, data):
                         # The user hasn't any access in the system or there inst any user with that ID
                         logging.error("The user entered has already a username and password " \
-                                              "in the system or it is not exist: %s" % data['username'])
+                                      "in the system or it is not exist: %s" % data['username'])
                         raise ValidationError("The user entered has already a username and password " \
                                               "in the system or it is not exist: %s" % data['username'])
                     # Appending the username
@@ -428,12 +505,12 @@ class Utilities(object):
                 validate(p_data, schema, format_checker=FormatChecker())
                 if Utilities.validate_user_registered(p_database, p_data):
                     # The user exist in the system
-                    logging.error("The entered username is duplicated: %s", p_data['username'])
+                    logging.error("The entered username is duplicated: %s" % p_data['username'])
                     raise ValidationError("The entered username is duplicated: %s" % p_data['username'])
                 elif Utilities.validate_user_access(p_database, p_data):
                     # The user hasn't any acess in the system or there isnt any user with that ID
                     logging.error("The user entered has already a username and password " \
-                                          "in the system: %s" % p_data['username'])
+                                  "in the system: %s" % p_data['username'])
                     raise ValidationError("The user entered has already a username and password " \
                                           "in the system: %s" % p_data['username'])
         except ValidationError as e:
@@ -509,7 +586,7 @@ class Utilities(object):
                     validate(data, schema, format_checker=FormatChecker())
                     if Utilities.validate_user_registered(p_database, data):
                         # The user exist in the system
-                        logging.error("The entered username is duplicated: %s", data['username'])
+                        logging.error("The entered username is duplicated: %s" % data['username'])
                         raise ValidationError("The entered username is duplicated: %s" % data["username"])
                     # adding the username to the list
                     list_of_usernames.append(data['username'])
@@ -524,8 +601,8 @@ class Utilities(object):
                 validate(p_data, schema, format_checker=FormatChecker())
                 if Utilities.validate_user_registered(p_database, p_data):
                     # The user exist in the system
-                    logging.error("The entered username is duplicated: %s", p_data['username'])
-                    raise ValidationError("The entered username is duplicated: %s", p_data['username'])
+                    logging.error("The entered username is duplicated: %s" % p_data['username'])
+                    raise ValidationError("The entered username is duplicated: %s" % p_data['username'])
         except ValidationError as e:
             logging.error("The schema entered by the user is invalid")
             msg = e.message
@@ -581,6 +658,7 @@ class Utilities(object):
 
         Check if add_measure data is entered ok with required values
 
+        :param p_database: The database instance
         :param p_data: User data
         :return:  --> None: If all is OK
                   --> Message: A message containing the encountered error
@@ -622,10 +700,11 @@ class Utilities(object):
                     "minLength": 2,
                     "maxLength": 45,
                     "enum": [
-                        "DAY", "WK", "MON",
-                        "day", "wk", "mon"
+                        "DAY", "1WK", "2WK", "MON", "QTR", "SEM", "1YR", "2YR", "3YR", "5YR",
+                        "day", "1wk", "2wk", "mon", "qtr", "sem", "1yr", "2yr", "3yr", "5yr"
                     ]
                 },
+                # TODO this part would be deleted in favour of using "duration" as interval end duration"
                 "interval_end": {
                     "description": "The end time when the measure is recorded",
                     "type": "string",
@@ -646,7 +725,7 @@ class Utilities(object):
                                     "maximum": 1000000,
                                     "exclusiveMinimum": False,
                                     "exclusiveMaximum": False,
-                                    #"multipleOf": 0.01
+                                    # "multipleOf": 0.01
                                 },
                                 "data_source_type": {
                                     "description": "how the action has been decided or imported",
@@ -669,7 +748,7 @@ class Utilities(object):
                     },
                     "additionalProperties": False,
                     "minProperties": 1,
-                    "maxProperties": 20
+                    "maxProperties": 30
                 },
                 "extra": {
                     "description": "Additional information given by the Pilot in the LEA",
@@ -695,12 +774,12 @@ class Utilities(object):
                     for payload in data['payload']:
                         if payload.lower() not in list_of_measures:
                             # This measure doesn't exist in database
-                            logging.error("The entered measure doesn't exist: %s", payload)
-                            raise ValidationError("The entered measure doesn't exist: %s", payload)
+                            logging.error("The entered measure doesn't exist: %s" % payload)
+                            raise ValidationError("The entered measure doesn't exist: %s" % payload)
                     # Validating the user with its pilot
                     if not Utilities.validate_user_pilot(p_database, data['user'].split(':')[-1].lower(),
-                                                           data['pilot'].lower()):
-                        logging.error("The entered user pilot is incorrect or the user doesn't exist: %s",
+                                                         data['pilot'].lower()):
+                        logging.error("The entered user pilot is incorrect or the user doesn't exist: %s" %
                                       data['user'])
                         raise ValidationError("The entered user pilot is incorrect or the user doesn't exist: %s" %
                                               data['user'])
@@ -710,12 +789,12 @@ class Utilities(object):
                 for payload in p_data['payload']:
                     if payload.lower() not in list_of_measures:
                         # This measure doesn't exist in database
-                        logging.error("The entered measure doesn't exist: %s", payload)
-                        raise ValidationError("The entered measure doesn't exist: %s", payload)
+                        logging.error("The entered measure doesn't exist: %s" % payload)
+                        raise ValidationError("The entered measure doesn't exist: %s" % payload)
                 # Validating the user with its pilot
                 if not Utilities.validate_user_pilot(p_database, p_data['user'].split(':')[-1].lower(),
-                                                       p_data['pilot'].lower()):
-                    logging.error("The entered user pilot is incorrect or the user doesn't exist: %s", p_data['user'])
+                                                     p_data['pilot'].lower()):
+                    logging.error("The entered user pilot is incorrect or the user doesn't exist: %s" % p_data['user'])
                     raise ValidationError("The entered user pilot is incorrect or the user doesn't exist: %s" %
                                           p_data['user'])
 
@@ -812,7 +891,14 @@ class Utilities(object):
             "title": "Eam database additional data validator",
             "type": "object",
             "properties": {
-                "activity_name": {
+                "user": {
+                    "description": "The user in role of the EAM. Default to Pilot if not filled",
+                    "type": "string",
+                    "minLength": 3,
+                    "maxLength": 50,
+                    "pattern": "^eu:c4a:user:[0-9]{1,15}$",
+                },
+                "activity": {
                     "description": "The name of the current activity",
                     "type": "string",
                     "minLength": 3,
@@ -826,10 +912,11 @@ class Utilities(object):
                     },
                     "minItems": 1,
                     "uniqueItems": True,
-                    "additionalProperties": False
+                    "additionalProperties": False,
+                    "pattern": "^(eu:c4a:[a-z,A-Z,0-9]{3,25}:[a-z,A-Z,0-9]{1,30}|eu:c4a:[a-z,A-Z,0-9]{3,25}:[a-z,A-Z,0-9]{1,35}:[a-z,A-Z,0-9]{1,35})$",
                 },
-                "actions": {
-                    "description": "A list containing the possible actions of the EAM",
+                "transformed_action": {
+                    "description": "A list containing the transformed actions of the EAM",
                     "type": "array",
                     "items": {
                         "type": "string"
@@ -865,9 +952,9 @@ class Utilities(object):
                 }
             },
             "required": [
-                "activity_name",
+                "activity",
                 "locations",
-                "actions",
+                "transformed_action",
                 "duration",
                 "start"
             ],
@@ -879,24 +966,50 @@ class Utilities(object):
                 # We have a list of dicts
                 for data in p_data:
                     validate(data, schema, format_checker=FormatChecker())
-                    # checking data integrity
-                    res = Utilities.validate_eam(p_database, data)
-                    if not res:
-                        logging.error("The activity, action or location doesn't exist in database")
-                        raise ValidationError("The activity, action or location doesn't exist in database")
+                    # Checking data integrity
+                    if not Utilities.validate_transformed_action(p_database, data):
+                        logging.error("The entered transformed action is not valid: %s" %
+                                      data.get('transformed_action', False))
+                        raise ValidationError("The entered transformed action is not valid: %s" %
+                                              data.get('transformed_action', False))
+                    if not Utilities.validate_activity(p_database, data):
+                        logging.error("The entered activity is not valid: %s" %
+                                      data.get('activity'), False)
+                        raise ValidationError("The entered activity is not valid: %s" %
+                                              data.get('activity'), False)
+                    if data.get('user', False):
+                        # There is a user attached to this EAM
+                        if not Utilities.validate_user(p_database, data):
+                            logging.error("The entered user doesn't exist in database: %s" % data.get('user', False))
+                            raise ValidationError("The entered user doesn't exist in database: %s" %
+                                                  data.get('user', False))
+
+                            # TODO make a validation of the locations
             else:
                 validate(p_data, schema, format_checker=FormatChecker())
-                # checking data integrity
-                res = Utilities.validate_eam(p_database, p_data)
-                if not res:
-                    logging.error("The activity, action or location doesn't exist in database")
-                    raise ValidationError("The activity, action or location doesn't exist in database")
+                # Checking data integrity
+                if not Utilities.validate_transformed_action(p_database, p_data):
+                    logging.error("The entered transformed action is not valid: %s" %
+                                  p_data.get('transformed_action', False))
+                    raise ValidationError("The entered transformed action is not valid: %s" %
+                                          p_data.get('transformed_action', False))
+                if not Utilities.validate_activity(p_database, p_data):
+                    logging.error("The entered activity is not valid: %s" %
+                                  p_data.get('activity'), False)
+                    raise ValidationError("The entered activity is not valid: %s" %
+                                          p_data.get('activity'), False)
+                if p_data.get('user', False):
+                    # There is a user attached to this EAM
+                    if not Utilities.validate_user(p_database, p_data):
+                        logging.error("The entered user doesn't exist in database: %s" % p_data.get('user', False))
+                        raise ValidationError("The entered user doesn't exist in database: %s" %
+                                              p_data.get('user', False))
+                        # TODO make a validation of the locations
+
         except ValidationError as e:
             logging.error("The schema entered by the user is invalid")
             msg = e.message
         return msg
-
-
 
     ###################################################################################################
     ###################################################################################################
@@ -923,7 +1036,6 @@ class Utilities(object):
                 res = True
         return res
 
-
     # TODO some of this methods are repetet. check to unify it
 
     @staticmethod
@@ -943,8 +1055,6 @@ class Utilities(object):
             # Get current registered users
             res = p_database.check_username(username)
         return res
-
-
 
     # TODO this method needs more changes.
 
@@ -972,6 +1082,26 @@ class Utilities(object):
         return res
 
     @staticmethod
+    def validate_user(p_database, p_one_data):
+        """
+        This method checks if there is already a user in the system or not
+
+        :param p_database: The database instance
+        :param p_one_data: The element to be checked
+
+        :return: True if the user exists in the system
+                False if the user doesn't exist
+        """
+        res = False
+        if p_one_data and p_one_data.get('user', False):
+            user_in_role = p_one_data['user'].lower() or None  # lowering string cases
+            # Converting the user data to get the ID
+            user_in_role_id = int(user_in_role.split(':')[-1])
+            # Get current registered users
+            res = p_database.check_user_in_role(user_in_role_id)
+        return res
+
+    @staticmethod
     def validate_user_pilot(p_database, p_user, p_pilot):
         """
         Giving a User and Pilot, this method checks if the users exist in database and if exist, it checks its pilot
@@ -980,61 +1110,27 @@ class Utilities(object):
         :param p_database: The database instance 
         :param p_user: The user in the system
         :param p_pilot: The pilot 
-        :return: True if the user doens't exist of everything is ok
-                False if something is not well.
+        :return:    False: If the user doesn't exist in the system or its pilots is incorrect
+                    True: If the Pilot and user fits in DB
         """
 
         return p_database.check_user_pilot(p_user, p_pilot)
 
     @staticmethod
-    def validate_eam(p_database, p_one_data):
+    def validate_action(p_database, p_one_data):
         """
-        This method checks if the given element of a EAM has valid information.
-
-        To know it we need to check the following:
-
-            * Activiy: If the activities exist in DB
-            * Actions: If the actions exist in DB
-            * Locations: If the locations exist in DB
+        Giving a user action, this method check if the action of a user exist in database or not
 
         :param p_database: The database instance
-        :param p_one_data: The information about an EAM
-        :return: True if the information of EAM is correct
-                False if some of the EAM elements are not correct
+        :param p_one_data: An action
+        :return:  False: If the action doesn't exist in the system
+                  True: If the action exist in the system
         """
         res = False
-
-        # checking if exist activity name
-        if p_one_data and p_one_data.get('activity_name', False):
-            activity_name = p_one_data['activity_name'].lower() or None
-            # Check if the activity exist in DB
-            res = p_database.check_activity(activity_name)
-
-        # checking if exist action name
-        if res and p_one_data and p_one_data.get('actions', False):
-            # We check if the actions exist in DB
-            for action_name in p_one_data['actions']:
-                # GIVING an action name we check it in DB
-                res = p_database.check_action(action_name.lower())
-                if not res:
-                    res = False  # Ensuring that result is FALSE and not NONE or whatever
-                    break
-        else:
-            logging.error("validate_eam: some of the values are not present")
-            res = False
-
-        if res and p_one_data and p_one_data.get('locations', False):
-            # We check if the locations exist in DB
-            for location_name in p_one_data['locations']:
-                # GIVING a location name we check it in DB
-                res = p_database.check_location(location_name.lower())
-                if not res:
-                    res = False
-                    break
-        else:
-            logging.error("validate_eam: some of the values are not present")
-            res = False
-
+        if p_one_data and p_one_data.get('action', False):
+            action = p_one_data['action'].lower() or None  # lowering string cases
+            # Get current registered users
+            res = p_database.check_action(action)
         return res
 
     @staticmethod
@@ -1050,9 +1146,46 @@ class Utilities(object):
         """
         res = False
         # checking if exist activity name
-        if p_one_data and p_one_data.get('activity_name', False):
-            activity_name = p_one_data['activity_name'].lower() or None
-            res = p_database.check_activity(activity_name)
+        if p_one_data and p_one_data.get('activity', False):
+            activity = p_one_data['activity'].lower() or None
+            res = p_database.check_activity(activity)
+        return res
+
+    @staticmethod
+    def validate_transformed_action(p_database, p_one_data):
+        """
+        This method check in database if the current transformed action exist already or not
+
+        :param p_database: Database instance
+        :param p_one_data: The element to be checked
+
+        :return: True if al is correct
+                False if there are duplicated elements in DB
+        """
+        res = False
+        # Checking if exists transformed action
+        if p_one_data and p_one_data.get('transformed_action', False):
+            transformed_action = p_one_data.get('transformed_action', False)
+            for t_action in transformed_action:
+                res = p_database.check_transformed_action(t_action)
+                if not res:
+                    # One of the transformed actions doesn't exist in database
+                    break
+        return res
+
+    @staticmethod
+    def validate_location(p_database, p_one_data):
+        """
+        This method check in database if the current location exist already or not
+
+        :param p_database: Database instance
+        :param p_one_data: The element to be checked
+        :return:
+        """
+        res = False
+        if p_one_data and p_one_data.get('location', False):
+            location = p_one_data['location'].lower() or None
+            res = p_database.check_location(location)
         return res
 
     @staticmethod
@@ -1060,7 +1193,7 @@ class Utilities(object):
         """
         This method recovers all 
         
-        :param p_databasem: Giving a database, this method recovers all instances of measure data
+        :param p_database: Giving a database, this method recovers all instances of measure data
         :return: A list of measures
         """
 

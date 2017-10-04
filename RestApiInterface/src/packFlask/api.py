@@ -20,6 +20,7 @@ from itsdangerous import Signer, BadSignature
 from src.packControllers import ar_post_orm, sr_post_orm
 
 
+
 __author__ = 'Rubén Mulero'
 __copyright__ = "Copyright 2017, City4Age project"
 __credits__ = ["Rubén Mulero", "Aitor Almeida", "Gorka Azkune", "David Buján"]
@@ -34,15 +35,10 @@ __status__ = "Prototype"
 ACTUAL_API = '0.1'
 AVAILABLE_API = '0.1', '0.2', '0.3'
 SECRET_KEY = '\xc2O\xd1\xbb\xd6\xb2\xc2pxRS\x12l\xee8X\xcb\xc3(\xeer\xc5\x08s'
-AR_DATABASE = 'Database'
-SR_DATABASE = 'Database'
+AR_DATABASE = None
+SR_DATABASE = None
 USER = None
 MAX_LENGHT = 1398101  # in bytes        ~~ 500 LEAS OR up to 16MB? check if it whort it
-
-
-#MAX_LENGHT = 8 * 1024 * 1024 # in bytes
-
-
 
 # Create application and load config.
 app = Flask(__name__)
@@ -115,10 +111,12 @@ def required_roles(*roles):
 def before_request():
     # Connection
     global AR_DATABASE
-    AR_DATABASE = ar_post_orm.ARPostORM()
+    if not AR_DATABASE:
+        AR_DATABASE = ar_post_orm.ARPostORM()
     global SR_DATABASE
-    SR_DATABASE = sr_post_orm.SRPostORM()
-    # Make sessions permament with some time
+    if not SR_DATABASE:
+        SR_DATABASE = sr_post_orm.SRPostORM()
+    # Make sessions permanent with some time
     session.permanent = True
     app.permanent_session_lifetime = timedelta(days=30)  # minutes=30 days=232323 years=2312321 and so on.
     session.modified = True  # To force seesion expiration
@@ -150,8 +148,9 @@ def after_request(response):
     ip = request.remote_addr or "No IP provided"
     agent = request.user_agent.string or "No user_agent provided"
     status = response.status or "No Status provided"
+    data = response.data or "No data provided"
     # Writing into log file
-    app.logger.info("%s - %s - %s- %s - %s" % (ip, agent, method, route, status))
+    app.logger.info("%s - %s - %s- %s - %s - %s" % (ip, agent, method, route, status, data))
     return response
 
 
@@ -164,7 +163,7 @@ def when_request_finished(sender, response, **extra):
     :param sender: The sender data
     :param response: The server response data
     :param extra: Extra data from the server
-    :return:
+    :return: None
     """
 
     # We want to check if it is a registered user POST call.
@@ -233,6 +232,8 @@ def verify_password(username_or_token, password):
     USER = user
     return True
 
+
+# TODO this method needs to be used to log user in the system when we decide to disable the login process
 
 @app.route('/api/<version>/login', methods=['GET'])
 @limit_content_length(MAX_LENGHT)
@@ -404,6 +405,9 @@ def get_my_info(version=app.config['ACTUAL_API']):
 ###################################################################################################
 
 
+# TODO this search method will be splited in several parts to cover different angles of search --> Force to the user to decide some tables.
+
+
 @app.route('/api/<version>/search', methods=['POST'])
 @limit_content_length(MAX_LENGHT)
 @auth.login_required
@@ -433,25 +437,67 @@ def search(version=app.config['ACTUAL_API']):
     :return:
     """
 
+
     """
-    
+
+    ------> This code is only used for reference purposes
+
+    if Utilities.check_connection(app, version):
+        data = _convert_to_dict(request.json)
+        msg = Utilities.check_add_activity_data(AR_DATABASE, data)
+        if data and not msg and USER:
+            # User and data are OK. save data into DB
+            res_ar = AR_DATABASE.add_activity(data)
+            res_sr = SR_DATABASE.add_activity(data)
+            if res_ar and res_sr:
+                logging.info("add_activity: the username: %s adds new activity into database" % USER.username)
+                return Response('Data stored in database OK\n'), 200
+            else:
+                logging.error("add_activity: the username: %s failed to store data into database. 500" % USER.username)
+                return Response("There is an error in DB"), 500
+        else:
+            logging.error("add_activity: there is a problem with entered data")
+            # Data is not valid, check the problem
+            if "duplicated" in msg:
+                # Data sent is duplicated.
+                return Response(msg), 409
+            else:
+                # Standard Error
+                return Response(msg), 400
+
+    """
+
+
+
+
+
+
+    # TODO tell to the user what kind of schema
+
+
+    """
+
     res = None
     if Utilities.check_connection(app, version):
         data = _convert_to_dict(request.json)[0]
-        
-        if data and res and USER:
-            # data Entered by the user is OK
+        # Checking inf search data is ok
+        msg = Utilities.check_search_data(AR_DATABASE, data)
+        if data and not msg and USER:
+            # data Entered by the user is OK we are goinng to extract extra search parameters
             limit = data.get('limit', 10) if data and data.get('limit', 10) >= 0 else 10
             offset = data.get('offset', 0) if data and data.get('offset', 0) >= 0 else 0
             order_by = data.get('order_by', 'asc') if data and data.get('order_by', 'asc') in ['asc', 'desc'] else 'asc'
+            # After extracting data, we make the needed search.
 
 
-            # TODO we need to know exactly what kind of tables we need to call
+
+            # TODO need to think about making a search based on a criteria ?=
 
 
-            # Obtain table class using the name of the desired table
-            table_class = AR_DATABASE.get_table_object_by_name(data['table'])
-            # Query database and select needed elements
+
+
+            # TODO code this final part
+
             try:
                 res = AR_DATABASE.query(table_class, data['criteria'], limit=limit, offset=offset, order_by=order_by)
                 serialized_labels = [serialize(label) for label in res]
@@ -474,9 +520,10 @@ def search(version=app.config['ACTUAL_API']):
                 "tables, check if you type one of the following tables: %s" % AR_DATABASE.get_tables()
             ), 413
     return res
-    """
-    return "Not implemented yet", 501
 
+    """
+
+################################################################################
 
 @app.route('/api/<version>/add_action', methods=['POST'])
 @limit_content_length(MAX_LENGHT)
@@ -533,6 +580,8 @@ def add_action(version=app.config['ACTUAL_API']):
                 return Response(msg), 400
 
 
+# TODO code this pasrt
+
 @app.route('/api/<version>/add_activity', methods=['POST'])
 @limit_content_length(MAX_LENGHT)
 @auth.login_required
@@ -548,13 +597,25 @@ def add_activity(version=app.config['ACTUAL_API']):
     An example in JSON could be:
 
     {
-        "activity_name": "LeaveHouse",
-        "activity_description": "Some description of the activity",          # Optional
-        "instrumental": True,                                               # Optional
-        "house_number": 0,              # Optional
-        "indoor": false,                # Optional
-        "location":"eu:c4a:Bus:39",     # Optional
-        "pilot": "LCC"                  # Optional
+        "activity":     "LeaveHouse",
+        "user":         "eu:c4a:user:1234523",
+        "pilot":        "ATH",
+        "start_time":   "2018-04-20T07:08:41.013+03:00",
+        "end_time":     "2018-05-20T07:08:41.013+03:00",
+        "duration":     23232323,
+        "payload": {
+            # Optional information containing a list of different actions
+            "eu:c4a:POI_ENTER": {
+                "location": "eu:c4a:Shop:Ermou96",
+                "position": "37.976908 23.724375",              # Optional
+                "timestamp": "2014-05-20T07:08:41.013+03:00"
+            },
+            "eu:c4a:POI_EXIT": {
+                "location": "eu:c4a:Room:number23",
+                "timestamp": "2012-05-20T07:08:41.013+03:00"
+            }
+        },
+        "data_source_type": [ "sensors", "external_dataset" ]
     }
 
     :param version: Api version
@@ -816,20 +877,23 @@ def add_eam(version=app.config['ACTUAL_API']):
     An example in JSON could be:
 
     {
-        "activity_name": "AnsweringPhone",                      # This must exist previously
+        "user": "eu:c4a:user:12345",                            # OPTIONAL user information. Default: Pilot Id
+        "activity": "AnsweringPhone",                           # This must exist previously
         "locations": ["Kitchen", "Office", "Bedroom"],
-        "actions": ["KitchenPIR", "BedroomPIR"],
-        "duration": 120,
+        "transformed_action": ["KitchenPIR", "BedroomPIR"],     # Transformed actions of the new EAM
+        "duration": 120,                                        # Duration time
         "start": [
             ["12:00", "12:05"],
             ["20:00", "20:10"]
         ]
     }
 
-
     :param version: Api version
     :return:
     """
+
+    # TODO: this part needs to be re-checked in order to improve some of the new parts of the EAM
+
     if Utilities.check_connection(app, version):
         # We created a list of Python dict.
         data = _convert_to_dict(request.json)
@@ -852,6 +916,11 @@ def add_eam(version=app.config['ACTUAL_API']):
             else:
                 # Standard Error
                 return Response(msg), 400
+
+
+
+# TODO --> Add new function to the API --> commit() # Executes an script to calculate NUI's only SR
+# TODO --> Add new function to the API --> add_ges() # Adds a new geriatric data into the SR schema
 
 
 ###################################################################################################

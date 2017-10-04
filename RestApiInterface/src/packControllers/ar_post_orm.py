@@ -62,9 +62,9 @@ class ARPostORM(PostORM):
                 logging.info("verify_user_login: Login ok.")
                 user_data = res[0]
             else:
-                logging.error("verify_user_login: User entered invalid username/password")
+                logging.error(inspect.stack()[0][3], "User entered invalid username/password combination")
         else:
-            logging.error("verify_user_login: Rare error detected")
+            logging.error(inspect.stack()[0][3], "Rare error detected")
         return user_data
 
     def verify_auth_token(self, token, app):
@@ -89,54 +89,64 @@ class ARPostORM(PostORM):
     ###################################################################################################
     ###################################################################################################
 
-    def add_eam(self, p_data):
+    def add_eam(self, p_data, p_user_id):
         """
         Giving EAM information data, this method insert the needed data into DB.
 
 
         :param p_data: A list containing instances of JSON data with the needed information
+        :param p_user_id: The user registration access id
         :return:  True if everything is ok
         """
 
-        # TODO, review tables to the new version of database
-
+        logging.info(inspect.stack()[0][3], "adding data to database")
+        insert_list = []
         for data in p_data:
-            # Getting activity id from DB
-            activity = self._get_or_create(ar_tables.Activity, activity_name=data['activity_name'].lower())
-            # Insert eam information
-            eam = self._get_or_create(ar_tables.EAM, duration=data['duration'], activity_id=activity.id)
+            # Recovering basic data
+            if data.get('user', False):
+                # The User provides a user in role for this EAM
+                user_in_role = self._get_or_create(self.tables.UserInRole, id=int(data['user'].split(':')[-1]))
+            else:
+                # The User doesn't provide a user, back to Pilot ID
+                user_in_role = self._get_or_create(self.tables.UserInRole, id=p_user_id)
+            cd_activity = self._get_or_create(self.tables.CDActivity, activity_name=data['activity_name'])
+            # Insert new EAM
+            cd_eam = self.tables.CDEAM(duration=data['duration'])
+            insert_list.append(cd_eam)
+            ## Intermediate tables
             # For each location
             for location in data['locations']:
                 # Insert EAM location REL and locationType
                 location = self._get_or_create(ar_tables.Location, location_name=location.lower())
-
-                # # Getting the location type or creating a default one
-                # location_type = self.session.query(ar_tables.LocationLocationTypeRel).filter_by(location_id=location.id)
-                # if location_type.count() == 0:
-                #     # Our location doesn't have any kind of location type, so we will assign one
-                #     location_type = self._get_or_create(ar_tables.LocationType,
-                #                                         location_type_name='eam')
-                #     location_type_rel = self._get_or_create(ar_tables.LocationLocationTypeRel, location_id=location.id,
-                #                                             location_type_id=location_type.id)
-
                 # Adding the relationship to EAM
-                self._get_or_create(ar_tables.EAMLocationRel, location_id=location.id, eam_id=eam.id)
-            # Insert the time ranges
+                cd_eam_location_rel = ar_tables.CDEAMLocationRel(location_id=location.id, cd_eam_id=cd_eam.id)
+                insert_list.append(cd_eam_location_rel)
+            # For each start_range
             for date_range in data['start']:
                 # Insert the actual range
                 start_range = self._get_or_create(ar_tables.StartRange,
-                                                  start_hour=date_range[0],
-                                                  end_hour=date_range[1])
+                                                  start_time=date_range[0],
+                                                  end_time=date_range[1])
                 # Insert the m2m table
-                self._get_or_create(ar_tables.EAMStartRangeRel, start_range_id=start_range.id, eam_id=eam.id)
-            # Insert the action ranges
-            for action in data['actions']:
-                # Insert the actual action
-                action = self._get_or_create(ar_tables.CDAction, action_name=action.lower())
-                # Insert the m2m table
-                self._get_or_create(ar_tables.EAMCDActionRel, cd_action_id=action.id, eam_id=eam.id)
-
-        logging.info(inspect.stack()[0][3], "data entered successfully")
+                cd_eam_start_range_rel = ar_tables.CDEAMStartRangeRel(start_range_id=start_range.id, cd_eam_id=cd_eam.id)
+                insert_list.append(cd_eam_start_range_rel)
+            # For each transformed action
+            for transformed_action in data['transformed_action']:
+                # Insert the transformed actions
+                transformed_action = self._get_or_create(ar_tables.CDTransformedAction,
+                                                         transformed_action_name=transformed_action)
+                cd_eam__cd_transformed_action_rel = ar_tables.CDEAMCDTransformedActionRel(
+                    cd_transformed_action_id=transformed_action.id, cd_eam_id=cd_eam.id)
+                insert_list.append(cd_eam__cd_transformed_action_rel)
+            # Inserting the rest of relationships
+            cd_eam_user_in_role_rel = ar_tables.CDEAMUserInRoleRel(user_in_role_id=user_in_role.id,
+                                                                   cd_eam_id=cd_eam.id)
+            user_in_eam = ar_tables.UserInEAM(cd_activity_id=cd_activity.id, user_in_role_id=user_in_role.id,
+                                              cd_eam_id=cd_eam.id)
+            insert_list.extend([cd_eam_user_in_role_rel, user_in_eam])
+            # Adding info to database
+            self.insert_all(insert_list)
+        # Commit changes and exiting
         return self.commit()
 
 
@@ -272,116 +282,3 @@ class ARPostORM(PostORM):
             # Adding the dict to the final list
             list_of_leas.append(lea)
         return list_of_leas
-
-    ###################################################################################################
-    ###################################################################################################
-    ######                              DATABASE CHECKS
-    ###################################################################################################
-    ###################################################################################################
-
-    def check_user_in_role(self, p_user_id):
-        """
-        Giving user id, this method checks if the user exist or not in the system.
-
-        :param p_user_id: The user_in_role id in the system
-        :return: True if the user_in_role exist in the system
-                False if it not exist in the system
-        """
-        res = False
-        user_in_role = self.session.query(ar_tables.UserInRole).filter_by(id=p_user_id) or None
-        if user_in_role and user_in_role.count() == 1 and user_in_role[0].id == p_user_id:
-            # The user exist in the system
-            res = True
-        return res
-
-    def check_user_pilot(self, p_user_id, p_pilot):
-        """
-        Giving a user and a Pilot, this method checks if the user exist and if its Pilot is equal 
-        of the given Pilot.
-        
-        :param p_user_id: The user id of the system 
-        :param p_pilot: The given Pilot to compare
-        :return:    False -> If the User doesn't exist in database of if the Pilot is different
-                    True -> If everything is OK
-        """
-        res = False
-        user_in_role = self.session.query(ar_tables.UserInRole).filter_by(id=p_user_id) or None
-        if user_in_role and user_in_role.count() == 1 and user_in_role[0].id == int(p_user_id) and \
-                        user_in_role[0].pilot_code == p_pilot:
-            res = True
-        return res
-
-    def check_username(self, p_username):
-        """
-        Giving a username. check if if exist or not in database
-
-        :param p_username: The username in the system
-        :return: True if the user exist in database
-                False if the user do not exist in database
-        """
-        res = False
-        username = self.session.query(ar_tables.UserInSystem).filter_by(username=p_username)
-        if username and username.count() == 1 and username[0].username == p_username:
-            # The user exist in the system
-            res = True
-        return res
-
-    def check_user_access(self, p_user_in_role):
-        """
-        Given a user in role, check if it has already an access in the system.
-
-        If the user doesn't exist, we assume that it has no access in the system.
-
-        :param p_user_in_role: The id of the user_in_role
-        :return: True if the user has an access in the system
-                False if the user hasn't any access in the system
-        """
-        res = False
-        user_in_role = self.session.query(ar_tables.UserInRole).filter_by(id=p_user_in_role)
-        if user_in_role and user_in_role.count() == 1 and user_in_role[0].user_in_system_id is not None:
-            # The user has already access in the system
-            res = True
-        return res
-
-    def check_activity(self, p_activity_name):
-        """
-        Giving an activity name, we check if it exist or not in the system.
-
-
-        :param p_activity_name: The name of an activity
-        :return: True if the activity exist in the system
-                False if the activity doesn't exist in the system
-        """
-        res = False
-        activity = self.session.query(ar_tables.Activity).filter_by(activity_name=p_activity_name)
-        if activity and activity.count() == 1:
-            res = True
-        return res
-
-    def check_action(self, p_action_name):
-        """
-        Giving the action anem, we check if it exist or not in the system.
-
-        :param p_action_name: The name of the action
-        :return: True if the action exist in database.
-                False if the action doesn't exist in database
-        """
-        res = False
-        action = self.session.query(ar_tables.CDAction).filter_by(action_name=p_action_name)
-        if action and action.count() == 1:
-            res = True
-        return res
-
-    def check_location(self, p_location_name):
-        """
-        giving the location name, we check if it exist or not in the system.
-
-        :param p_location_name: The name of the location
-        :return: True if the location exist in the system
-                False if the location deesn't exist in the system
-        """
-        res = False
-        location = self.session.query(ar_tables.Location).filter_by(location_name=p_location_name)
-        if location and location.count() == 1:
-            res = True
-        return res

@@ -3,6 +3,7 @@ package eu.deustotech.city4age;
 
 import sun.rmi.runtime.Log;
 
+import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -24,6 +25,7 @@ import java.util.logging.SimpleFormatter;
 public class InferenceMain {
 
     private static boolean run = true;
+    private static final long defaultTime = 172800000;           // 24h defined in milliseconds
 
     public static void main(String[] args) {
         if (args.length > 0 && args[0].length() > 0 && args[0].contains(".ttl") &&
@@ -45,19 +47,19 @@ public class InferenceMain {
                         timer.cancel();
                         timer.purge();
                         LOGGER.log(Level.SEVERE, "The timer is forced to stop, there is problem in the code");
-                        System.err.println("The timer stops due to some erros");
+                        System.err.println("The timer stops due to some errors");
                     }
                 }
             };
             // Decide if the program uses user defined time or system default.
             if (args.length >= 3 && args[2].length() > 0 && isLong(args[2])) {
                 LOGGER.info("User entered a defined time interval. The value is --> {}" + args[2]);
-                System.out.print("Executing a time-defined TimerTask");
-                timer.scheduleAtFixedRate(timerTask, 0, Long.parseLong(args[3])); // Setting user defined time.
+                System.out.println("Executing a time-defined TimerTask of: " +args[2] + " milliseconds");
+                timer.scheduleAtFixedRate(timerTask, 0, Long.parseLong(args[2])); // Setting user defined time.
             }else {
                 LOGGER.info("Using default time interval");
-                System.out.print("Executing default TimerTask");
-                timer.scheduleAtFixedRate(timerTask, 0, 60000);                   // Setting default time 1 min.
+                System.out.println("Executing DEFAULT TimerTask of: "+ defaultTime +" milliseconds");
+                timer.scheduleAtFixedRate(timerTask, 0, defaultTime);
             }
         }else if (args.length == 1 && args[0].equals("-h")) {
             // The user entered a HELP VALUES
@@ -102,7 +104,11 @@ public class InferenceMain {
         // Logging File initialization
         try {
             // This block configure the logger with handler and formatter
-            FileHandler fh = new FileHandler("./reasoner-" + dateFormat.format(date) +".log");
+            File directory = new File("log");
+            if (! directory.exists()){
+                directory.mkdir();
+            }
+            FileHandler fh = new FileHandler("./log/reasoner-" + dateFormat.format(date) +".log");
             logger.addHandler(fh);
             SimpleFormatter formatter = new SimpleFormatter();
             fh.setFormatter(formatter);

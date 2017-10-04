@@ -122,3 +122,9 @@ DemoRestAPI/include/
 LinkedDataInterface/src/ruleEngine/mapping_sr.ttl
 RestApiInterface/log/
 apache_mods_activation.txt
+/RestApiInterface/whoosh_indexes/
+LinkedDataInterface/conf/log4j.properties
+LinkedDataInterface/src/ruleEngine/log/reasoner-13-09-2017 13-56-55.log.lck
+LinkedDataInterface/src/ruleEngine/log/reasoner-13-09-2017 14-33-39.log.lck
+LinkedDataInterface/src/ruleEngine/out/artifacts/ruleEngine_jar/odin
+LinkedDataInterface/src/ruleEngine/testing.ttl

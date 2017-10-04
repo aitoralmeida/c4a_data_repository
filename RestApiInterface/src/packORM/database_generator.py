@@ -7,6 +7,7 @@ This file contains the basic data structure to initialize the REST API interface
 """
 
 import logging
+import inspect
 import ar_tables
 import sr_tables
 
@@ -34,24 +35,30 @@ def generate_database(p_ar_post_orm, p_sr_post_orm):
     if len(ar_orm.get_tables()) == 0:
         print("Creating Activity Recognition database schema........")
         # We need to create tables in database
-        logging.info("Database is empty. Creating new tables in database and adding basic data")
+        logging.info(inspect.stack()[0][3], "Database is empty. Creating new tables in database and adding basic data")
         # Creating base tables
         ar_orm.create_tables()
         # Creating roles
         create_system_role(ar_tables, ar_orm)
-        logging.info("Created system roles for Activity Recognition schema")
+        logging.info(inspect.stack()[0][3], "Created system roles for Activity Recognition schema")
         # Creating administrative accounts
         create_administrative_account(ar_tables, ar_orm)
-        logging.info("Created administrative accounts for Activity Recognition schema")
+        logging.info(inspect.stack()[0][3], "Created administrative accounts for Activity Recognition schema")
         # Creating Pilot information
         create_pilot(ar_tables, ar_orm)
-        logging.info("Created pilots for Activity Recognition schema")
+        logging.info(inspect.stack()[0][3], "Created pilots for Activity Recognition schema")
         # Creating Pilots accounts
         create_pilots_accounts(ar_tables, ar_orm)
-        logging.info("Created pilot accounts for Activity Recognition schema")
-        # Creating CDActivity information:
+        logging.info(inspect.stack()[0][3], "Created pilot accounts for Activity Recognition schema")
+        # Creating CDAction information:
         create_actions(ar_tables, ar_orm)
-        logging.info("Created Actions for Activity Recognition schema")
+        logging.info(inspect.stack()[0][3], "Created Actions for Activity Recognition schema")
+        # Creating CDMetric information
+        create_metric(ar_tables, ar_orm)
+        logging.info(inspect.stack()[0][3], "Created Metrics for Activity Recognition schema")
+        # Creating CDTransformedAction information
+        create_transformed_actions(ar_tables, ar_orm)
+        logging.info(inspect.stack()[0][3], "Created Trasformed Actions for Activity Recognition schema")
         # Commit and closing connection
         ar_orm.commit()
         ar_orm.close()
@@ -62,34 +69,36 @@ def generate_database(p_ar_post_orm, p_sr_post_orm):
     if len(sr_orm.get_tables()) == 0:
         print ("Creating Shared Repository database schema........")
         # We need to create tables in database
-        logging.info("Database is empty. Creating new tables in database and adding basic data")
+        logging.info(inspect.stack()[0][3], "Database is empty. Creating new tables in database and adding basic data")
         # Creating base tables
         sr_orm.create_tables()
         # Creating roles
         create_system_role(sr_tables, sr_orm)
-        logging.info("Created system roles for Shared Repository schema")
+        logging.info(inspect.stack()[0][3], "Created system roles for Shared Repository schema")
         # Creating administrative accounts
         create_administrative_account(sr_tables, sr_orm)
-        logging.info("Created administrative accounts for Shared Repository schema")
+        logging.info(inspect.stack()[0][3], "Created administrative accounts for Shared Repository schema")
         # Creating Pilot information
         create_pilot(sr_tables, sr_orm)
-        logging.info("Created pilots for Shared Repository schema")
+        logging.info(inspect.stack()[0][3], "Created pilots for Shared Repository schema")
         # Creating Pilots accounts
         create_pilots_accounts(sr_tables, ar_orm)
-        logging.info("Created pilot accounts for Shared Repository schema")
+        logging.info(inspect.stack()[0][3], "Created pilot accounts for Shared Repository schema")
         # Detection variables
         create_detection_variables(sr_tables, sr_orm)
-        logging.info("Created detection variables for Shared Repository schema")
-        # TODO we need to be sure if this schema needs this datatype
-        # Creating CDActivity information:
+        logging.info(inspect.stack()[0][3], "Created detection variables for Shared Repository schema")
+        # Creating CDAction information:
         create_actions(sr_tables, sr_orm)
-        logging.info("Created Actions for Shared Repository schema")
+        logging.info(inspect.stack()[0][3], "Created Actions for Shared Repository schema")
         # Creating CDDetectionVariable Table
         create_measure(sr_tables, sr_orm)
-        logging.info("Created CDDetectionVariable for Shared Repository schema")
+        logging.info(inspect.stack()[0][3], "Created CDDetectionVariable for Shared Repository schema")
         # Creating CDTypicalPeriod Table
         create_typical_period(sr_tables, sr_orm)
-        logging.info("Created CDTypicalPeriod for Shared Repository schema")
+        logging.info(inspect.stack()[0][3], "Created CDTypicalPeriod for Shared Repository schema")
+        # Creating CDMetric information
+        create_metric(sr_tables, sr_orm)
+        logging.info(inspect.stack()[0][3], "Created Metrics for Shared Repository schema")
         # Commit and closing connection
         sr_orm.commit()
         sr_orm.close()
@@ -273,12 +282,12 @@ def create_pilot(p_tables, p_orm):
     """
     # Creating pilots names
     list_of_pilots = list()
-    madrid = p_tables.Pilot(pilot_name='madrid', code='mad', population_size=3141991)
-    lecce = p_tables.Pilot(pilot_name='lecce', code='lcc', population_size=89839)
-    singapore = p_tables.Pilot(pilot_name='singapore', code='sin', population_size=5610000)
-    montpellier = p_tables.Pilot(pilot_name='montpellier', code='mpl', population_size=268456)
-    athens = p_tables.Pilot(pilot_name='athens', code='ath', population_size=3090508)
-    birmingham = p_tables.Pilot(pilot_name='birmingham', code='bhx', population_size=1101360)
+    madrid = p_tables.Pilot(pilot_name='madrid', pilot_code='mad', population_size=3141991)
+    lecce = p_tables.Pilot(pilot_name='lecce', pilot_code='lcc', population_size=89839)
+    singapore = p_tables.Pilot(pilot_name='singapore', pilot_code='sin', population_size=5610000)
+    montpellier = p_tables.Pilot(pilot_name='montpellier', pilot_code='mpl', population_size=268456)
+    athens = p_tables.Pilot(pilot_name='athens', pilot_code='ath', population_size=3090508)
+    birmingham = p_tables.Pilot(pilot_name='birmingham', pilot_code='bhx', population_size=1101360)
     list_of_pilots.extend([madrid, lecce, singapore, montpellier, athens, birmingham])
     # Insert data, pending action
     p_orm.insert_all(list_of_pilots)
@@ -679,6 +688,35 @@ def create_actions(p_tables, p_orm):
     p_orm.commit()
 
 
+def create_transformed_actions(p_tables, p_orm):
+    """
+    This method creates the codebook of transformed actions to know which actions are connected to original
+    actions to the HARS discovery tool.
+
+
+    :param p_tables: the instantiation of the tables in database
+    :param p_orm: the orm connection to the database
+    :return:
+    """
+    list_of_transformed_action = []
+
+    home_enter = p_tables.CDTransformedAction(transformed_action_name='home_enter',
+                                              transformed_action_description='The user enters in home')
+    home_exit = p_tables.CDTransformedAction(transformed_action_name='home_exit',
+                                             transformed_action_description='The user leaves home')
+    walking_start = p_tables.CDTransformedAction(transformed_action_name='walking_start',
+                                                 transformed_action_description='The user starts walking')
+    walking_stop = p_tables.CDTransformedAction(transformed_action_name='walking_stop',
+                                                transformed_action_description='The user stops walking')
+
+    # Filling the list
+    list_of_transformed_action.extend([home_enter, home_exit, walking_start, walking_stop])
+    # Insert data, pending action
+    p_orm.insert_all(list_of_transformed_action)
+    # Commit changes
+    p_orm.commit()
+
+
 def create_typical_period(p_tables, p_orm):
     """
     Creating the needed tables of typical duration when the user send a duration valaue rather than interval_end in the
@@ -691,21 +729,93 @@ def create_typical_period(p_tables, p_orm):
     list_of_typical_period = []
 
     one_day = p_tables.CDTypicalPeriod(typical_period="day", period_description="One day", typical_duration=86400)
-    one_week = p_tables.CDTypicalPeriod(typical_period="wk", period_description="One week", typical_duration=604800)
-    two_weeks = p_tables.CDTypicalPeriod(typical_period="2wk", period_description="Two weeks (14 days, fortnight)", typical_duration=1210000)
-    one_month = p_tables.CDTypicalPeriod(typical_period="mon", period_description="One calendar month", typical_duration=2628000)
-    quarter = p_tables.CDTypicalPeriod(typical_period="qtr", period_description="Quarter year (3 months)", typical_duration=7884000)
-    semester = p_tables.CDTypicalPeriod(typical_period="sem", period_description="Semester, half a year, 6 months", typical_duration=15768000)
+    one_week = p_tables.CDTypicalPeriod(typical_period="1wk", period_description="One week", typical_duration=604800)
+    two_weeks = p_tables.CDTypicalPeriod(typical_period="2wk", period_description="Two weeks (14 days, fortnight)",
+                                         typical_duration=1210000)
+    one_month = p_tables.CDTypicalPeriod(typical_period="mon", period_description="One calendar month",
+                                         typical_duration=2628000)
+    quarter = p_tables.CDTypicalPeriod(typical_period="qtr", period_description="Quarter year (3 months)",
+                                       typical_duration=7884000)
+    semester = p_tables.CDTypicalPeriod(typical_period="sem", period_description="Semester, half a year, 6 months",
+                                        typical_duration=15768000)
     one_year = p_tables.CDTypicalPeriod(typical_period="1yr", period_description="One year", typical_duration=31540000)
-    two_years = p_tables.CDTypicalPeriod(typical_period="2yr", period_description="Two years", typical_duration=63070000)
-    three_years = p_tables.CDTypicalPeriod(typical_period="3yr", period_description="Three years", typical_duration=94610000)
-    five_years = p_tables.CDTypicalPeriod(typical_period="5yr", period_description="Five years", typical_duration=157700000)
+    two_years = p_tables.CDTypicalPeriod(typical_period="2yr", period_description="Two years",
+                                         typical_duration=63070000)
+    three_years = p_tables.CDTypicalPeriod(typical_period="3yr", period_description="Three years",
+                                           typical_duration=94610000)
+    five_years = p_tables.CDTypicalPeriod(typical_period="5yr", period_description="Five years",
+                                          typical_duration=157700000)
 
     # Filling the list
-    list_of_typical_period.extend([one_day, one_week, two_weeks, one_month, quarter, semester,one_year,two_years,
+    list_of_typical_period.extend([one_day, one_week, two_weeks, one_month, quarter, semester, one_year, two_years,
                                    three_years, five_years])
 
     # Insert data, pending action
     p_orm.insert_all(list_of_typical_period)
+    # Commit changes
+    p_orm.commit()
+
+
+def create_metric(p_tables, p_orm):
+    """
+    Creating the needed information of the metric table to be used as part of payload information of a given action
+
+    :param p_tables the instantiation of the tables in database
+    :param p_orm the orm connection to the database
+
+    """
+
+    list_of_metric = []
+
+    # Generating tables values
+    instance_id = p_tables.CDMetric(metric_name="instance_id", metric_description="a unique ID, chosen by the "
+                                                                                  "Pilot, that links together actions "
+                                                                                  "in an instance of the sequence",
+                                    metric_base_unit="string")
+    appliance_id = p_tables.CDMetric(metric_name="appliance_id", metric_description="identifier of the involved "
+                                                                                    "appliance, defined by the Pilot",
+                                     metric_base_unit="string")
+
+    appliance_type = p_tables.CDMetric(metric_name="appliance_type", metric_description="the appliance type, to be "
+                                                                                        "chosen from a specific "
+                                                                                        "ontology "
+                                                                                        " of appliances",
+                                       metric_base_unit="string")
+
+    furniture_id = p_tables.CDMetric(metric_name="furniture_id", metric_description="identifier of the involved piece "
+                                                                                    "of furniture, defined "
+                                                                                    "by the Pilot",
+                                     metric_base_unit="string")
+
+    furniture_type = p_tables.CDMetric(metric_name="furniture_type", metric_description="the furniture type, to be "
+                                                                                        "chosen from a specific ontology"
+                                                                                        " of pieces of furniture",
+                                       metric_base_unit="string")
+
+    associated_to = p_tables.CDMetric(metric_name="associated_to", metric_description="the entity the measurement is "
+                                                                                      "related to. It can be chosen in "
+                                                                                      "the set {'user', 'place'}. If it "
+                                                                                      "is set to 'place', the 'user' "
+                                                                                      "field in the CDF can be "
+                                                                                      "left unspecified",
+                                      metric_base_unit="string")
+
+    temperature = p_tables.CDMetric(metric_name="temperature", metric_description="current temperature in °C",
+                                    metric_base_unit="float")
+
+    humidity = p_tables.CDMetric(metric_name="humidity", metric_description="current humidity in %",
+                                 metric_base_unit="float")
+
+    noise = p_tables.CDMetric(metric_name="noise", metric_description="current noise level in dBe",
+                              metric_base_unit="float")
+
+    luminosity = p_tables.CDMetric(metric_name="luminosity", metric_description="current luminosity in lux",
+                                   metric_base_unit="float")
+
+    # Filling the list
+    list_of_metric.extend([instance_id, appliance_id, appliance_type, furniture_id, furniture_type, associated_to,
+                           temperature, humidity, noise, luminosity])
+    # Insert data, pending action
+    p_orm.insert_all(list_of_metric)
     # Commit changes
     p_orm.commit()
