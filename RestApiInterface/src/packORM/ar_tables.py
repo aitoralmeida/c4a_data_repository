@@ -21,6 +21,8 @@ from sqlalchemy import Column, Integer, String, Boolean, Sequence, Float, BigInt
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, validates
 from sqlalchemy.schema import CreateSchema
+from sqlalchemy_searchable import make_searchable
+from sqlalchemy_utils.types import TSVectorType
 
 from PasswordHash import PasswordHash
 from Encryption import Encryption
@@ -53,6 +55,13 @@ else:
 # Global variable declarative base
 Base = declarative_base(metadata=MetaData(schema='city4age_ar'))
 
+# Executing the making of searchable index
+# make_searchable()
+
+
+"""
+Definition of table special types. Here I defined some special tables for table encryption and password hashing.
+"""
 
 class EncryptedValue(TypeDecorator):
     """
@@ -166,7 +175,6 @@ class ExecutedAction(Base):
     """
 
     __tablename__ = 'executed_action'
-    # __searchable__ = ['acquisition_datetime']
 
 
     # Generating the Sequence
@@ -190,6 +198,10 @@ class ExecutedAction(Base):
     # Relationship with other TABLES
     cd_action = relationship("CDAction")
     location = relationship("Location")
+
+    # Vector search
+    ar_search_vector = Column(TSVectorType('location_id', 'user_in_role_id'))
+
 
     def __repr__(self):
         return "<ExecutedAction(id='%s', acquisition_datetime='%s', execution_datetime='%s', " \
@@ -228,6 +240,7 @@ class ExecutedActivity(Base):
 
     cd_location_type_executed_activity_rel = relationship("CDLocationTypeExecutedActivityRel",
                                                           cascade="all, delete-orphan")
+
 
     def __repr__(self):
         return "<ExecutedActivity(id='%s', start_time='%s', end_time='%s', duration='%s')>" % (self.id,
@@ -394,6 +407,7 @@ class PayloadValue(Base):
     cd_action = relationship('CDAction')
 
 
+
 # Basic Tables
 class UserInRole(Base):
     """
@@ -401,7 +415,6 @@ class UserInRole(Base):
     """
 
     __tablename__ = 'user_in_role'
-    # __searchable__ = ['pilot_source_user_id']
 
     # Generating the Sequence
     user_in_role_seq = Sequence('user_in_role_seq', metadata=Base.metadata)
@@ -421,6 +434,7 @@ class UserInRole(Base):
     executed_activity = relationship("ExecutedActivity", cascade="all, delete-orphan")
     executed_transformed_action = relationship("ExecutedTransformedAction", cascade="all, delete-orphan")
     user_in_eam = relationship("UserInEAM", cascade="all, delete-orphan")
+
 
     def __repr__(self):
         return "<UserInRole(id='%s', valid_from='%s'. valid_to='%s')>" % (self.id, self.valid_from, self.valid_to)
@@ -497,7 +511,6 @@ class CDAction(Base):
     Action registration
     """
     __tablename__ = 'cd_action'
-    #__searchable__ = ['action_name']
 
     # Generating the Sequence
     cd_action_id_seq = Sequence('cd_action_id_seq', metadata=Base.metadata)
@@ -506,6 +519,9 @@ class CDAction(Base):
     action_name = Column(String(50), unique=True)
     action_category = Column(String(25))
     action_description = Column(String(250), nullable=False)
+
+    # Search vector tables
+    ar_search_vector = Column(TSVectorType('action_name'))
 
     def __repr__(self):
         return "<CDAction(action_name='%s', action_category='%s', action_description='%s')>" % \
@@ -518,7 +534,6 @@ class Location(Base):
     """
 
     __tablename__ = 'location'
-    #__searchable__ = ['location_name']
 
     # Generating the Sequence
     location_id_seq = Sequence('location_id_seq', metadata=Base.metadata)
@@ -528,6 +543,9 @@ class Location(Base):
     indoor = Column(Boolean)
     # One2Many
     pilot_code = Column(String(4), ForeignKey('pilot.pilot_code'), nullable=True)
+
+    # Vector search
+    ar_search_vector = Column(TSVectorType('location_name'))
 
     def __repr__(self):
         return "<Location(location_name='%s', indoor='%s')>" % (
@@ -567,7 +585,6 @@ class CDActivity(Base):
     """
 
     __tablename__ = 'cd_activity'
-    #__searchable__ = ['activity_name']
 
     # Generating the Sequence
     activity_id_seq = Sequence('cd_activity_id_seq', metadata=Base.metadata)
@@ -575,7 +592,7 @@ class CDActivity(Base):
     id = Column(Integer, server_default=activity_id_seq.next_value(), primary_key=True)
     activity_name = Column(String(50), unique=True)
     activity_description = Column(String(200), nullable=True)
-    creation_date = Column(ArrowType(timezone=True), default=arrow.utcnow())
+    creation_date = Column(ArrowType(timezone=True), default=arrow.utcnow())            # Creation date automatic
     instrumental = Column(Boolean, default=False, nullable=False)  # Default value set to False --> Normal Activities
 
     # One2one
@@ -588,6 +605,9 @@ class CDActivity(Base):
     # expected_inter_behaviour = relationship("InterBehaviour", foreign_keys='InterBehaviour.expected_activity_id')
     # real_inter_behaviour = relationship("InterBehaviour", foreign_keys='InterBehaviour.real_activity_id')
 
+    # Vector search
+    ar_search_vector = Column(TSVectorType('activity_name'))
+
     def __repr__(self):
         return "<CDActivity(activity_name='%s')>" % self.activity_name
 
@@ -598,7 +618,6 @@ class Pilot(Base):
     """
 
     __tablename__ = 'pilot'
-    #__searchable__ = ['pilot_name']
 
     pilot_code = Column(String(3), unique=True, nullable=False, primary_key=True)
     pilot_name = Column(String(50), unique=True, nullable=False)
@@ -606,6 +625,9 @@ class Pilot(Base):
     # One2Many
     user_in_role = relationship('UserInRole')
     location = relationship('Location')
+
+    # Vector search
+    ar_search_vector = Column(TSVectorType('pilot_code', 'pilot_name'))
 
     def __repr__(self):
         return "<Pilot(pilot_code='%s', pilot_name='%s', population_size='%s')>" % \
@@ -660,6 +682,9 @@ class CDRole(Base):
 
     # one2many
     user_in_role = relationship('UserInRole')
+
+    # Vector search
+    ar_search_vector = Column(TSVectorType('role_name', 'role_abbreviation'))
 
     def __repr__(self):
         return "<CDRole(id='%s', role_name='%s', role_abbreviation='%s', role_description='%s'," \
@@ -759,6 +784,9 @@ class CDMetric(Base):
     # M2M relationship
     payload_value = relationship('PayloadValue')
 
+    # Vector search
+    ar_search_vector = Column(TSVectorType('metric_name'))
+
 
 class CDTransformedAction(Base):
     """
@@ -767,7 +795,7 @@ class CDTransformedAction(Base):
     """
 
     __tablename__ = 'cd_transformed_action'
-    #__searchable__ = ['transformed_action_name']
+
 
     # Generating the Sequence
     cd_transformed_action_seq = Sequence('cd_transformed_action_seq', metadata=Base.metadata)
@@ -775,3 +803,6 @@ class CDTransformedAction(Base):
     id = Column(Integer, server_default=cd_transformed_action_seq.next_value(), primary_key=True)
     transformed_action_name = Column(String(255), unique=True)
     transformed_action_description = Column(String(255), nullable=True)
+
+    # Vector search
+    ar_search_vector = Column(TSVectorType('transformed_action_name'))

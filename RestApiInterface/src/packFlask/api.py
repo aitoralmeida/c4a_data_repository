@@ -8,6 +8,7 @@ for Flask and manage error codes.
 
 from __future__ import print_function
 import logging
+import inspect
 from datetime import timedelta
 from functools import wraps
 from json import dumps, loads
@@ -19,8 +20,6 @@ from src.packUtils.utilities import Utilities
 from itsdangerous import Signer, BadSignature
 from src.packControllers import ar_post_orm, sr_post_orm
 
-
-
 __author__ = 'Rubén Mulero'
 __copyright__ = "Copyright 2017, City4Age project"
 __credits__ = ["Rubén Mulero", "Aitor Almeida", "Gorka Azkune", "David Buján"]
@@ -29,7 +28,6 @@ __version__ = "0.2"
 __maintainer__ = "Rubén Mulero"
 __email__ = "ruben.mulero@deusto.es"
 __status__ = "Prototype"
-
 
 # Configuration
 ACTUAL_API = '0.1'
@@ -44,6 +42,7 @@ MAX_LENGHT = 1398101  # in bytes        ~~ 500 LEAS OR up to 16MB? check if it w
 app = Flask(__name__)
 app.config.from_object(__name__)
 auth = HTTPBasicAuth()
+
 
 # Signatura verification configuration
 # s = Signer(os.urandom(24))
@@ -76,6 +75,7 @@ def limit_content_length(max_length):
             return f(*args, **kwargs)
 
         return wrapper
+
     return decorator
 
 
@@ -96,7 +96,9 @@ def required_roles(*roles):
                 logging.error("The uses doesn't have permissions to enter to this resource")
                 abort(403)
             return f(*args, **kwargs)
+
         return wrapped
+
     return wrapper
 
 
@@ -190,7 +192,6 @@ def when_request_finished(sender, response, **extra):
                           "\n Status code?: %s", USER.id, route, ip, agent, data, status_code)
 
 
-
 ###################################################################################################
 ###################################################################################################
 ######                              AUTH METHODS
@@ -238,7 +239,7 @@ def verify_password(username_or_token, password):
 @app.route('/api/<version>/login', methods=['GET'])
 @limit_content_length(MAX_LENGHT)
 @auth.login_required
-#@required_roles('administrator', 'geriatrician')
+# @required_roles('administrator', 'geriatrician')
 def login(version=app.config['ACTUAL_API']):
     """
     Gives the ability to login into API. It returns an encrypted cookie with the token information and a JSON containing
@@ -252,9 +253,10 @@ def login(version=app.config['ACTUAL_API']):
         if USER:
             token = AR_DATABASE.get_auth_token(USER, app, expiration=600)
             session['token'] = token
+            logging.info("login: User logged successfully")
             return jsonify({'token': token.decode('ascii')})
     else:
-        logging.error("logout: User entered an invalid api version, 404")
+        logging.error("login: User entered an invalid api version, 404")
         return "You have entered an invalid api version", 404
 
 
@@ -304,7 +306,6 @@ def data_sent_too_long(error):
     msg = "Data entered is too long, please send data with max length of %d bytes \n" % MAX_LENGHT
     resp = make_response(msg, 413)
     return resp
-
 
 
 ###################################################################################################
@@ -362,6 +363,7 @@ def api(version=app.config['ACTUAL_API']):
             <li><b>add_eam</b>: Adds information about EAM's in the API related to an activity.</li>
             <li><b>add_care_receiver</b>: Allows to a Pilot add a new user 'care_receiver' in the API.</li>
             <li><b>add_new_user</b>: Adds a new registered user in the system (Administrator only).</li>
+            <li><b>add_new_activity</b>: Adds a new activity into the activity codebook (Administrator only).</li>
             <li><b>get_my_info</b>: Returns user information about the actual client.</li>
         </ul>
 
@@ -437,7 +439,6 @@ def search(version=app.config['ACTUAL_API']):
     :return:
     """
 
-
     """
 
     ------> This code is only used for reference purposes
@@ -466,11 +467,6 @@ def search(version=app.config['ACTUAL_API']):
                 return Response(msg), 400
 
     """
-
-
-
-
-
 
     # TODO tell to the user what kind of schema
 
@@ -523,6 +519,7 @@ def search(version=app.config['ACTUAL_API']):
 
     """
 
+
 ################################################################################
 
 @app.route('/api/<version>/add_action', methods=['POST'])
@@ -536,19 +533,23 @@ def add_action(version=app.config['ACTUAL_API']):
     The JSON structure must be in a defined format called Common Data format as:
 
     {
+        "activity": "LeaveHouse",
+        "user": "eu:c4a:user:9",
+        "pilot": "LCC",
+        "start_time": "2018-04-20T07:08:41.013+03:00",
+        "end_time": "2018-05-20T07:08:41.013+03:00",
+        "duration": 23232323,
+        "payload": [{
             "action": "eu:c4a:POI_ENTER",
-            "user": "eu:c4a:user:1234523",
-            "pilot": "ATH",
             "location": "eu:c4a:Shop:Ermou96",
             "position": "37.976908 23.724375",
-            "timestamp": "2014-05-20T07:08:41.013+03:00",
-            "payload": {
-                "instance_id": "124"
-            },
-            "data_source_type": [ "sensors", "external_dataset" ],
-            "extra": {
-                "pilot_specific_field": "some value"
-            }
+            "timestamp": "2014-05-20T07:08:41.013+03:00"
+        }, {
+            "action": "eu:c4a:POI_EXIT",
+            "location": "eu:c4a:Room:number23",
+            "timestamp": "2012-05-20T07:08:41.013+03:00"
+        }],
+        "data_source_type": ["sensors", "external_dataset"]
     }
     
     :param version: Api version
@@ -580,8 +581,6 @@ def add_action(version=app.config['ACTUAL_API']):
                 return Response(msg), 400
 
 
-# TODO code this pasrt
-
 @app.route('/api/<version>/add_activity', methods=['POST'])
 @limit_content_length(MAX_LENGHT)
 @auth.login_required
@@ -596,26 +595,32 @@ def add_activity(version=app.config['ACTUAL_API']):
 
     An example in JSON could be:
 
+
     {
-        "activity":     "LeaveHouse",
-        "user":         "eu:c4a:user:1234523",
-        "pilot":        "ATH",
-        "start_time":   "2018-04-20T07:08:41.013+03:00",
-        "end_time":     "2018-05-20T07:08:41.013+03:00",
-        "duration":     23232323,
-        "payload": {
-            # Optional information containing a list of different actions
-            "eu:c4a:POI_ENTER": {
-                "location": "eu:c4a:Shop:Ermou96",
-                "position": "37.976908 23.724375",              # Optional
-                "timestamp": "2014-05-20T07:08:41.013+03:00"
-            },
-            "eu:c4a:POI_EXIT": {
-                "location": "eu:c4a:Room:number23",
-                "timestamp": "2012-05-20T07:08:41.013+03:00"
-            }
-        },
-        "data_source_type": [ "sensors", "external_dataset" ]
+        "activity": "LeaveHouse",
+        "user": "eu:c4a:user:9",
+        "pilot": "LCC",
+        "start_time": "2018-04-20T07:08:41.013+03:00",
+        "end_time": "2018-05-20T07:08:41.013+03:00",
+        "duration": 23232323,
+        "payload": [{
+            "action": "eu:c4a:POI_EXIT",
+            "location": "eu:c4a:Pharmacy:Vanilla123",
+            "timestamp": "2015-05-20T07:08:41.013+03:00",
+            "position": "38.976908 22.724375"
+        }, {
+            "action": "eu:c4a:POI_ENTER",
+            "location": "eu:c4a:Shop:Ermou96",
+            "timestamp": "2014-05-20T07:08:41.013+03:00",
+            "position": "37.976908 23.724375"
+        }, {
+            "action": "eu:c4a:APPLIANCE_ON",
+            "location": "eu:c4a:Room:number23",
+            "timestamp": "2012-05-20T07:08:41.013+03:00",
+            "position": "42.986908 33.724375"
+        }
+                   ],
+        "data_source_type": ["sensors", "external_dataset"]
     }
 
     :param version: Api version
@@ -632,10 +637,53 @@ def add_activity(version=app.config['ACTUAL_API']):
                 logging.info("add_activity: the username: %s adds new activity into database" % USER.username)
                 return Response('Data stored in database OK\n'), 200
             else:
-                logging.error("add_activity: the username: %s failed to store data into database. 500" % USER.username)
+                logging.error("add_activity: %s failed to store data into database. 500" % USER.username)
                 return Response("There is an error in DB"), 500
         else:
             logging.error("add_activity: there is a problem with entered data")
+            # Data is not valid, check the problem
+            if "duplicated" in msg:
+                # Data sent is duplicated.
+                return Response(msg), 409
+            else:
+                # Standard Error
+                return Response(msg), 400
+
+
+@app.route('/api/<version>/add_new_activity', methods=['POST'])
+@limit_content_length(MAX_LENGHT)
+@auth.login_required
+@required_roles('administrator')
+def add_new_activity(version=app.config['ACTUAL_API']):
+    """
+    Adds a new value into the codebook of activities. The activity must not exist previously in database
+
+
+    {
+        "activity": "LeaveHouse",
+        "description": "User leave the house",      # OPTIONAL VALUE
+        "instrumental": true
+    }
+
+    :param version: Api version
+    :return: Confirmation message
+    """
+    if Utilities.check_connection(app, version):
+        data = _convert_to_dict(request.json)
+        msg = Utilities.check_add_new_activity_data(AR_DATABASE, data)
+        if data and not msg and USER:
+            # User and data are OK. save data into DB
+            res_ar = AR_DATABASE.add_new_activity(data)
+            res_sr = SR_DATABASE.add_new_activity(data)
+            if res_ar and res_sr:
+                logging.info("add_new_activity: the username: %s adds new activity into database" % USER.username)
+                return Response('Data stored in database OK\n'), 200
+            else:
+                logging.error(
+                    "add_new_activity: the username: %s failed to store data into database. 500" % USER.username)
+                return Response("There is an error in DB"), 500
+        else:
+            logging.error("add_new_activity: there is a problem with entered data")
             # Data is not valid, check the problem
             if "duplicated" in msg:
                 # Data sent is duplicated.
@@ -689,7 +737,7 @@ def add_new_user(version=app.config['ACTUAL_API']):
 
                 return Response('The user(s) are registered successfully in the system', 200)
             else:
-                logging.error("add_new_user: the username: %s failed to store data into database. 500" % USER.username)
+                logging.error("add_new_user: %s failed to store data into database. 500" % USER.username)
                 return Response("There is an error in DB"), 500
         else:
             logging.error("add_new_user: there is a problem with entered data")
@@ -734,10 +782,14 @@ def add_care_receiver(version=app.config['ACTUAL_API']):
             res_sr = SR_DATABASE.add_new_care_receiver(data, USER.id)
             if res_ar and res_sr:
                 # We only return one value, because both database has the same IDS
+                logging.info(
+                    "add_care_receiver: the username: %s adds new user care receiver into database" % USER.username)
                 return jsonify(res_ar)
             else:
+                logging.error("add_care_receiver: %s failed to store data into database. 500" % USER.username)
                 return Response("There is an error in DB"), 500
         else:
+            logging.error("add_care_receiver: there is a problem with entered data")
             # Data is not valid, check the problem
             if "duplicated" in msg:
                 # Data sent is duplicated.
@@ -916,7 +968,6 @@ def add_eam(version=app.config['ACTUAL_API']):
             else:
                 # Standard Error
                 return Response(msg), 400
-
 
 
 # TODO --> Add new function to the API --> commit() # Executes an script to calculate NUI's only SR

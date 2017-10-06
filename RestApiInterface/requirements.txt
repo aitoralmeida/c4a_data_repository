@@ -1,5 +1,6 @@
 arrow==0.10.0
 blinker==1.4
+decorator==4.1.2
 Flask==0.10.1
 Flask-HTTPAuth==3.2.2
 Flask-SQLAlchemy==2.1
@@ -18,13 +19,18 @@ psycopg2==2.6.1
 py-bcrypt==0.4
 pycrypto==2.6.1
 PyInstaller==3.2
+pyparsing==2.2.0
 python-dateutil==2.6.0
 pytz==2017.2
 rfc3987==1.3.7
+simplejson==3.11.1
 six==1.10.0
 SQLAlchemy==1.0.12
+SQLAlchemy-Searchable==0.10.4
 SQLAlchemy-Utils==0.32.14
 testfixtures==4.9.1
 urllib3==1.19
-uWSGI==2.0.13
+uWSGI==2.0.12
+validators==0.12.0
 Werkzeug==0.11.5
+Whoosh==2.7.4

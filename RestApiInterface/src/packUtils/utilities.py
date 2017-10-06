@@ -235,7 +235,6 @@ class Utilities(object):
         :return: --> None: If all is OK
                   --> Message: A message containing the encountered error
         """
-
         msg = None
         # Defining schema to be compared with entered data
         schema = {
@@ -287,37 +286,44 @@ class Utilities(object):
                 },
                 "payload": {
                     "description": "Additional values like action",
-                    "type": "object",
-                    "patternProperties": {
-                        "^[a-z, A-Z]": {
-                            "type": "object",
-                            "properties": {
-                                "location": {
-                                    "description": "Semantic location of the performed action",
-                                    "type": "string",
-                                    "minLength": 3,
-                                    "maxLength": 50,
-                                    "pattern": "^eu:c4a:[a-z,A-Z,0-9]{3,25}:[a-z,A-Z,0-9]{1,30}$",
-                                },
-                                "timestamp": {
-                                    "description": "The time when de action was performed",
-                                    "type": "string",
-                                    "format": "date-time",
-                                    "minLength": 3,
-                                    "maxLength": 45
-                                },
-                                "position": {
-                                    "description": "The exact position given in Lat/Long format",
-                                    "type": "string",
-                                    "minLength": 3,
-                                    "maxLength": 50
-                                },
+                    "type": "array",
+                    "minItems": 0,
+                    "maxItems": 30,
+                    "uniqueItems": True,
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "action": {
+                                "description": "the name of the action",
+                                "type": "string",
+                                "minLength": 3,
+                                "maxLength": 50,
+                                "pattern": "^(eu:c4a:[a-z,A-Z]{3,15}_[a-z,A-Z]{2,15}_[a-z,A-Z]{2,15}|eu:c4a:[a-z,A-Z]{3,15}_[a-z,A-Z]{2,15})$",
                             },
-                            "additionalProperties": False,
-                            "required": ["location", "timestamp"]
+                            "location": {
+                                "description": "Semantic location of the performed action",
+                                "type": "string",
+                                "minLength": 3,
+                                "maxLength": 50,
+                                "pattern": "^eu:c4a:[a-z,A-Z,0-9]{3,25}:[a-z,A-Z,0-9]{1,30}$",
+                            },
+                            "timestamp": {
+                                "description": "The time when de action was performed",
+                                "type": "string",
+                                "format": "date-time",
+                                "minLength": 3,
+                                "maxLength": 45
+                            },
+                            "position": {
+                                "description": "The exact position given in Lat/Long format",
+                                "type": "string",
+                                "minLength": 3,
+                                "maxLength": 50
+                            },
                         },
-                    },
-                    "additionalProperties": False,
+                        "additionalProperties": False,
+                        "required": ["action", "location", "timestamp", "position"]
+                        }
                 },
                 "data_source_type": {
                     "description": "how the action has been decided or imported",
@@ -351,7 +357,7 @@ class Utilities(object):
                     raise ValidationError("The entered activity doesn't exist: %s" % data['activity'])
                 # Appending the activity
                 # list_of_activities.append(data['activity'])
-                elif not Utilities.validate_user_pilot(p_database, data['user'], data['pilot']):
+                elif not Utilities.validate_user_pilot(p_database, data['user'].split(':')[-1].lower(), data['pilot']):
                     logging.error("The entered user doesn't exist or its Pilot is incorrect: %s -- %s" %
                                   (data['user'], data['pilot']))
                     raise ValidationError("The entered user doesn't exist or its Pilot is incorrect: %s -- %s" %
@@ -362,35 +368,101 @@ class Utilities(object):
                     raise ValidationError("Start time is greater than end time. Start_time: %s -- End_time_ %s" %
                                           (data['start_time'], data['end_time']))
                 ###
-                if data.get('payload', False):
+                payload = data.get('payload', False)
+                if payload:
                     # The user entered a payload of actions, we are going to check if data is consistent or not
-                    for key, value in data['payload'].items():
+                    for value in payload:
                         # Validating entered action
-                        if not Utilities.validate_action(p_database, key):
-                            logging.error("The given action in the payload doesn't exists in database: %s" % key)
-                            raise ValidationError("The given action in the payload doesn't exists in database: %s" % key)
+                        if not Utilities.validate_action(p_database, value):
+                            logging.error("The given action in the payload doesn't exists in database: %s" % value)
+                            raise ValidationError(
+                                "The given action in the payload doesn't exists in database: %s" % value.get('action'))
                         elif value.get('location', False) and not Utilities.validate_location(p_database, value):
                             logging.error(
-                                "The given location of the performed action doesn't exist in database: %s" % data['payload'][
-                                    'location'])
+                                "The given location of the performed action doesn't exist in database: %s" % value.get(
+                                    'location', False))
                             raise ValidationError("The given location of the performed action "
-                                                  "doesn't exist in database: %s" %
-                                                  data['payload']['location'])
+                                                  "doesn't exist in database: %s" % value.get('location', False))
 
-                    # We are going to search for duplicated users in the json list sent by the user
-                    # duplicated = [k for k, v in Counter(list_of_activities).items() if v > 1]
-                    # if len(duplicated) > 0:
-                    #    # Raise an error for duplicated values
-                    #    logging.error("There are are duplicated activity names in the JSON: %s" % duplicated)
-                    #    raise ValidationError("There are are duplicated activity names in the JSON: %s" % duplicated)
+                            # We are going to search for duplicated users in the json list sent by the user
+                            # duplicated = [k for k, v in Counter(list_of_activities).items() if v > 1]
+                            # if len(duplicated) > 0:
+                            #    # Raise an error for duplicated values
+                            #    logging.error("There are are duplicated activity names in the JSON: %s" % duplicated)
+                            #    raise ValidationError("There are are duplicated activity names in the JSON: %s" % duplicated)
 
-                    # else:
-                    #     validate(p_data, schema, format_checker=FormatChecker())
-                    #     # check if the activity exist in database or not
-                    #     if Utilities.validate_activity(p_database, p_data):
-                    #         # The activity exist already in database
-                    #         logging.error("The entered activity is duplicated: %s" % p_data['activity'])
-                    #         raise ValidationError("The entered activity is duplicated: %s" % p_data['activity'])
+                            # else:
+                            #     validate(p_data, schema, format_checker=FormatChecker())
+                            #     # check if the activity exist in database or not
+                            #     if Utilities.validate_activity(p_database, p_data):
+                            #         # The activity exist already in database
+                            #         logging.error("The entered activity is duplicated: %s" % p_data['activity'])
+                            #         raise ValidationError("The entered activity is duplicated: %s" % p_data['activity'])
+        except ValidationError as e:
+            logging.error("The schema entered by the user is invalid")
+            msg = e.message
+        return msg
+
+    @staticmethod
+    def check_add_new_activity_data(p_database, p_data):
+        """
+        Check if the given activity data is coorect and none of the sent data exists in database
+
+
+        :param p_database: The database instance to call
+        :param p_data: User sent data
+
+        :return:  --> None: If all is OK
+                  --> Message: A message containing the encountered error
+        """
+        msg = None
+        schema = {
+            "title": "Add new activity into the database coodebook of activities",
+            "type": "object",
+            "properties": {
+                "activity": {
+                    "description": "The name of the new activity",
+                    "type": "string",
+                    "minLength": 5,
+                    "maxLength": 50
+                },
+                "description": {
+                    "description": "The description of the given activity",
+                    "type": "string",
+                    "minLength": 5,
+                    "maxLength": 200
+                },
+                "instrumental": {
+                    "description": "Sets if the given activity is or not an instrumental activity",
+                    "type": "boolean",
+                },
+            },
+            "required": [
+                "activity",
+                "description",
+                "instrumental"
+            ],
+            "additionalProperties": False
+        }
+
+        try:
+            # We have a list of dicts
+            list_of_activities = []
+            for data in p_data:
+                validate(data, schema, format_checker=FormatChecker())
+                # check if the activity exist in database or not
+                if Utilities.validate_activity(p_database, data):
+                    # The activity exist already in database
+                    logging.error("The entered activity already exists in database: %s" % data['activity'])
+                    raise ValidationError("The entered activity already exists in database: %s" % data['activity'])
+                # Appending the activity
+                list_of_activities.append(data['activity'])
+                # We are going to search for duplicated users in the json list sent by the user
+                duplicated = [k for k, v in Counter(list_of_activities).items() if v > 1]
+                if len(duplicated) > 0:
+                    # Raise an error for duplicated values
+                    logging.error("There are are duplicated activity names in the JSON: %s" % duplicated)
+                    raise ValidationError("There are are duplicated activity names in the JSON: %s" % duplicated)
         except ValidationError as e:
             logging.error("The schema entered by the user is invalid")
             msg = e.message
@@ -398,7 +470,7 @@ class Utilities(object):
 
     @staticmethod
     def check_add_new_user_data(p_database, p_data):
-        """
+        """activity_
         Check if data is ok and if the not nullable values are filled.
 
         :param p_database: The database instance to call
@@ -985,6 +1057,7 @@ class Utilities(object):
                                                   data.get('user', False))
 
                             # TODO make a validation of the locations
+            """
             else:
                 validate(p_data, schema, format_checker=FormatChecker())
                 # Checking data integrity
@@ -1005,6 +1078,8 @@ class Utilities(object):
                         raise ValidationError("The entered user doesn't exist in database: %s" %
                                               p_data.get('user', False))
                         # TODO make a validation of the locations
+
+            """
 
         except ValidationError as e:
             logging.error("The schema entered by the user is invalid")
@@ -1114,7 +1189,7 @@ class Utilities(object):
                     True: If the Pilot and user fits in DB
         """
 
-        return p_database.check_user_pilot(p_user, p_pilot)
+        return p_database.check_user_pilot(p_user, p_pilot.lower())
 
     @staticmethod
     def validate_action(p_database, p_one_data):
@@ -1128,7 +1203,7 @@ class Utilities(object):
         """
         res = False
         if p_one_data and p_one_data.get('action', False):
-            action = p_one_data['action'].lower() or None  # lowering string cases
+            action = p_one_data['action'].split(':')[-1].lower() or None  # lowering string cases
             # Get current registered users
             res = p_database.check_action(action)
         return res
@@ -1141,8 +1216,8 @@ class Utilities(object):
         
         :param p_database: Databas instance 
         :param p_one_data: The element to be checked
-        :return: True if all is correct
-                False if there are duplicated elements in DB
+        :return: True if the activity already exists ind database
+                 False if the activity doesn't exist in database
         """
         res = False
         # checking if exist activity name

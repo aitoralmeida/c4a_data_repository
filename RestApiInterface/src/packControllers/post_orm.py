@@ -14,11 +14,11 @@ import inspect
 import ConfigParser
 import logging
 import arrow
-from sqlalchemy import create_engine, desc
+from sqlalchemy import create_engine, desc, orm
 from sqlalchemy.engine.url import URL
 from sqlalchemy.exc import OperationalError
-from sqlalchemy.orm import sessionmaker
-from whooshalchemy import IndexService
+from sqlalchemy.orm import sessionmaker, scoped_session
+from sqlalchemy_searchable import search
 
 __author__ = 'Rubén Mulero'
 __copyright__ = "Copyright 2016, City4Age project"
@@ -64,30 +64,18 @@ class PostORM(object):
         self.tables = p_tables
         # Make basic connection and setup declarative
         self.engine = create_engine(URL(**DATABASE))
+        orm.configure_mappers()  # Important for full text search index
         try:
-            session_mark = sessionmaker(bind=self.engine)  # Bind session engine Test connection
+            session_mark = scoped_session(sessionmaker(autoflush=autoflush, bind=self.engine))
             session = session_mark()
             if session:
-                print("Connection OK")
-                if autoflush:
-                    logging.info("Created session connection with autoflush")
-                    self.session = session
-                else:
-                    logging.info("Created session connection without autoflush")
-                    self.session = session.no_autoflush
-                """
-                # Registering index session
-                index_service = IndexService(session=session)
-                # Appending searchable tables
-                if len(index_service.indexes) == 0:
-                    logging.info("Populating index service")
-                    # Registering tables
-                    for name, cls in p_tables.__dict__.items():
-                        if getattr(cls, '__searchable__', False):
-                            index_service.register_class(cls)
-                            logging.info("Registering index class of: %s" % name)
-                            print("Registering index class of: %s" % name)
-                """
+                print("Database connection OK")
+                logging.debug(inspect.stack()[0][3], "Database session opened successfully")
+                self.session = session
+            else:
+                print("Failed to open a database session")
+                logging.error(inspect.stack()[0][3], "Failed to open database session")
+                raise Exception("Failed to open database session")
         except OperationalError:
             print("Database arguments are invalid")
 
@@ -340,7 +328,6 @@ class PostORM(object):
             user = self._get_or_create(self.tables.UserInRole, id=int(data['user'].split(':')[-1]),
                                        pilot_code=pilot.pilot_code,
                                        cd_role_id=cd_role.id)
-            # Adding the location
             # location_type = self._get_or_create(sr_tables.LocationType,
             #                                   location_type_name=data['location'].split(':')[-2].lower())
             # location = self._get_or_create(sr_tables.Location, location_name=data['location'].split(':')[-1].lower(),
@@ -349,6 +336,8 @@ class PostORM(object):
                                            pilot_code=pilot.pilot_code)
             # location_type_rel = self._get_or_create(sr_tables.LocationLocationTypeRel, location_id=location.id, location_type_id=location_type.id)
 
+            # Generating IDS
+            self.session.flush()
             # Generating a new acquisition_datetime
             acquisition_datetime = arrow.utcnow()
             # Insert a new executed action
@@ -393,8 +382,8 @@ class PostORM(object):
         logging.info(inspect.stack()[0][3], "adding data to database")
         for data in p_data:
             # Getting the activity from database
-            cd_activity = self.session.query(self.tables.CDActivity).filter_by(activity_name=data['activity'])
-            user_in_role = self.session.query(self.tables.UserInRole, id=int(data['user'].split(':')[-1]))
+            cd_activity = self.session.query(self.tables.CDActivity).filter_by(activity_name=data['activity'].lower())[0]
+            user_in_role = self.session.query(self.tables.UserInRole).filter_by(id=int(data['user'].split(':')[-1]))[0]
             # Insert new executed activity data into DB
             executed_activity = self.tables.ExecutedActivity(start_time=data['start_time'], end_time=data['end_time'],
                                                              duration=data['duration'],
@@ -405,21 +394,22 @@ class PostORM(object):
             # Pending insert in database (Obtaining possible ID)
             self.insert_one(executed_activity)
             # If the entered data contains payload
-            if data.get('payload', False):
+            payload = data.get('payload', False)
+            if payload:
                 # Obtaining pilot information
-                pilot = self.session.query(self.tables.Pilot, pilot_code=data['pilot'])
-                for key, value in data['payload'].items():
+                pilot = self.session.query(self.tables.Pilot).filter_by(pilot_code=data['pilot'].lower())[0]
+                for value in payload:
                     # Key is the action name, Value is the needed action value to extract it from db
-                    cd_action = self.session.query(self.tables.CDAction).filter_by(action_name=key)
+                    cd_action = self.session.query(self.tables.CDAction).filter_by(action_name=value['action'].split(':')[-1].lower())[0]
                     location = self.session.query(self.tables.Location).filter_by(
-                        location_name=value.get('location', False), pilot_code=pilot[0].pilot_code)
-                    # Obtaining exectued action instance
+                        location_name=value.get('location', None).lower(), pilot_code=pilot.pilot_code)[0]
+                    # Obtaining executed action instance
                     executed_action = self.session.query(self.tables.ExecutedAction).filter_by(
-                        user_in_role_id=user_in_role[0].id,
-                        cd_action_id=cd_action[0].id,
-                        location_id=location[0].id,
-                        execution_datetime=value.get('timestamp', False),
-                        position=value.get('position', False)
+                        user_in_role_id=user_in_role.id,
+                        cd_action_id=cd_action.id,
+                        location_id=location.id,
+                        execution_datetime=value.get('timestamp'),
+                        position=value.get('position')
                     )
                     # Once data is recovered
                     if executed_action and executed_action.count() > 0:
@@ -427,16 +417,33 @@ class PostORM(object):
                         # Fill intermediate table between executed action and executed activity
                         executed_activity_executed_action_rel = self.tables.ExecutedActivityExecutedActionRel(
                             executed_activity_id=executed_activity.id,
-                            executed_action_id=executed_action.id
+                            executed_action_id=executed_action[0].id
                         )
                         # Pending insert in database
                         self.insert_one(executed_activity_executed_action_rel)
-
         # Commit changes
         logging.info(inspect.stack()[0][3], "data entered successfully")
         return self.commit()
 
-    def search_dataset(self, p_data):
+    def add_new_activity(self, p_data):
+        """
+        Adds a new activity into the codebook database of activities.
+
+
+        :param p_data: Data sent by the user
+        :return: True if everything goes well.
+                False if there are any problem
+        """
+        logging.info(inspect.stack()[0][3], "adding data to database")
+        for data in p_data:
+            cd_activity = self._get_or_create(self.tables.CDActivity, activity_name=data['activity'].lower(),
+                                activity_description=data['description'],
+                                instrumental=data['instrumental'])
+        # Commit changes9
+        logging.info(inspect.stack()[0][3], "data entered successfully")
+        return self.commit()
+
+    def search(self, p_data):
         """
         By receiving a set of data. Make the needed calls inside database to extract the given search pattern
 
@@ -460,26 +467,11 @@ class PostORM(object):
         :return:  A data result based on search criteria
         """
         res = None
-        # If data contains an specific table, we make the search to this table, otherwise, we decide a 'default' table
-        # to be used in the search.
-        q = self.query(p_data['table'], p_data['criteria'], p_data['limit'], p_data['offset'], p_data['order_by'])
-        if q.count() > 0:
-            # We have useful data
-            # --> TODO process this data
 
+        # query = self.session.query(TABLES)
+        # query = search(query, 'first')
 
-            pass
-
-        # TODO for check purpuses (This piece of code generates a dict of p_tables element)
-        # dict([(name, cls) for name, cls in p_tables.__dict__.items() if isinstance(cls, type)])
-
-        return res
-
-    # TODO think a method to make a query into DB and list all available tables in a desired ScHEMA.
-
-
-
-
+        # query.first().name
 
     ###################################################################################################
     ###################################################################################################

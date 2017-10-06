@@ -132,6 +132,9 @@ class ARPostORM(PostORM):
                 insert_list.append(cd_eam_start_range_rel)
             # For each transformed action
             for transformed_action in data['transformed_action']:
+
+                # TODO users can create NEW TRANSFORMED ACTIONS BASED IN THEIR PAYLOAD
+
                 # Insert the transformed actions
                 transformed_action = self._get_or_create(ar_tables.CDTransformedAction,
                                                          transformed_action_name=transformed_action)

@@ -21,6 +21,8 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, validates
 from sqlalchemy.schema import CreateSchema
 from sqlalchemy_utils import ArrowType
+from sqlalchemy_searchable import make_searchable
+from sqlalchemy_utils.types import TSVectorType
 
 from PasswordHash import PasswordHash
 from Encryption import Encryption
@@ -52,6 +54,10 @@ else:
 
 # Global variable declarative base
 Base = declarative_base(metadata=MetaData(schema='city4age_sr'))
+
+# Executing the making of searchable index
+# make_searchable()
+
 
 """
 Definition of table special types. Here I defined some special tables for table encryption and password hashing.
@@ -203,8 +209,9 @@ class FrailtyStatusTimeline(Base):
     time_interval = relationship('TimeInterval')
     cd_frailty_status = relationship('CDFrailtyStatus')
 
+    # Vector search
+    ar_search_vector = Column(TSVectorType('time_interval_id', 'user_in_role_id', 'frailty_status'))
 
-# TODO UPDATE THIS TABLE
 
 class MDPilotDetectionVariable(Base):
     """
@@ -304,6 +311,7 @@ class ExecutedActivity(Base):
     executed_activity_executed_action_rel = relationship("ExecutedActivityExecutedActionRel",
                                                          cascade="all, delete-orphan")
 
+
     def __repr__(self):
         return "<ExecutedActivity(executed_activity_name='%s')>" % self.executed_activity_name
 
@@ -340,6 +348,10 @@ class ExecutedAction(Base):
     cd_action = relationship("CDAction")
     executed_activity = relationship("ExecutedActivity")
     location = relationship("Location")
+
+    # Vector search
+    sr_search_vector = Column(TSVectorType('location_id', 'user_in_role_id'))
+
 
 
 class LocationLocationTypeRel(Base):
@@ -440,6 +452,9 @@ class CDRole(Base):
 
     # M2M Relationship
     assessment_audience_role = relationship('AssessmentAudienceRole')
+
+    # Vector search
+    sr_search_vector = Column(TSVectorType('role_name', 'role_abbreviation'))
 
     def __repr__(self):
         return "<CDRole(id='%s', role_name='%s', role_abbreviation='%s', role_description='%s'," \
@@ -623,6 +638,8 @@ class Pilot(Base):
     # M2M Relationship
     #md_pilot_detection_variable = relationship('MDPilotDetectionVariable')
 
+    sr_search_vector = Column(TSVectorType('pilot_code', 'pilot_name'))
+
     def __repr__(self):
         return "<Pilot(pilot_code='%s', pilot_name='%s', population_size='%s')>" % \
                (self.pilot_code, self.pilot_name, self.population_size)
@@ -647,6 +664,9 @@ class Location(Base):
     # many2many
     # executed_activity = relationship("LocationExecutedActivityRel")
     location_type = relationship("LocationLocationTypeRel")
+
+    # Vector search
+    sr_search_vector = Column(TSVectorType('location_name'))
 
     def __repr__(self):
         return "<Location(location_name='%s', indoor='%s')>" % (self.location_name, self.indoor)
@@ -740,6 +760,9 @@ class CDActivity(Base):
     # one2many
     # expected_inter_behaviour = relationship("InterBehaviour", foreign_keys='InterBehaviour.expected_activity_id')
     # real_inter_behaviour = relationship("InterBehaviour", foreign_keys='InterBehaviour.real_activity_id')
+
+    # Vector search
+    sr_search_vector = Column(TSVectorType('activity_name'))
 
     def __repr__(self):
         return "<CDActivity(activity_name='%s')>" % self.activity_name
@@ -1170,3 +1193,6 @@ class CDMetric(Base):
     metric_base_unit = Column(String(50), nullable=True)
     # M2M relationship
     payload_value = relationship('PayloadValue')
+
+    # Vector search
+    sr_search_vector = Column(TSVectorType('metric_name'))
