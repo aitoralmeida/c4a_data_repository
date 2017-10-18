@@ -14,7 +14,7 @@ import inspect
 import ConfigParser
 import logging
 import arrow
-from sqlalchemy import create_engine, desc, orm
+from sqlalchemy import create_engine, desc, orm, cast, MetaData, String
 from sqlalchemy.engine.url import URL
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import sessionmaker, scoped_session
@@ -139,15 +139,33 @@ class PostORM(object):
         :param order_by: Set order of query (default is 'asc' on ID column)
         :return:
         """
+
+        # Making the first query using the class value
         q = self.session.query(p_class)
+        # Determine whether the class is a Table or a Meta
+        if p_class.__class__.__name__ == 'Table':
+            # The class is a reflective object, using .c to obtain columns
+            table_class = p_class.c
+        else:
+            # The class is a Meta based object. Nothing to do
+            table_class = p_class
+        # Filtering the web_dict
         if q and web_dict and web_dict.items():
-            # Filter based of the content of the dict
+            # Filtering elements by criteria
             for attr, value in web_dict.items():
-                q = q.filter(getattr(p_class, attr).like("%%%s%%" % value))
+                # Getting attribute element
+                """
+                try:
+                    int(value)
+                    # The value is an integer, we need to perform a left side casting
+                    q = q.filter(cast(getattr(table_class, attr), String).like('%%%s%%' % value))
+                except ValueError:
+                    q = q.filter(getattr(table_class, attr).like("%%%s%%" % value))
+                """
+                q = q.filter(cast(getattr(table_class, attr), String).like('%%%s%%' % value))
         # ORder by
         if order_by is not 'asc':
-            # Default order by id
-            q = q.order_by(desc(p_class.id))
+            q = q.order_by(desc(table_class.id))
         # Limit and offset our query
         q = q.limit(limit)
         q = q.offset(offset)
@@ -334,15 +352,11 @@ class PostORM(object):
             location = self._get_or_create(self.tables.Location, location_name=data['location'].lower(),
                                            indoor=True,
                                            pilot_code=pilot.pilot_code)
-            # location_type_rel = self._get_or_create(sr_tables.LocationLocationTypeRel, location_id=location.id, location_type_id=location_type.id)
 
-            # Generating IDS
+            # Creating flush to obtain the possible location id
             self.session.flush()
-            # Generating a new acquisition_datetime
-            acquisition_datetime = arrow.utcnow()
             # Insert a new executed action
-            executed_action = self.tables.ExecutedAction(acquisition_datetime=acquisition_datetime,
-                                                         execution_datetime=data['timestamp'],
+            executed_action = self.tables.ExecutedAction(execution_datetime=data['timestamp'],
                                                          location_id=location.id,
                                                          cd_action_id=cd_action.id,
                                                          user_in_role_id=user.id,
@@ -352,19 +366,25 @@ class PostORM(object):
                                                                                             ['sensors'])),
                                                          extra_information=' '.join(data.get('extra', None))
                                                          )
+            # pending insert
+            self.insert_one(executed_action)
+            # Generating IDS
+            self.session.flush()
             # Inserting the values attached with this action into database
             list_of_payload_values = []
             for key, value in data['payload'].items():
                 cd_metric = self._get_or_create(self.tables.CDMetric, metric_name=key)
                 payload_value = self.tables.PayloadValue(cd_metric_id=cd_metric.id, cd_action_id=cd_action.id,
-                                                         acquisition_datetime=acquisition_datetime,
+                                                         acquisition_datetime=executed_action.acquisition_datetime,
                                                          value=value,
                                                          execution_datetime=data['timestamp'])
                 list_of_payload_values.append(payload_value)
-
-            # pending insert
-            self.insert_one(executed_action)
+            # Insert all elements in pending insert
             self.insert_all(list_of_payload_values)
+
+            # TODO LEA TRANSFORMATION
+            # For each LEA, transform it
+
         # Commit changes
         logging.info(inspect.stack()[0][3], "data entered successfully")
         return self.commit()
@@ -382,7 +402,8 @@ class PostORM(object):
         logging.info(inspect.stack()[0][3], "adding data to database")
         for data in p_data:
             # Getting the activity from database
-            cd_activity = self.session.query(self.tables.CDActivity).filter_by(activity_name=data['activity'].lower())[0]
+            cd_activity = self.session.query(self.tables.CDActivity).filter_by(activity_name=data['activity'].lower())[
+                0]
             user_in_role = self.session.query(self.tables.UserInRole).filter_by(id=int(data['user'].split(':')[-1]))[0]
             # Insert new executed activity data into DB
             executed_activity = self.tables.ExecutedActivity(start_time=data['start_time'], end_time=data['end_time'],
@@ -400,7 +421,8 @@ class PostORM(object):
                 pilot = self.session.query(self.tables.Pilot).filter_by(pilot_code=data['pilot'].lower())[0]
                 for value in payload:
                     # Key is the action name, Value is the needed action value to extract it from db
-                    cd_action = self.session.query(self.tables.CDAction).filter_by(action_name=value['action'].split(':')[-1].lower())[0]
+                    cd_action = self.session.query(self.tables.CDAction).filter_by(
+                        action_name=value['action'].split(':')[-1].lower())[0]
                     location = self.session.query(self.tables.Location).filter_by(
                         location_name=value.get('location', None).lower(), pilot_code=pilot.pilot_code)[0]
                     # Obtaining executed action instance
@@ -437,8 +459,8 @@ class PostORM(object):
         logging.info(inspect.stack()[0][3], "adding data to database")
         for data in p_data:
             cd_activity = self._get_or_create(self.tables.CDActivity, activity_name=data['activity'].lower(),
-                                activity_description=data['description'],
-                                instrumental=data['instrumental'])
+                                              activity_description=data['description'],
+                                              instrumental=data['instrumental'])
         # Commit changes9
         logging.info(inspect.stack()[0][3], "data entered successfully")
         return self.commit()
@@ -468,6 +490,26 @@ class PostORM(object):
         """
         res = None
 
+        # Recover each piece of data
+        table = p_data.get('table', None)
+        criteria = p_data.get('criteria', None)
+        limit = p_data.get('limit', None)
+        offset = p_data.get('offset', None)
+        order_by = p_data.get('order_by', None)
+        if table and criteria and len(criteria) > 0:
+            # Remove some unwanted data from criteria
+            if criteria.get('user_in_role_id', False):
+                criteria['user_in_role_id'] = criteria['user_in_role_id'].split(':')[-1]
+            if criteria.get('action', False):
+                criteria['action'] = criteria['action'].split(':')[-1]
+            # Obtaining the instance of table based on its name
+            # Recovering the needed table instance to compute the query into database
+            table_instance = self.get_table_instance(table)
+            # We have needed data to make a full search
+            res = self.query(table_instance, criteria, limit, offset, order_by)
+        return res
+
+        # TODO implement a full text based search
         # query = self.session.query(TABLES)
         # query = search(query, 'first')
 
@@ -600,6 +642,41 @@ class PostORM(object):
         if location and location.count() == 1:
             res = True
         return res
+
+
+    ###################################################################################################
+    ###################################################################################################
+    ######                              DATABASE GETTERS
+    ###################################################################################################
+    ###################################################################################################
+
+    def get_tables(self, p_schema=None):
+        """
+        List current database tables in DATABASE active connection (Current installed system).
+
+        :return: A list containing current tables.
+        """
+        m = MetaData()
+        m.reflect(self.engine, schema=p_schema)
+        return m.tables.keys()
+
+    def get_table_instance(self, p_table_name, p_schema=None):
+        """
+        By giving a name of a table, this method returns the base instance
+
+        :param p_table_name The name of the table
+        :param p_schema The name of the given schema
+
+        :return: A Base instance of the table to be computed
+        """
+        # Reflecting data
+        m = MetaData()
+        m.reflect(self.engine, schema=p_schema, views=True)
+        # Getting table instance
+        table_instance = m.tables[p_schema + '.' + p_table_name]
+        return table_instance
+
+
 
     ########################################
 

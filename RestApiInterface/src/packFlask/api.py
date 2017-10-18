@@ -406,10 +406,6 @@ def get_my_info(version=app.config['ACTUAL_API']):
 ###################################################################################################
 ###################################################################################################
 
-
-# TODO this search method will be splited in several parts to cover different angles of search --> Force to the user to decide some tables.
-
-
 @app.route('/api/<version>/search', methods=['POST'])
 @limit_content_length(MAX_LENGHT)
 @auth.login_required
@@ -439,85 +435,57 @@ def search(version=app.config['ACTUAL_API']):
     :return:
     """
 
-    """
-
-    ------> This code is only used for reference purposes
+    ########################################################3
 
     if Utilities.check_connection(app, version):
+        # We created a list of Python dict.
         data = _convert_to_dict(request.json)
-        msg = Utilities.check_add_activity_data(AR_DATABASE, data)
-        if data and not msg and USER:
-            # User and data are OK. save data into DB
-            res_ar = AR_DATABASE.add_activity(data)
-            res_sr = SR_DATABASE.add_activity(data)
-            if res_ar and res_sr:
-                logging.info("add_activity: the username: %s adds new activity into database" % USER.username)
-                return Response('Data stored in database OK\n'), 200
-            else:
-                logging.error("add_activity: the username: %s failed to store data into database. 500" % USER.username)
-                return Response("There is an error in DB"), 500
-        else:
-            logging.error("add_activity: there is a problem with entered data")
-            # Data is not valid, check the problem
-            if "duplicated" in msg:
-                # Data sent is duplicated.
-                return Response(msg), 409
-            else:
-                # Standard Error
-                return Response(msg), 400
-
-    """
-
-    # TODO tell to the user what kind of schema
-
-
-    """
-
-    res = None
-    if Utilities.check_connection(app, version):
-        data = _convert_to_dict(request.json)[0]
-        # Checking inf search data is ok
-        msg = Utilities.check_search_data(AR_DATABASE, data)
-        if data and not msg and USER:
-            # data Entered by the user is OK we are goinng to extract extra search parameters
-            limit = data.get('limit', 10) if data and data.get('limit', 10) >= 0 else 10
-            offset = data.get('offset', 0) if data and data.get('offset', 0) >= 0 else 0
-            order_by = data.get('order_by', 'asc') if data and data.get('order_by', 'asc') in ['asc', 'desc'] else 'asc'
-            # After extracting data, we make the needed search.
-
-
-
-            # TODO need to think about making a search based on a criteria ?=
-
-
-
-
-            # TODO code this final part
-
-            try:
-                res = AR_DATABASE.query(table_class, data['criteria'], limit=limit, offset=offset, order_by=order_by)
-                serialized_labels = [serialize(label) for label in res]
-                if len(serialized_labels) == 0:
-                    Utilities.write_log_warning(app, ("search: the username: %s performs a valid search "
-                                                      "with no results" % USER.username))
-                    res = Response("No data found with this filters.\n")
+        if len(data) == 1:
+            msg = Utilities.check_search_data(data)
+            if data and not msg and USER:
+                # User and data are OK. save data into DB
+                # Finding the desired table in the proper schema
+                is_ar_table = Utilities.validate_search_tables(AR_DATABASE, data[0])
+                is_sr_table = Utilities.validate_search_tables(SR_DATABASE, data[0])
+                # Defining default values to return data
+                res_ar = None
+                res_sr = None
+                if is_ar_table and is_sr_table:
+                    # The table is in both schema, making the search in AR only
+                    res_ar = AR_DATABASE.search(data[0])
+                elif is_ar_table and not is_sr_table:
+                    # The table is only in AR schema, making the search in AR only
+                    res_ar = AR_DATABASE.search(data[0])
+                elif is_sr_table and not is_ar_table:
+                    # The table is only in SR schema, making the search in SR only
+                    res_sr = SR_DATABASE.search(data[0])
                 else:
-                    Utilities.write_log_info(app, ("search: the username: %s performs a valid search" %
-                                                   USER.username))
-                    res = Response(dumps(serialized_labels, default=date_handler), mimetype='application/json')
-            except AttributeError:
-                abort(500)
+                    # General exception. Error in DB
+                    logging.error('search: Internal error of the database when deciding the search schema criteria')
+                    return Response("Database internal error, contact with administrator", 500)
+                # Return the results of the performed search
+                res = res_ar or res_sr
+                if res.count() > 0:
+                    # We have data to show
+                    logging.info("search: the username: %s requests a search without size of %s elements" %
+                                 (USER.username, res.count()))
+                    # Returning the results
+                    # TODO find a solution to serialize datetimes
+                    return jsonify(json_list=res.all())
+                else:
+                    logging.info("search: the username: %s requests a search without results" % USER.username)
+                    return Response("The search query doesn't return any result"), 200
+            else:
+                logging.error("add_action: there is a problem with entered data")
+                # Data is not valid, check the problem
+                if "duplicated" in msg:
+                    # Data sent is duplicated.
+                    return Response(msg), 409
+                else:
+                    # Standard Error
+                    return Response(msg), 400
         else:
-            # Some user data is not well
-            Utilities.write_log_error(app, ("search: the username: %s performs an INVALID search. 413" %
-                                      USER.username))
-            res = Response(
-                "You have entered incorrect JSON format Data, check if your JSON is OK. Here there are current database"
-                "tables, check if you type one of the following tables: %s" % AR_DATABASE.get_tables()
-            ), 413
-    return res
-
-    """
+            return Response("This method doesn't allow list of JSON", 400)
 
 
 ################################################################################
@@ -970,7 +938,31 @@ def add_eam(version=app.config['ACTUAL_API']):
                 return Response(msg), 400
 
 
-# TODO --> Add new function to the API --> commit() # Executes an script to calculate NUI's only SR
+@app.route('/api/<version>/commit_measure', methods=['GET'])
+@limit_content_length(MAX_LENGHT)
+@auth.login_required
+@required_roles('Pilot source system')
+def commit_measure(version=app.config['ACTUAL_API']):
+    """
+    This method executes and external program that makes the needed calculations in SR schema and
+    updates some tables
+
+
+    :param version: API version
+    :return:
+    """
+
+    if Utilities.check_connection(app, version) and USER:
+        # Calling to external java jar file to update database data
+        res = SR_DATABASE.commit_measure(USER)
+        if res:
+            logging.info("commit_measure: data commit sucesfully")
+            return Response('Your measures are successfully saved and committed in database\n'), 200
+        else:
+            logging.error("commit_measure: failed to commit measures data in DB")
+            return Response('FAILED: the commit script was encountered an error. Contact with administrator'), 500
+
+
 # TODO --> Add new function to the API --> add_ges() # Adds a new geriatric data into the SR schema
 
 

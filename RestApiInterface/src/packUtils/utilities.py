@@ -8,9 +8,11 @@ This class has all utilities of the project. The idea is to store all checkers, 
 """
 
 import logging
+import re
 from collections import Counter
 from flask import abort, session, request
 from jsonschema import validate, ValidationError, FormatChecker
+from src.packORM import ar_tables, sr_tables
 
 __author__ = 'Rubén Mulero'
 __copyright__ = "Copyright 2016, City4Age project"
@@ -323,7 +325,7 @@ class Utilities(object):
                         },
                         "additionalProperties": False,
                         "required": ["action", "location", "timestamp", "position"]
-                        }
+                    }
                 },
                 "data_source_type": {
                     "description": "how the action has been decided or imported",
@@ -876,7 +878,7 @@ class Utilities(object):
         return msg
 
     @staticmethod
-    def check_search_data(p_database, p_data):
+    def check_search_data(p_data):
         """
         Check if search data is ok and evaluates what is the best table that fits with search criteria
 
@@ -896,26 +898,30 @@ class Utilities(object):
                     "description": "The name of the target table to make the search",
                     "type": "string",
                     "minLength": 3,
-                    "maxLength": 50
+                    "maxLength": 50,
+                    "enum": Utilities.get_available_tables()
                 },
                 "criteria": {
                     "description": "The user search criteria",
-                    "type": "object"
+                    "type": "object",
                 },
                 "limit": {
                     "description": "The limit of the query",
                     "type": "integer",
-                    "minimum": 0
+                    "minimum": 0,
+                    "maximum": 10000
                 },
                 "offset": {
                     "description": "The offset of the query",
                     "type": "integer",
-                    "minimum": 0
+                    "minimum": 0,
+                    "maximum": 1000
                 },
                 "order_by": {
                     "description": "The name of the target table to make the search",
                     "type": "string",
-                    "maxLength": 4
+                    "maxLength": 4,
+                    "enum": ['asc', 'desc']
                 }
             },
             "required": [
@@ -929,17 +935,6 @@ class Utilities(object):
             if type(p_data) is list:
                 for data in p_data:
                     validate(data, schema, format_checker=FormatChecker())
-                    # Once data is validated, we are going to check if tables ARE OK
-                    if not Utilities.validate_search_tables(p_database, data):
-                        logging.error("User entered an invalid table name: %s" % p_database.get_tables)
-                        raise ValidationError("Invalid table name: %s" % data['table'])
-            else:
-                validate(p_data, schema, format_checker=FormatChecker())
-                # Once data is validated, we are going to check if tables ARE OK
-                if not Utilities.validate_search_tables(p_database, p_data):
-                    logging.error("User entered an invalid table name: %s" % p_database.get_tables)
-                    raise ValidationError("Invalid table name: %s" % p_data['table'])
-
         except ValidationError as e:
             logging.error("The schema entered by the user is invalid")
             msg = e.message
@@ -1107,7 +1102,7 @@ class Utilities(object):
         if p_one_data and p_one_data.get('table', False):
             table = p_one_data['table'].lower() or None  # lowering string cases
             current_tables = p_database.get_tables()
-            if table in current_tables:
+            if [s for s in current_tables if table in s]:
                 res = True
         return res
 
@@ -1286,3 +1281,14 @@ class Utilities(object):
         """
         list_of_roles = p_database.get_users_roles()
         return list_of_roles
+
+    @staticmethod
+    def get_available_tables():
+        """
+        This method contains a simple list to know what are the available tables used in the search endpoint
+
+        :return:
+        """
+        available_tables = ['executed_action', 'pilot', 'location', 'activity', 'action', 'measure',
+                            'EXECUTED_ACTION', 'PILOT', 'LOCATION', 'ACTIVITY', 'ACTION', 'MEASURE']
+        return available_tables

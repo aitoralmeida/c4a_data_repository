@@ -16,10 +16,12 @@ import arrow
 from itsdangerous import (TimedJSONWebSignatureSerializer
                           as Serializer, BadSignature, SignatureExpired)
 from sqlalchemy import Column, Integer, String, Boolean, Sequence, Numeric, Float, BigInteger, ForeignKey, \
-    LargeBinary, TIMESTAMP, Text, TypeDecorator, event, MetaData
+    LargeBinary, TIMESTAMP, Text, DateTime, TypeDecorator, event, MetaData
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, validates
 from sqlalchemy.schema import CreateSchema
+from sqlalchemy.sql import expression
+from sqlalchemy.ext.compiler import compiles
 from sqlalchemy_utils import ArrowType
 from sqlalchemy_searchable import make_searchable
 from sqlalchemy_utils.types import TSVectorType
@@ -57,6 +59,43 @@ Base = declarative_base(metadata=MetaData(schema='city4age_sr'))
 
 # Executing the making of searchable index
 # make_searchable()
+
+
+"""
+Definition of a special recompilation of utcnow class to obtain the current time in UTC
+
+"""
+
+
+#######
+# This class makes possible the insert of current time zone based on the time registered in the INSERT statement
+#######
+
+class utcnow(expression.FunctionElement):
+    type = DateTime()
+
+
+@compiles(utcnow, 'postgresql')
+def pg_utcnow(element, compiler, **kw):
+    return "TIMEZONE('utc', CURRENT_TIMESTAMP)"
+
+
+@compiles(utcnow, 'mssql')
+def ms_utcnow(element, compiler, **kw):
+    return "GETUTCDATE()"
+
+#######
+# This class makes possible the insert of current time zone based on each time registered by transaction.
+# THIS IS NOT SQL-STANDAR AND ONLY IS AVAILABLE WITH POSTGREQSL
+#######
+
+class utcnowtimestamp(expression.FunctionElement):
+    type = DateTime()
+
+@compiles(utcnowtimestamp, 'postgresql')
+def pg_utcnow(element, compiler, **kw):
+    # return "TIMEZONE('utc', statement_timestamp())"
+    return "TIMEZONE('utc', clock_timestamp())"
 
 
 """
@@ -196,7 +235,7 @@ class FrailtyStatusTimeline(Base):
 
     time_interval_id = Column(Integer, ForeignKey('time_interval.id'), primary_key=True)
     user_in_role_id = Column(Integer, ForeignKey('user_in_role.id'), primary_key=True)
-    changed = Column(ArrowType(timezone=True), default=arrow.utcnow(), primary_key=True)
+    changed = Column(ArrowType(timezone=True), server_default=utcnow(), primary_key=True)
 
     # Data
     frailty_notice = Column(String(200))
@@ -227,7 +266,7 @@ class MDPilotDetectionVariable(Base):
     # Data columns
     derivation_function_formula = Column(Text, nullable=True)
     derivation_weight = Column(Numeric(precision=5, scale=2))
-    valid_from = Column(ArrowType(timezone=True), default=arrow.utcnow())
+    valid_from = Column(ArrowType(timezone=True), server_default=utcnow())
     valid_to = Column(ArrowType(timezone=True), nullable=True)
     detection_variable_usage_status = Column(String(3))
 
@@ -265,7 +304,7 @@ class AssessmentAudienceRole(Base):
 
     assessment_id = Column(Integer, ForeignKey('assessment.id'), primary_key=True)
     role_id = Column(Integer, ForeignKey('cd_role.id'), primary_key=True)
-    assigned = Column(ArrowType(timezone=True), default=arrow.utcnow(), nullable=True)
+    assigned = Column(ArrowType(timezone=True), server_default=utcnow(), nullable=True)
 
     # Relationship with other Tables
     assessment = relationship('Assessment')
@@ -330,7 +369,7 @@ class ExecutedAction(Base):
     # Creating the columns
     id = Column(Integer, server_default=executed_action_id_seq.next_value(), primary_key=True)
     # Associated information
-    acquisition_datetime = Column(ArrowType(timezone=True), default=arrow.utcnow())
+    acquisition_datetime = Column(ArrowType(timezone=True), server_default=utcnowtimestamp())
     execution_datetime = Column(ArrowType(timezone=True))
     rating = Column(Numeric(precision=5, scale=2))
     sensor_id = Column(Integer)
@@ -441,7 +480,7 @@ class CDRole(Base):
     role_name = Column(String(50), nullable=False, unique=True)
     role_abbreviation = Column(String(3))
     role_description = Column(String(350), nullable=True)
-    valid_from = Column(ArrowType(timezone=True), default=arrow.utcnow())
+    valid_from = Column(ArrowType(timezone=True), server_default=utcnow())
     valid_to = Column(ArrowType(timezone=True), nullable=True)
 
     # One2Many
@@ -473,7 +512,7 @@ class Stakeholder(Base):
     abbreviation = Column(String(3), primary_key=True)
     stakeholder_name = Column(String(100), nullable=False)
     stakeholder_description = Column(String(250))
-    valid_from = Column(ArrowType(timezone=True), default=arrow.utcnow())
+    valid_from = Column(ArrowType(timezone=True), server_default=utcnow())
     valid_to = Column(ArrowType(timezone=True))
 
     # One2Many relationship
@@ -491,7 +530,7 @@ class UserInRole(Base):
     user_in_role_seq = Sequence('user_in_role_seq', metadata=Base.metadata)
     # Creating the columns
     id = Column(Integer, server_default=user_in_role_seq.next_value(), primary_key=True)
-    valid_from = Column(ArrowType(timezone=True), default=arrow.utcnow())
+    valid_from = Column(ArrowType(timezone=True), server_default=utcnow())
     valid_to = Column(ArrowType(timezone=True))
     pilot_source_user_id = Column(String(20))
 
@@ -537,7 +576,7 @@ class UserInSystem(Base):
     username = Column(String(25), nullable=False, unique=True)
     password = Column(Password(rounds=13), nullable=False)
     display_name = Column(String(100))
-    created_date = Column(ArrowType(timezone=True), default=arrow.utcnow())
+    created_date = Column(ArrowType(timezone=True), server_default=utcnow())
 
     # one2many
     user_action = relationship('UserAction')
@@ -748,7 +787,7 @@ class CDActivity(Base):
     id = Column(Integer, server_default=activity_id_seq.next_value(), primary_key=True)
     activity_name = Column(String(50), unique=True)
     activity_description = Column(String(200), nullable=True)
-    creation_date = Column(ArrowType(timezone=True), default=arrow.utcnow())
+    creation_date = Column(ArrowType(timezone=True), server_default=utcnow())
     instrumental = Column(Boolean, default=False, nullable=False)  # Default value set to False --> Normal Activities
 
     # One2one
@@ -931,7 +970,7 @@ class SourceEvidence(Base):
     geriatric_factor_id = Column(Integer, ForeignKey('geriatric_factor_value.id'), primary_key=True)
     text_evidence = Column(Text)
     multimedia_evidence = Column(LargeBinary)
-    uploaded = Column(ArrowType(timezone=True), default=arrow.utcnow(), nullable=False)
+    uploaded = Column(ArrowType(timezone=True), server_default=utcnow(), nullable=False)
 
     # Many2One
     author_id = Column(Integer, ForeignKey('user_in_role.id'))
@@ -987,8 +1026,8 @@ class Assessment(Base):
     id = Column(Integer, server_default=assessment_seq.next_value(), primary_key=True)
     assessment_comment = Column(String)
     data_validity_status = Column(String(1))
-    created = Column(ArrowType(timezone=True), default=arrow.utcnow(), nullable=False)
-    updated = Column(ArrowType(timezone=True))
+    created = Column(ArrowType(timezone=True), server_default=utcnow(), nullable=False)
+    updated = Column(ArrowType(timezone=True), onupdate=utcnow())
 
     # Many2One
     risk_status = Column(String(1), ForeignKey('cd_risk_status.risk_status'), nullable=False)
@@ -1012,8 +1051,8 @@ class CareProfile(Base):
     attention_status = Column(String(1))
     intervention_status = Column(String(1))
     last_intervention_date = Column(ArrowType(timezone=True))
-    created = Column(ArrowType(timezone=True), default=arrow.utcnow(), nullable=False)
-    last_updated = Column(ArrowType(timezone=True))
+    created = Column(ArrowType(timezone=True), server_default=utcnow(), nullable=False)
+    last_updated = Column(ArrowType(timezone=True), onupdate=utcnow())
     # Many 2 one Relationships
     created_by = Column(Integer, ForeignKey('user_in_role.id'), nullable=False)
     last_updated_by = Column(Integer, ForeignKey('user_in_role.id'))
@@ -1083,7 +1122,7 @@ class CDDetectionVariable(Base):
     # Creating the columns
     id = Column(Integer, server_default=cd_detection_variable_seq.next_value(), primary_key=True)
     detection_variable_name = Column(String(100), nullable=False)
-    valid_from = Column(ArrowType(timezone=True), default=arrow.utcnow())
+    valid_from = Column(ArrowType(timezone=True), server_default=utcnow())
     valid_to = Column(ArrowType(timezone=True))
     default_derivation_weight = Column(Numeric(precision=5, scale=2))
     source_datatype = Column(String(25))
@@ -1169,7 +1208,7 @@ class UserAction(Base):
     data = Column(String(255))
     ip = Column(String(60))
     agent = Column(String(255))
-    date = Column(ArrowType(timezone=True), default=arrow.utcnow())
+    date = Column(ArrowType(timezone=True), server_default=utcnow())
     status_code = Column(Integer)
     # One2Many
     user_in_system_id = Column(Integer, ForeignKey('user_in_system.id'))

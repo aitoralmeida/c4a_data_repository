@@ -12,7 +12,7 @@ import logging
 import arrow
 import inspect
 from sqlalchemy import MetaData
-from packORM import ar_tables
+from src.packORM import ar_tables
 from post_orm import PostORM
 
 __author__ = 'Rubén Mulero'
@@ -99,6 +99,8 @@ class ARPostORM(PostORM):
         :return:  True if everything is ok
         """
 
+        # TODO users can't insert in CD_transformed
+
         logging.info(inspect.stack()[0][3], "adding data to database")
         insert_list = []
         for data in p_data:
@@ -174,15 +176,28 @@ class ARPostORM(PostORM):
             token = p_user.generate_auth_token(app, expiration)
         return token
 
-    def get_tables(self):
+    def get_tables(self, p_schema='city4age_ar'):
         """
         List current database tables in DATABASE active connection (Current installed system).
-    
+
+        :param p_schema The name of the given schema
+
         :return: A list containing current tables.
         """
-        m = MetaData()
-        m.reflect(self.engine, schema='city4age_ar')
-        return m.tables.keys()
+
+        return super(ARPostORM, self).get_tables(p_schema)
+
+    def get_table_instance(self, p_table_name, p_schema='city4age_ar'):
+        """
+        By giving a name of a table, this method returns the base instance
+
+        :param p_table_name The name of the table
+        :param p_schema The name of the given schema
+
+        :return: A Base instance of the table to be computed
+        """
+
+        return super(ARPostORM, self).get_table_instance(p_table_name, p_schema)
 
     def get_user_pilot(self, p_user_id):
         """

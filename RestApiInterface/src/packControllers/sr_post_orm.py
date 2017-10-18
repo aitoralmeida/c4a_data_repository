@@ -10,8 +10,9 @@ calls into the SR database. This class is directly inherited from PostORM superc
 import arrow
 import inspect
 import logging
+import subprocess
 
-from packORM import sr_tables
+from src.packORM import sr_tables
 from post_orm import PostORM
 from sqlalchemy import MetaData
 
@@ -112,21 +113,55 @@ class SRPostORM(PostORM):
         logging.info(inspect.stack()[0][3], "data entered successfully")
         return res
 
+    def commit_measure(self, p_user):
+        """
+        This method executes and external Java program to update the data from DB
+
+
+        :return: A confirmation message
+        """
+        res = False
+        # Calling to the external java file
+        # TODO change path to needed field. Process should return an exit code 0
+        call_java_file = subprocess.call(['java', '-jar', 'Blender.jar'])
+        if call_java_file == 0:
+            # update latest_data_submission_completed from Pilot table
+            pilot = self.session.query(self.tables.Pilot).filter_by(pilot_code=p_user.user_in_role[0].pilot_code)[0]
+            pilot.latest_configuration_update = arrow.utcnow()
+            res = self.commit()
+
+        return res
+
+
     ###################################################################################################
     ###################################################################################################
     ######                              DATABASE GETTERS
     ###################################################################################################
     ###################################################################################################
 
-    def get_tables(self):
+    def get_tables(self, p_schema='city4age_sr'):
         """
         List current database tables in DATABASE active connection (Current installed system).
 
+        :param p_schema The name of the given schema
+
         :return: A list containing current tables.
         """
-        m = MetaData()
-        m.reflect(self.engine, schema='city4age_sr')
-        return m.tables.keys()
+
+        return super(SRPostORM, self).get_tables(p_schema)
+
+    def get_table_instance(self, p_table_name, p_schema='city4age_sr'):
+        """
+        By giving a name of a table, this method returns the base instance
+
+        :param p_table_name The name of the table
+        :param p_schema The name of the given schema
+
+        :return: A Base instance of the table to be computed
+        """
+
+        return super(SRPostORM, self).get_table_instance(p_table_name, p_schema)
+
 
     def get_measures(self):
         """
