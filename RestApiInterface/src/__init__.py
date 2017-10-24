@@ -8,6 +8,7 @@ import logging
 import os
 import sys
 from logging.handlers import RotatingFileHandler
+import jinja2
 
 from src.packORM import database_generator
 from src.packControllers import ar_post_orm, sr_post_orm
@@ -40,3 +41,10 @@ logHandler.setFormatter(formatter)
 # set the app logger level
 application.logger.setLevel(logging.INFO)
 application.logger.addHandler(logHandler)
+
+# Set the jinja2 templates path
+my_loader = jinja2.ChoiceLoader([
+        application.jinja_loader,
+        jinja2.FileSystemLoader(['./templates', './static']),
+    ])
+application.jinja_loader = my_loader

@@ -13,7 +13,7 @@ from datetime import timedelta
 from functools import wraps
 from json import dumps, loads
 from flask import Flask, request, make_response, Response, abort, redirect, url_for, session, flash, jsonify, \
-    request_finished
+    request_finished, render_template
 from flask_httpauth import HTTPBasicAuth
 from sqlalchemy.orm import class_mapper
 from src.packUtils.utilities import Utilities
@@ -346,28 +346,8 @@ def api(version=app.config['ACTUAL_API']):
     :return:
     """
     if Utilities.check_version(app, version):
-        return """
-
-        <h1>Welcome to City4Age Rest API</h1>
-
-        Here you have a list of available commands to use:
-
-        This API is designed to be used with curl and JSON request.
-
-        <ul>
-            <li><b>login</b>: Obtain an identification user token.</li>
-            <li><b>logout</b>: Remove the actual user token from the system.</li>
-            <li><b>add_action</b>: Adds new Action into database.</li>
-            <li><b>add_activity</b>: Adds new Activity into database.</li>
-            <li><b>add_measure</b>: Adds a new Measure into database.</li>
-            <li><b>add_eam</b>: Adds information about EAM's in the API related to an activity.</li>
-            <li><b>add_care_receiver</b>: Allows to a Pilot add a new user 'care_receiver' in the API.</li>
-            <li><b>add_new_user</b>: Adds a new registered user in the system (Administrator only).</li>
-            <li><b>add_new_activity</b>: Adds a new activity into the activity codebook (Administrator only).</li>
-            <li><b>get_my_info</b>: Returns user information about the actual client.</li>
-        </ul>
-
-        """
+        # Loading main page of the APi
+        return render_template('index.html')
     else:
         return "You have entered an invalid api version", 404
 
@@ -435,6 +415,7 @@ def search(version=app.config['ACTUAL_API']):
     :return:
     """
 
+    # TODO this endpoint will be different if the user is admin or pilot --> Using roles
     ########################################################3
 
     if Utilities.check_connection(app, version):
@@ -501,25 +482,22 @@ def add_action(version=app.config['ACTUAL_API']):
     The JSON structure must be in a defined format called Common Data format as:
 
     {
-        "activity": "LeaveHouse",
+        "action": "eu:c4a:POI_EXIT",
         "user": "eu:c4a:user:9",
         "pilot": "LCC",
-        "start_time": "2018-04-20T07:08:41.013+03:00",
-        "end_time": "2018-05-20T07:08:41.013+03:00",
-        "duration": 23232323,
-        "payload": [{
-            "action": "eu:c4a:POI_ENTER",
-            "location": "eu:c4a:Shop:Ermou96",
-            "position": "37.976908 23.724375",
-            "timestamp": "2014-05-20T07:08:41.013+03:00"
-        }, {
-            "action": "eu:c4a:POI_EXIT",
-            "location": "eu:c4a:Room:number23",
-            "timestamp": "2012-05-20T07:08:41.013+03:00"
-        }],
-        "data_source_type": ["sensors", "external_dataset"]
+        "location": "eu:c4a:Pharmacy:Vanilla123",
+        "position": "38.976908 22.724375",
+        "timestamp": "2015-05-20T07:08:41.013+03:00",
+        "payload": {
+            "instance_id": "1287"
+        },
+        "rating": 0.45,
+        "data_source_type": [ "sensors", "external_dataset" ],
+        "extra": {
+            "pilot_specific_field": "some value"
+        }
     }
-    
+
     :param version: Api version
     :return: Different kind of HTML codes explaining if the action was successful
     """
@@ -557,9 +535,6 @@ def add_activity(version=app.config['ACTUAL_API']):
     """
     Adds a new activity into the system
 
-
-    # TODO Instrumental and Basic activities are present HERE!!!! There are two type of Activities
-    # Copanion? YES NO boolean
 
     An example in JSON could be:
 
@@ -626,7 +601,6 @@ def add_new_activity(version=app.config['ACTUAL_API']):
     """
     Adds a new value into the codebook of activities. The activity must not exist previously in database
 
-
     {
         "activity": "LeaveHouse",
         "description": "User leave the house",      # OPTIONAL VALUE
@@ -680,11 +654,9 @@ def add_new_user(version=app.config['ACTUAL_API']):
         "roletype": "administrator",
         "pilot": "ath"
     }
-    
-    
+
     There are optional parameters that are used only if the administrator wants to add access credentials to ana ctive
     user in the system.
-    
 
     :param version: Api version
     :return:

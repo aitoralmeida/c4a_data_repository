@@ -203,6 +203,23 @@ class PostORM(object):
             self.session.rollback()
         return res
 
+    def rollback(self):
+        """
+        This is a "forced" rollback when it is necessary to call rollback in a defined situation. The class makes
+        a rollback in db of the current transactions to force an exception in the code
+
+        :return: False to indicate that the current operation has failed
+
+        :return:
+        """
+        try:
+            self.session.rollback()
+            # Rollback done
+            logging.info("post_orm: a programing based rollback has been invoked")
+        except Exception as e:
+            logging.exception("post_orm: An error happened when rollback in DB: %s", e)
+        return False
+
     def close(self):
         """
         Force close the connection of the actual session
@@ -381,11 +398,11 @@ class PostORM(object):
                 list_of_payload_values.append(payload_value)
             # Insert all elements in pending insert
             self.insert_all(list_of_payload_values)
+            # Insert transformed action elements in DB
+            if self.__class__.__name__ == 'ARPostORM':
+                # We are going to insert the needed transformed actions
+                res = self._add_transformed_action(data, executed_action)
 
-            # TODO LEA TRANSFORMATION
-            # For each LEA, transform it
-
-        # Commit changes
         logging.info(inspect.stack()[0][3], "data entered successfully")
         return self.commit()
 
@@ -507,6 +524,11 @@ class PostORM(object):
             table_instance = self.get_table_instance(table)
             # We have needed data to make a full search
             res = self.query(table_instance, criteria, limit, offset, order_by)
+
+
+            # TODO once you have the needed data, think about filtering by PILOT
+
+
         return res
 
         # TODO implement a full text based search

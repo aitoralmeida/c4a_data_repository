@@ -1289,6 +1289,6 @@ class Utilities(object):
 
         :return:
         """
-        available_tables = ['executed_action', 'pilot', 'location', 'activity', 'action', 'measure',
-                            'EXECUTED_ACTION', 'PILOT', 'LOCATION', 'ACTIVITY', 'ACTION', 'MEASURE']
+        available_tables = ['executed_action', 'measure',
+                            'EXECUTED_ACTION', 'MEASURE']
         return available_tables

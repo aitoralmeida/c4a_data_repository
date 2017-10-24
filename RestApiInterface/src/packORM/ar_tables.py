@@ -63,10 +63,12 @@ Base = declarative_base(metadata=MetaData(schema='city4age_ar'))
 # make_searchable()
 
 
+
 """
 Definition of a special recompilation of utcnow class to obtain the current time in UTC
 
 """
+
 
 #######
 # This class makes possible the insert of current time zone based on the time registered in the INSERT statement
@@ -85,6 +87,7 @@ def pg_utcnow(element, compiler, **kw):
 def ms_utcnow(element, compiler, **kw):
     return "GETUTCDATE()"
 
+
 #######
 # This class makes possible the insert of current time zone based on each time registered by transaction.
 # THIS IS NOT SQL-STANDAR AND ONLY IS AVAILABLE WITH POSTGREQSL
@@ -93,16 +96,17 @@ def ms_utcnow(element, compiler, **kw):
 class utcnowtimestamp(expression.FunctionElement):
     type = DateTime()
 
+
 @compiles(utcnowtimestamp, 'postgresql')
 def pg_utcnow(element, compiler, **kw):
-    #return "TIMEZONE('utc', statement_timestamp())"
+    # return "TIMEZONE('utc', statement_timestamp())"
     return "TIMEZONE('utc', clock_timestamp())"
-
 
 
 """
 Definition of table special types. Here I defined some special tables for table encryption and password hashing.
 """
+
 
 class EncryptedValue(TypeDecorator):
     """
@@ -217,13 +221,13 @@ class ExecutedAction(Base):
 
     __tablename__ = 'executed_action'
 
-
     # Generating the Sequence
     executed_action_id_seq = Sequence('executed_action_id_seq', metadata=Base.metadata)
     # Creating the columns
     id = Column(Integer, server_default=executed_action_id_seq.next_value(), primary_key=True)
     # Associated information
-    acquisition_datetime = Column(ArrowType(timezone=True), server_default=utcnowtimestamp())  # Time of item registered in db
+    acquisition_datetime = Column(ArrowType(timezone=True),
+                                  server_default=utcnowtimestamp())  # Time of item registered in db
     execution_datetime = Column(ArrowType(timezone=True))  # Time of registered action
     rating = Column(Numeric(precision=5, scale=2))
     sensor_id = Column(Integer)
@@ -241,8 +245,7 @@ class ExecutedAction(Base):
     location = relationship("Location")
 
     # Vector search
-    ar_search_vector = Column(TSVectorType('location_id', 'user_in_role_id'))
-
+    search_vector = Column(TSVectorType('location_id', 'user_in_role_id'))
 
     def __repr__(self):
         return "<ExecutedAction(id='%s', acquisition_datetime='%s', execution_datetime='%s', " \
@@ -281,7 +284,6 @@ class ExecutedActivity(Base):
 
     cd_location_type_executed_activity_rel = relationship("CDLocationTypeExecutedActivityRel",
                                                           cascade="all, delete-orphan")
-
 
     def __repr__(self):
         return "<ExecutedActivity(id='%s', start_time='%s', end_time='%s', duration='%s')>" % (self.id,
@@ -432,6 +434,7 @@ class LocationCDLocationTypeRel(Base):
     # Relationship
     location = relationship('Location')
 
+
 # Rename to payload_value
 class PayloadValue(Base):
     """
@@ -446,7 +449,6 @@ class PayloadValue(Base):
     execution_datetime = Column(ArrowType(timezone=True), nullable=False)
     value = Column(String(50), nullable=False)
     cd_action = relationship('CDAction')
-
 
 
 # Basic Tables
@@ -475,7 +477,6 @@ class UserInRole(Base):
     executed_activity = relationship("ExecutedActivity", cascade="all, delete-orphan")
     executed_transformed_action = relationship("ExecutedTransformedAction", cascade="all, delete-orphan")
     user_in_eam = relationship("UserInEAM", cascade="all, delete-orphan")
-
 
     def __repr__(self):
         return "<UserInRole(id='%s', valid_from='%s'. valid_to='%s')>" % (self.id, self.valid_from, self.valid_to)
@@ -562,7 +563,7 @@ class CDAction(Base):
     action_description = Column(String(250), nullable=False)
 
     # Search vector tables
-    ar_search_vector = Column(TSVectorType('action_name'))
+    search_vector = Column(TSVectorType('action_name'))
 
     def __repr__(self):
         return "<CDAction(action_name='%s', action_category='%s', action_description='%s')>" % \
@@ -586,7 +587,7 @@ class Location(Base):
     pilot_code = Column(String(4), ForeignKey('pilot.pilot_code'), nullable=True)
 
     # Vector search
-    ar_search_vector = Column(TSVectorType('location_name'))
+    search_vector = Column(TSVectorType('location_name'))
 
     def __repr__(self):
         return "<Location(location_name='%s', indoor='%s')>" % (
@@ -633,7 +634,7 @@ class CDActivity(Base):
     id = Column(Integer, server_default=activity_id_seq.next_value(), primary_key=True)
     activity_name = Column(String(50), unique=True)
     activity_description = Column(String(200), nullable=True)
-    creation_date = Column(ArrowType(timezone=True), server_default=utcnow())            # Creation date automatic
+    creation_date = Column(ArrowType(timezone=True), server_default=utcnow())  # Creation date automatic
     instrumental = Column(Boolean, default=False, nullable=False)  # Default value set to False --> Normal Activities
 
     # One2one
@@ -647,7 +648,7 @@ class CDActivity(Base):
     # real_inter_behaviour = relationship("InterBehaviour", foreign_keys='InterBehaviour.real_activity_id')
 
     # Vector search
-    ar_search_vector = Column(TSVectorType('activity_name'))
+    search_vector = Column(TSVectorType('activity_name'))
 
     def __repr__(self):
         return "<CDActivity(activity_name='%s')>" % self.activity_name
@@ -668,7 +669,7 @@ class Pilot(Base):
     location = relationship('Location')
 
     # Vector search
-    ar_search_vector = Column(TSVectorType('pilot_code', 'pilot_name'))
+    search_vector = Column(TSVectorType('pilot_code', 'pilot_name'))
 
     def __repr__(self):
         return "<Pilot(pilot_code='%s', pilot_name='%s', population_size='%s')>" % \
@@ -725,13 +726,14 @@ class CDRole(Base):
     user_in_role = relationship('UserInRole')
 
     # Vector search
-    ar_search_vector = Column(TSVectorType('role_name', 'role_abbreviation'))
+    search_vector = Column(TSVectorType('role_name', 'role_abbreviation'))
 
     def __repr__(self):
         return "<CDRole(id='%s', role_name='%s', role_abbreviation='%s', role_description='%s'," \
                "valid_from='%s', valid_to='%s')>" % (self.id, self.role_name,
                                                      self.role_abbreviation, self.role_description, self.valid_from,
                                                      self.valid_to)
+
 
 class CDEAM(Base):
     """
@@ -826,7 +828,7 @@ class CDMetric(Base):
     payload_value = relationship('PayloadValue')
 
     # Vector search
-    ar_search_vector = Column(TSVectorType('metric_name'))
+    search_vector = Column(TSVectorType('metric_name'))
 
 
 class CDTransformedAction(Base):
@@ -837,7 +839,6 @@ class CDTransformedAction(Base):
 
     __tablename__ = 'cd_transformed_action'
 
-
     # Generating the Sequence
     cd_transformed_action_seq = Sequence('cd_transformed_action_seq', metadata=Base.metadata)
     # Creating the columns
@@ -845,5 +846,15 @@ class CDTransformedAction(Base):
     transformed_action_name = Column(String(255), unique=True)
     transformed_action_description = Column(String(255), nullable=True)
 
+    # This values are used to give to the transformed action an uniqueness in the system
+    # Basic action-location values
+    action_name = Column(String(50), unique=False, nullable=False)
+    location_type = Column(String(50), unique=False, nullable=True)
+    # Payload information columns to detect uniqueness
+    appliance_type = Column(String(50), nullable=True)
+    furniture_type = Column(String(50), nullable=True)
+    state_type = Column(String(50), nullable=True)
+    calling_number = Column(String(50), nullable=True)
+
     # Vector search
-    ar_search_vector = Column(TSVectorType('transformed_action_name'))
+    # ar_search_vector = Column(TSVectorType('transformed_action_name'))

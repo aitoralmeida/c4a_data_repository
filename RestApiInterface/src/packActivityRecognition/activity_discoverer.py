@@ -27,13 +27,20 @@ Transactions on Systems, Man, and Cybernetics, Part B, 2013.
 
 import os
 import inspect
-import subprocess
+
 import arrow
 import logging
-import kasteren_data_transformer as kas_transformer
+import csv
+from collections import OrderedDict
+from subprocess import PIPE, STDOUT, Popen
 
 from packControllers import ar_post_orm
 from subprocess import CalledProcessError
+
+
+#import sys
+#sys.path.insert(0, '/path/to/application/app/folder')
+# import file
 
 
 __author__ = 'Rubén Mulero'
@@ -46,8 +53,16 @@ __email__ = "ruben.mulero@deusto.es"
 __status__ = "Prototype"
 
 
+# Global variables
+DATA_FILE = 'casas.csv'
+CONFIG_FILE = 'casas.config'
+LOG_FILE = 'casas_log.txt'
+
+
+# Casas configuration directories
 current_dir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
-casas_config_dir = os.path.abspath(current_dir + '../../../al/bin/al')
+casas_execution_file = os.path.abspath(current_dir + '../../../al/bin/al')
+casas_config_file = os.path.abspath(current_dir + '/' + CONFIG_FILE)
 
 
 class ActivityDiscoverer(object):
@@ -74,14 +89,14 @@ class ActivityDiscoverer(object):
         if p_end_time < p_start_time:
             # This is not possible relaunch this method using an appropriate time intervals
             logging.warn("get_action: The start date is greater than final date. Relaunch the method....")
-            self.lea_extractor(p_end_time, p_start_time)
+            list_leas = self.lea_extractor(p_end_time, p_start_time)
         else:
             # Format data to UTC using arrow library
             start_time = arrow.get(p_start_time)
             final_date = arrow.get(p_end_time)
             # Calling to the main method to extract leas
-            list_leas = self.database.get_action(start_time, final_date)
-            logging.info("get_action: Number of extracted leas is:", list_leas.count())
+            list_leas = self.database.get_transformed_action(start_time, final_date)
+            logging.info("get_action: Number of extracted leas is:", len(list_leas))
 
         return list_leas
 
@@ -94,51 +109,91 @@ class ActivityDiscoverer(object):
         :param p_list_leas: A set of LEAS extracted from database
         :return: 
         """
-        # 1º I need to know exactly the casas FORMAT Before send any
+        # Control check
+        if len(p_list_leas) > 0:
+            logging.info("execute_casas: converting the given LEAs list to CASAS format")
+            # Prepare the data to be introduced in Kasteren
+            list_of_sensor_actions = list()
+            list_of_ordered_kasteren = list()
+            for lea in p_list_leas:
+                local_time = lea['execution_datetime'].to('Europe/Madrid')
+                time = local_time.format('YYYY-MM-DD')
+                hour = local_time.format('HH:mm:ss')
+                kasteren_lea = OrderedDict([
+                    ('lea_time', time),
+                    ('lea_hour', hour),
+                    ('action1', lea['action_name'].upper()),
+                    ('action2', lea['action_name'].upper()),
+                    ('mode', 'ON'),
+                    ('tag', 'OTHER_ACTIVITY')])
+                list_of_ordered_kasteren.append(kasteren_lea)
+                # Adding the sensor elements to the list to be used in the config file
+                if lea['action_name'] not in list_of_sensor_actions:
+                    list_of_sensor_actions.append(lea['action_name'])
+            # Convert to csv
+            keys = list_of_ordered_kasteren[0].keys()
+            with open(DATA_FILE, 'wb', 0) as output_file:
+                dict_writer = csv.DictWriter(output_file, keys, delimiter=' ')
+                # dict_writer.writeheader()
+                dict_writer.writerows(list_of_ordered_kasteren)
+                output_file.flush()
+                os.fsync(output_file.fileno())
+            # Saving the config file
+            with open(CONFIG_FILE, 'wb', 0) as output_config_file:
+                # Writing the structure in the file
+                output_config_file.write('sensor ' + " ".join(str(i) for i in list_of_sensor_actions))
+                output_config_file.write('\nweight 1')
+                output_config_file.write('\ndata ' + DATA_FILE)
+                output_config_file.write('\nmodel model')
+                output_config_file.write('\npredictactivity Sleep')
+                output_config_file.flush()
+                os.fsync(output_config_file.fileno())
+            # We save the needed file into disk, now we are going to use casas algorithm
+            try:
+                output = Popen([casas_execution_file, '-d', casas_config_file], shell=False,
+                               stdout=PIPE, stderr=STDOUT)
+                out, err = output.communicate()
+                errcode = output.returncode
+                # Creating the needed output file
+                with open(LOG_FILE, 'wb', 0) as output_log_file:
+                    # Writing the log file of the algorithm
+                    output_log_file.write(out)
+                    output_log_file.flush()
+                    os.fsync(output_log_file.fileno())
+                ########
+            except CalledProcessError as e:
+                e.output()
 
+            # The output contains the LOG of the program
+        else:
+            # The given list doesn't have leas, nothing to do
+            logging.warning("execute_casas: the given list of extracted LEAs is empty")
 
-        # 2º Once data prepared use the converter, need to know the transformed.csv FILE
-        # Convert data
-
-        # TODO --> WE NEED FILES TO USE THIS CONVERTER???????
-        kas_transformer.transformDataset(p_list_leas, './transformed.csv')
-        # Having all needed data we can use it an transform this data into CSV
-
-
-
-
-
-
-
-        # TODO check where is located the CONFIG_FILE to use with this AR system
-        # TODO think about a sub.subprocess to catch the ouptput file
-
-
-
-        try:
-
-            output = subprocess.check_output(["./al/bin/al", "-r", casas_config_dir, p_list_leas])
-
-        except CalledProcessError as e:
-            e.output()
-
-
-
-
-        # The output contains the LOG of the program
-
-
-
-    def inser_data(self, p_list_activity):
+    def execute_hars(self, p_list_leas):
         """
-        Giving a list of activities, this method uses the API mechanism
+        This method executes the HARS algorithm to discover new activities.
 
-
-        :param p_list_activity:
+        :param p_list_leas: The extracted list of leas from DB
         :return:
         """
 
-        # TODO insert data thought API
+        # TODO execute hars to discover new activities. Remember to return something
+
+        pass
+
+
+    def inser_data(self, p_list_discovered_activities, p_list_leas):
+        """
+        Given the final results from HARS, insert needed data into database
+
+
+        :p_p_list_discovered_activities: The discovered activities from HARS
+        :param p_list_activity: The extracted list of LEAS
+        :return:
+        """
+
+        # TODO insert data thought API into database
+        pass
 
 
 # TODO delete this dummy main class
@@ -148,3 +203,7 @@ if __name__ == '__main__':
     start_date = '2014-05-23 06:08:41.013+02'
     end_date = '2014-05-18 06:08:41.013+02'
     data = ar.lea_extractor(start_date, end_date)
+    # After obtained the list of leas we are going to process it
+    res = ar.execute_casas(data)
+    # TU HARS
+    # BD

@@ -115,22 +115,17 @@ class SRPostORM(PostORM):
 
     def commit_measure(self, p_user):
         """
-        This method executes and external Java program to update the data from DB
+        This method updates the Pilot column called as latest_data_submission_completed to let
+        external services that the Pilot stops uploading data to the API
 
-
-        :return: A confirmation message
+        :return: True if everything is OK
         """
-        res = False
-        # Calling to the external java file
-        # TODO change path to needed field. Process should return an exit code 0
-        call_java_file = subprocess.call(['java', '-jar', 'Blender.jar'])
-        if call_java_file == 0:
-            # update latest_data_submission_completed from Pilot table
-            pilot = self.session.query(self.tables.Pilot).filter_by(pilot_code=p_user.user_in_role[0].pilot_code)[0]
-            pilot.latest_configuration_update = arrow.utcnow()
-            res = self.commit()
 
-        return res
+        # update latest_data_submission_completed from Pilot table
+        pilot = self.session.query(self.tables.Pilot).filter_by(pilot_code=p_user.user_in_role[0].pilot_code)[0]
+        pilot.latest_data_submission_completed = arrow.utcnow()
+
+        return self.commit()
 
 
     ###################################################################################################
@@ -161,7 +156,6 @@ class SRPostORM(PostORM):
         """
 
         return super(SRPostORM, self).get_table_instance(p_table_name, p_schema)
-
 
     def get_measures(self):
         """

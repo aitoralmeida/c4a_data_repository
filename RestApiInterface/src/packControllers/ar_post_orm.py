@@ -130,14 +130,13 @@ class ARPostORM(PostORM):
                                                   start_time=date_range[0],
                                                   end_time=date_range[1])
                 # Insert the m2m table
-                cd_eam_start_range_rel = ar_tables.CDEAMStartRangeRel(start_range_id=start_range.id, cd_eam_id=cd_eam.id)
+                cd_eam_start_range_rel = ar_tables.CDEAMStartRangeRel(start_range_id=start_range.id,
+                                                                      cd_eam_id=cd_eam.id)
                 insert_list.append(cd_eam_start_range_rel)
             # For each transformed action
             for transformed_action in data['transformed_action']:
-
-                # TODO users can create NEW TRANSFORMED ACTIONS BASED IN THEIR PAYLOAD
-
                 # Insert the transformed actions
+                # TODO review this to considering not to add new transformed actions
                 transformed_action = self._get_or_create(ar_tables.CDTransformedAction,
                                                          transformed_action_name=transformed_action)
                 cd_eam__cd_transformed_action_rel = ar_tables.CDEAMCDTransformedActionRel(
@@ -154,6 +153,63 @@ class ARPostORM(PostORM):
         # Commit changes and exiting
         return self.commit()
 
+    def _add_transformed_action(self, p_add_action_data, p_executed_action):
+        """
+        Giving an add_action data, this method transforms the given data into a model data
+        that can be used by the HARS algorithms.
+
+        :param p_add_action_data: A instance of add_action
+        :param p_executed_action: The created instance of executed_action from add_action method
+
+        :return: True if everything works as expected
+                False is something goes wrong
+        """
+
+        res = False
+        # Entering data into database
+        logging.info(inspect.stack()[0][3], "adding data to database")
+        # Extracting the needed data from the dataset
+        action_name = p_add_action_data.get('action', None) and p_add_action_data['action'].split(':')[-1].lower()
+        location_type = p_add_action_data.get('location', None) and p_add_action_data['location'].split(':')[2].lower()
+        # additional values that might be needed if payload data is present
+        appliance_type = p_add_action_data.get('payload', None) and \
+                         p_add_action_data['payload'].get('appliance_type', None) and \
+                         p_add_action_data['payload']['appliance_type'].lower()
+        furniture_type = p_add_action_data.get('payload', None) and \
+                         p_add_action_data['payload'].get('furniture_type', None) and \
+                         p_add_action_data['payload']['furniture_type'].lower()
+        state_type = p_add_action_data.get('payload', None) and p_add_action_data['payload'].get('state_type', None)
+        calling_number = p_add_action_data.get('payload', None) and \
+                         p_add_action_data['payload'].get('calling_number', None)
+
+        # Making the needed search to obtain the transformed action
+        if appliance_type or furniture_type or state_type or calling_number:
+            # Avoiding the location value in the operation
+            location_type = None
+
+        # Getting the needed transformed action from DB
+        transformed_action = self.session.query(ar_tables.CDTransformedAction).filter_by(
+            action_name=action_name, location_type=location_type,
+            appliance_type=appliance_type, furniture_type=furniture_type,
+            state_type=state_type, calling_number=calling_number)
+        # Self session to obtain ids
+        self.session.flush()
+        # Check if the count is only one
+        if transformed_action and transformed_action.count() == 1:
+            # We detect the popper transformed action in the
+            executed_transformed_action = ar_tables.ExecutedTransformedAction(
+                transformed_execution_datetime=p_add_action_data.get('timestamp', arrow.utcnow()),
+                transformed_acquisition_datetime=p_executed_action.acquisition_datetime,
+                executed_action_id=p_executed_action.id,
+                cd_transformed_action_id=transformed_action[0].id,
+                user_in_role_id=p_executed_action.user_in_role_id)
+            # Pending insert in DB
+            self.insert_one(executed_transformed_action)
+            # All done, res success
+            res = True
+        # Data added ok
+        logging.info(inspect.stack()[0][3], "data added successful")
+        return res
 
     ###################################################################################################
     ###################################################################################################
@@ -270,9 +326,10 @@ class ARPostORM(PostORM):
             actions.append(action[0])
         return actions
 
+    # Todo check if this class is needed
     def get_action(self, p_start_time, p_end_time):
         """
-        By giving a start and end time, this method extracts from database the stores leas and inserts in in a
+        By giving a start and end time, this method extracts from database the stored leas and inserts in in a
         Python dict.
 
 
@@ -282,7 +339,6 @@ class ARPostORM(PostORM):
         """
 
         list_of_leas = list()
-
         # Dates are ok, we are going to extract needed LEAS from executed action table
         query = self.session.query(ar_tables.ExecutedAction).filter(
             ar_tables.ExecutedAction.execution_datetime.between(p_start_time, p_end_time))
@@ -296,6 +352,34 @@ class ARPostORM(PostORM):
                 'execution_datetime': q.execution_datetime,
                 'location_name': location_name,
                 'action_name': action_name
+            }
+            # Adding the dict to the final list
+            list_of_leas.append(lea)
+        return list_of_leas
+
+    def get_transformed_action(self, p_start_time, p_end_time):
+        """
+        By giving a start and end time, this method extract from database the stored Transformed actions
+        to create a proper Python dict to be used by HARS.
+
+
+        :param p_start_time: The interval start date of the extraction
+        :param p_end_time: The final end date of the extraction
+        :return:  A list containing a Python dictionaries with the needed LEAS.
+        """
+        list_of_leas = list()
+        # Dates are ok, we are going to extract needed LEAS from executed action table
+        query = self.session.query(ar_tables.ExecutedTransformedAction).filter(
+            ar_tables.ExecutedTransformedAction.transformed_execution_datetime.between(p_start_time, p_end_time))
+        logging.info(inspect.stack()[0][3], "Total founded LEAS in database: ", query.count())
+        for q in query:
+            # Extracting the needed data and obtaining additional values
+            transformed_action = self.session.query(ar_tables.CDTransformedAction).filter_by(id=q.id)[0]
+            lea = {
+                'executed_action_id': q.executed_action_id,
+                'execution_datetime': q.transformed_execution_datetime,
+                'location_name': transformed_action.location_type,
+                'action_name': transformed_action.transformed_action_name
             }
             # Adding the dict to the final list
             list_of_leas.append(lea)
