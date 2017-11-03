@@ -99,6 +99,9 @@ def generate_database(p_ar_post_orm, p_sr_post_orm):
         # Creating CDMetric information
         create_metric(sr_tables, sr_orm)
         logging.info(inspect.stack()[0][3], "Created Metrics for Shared Repository schema")
+        # Creating CDFrailtyStatus information
+        create_frailty_status(sr_tables, sr_orm)
+        logging.info(inspect.stack()[0][3], "Created Frailty Status for Shared Repository schema")
         # Commit and closing connection
         sr_orm.commit()
         sr_orm.close()
@@ -700,28 +703,6 @@ def create_transformed_actions(p_tables, p_orm):
     """
     list_of_transformed_action = []
 
-
-
-    """
-    
-    
-    transformed_action_name = Column(String(255), unique=True)
-    transformed_action_description = Column(String(255), nullable=True)
-
-    # This values are used to give to the transformed action an uniqueness in the system
-    # Basic action-location values
-    action_name = Column(String(50), unique=True, nullable=False)
-    location_name = Column(String(500), unique=True, nullable=False)
-    # Payload information columns to detect uniqueness
-    appliance_type = Column(String(50), nullable=True)
-    furniture_type = Column(String(50), nullable=True)
-    state_type = Column(String(50), nullable=True)
-    calling_number = Column(String(50), nullable=True)
-    
-    
-    
-    """
-
     # Enter locations
 
     home_enter = p_tables.CDTransformedAction(transformed_action_name='home_enter',
@@ -733,217 +714,244 @@ def create_transformed_actions(p_tables, p_orm):
                                               action_name='poi_enter', location_type='shop')
 
     seniorcenter_enter = p_tables.CDTransformedAction(transformed_action_name='seniorcenter_enter',
-                                              transformed_action_description='The user enters in a senior center',
-                                              action_name='poi_enter', location_type='seniorcenter')
+                                                      transformed_action_description='The user enters in a senior center',
+                                                      action_name='poi_enter', location_type='seniorcenter')
 
     cinema_enter = p_tables.CDTransformedAction(transformed_action_name='cinema_enter',
-                                              transformed_action_description='The user enters in a cinema',
-                                              action_name='poi_enter', location_type='cinema')
+                                                transformed_action_description='The user enters in a cinema',
+                                                action_name='poi_enter', location_type='cinema')
 
     museum_enter = p_tables.CDTransformedAction(transformed_action_name='museum_enter',
                                                 transformed_action_description='The user enters in a museum',
                                                 action_name='poi_enter', location_type='museum')
 
     gp_enter = p_tables.CDTransformedAction(transformed_action_name='gp_enter',
-                                                transformed_action_description='The user enters in a gp',
-                                                action_name='poi_enter', location_type='gp')
+                                            transformed_action_description='The user enters in a gp',
+                                            action_name='poi_enter', location_type='gp')
 
     pharmacy_enter = p_tables.CDTransformedAction(transformed_action_name='pharmacy_enter',
-                                                transformed_action_description='The user enters in a pharmacy',
-                                                action_name='poi_enter', location_type='pharmacy')
+                                                  transformed_action_description='The user enters in a pharmacy',
+                                                  action_name='poi_enter', location_type='pharmacy')
 
     restaurant_enter = p_tables.CDTransformedAction(transformed_action_name='restaurant_enter',
-                                                  transformed_action_description='The user enters in a restaurant',
-                                                  action_name='poi_enter', location_type='restaurant')
+                                                    transformed_action_description='The user enters in a restaurant',
+                                                    action_name='poi_enter', location_type='restaurant')
 
     neighbourhome_enter = p_tables.CDTransformedAction(transformed_action_name='neighbourhome_enter',
-                                                  transformed_action_description='The user enters in a neighbourhome',
-                                                  action_name='poi_enter', location_type='neighbourhome')
+                                                       transformed_action_description='The user enters in a neighbourhome',
+                                                       action_name='poi_enter', location_type='neighbourhome')
 
     friendhome_enter = p_tables.CDTransformedAction(transformed_action_name='friendhome_enter',
-                                                       transformed_action_description='The user enters in a friendhome',
-                                                       action_name='poi_enter', location_type='friendhome')
+                                                    transformed_action_description='The user enters in a friendhome',
+                                                    action_name='poi_enter', location_type='friendhome')
 
     familymemberhome_enter = p_tables.CDTransformedAction(transformed_action_name='familymemberhome_enter',
-                                                       transformed_action_description='The user enters in a familimemberhome',
-                                                       action_name='poi_enter', location_type='familymemberhome')
+                                                          transformed_action_description='The user enters in a familimemberhome',
+                                                          action_name='poi_enter', location_type='familymemberhome')
 
     foodcount_enter = p_tables.CDTransformedAction(transformed_action_name='foodcount_enter',
-                                                       transformed_action_description='The user enters in a foodcount',
-                                                       action_name='poi_enter', location_type='foodcount')
+                                                   transformed_action_description='The user enters in a foodcount',
+                                                   action_name='poi_enter', location_type='foodcount')
 
     publicpark_enter = p_tables.CDTransformedAction(transformed_action_name='publicpark_enter',
-                                                       transformed_action_description='The user enters in a publicpark',
-                                                       action_name='poi_enter', location_type='publicpark')
+                                                    transformed_action_description='The user enters in a publicpark',
+                                                    action_name='poi_enter', location_type='publicpark')
 
     restroom_enter = p_tables.CDTransformedAction(transformed_action_name='restroom_enter',
-                                                       transformed_action_description='The user enters in a restroom',
-                                                       action_name='poi_enter', location_type='restroom')
+                                                  transformed_action_description='The user enters in a restroom',
+                                                  action_name='poi_enter', location_type='restroom')
 
     bedroom_enter = p_tables.CDTransformedAction(transformed_action_name='bedroom_enter',
-                                                       transformed_action_description='The user enters in a bedroom',
-                                                       action_name='poi_enter', location_type='bedroom')
+                                                 transformed_action_description='The user enters in a bedroom',
+                                                 action_name='poi_enter', location_type='bedroom')
 
     kitchen_enter = p_tables.CDTransformedAction(transformed_action_name='kitchen_enter',
-                                                       transformed_action_description='The user enters in a kitchen',
-                                                       action_name='poi_enter', location_type='kitchen')
+                                                 transformed_action_description='The user enters in a kitchen',
+                                                 action_name='poi_enter', location_type='kitchen')
 
     livingroom_enter = p_tables.CDTransformedAction(transformed_action_name='livingroom_enter',
-                                                       transformed_action_description='The user enters in a livingroom',
-                                                       action_name='poi_enter', location_type='livingroom')
+                                                    transformed_action_description='The user enters in a livingroom',
+                                                    action_name='poi_enter', location_type='livingroom')
 
     anteroom_enter = p_tables.CDTransformedAction(transformed_action_name='anteroom_enter',
-                                                       transformed_action_description='The user enters in a anteroom',
-                                                       action_name='poi_enter', location_type='anteroom')
+                                                  transformed_action_description='The user enters in a anteroom',
+                                                  action_name='poi_enter', location_type='anteroom')
 
     # Exit locations
     home_exit = p_tables.CDTransformedAction(transformed_action_name='home_exit',
-                                              transformed_action_description='The user exits from home',
-                                              action_name='poi_exit', location_type='home')
+                                             transformed_action_description='The user exits from home',
+                                             action_name='poi_exit', location_type='home')
 
     shop_exit = p_tables.CDTransformedAction(transformed_action_name='shop_exit',
-                                              transformed_action_description='The user exits from a shop',
-                                              action_name='poi_exit', location_type='shop')
+                                             transformed_action_description='The user exits from a shop',
+                                             action_name='poi_exit', location_type='shop')
 
     seniorcenter_exit = p_tables.CDTransformedAction(transformed_action_name='seniorcenter_exit',
-                                                      transformed_action_description='The user exits from a senior center',
-                                                      action_name='poi_exit', location_type='seniorcenter')
+                                                     transformed_action_description='The user exits from a senior center',
+                                                     action_name='poi_exit', location_type='seniorcenter')
 
     cinema_exit = p_tables.CDTransformedAction(transformed_action_name='cinema_exit',
-                                                transformed_action_description='The user exits from a cinema',
-                                                action_name='poi_exit', location_type='cinema')
+                                               transformed_action_description='The user exits from a cinema',
+                                               action_name='poi_exit', location_type='cinema')
 
     museum_exit = p_tables.CDTransformedAction(transformed_action_name='museum_exit',
-                                                transformed_action_description='The user exits from a museum',
-                                                action_name='poi_exit', location_type='museum')
+                                               transformed_action_description='The user exits from a museum',
+                                               action_name='poi_exit', location_type='museum')
 
     gp_exit = p_tables.CDTransformedAction(transformed_action_name='gp_exit',
-                                            transformed_action_description='The user exits from a gp',
-                                            action_name='poi_exit', location_type='gp')
+                                           transformed_action_description='The user exits from a gp',
+                                           action_name='poi_exit', location_type='gp')
 
     pharmacy_exit = p_tables.CDTransformedAction(transformed_action_name='pharmacy_exit',
-                                                  transformed_action_description='The user exits from a pharmacy',
-                                                  action_name='poi_exit', location_type='pharmacy')
+                                                 transformed_action_description='The user exits from a pharmacy',
+                                                 action_name='poi_exit', location_type='pharmacy')
 
     restaurant_exit = p_tables.CDTransformedAction(transformed_action_name='restaurant_exit',
-                                                    transformed_action_description='The user exits from a restaurant',
-                                                    action_name='poi_exit', location_type='restaurant')
+                                                   transformed_action_description='The user exits from a restaurant',
+                                                   action_name='poi_exit', location_type='restaurant')
 
     neighbourhome_exit = p_tables.CDTransformedAction(transformed_action_name='neighbourhome_exit',
-                                                       transformed_action_description='The user exits from a neighbourhome',
-                                                       action_name='poi_exit', location_type='neighbourhome')
+                                                      transformed_action_description='The user exits from a neighbourhome',
+                                                      action_name='poi_exit', location_type='neighbourhome')
 
     friendhome_exit = p_tables.CDTransformedAction(transformed_action_name='friendhome_exit',
-                                                    transformed_action_description='The user exits from a friendhome',
-                                                    action_name='poi_exit', location_type='friendhome')
+                                                   transformed_action_description='The user exits from a friendhome',
+                                                   action_name='poi_exit', location_type='friendhome')
 
     familymemberhome_exit = p_tables.CDTransformedAction(transformed_action_name='familymemberhome_exit',
-                                                          transformed_action_description='The user exits from a familimemberhome',
-                                                          action_name='poi_exit', location_type='familymemberhome')
+                                                         transformed_action_description='The user exits from a familimemberhome',
+                                                         action_name='poi_exit', location_type='familymemberhome')
 
     foodcount_exit = p_tables.CDTransformedAction(transformed_action_name='foodcount_exit',
-                                                   transformed_action_description='The user exits from a foodcount',
-                                                   action_name='poi_exit', location_type='foodcount')
+                                                  transformed_action_description='The user exits from a foodcount',
+                                                  action_name='poi_exit', location_type='foodcount')
 
     publicpark_exit = p_tables.CDTransformedAction(transformed_action_name='publicpark_exit',
-                                                    transformed_action_description='The user exits from a publicpark',
-                                                    action_name='poi_exit', location_type='publicpark')
+                                                   transformed_action_description='The user exits from a publicpark',
+                                                   action_name='poi_exit', location_type='publicpark')
 
     restroom_exit = p_tables.CDTransformedAction(transformed_action_name='restroom_exit',
-                                                  transformed_action_description='The user exits from a restroom',
-                                                  action_name='poi_exit', location_type='restroom')
+                                                 transformed_action_description='The user exits from a restroom',
+                                                 action_name='poi_exit', location_type='restroom')
 
     bedroom_exit = p_tables.CDTransformedAction(transformed_action_name='bedroom_exit',
-                                                 transformed_action_description='The user exits from a bedroom',
-                                                 action_name='poi_exit', location_type='bedroom')
+                                                transformed_action_description='The user exits from a bedroom',
+                                                action_name='poi_exit', location_type='bedroom')
 
     kitchen_exit = p_tables.CDTransformedAction(transformed_action_name='kitchen_exit',
-                                                 transformed_action_description='The user exits from a kitchen',
-                                                 action_name='poi_exit', location_type='kitchen')
+                                                transformed_action_description='The user exits from a kitchen',
+                                                action_name='poi_exit', location_type='kitchen')
 
     livingroom_exit = p_tables.CDTransformedAction(transformed_action_name='livingroom_exit',
-                                                    transformed_action_description='The user exits from a livingroom',
-                                                    action_name='poi_exit', location_type='livingroom')
+                                                   transformed_action_description='The user exits from a livingroom',
+                                                   action_name='poi_exit', location_type='livingroom')
 
     anteroom_exit = p_tables.CDTransformedAction(transformed_action_name='anteroom_exit',
-                                                  transformed_action_description='The user exits from a anteroom',
-                                                  action_name='poi_exit', location_type='anteroom')
+                                                 transformed_action_description='The user exits from a anteroom',
+                                                 action_name='poi_exit', location_type='anteroom')
 
     # Transport locations
     bus_enter = p_tables.CDTransformedAction(transformed_action_name='bus_enter',
-                                                  transformed_action_description='The user enters in a bus',
-                                                  action_name='transport_enter', location_type='bus')
+                                             transformed_action_description='The user enters in a bus',
+                                             action_name='transport_enter', location_type='bus')
 
     train_enter = p_tables.CDTransformedAction(transformed_action_name='train_enter',
-                                             transformed_action_description='The user enters in a train',
-                                             action_name='transport_enter', location_type='train')
+                                               transformed_action_description='The user enters in a train',
+                                               action_name='transport_enter', location_type='train')
 
     taxi_enter = p_tables.CDTransformedAction(transformed_action_name='taxi_enter',
-                                             transformed_action_description='The user enters in a taxi',
-                                             action_name='transport_enter', location_type='taxi')
+                                              transformed_action_description='The user enters in a taxi',
+                                              action_name='transport_enter', location_type='taxi')
 
     car_enter = p_tables.CDTransformedAction(transformed_action_name='car_enter',
                                              transformed_action_description='The user enters in a car',
                                              action_name='transport_enter', location_type='car')
 
     bus_exit = p_tables.CDTransformedAction(transformed_action_name='bus_exit',
-                                             transformed_action_description='The user exits from a bus',
-                                             action_name='transport_exit', location_type='bus')
+                                            transformed_action_description='The user exits from a bus',
+                                            action_name='transport_exit', location_type='bus')
 
     train_exit = p_tables.CDTransformedAction(transformed_action_name='train_exit',
-                                               transformed_action_description='The user exits from a train',
-                                               action_name='transport_exit', location_type='train')
+                                              transformed_action_description='The user exits from a train',
+                                              action_name='transport_exit', location_type='train')
 
     taxi_exit = p_tables.CDTransformedAction(transformed_action_name='taxi_exit',
-                                              transformed_action_description='The user exits from a taxi',
-                                              action_name='transport_exit', location_type='taxi')
+                                             transformed_action_description='The user exits from a taxi',
+                                             action_name='transport_exit', location_type='taxi')
 
     car_exit = p_tables.CDTransformedAction(transformed_action_name='car_exit',
-                                             transformed_action_description='The user exits from a car',
-                                             action_name='transport_exit', location_type='car')
+                                            transformed_action_description='The user exits from a car',
+                                            action_name='transport_exit', location_type='car')
 
     # Transformed actions based on they value in the PAYLOAD
     # Appliance based LEAS
 
-    # TODO to be defined properly
+    oven_on = p_tables.CDTransformedAction(transformed_action_name='oven_on',
+                                           transformed_action_description='The user turn on the oven',
+                                           action_name='appliance_on', appliance_type='oven')
 
-    # culturalappliance
+    tv_on = p_tables.CDTransformedAction(transformed_action_name='tv_on',
+                                         transformed_action_description='The user turn on the tv',
+                                         action_name='appliance_on', appliance_type='tvset')
 
+    cooker_on = p_tables.CDTransformedAction(transformed_action_name='cooker_on',
+                                             transformed_action_description='The user turn on the cooker',
+                                             action_name='appliance_on', appliance_type='cooker')
+
+    washingmachine_on = p_tables.CDTransformedAction(transformed_action_name='washingmachine_on',
+                                                     transformed_action_description='The user turn on the wasingmachine',
+                                                     action_name='appliance_on', appliance_type='washingmachine')
+
+    oven_off = p_tables.CDTransformedAction(transformed_action_name='oven_off',
+                                            transformed_action_description='The user turn off the oven',
+                                            action_name='appliance_off', appliance_type='oven')
+
+    tv_off = p_tables.CDTransformedAction(transformed_action_name='tv_off',
+                                          transformed_action_description='The user turn off the tv',
+                                          action_name='appliance_off', appliance_type='tvset')
+
+    cooker_off = p_tables.CDTransformedAction(transformed_action_name='cooker_off',
+                                              transformed_action_description='The user turn off the cooker',
+                                              action_name='appliance_off', appliance_type='cooker')
+
+    washingmachine_off = p_tables.CDTransformedAction(transformed_action_name='washingmachine_off',
+                                                      transformed_action_description='The user turn off the wasingmachine',
+                                                      action_name='appliance_off', appliance_type='washingmachine')
 
     # Furniture based leas
     fridge_open = p_tables.CDTransformedAction(transformed_action_name='fridge_open',
-                                            transformed_action_description='The user open the fridge',
-                                            action_name='furniture_open', furniture_type='fridge')
+                                               transformed_action_description='The user open the fridge',
+                                               action_name='furniture_open', furniture_type='fridge')
 
     oven_open = p_tables.CDTransformedAction(transformed_action_name='oven_open',
-                                               transformed_action_description='The user open the oven',
-                                               action_name='furniture_open', furniture_type='oven')
+                                             transformed_action_description='The user open the oven',
+                                             action_name='furniture_open', furniture_type='oven')
 
     microwave_open = p_tables.CDTransformedAction(transformed_action_name='microwave_open',
-                                               transformed_action_description='The user open the microwave',
-                                               action_name='furniture_open', furniture_type='microwave')
+                                                  transformed_action_description='The user open the microwave',
+                                                  action_name='furniture_open', furniture_type='microwave')
 
     fridge_closed = p_tables.CDTransformedAction(transformed_action_name='fridge_closed',
-                                               transformed_action_description='The user closed the fridge',
-                                               action_name='furniture_closed', furniture_type='fridge')
+                                                 transformed_action_description='The user closed the fridge',
+                                                 action_name='furniture_closed', furniture_type='fridge')
 
     oven_closed = p_tables.CDTransformedAction(transformed_action_name='oven_closed',
-                                             transformed_action_description='The user closed the oven',
-                                             action_name='furniture_closed', furniture_type='oven')
+                                               transformed_action_description='The user closed the oven',
+                                               action_name='furniture_closed', furniture_type='oven')
 
     microwave_closed = p_tables.CDTransformedAction(transformed_action_name='microwave_closed',
-                                                  transformed_action_description='The user closed the microwave',
-                                                  action_name='furniture_closed', furniture_type='microwave')
+                                                    transformed_action_description='The user closed the microwave',
+                                                    action_name='furniture_closed', furniture_type='microwave')
 
     # Body related leas
 
     walking_start = p_tables.CDTransformedAction(transformed_action_name='walking_start',
-                                               transformed_action_description='The user start to walking',
-                                               action_name='body_state_start', state_type='walking')
+                                                 transformed_action_description='The user start to walking',
+                                                 action_name='body_state_start', state_type='walking')
 
     sleeping_start = p_tables.CDTransformedAction(transformed_action_name='sleeping_start',
-                                                 transformed_action_description='The user start to sleep',
-                                                 action_name='body_state_start', state_type='sleeping')
+                                                  transformed_action_description='The user start to sleep',
+                                                  action_name='body_state_start', state_type='sleeping')
 
     # light_sleeping_start = p_tables.CDTransformedAction(transformed_action_name='sleeping_start',
     #                                               transformed_action_description='The user start to light sleep',
@@ -954,16 +962,16 @@ def create_transformed_actions(p_tables, p_orm):
     #                                               action_name='body_state_start', state_type='deepslep')
 
     stairs_up_start = p_tables.CDTransformedAction(transformed_action_name='stairs_up_start',
-                                                  transformed_action_description='The user start to climbing stairs',
-                                                  action_name='body_state_start', state_type='climbingstairs')
+                                                   transformed_action_description='The user start to climbing stairs',
+                                                   action_name='body_state_start', state_type='climbingstairs')
 
     walking_stop = p_tables.CDTransformedAction(transformed_action_name='walking_stop',
-                                                 transformed_action_description='The user stop to walking',
-                                                 action_name='body_state_stop', state_type='walking')
+                                                transformed_action_description='The user stop to walking',
+                                                action_name='body_state_stop', state_type='walking')
 
     sleeping_stop = p_tables.CDTransformedAction(transformed_action_name='sleeping_stop',
-                                                  transformed_action_description='The user stop to sleep',
-                                                  action_name='body_state_stop', state_type='sleeping')
+                                                 transformed_action_description='The user stop to sleep',
+                                                 action_name='body_state_stop', state_type='sleeping')
 
     # light_sleeping_stop = p_tables.CDTransformedAction(transformed_action_name='sleeping_stop',
     #                                                     transformed_action_description='The user stop to light sleep',
@@ -974,26 +982,28 @@ def create_transformed_actions(p_tables, p_orm):
     #                                                    action_name='body_state_stop', state_type='deepslep')
 
     stairs_up_stop = p_tables.CDTransformedAction(transformed_action_name='stairs_up_stop',
-                                                   transformed_action_description='The user stop to climbing stairs',
-                                                   action_name='body_state_stop', state_type='climbingstairs')
+                                                  transformed_action_description='The user stop to climbing stairs',
+                                                  action_name='body_state_stop', state_type='climbingstairs')
 
     # Phone related LEAS
 
     # TODO thing what values needs to mach in phone start, stop ad so on
 
-
     # Filling the list
-    list_of_transformed_action.extend([home_enter, shop_enter, seniorcenter_enter, cinema_enter, museum_enter, gp_enter,
-                                    pharmacy_enter, restaurant_enter, restaurant_enter,neighbourhome_enter, friendhome_enter,
-                                      familymemberhome_enter, foodcount_enter, publicpark_enter, restaurant_enter, restroom_enter,
-                                       bedroom_enter, kitchen_enter, livingroom_enter, anteroom_enter, home_exit, shop_enter,
-                                      shop_exit, seniorcenter_exit, cinema_exit, museum_exit, gp_exit, pharmacy_exit,
-                                      restaurant_exit, neighbourhome_exit, friendhome_exit, friendhome_exit, familymemberhome_exit,
-                                      foodcount_exit, publicpark_exit, restroom_exit, bedroom_exit, kitchen_exit,
-                                      livingroom_exit, anteroom_exit, bus_enter, train_enter, taxi_enter, car_enter,
-                                      bus_exit, bus_exit, train_exit, taxi_exit, car_exit, fridge_open, oven_open, microwave_open,
-                                      fridge_closed, oven_closed, microwave_closed, walking_start, sleeping_start,
-                                       stairs_up_start, walking_start, walking_stop, sleeping_stop, stairs_up_stop])
+    list_of_transformed_action.extend([
+        home_enter, shop_enter, seniorcenter_enter, cinema_enter, museum_enter, gp_enter,
+        pharmacy_enter, restaurant_enter, restaurant_enter, neighbourhome_enter, friendhome_enter,
+        familymemberhome_enter, foodcount_enter, publicpark_enter, restaurant_enter, restroom_enter,
+        bedroom_enter, kitchen_enter, livingroom_enter, anteroom_enter, home_exit, shop_enter,
+        shop_exit, seniorcenter_exit, cinema_exit, museum_exit, gp_exit, pharmacy_exit,
+        restaurant_exit, neighbourhome_exit, friendhome_exit, friendhome_exit, familymemberhome_exit,
+        foodcount_exit, publicpark_exit, restroom_exit, bedroom_exit, kitchen_exit,
+        livingroom_exit, anteroom_exit, bus_enter, train_enter, taxi_enter, car_enter,
+        bus_exit, bus_exit, train_exit, taxi_exit, car_exit, fridge_open, oven_open, microwave_open,
+        fridge_closed, oven_closed, microwave_closed, walking_start, sleeping_start,
+        stairs_up_start, walking_start, walking_stop, sleeping_stop, stairs_up_stop,
+        oven_on, tv_on, cooker_on, washingmachine_on, oven_off, tv_off, cooker_off, washingmachine_off
+    ])
 
     # Insert data, pending action
     p_orm.insert_all(list_of_transformed_action)
@@ -1096,10 +1106,61 @@ def create_metric(p_tables, p_orm):
     luminosity = p_tables.CDMetric(metric_name="luminosity", metric_description="current luminosity in lux",
                                    metric_base_unit="float")
 
+    state_type = p_tables.CDMetric(metric_name="state_type", metric_description="the boy state type",
+                                   metric_base_unit="string")
+
+    walking_speed = p_tables.CDMetric(metric_name="walking_speed", metric_description="walking speed in m/s",
+                                      metric_base_unit="float")
+
+    elevation = p_tables.CDMetric(metric_name="elevation",
+                                  metric_description="elevation of current position in meters above sea level",
+                                  metric_base_unit="float")
+
+    calling_number = p_tables.CDMetric(metric_name="calling_number", metric_description="hashed calling phone number",
+                                       metric_base_unit="string")
+
+    visit_type = p_tables.CDMetric(metric_name="visit_type", metric_description="type of the visit",
+                                   metric_base_unit="string")
+
+    visitors_number = p_tables.CDMetric(metric_name="visitors_number",
+                                        metric_description="number of visitors received or met",
+                                        metric_base_unit="integer")
+
+    visitors_list = p_tables.CDMetric(metric_name="visitors_list", metric_description="list of visitors ID",
+                                      metric_base_unit="list")
+
     # Filling the list
     list_of_metric.extend([instance_id, appliance_id, appliance_type, furniture_id, furniture_type, associated_to,
-                           temperature, humidity, noise, luminosity])
+                           temperature, humidity, noise, luminosity, state_type, walking_speed, elevation,
+                           calling_number, visit_type, visitors_number, visitors_list])
     # Insert data, pending action
     p_orm.insert_all(list_of_metric)
+    # Commit changes
+    p_orm.commit()
+
+
+def create_frailty_status(p_tables, p_orm):
+    """
+    Creating the needed information about the frailty status of a user in the system. This table will be used by
+    frailty_status_timeline to know if a CR has or not frailty over the time.
+
+    :param p_tables the instantiation of the tables in database
+    :param p_orm the orm connection to the database
+    """
+
+    list_of_frailty_status = []
+
+    # Creating the needed entries
+    frail = p_tables.CDFrailtyStatus(frailty_status='frail',
+                                     frailty_status_description='The user is in frail condition')
+    non_frail = p_tables.CDFrailtyStatus(frailty_status='non_frail',
+                                         frailty_status_description='The user is in non-frail condition')
+    pre_frail = p_tables.CDFrailtyStatus(frailty_status='pre_frail',
+                                         frailty_status_description='The user is in pre-frail condition')
+
+    # Filling the list
+    list_of_frailty_status.extend([frail, non_frail, pre_frail])
+    # Insert data, pending action
+    p_orm.insert_all(list_of_frailty_status)
     # Commit changes
     p_orm.commit()

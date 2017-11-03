@@ -89,32 +89,18 @@ ENV/
 .ropeproject
 
 # Unversioned Files
-.idea/c4a_data_repository.iml
-.idea/misc.xml
-.idea/modules.xml
-.idea/workspace.xml
 LinkedDataInterface/bin/
 LinkedDataInterface/include/
-LinkedDataInterface/lib/
 LinkedDataInterface/local/
 LinkedDataInterface/man/
 LinkedDataInterface/pip-selfcheck.json
 LinkedDataInterface/share/
 RestApiInterface/bin/
 RestApiInterface/include/
-RestApiInterface/lib/
 RestApiInterface/local/
 RestApiInterface/man/
 RestApiInterface/pip-selfcheck.json
 RestApiInterface/share/
-RestApiInterface/src/__init__.pyc
-RestApiInterface/src/packFlask/__init__.pyc
-RestApiInterface/src/packFlask/api.pyc
-RestApiInterface/src/packORM/PasswordHash.pyc
-RestApiInterface/src/packORM/__init__.pyc
-RestApiInterface/src/packORM/post_orm.pyc
-RestApiInterface/src/packORM/tables.pyc
-
 # Pycharm realted data
 .idea
 DemoRestAPI/bin/
@@ -128,3 +114,4 @@ LinkedDataInterface/src/ruleEngine/log/reasoner-13-09-2017 13-56-55.log.lck
 LinkedDataInterface/src/ruleEngine/log/reasoner-13-09-2017 14-33-39.log.lck
 LinkedDataInterface/src/ruleEngine/out/artifacts/ruleEngine_jar/odin
 LinkedDataInterface/src/ruleEngine/testing.ttl
+LinkedDataInterface/src/ruleEngine/log/reasoner-25-10-2017 15-02-42.log.lck

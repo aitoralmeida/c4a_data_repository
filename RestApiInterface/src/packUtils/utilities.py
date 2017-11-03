@@ -12,7 +12,9 @@ import re
 from collections import Counter
 from flask import abort, session, request
 from jsonschema import validate, ValidationError, FormatChecker
+from sqlalchemy_utils import functions
 from src.packORM import ar_tables, sr_tables
+from flask import current_app as app
 
 __author__ = 'Rubén Mulero'
 __copyright__ = "Copyright 2016, City4Age project"
@@ -878,7 +880,7 @@ class Utilities(object):
         return msg
 
     @staticmethod
-    def check_search_data(p_data):
+    def check_search_data(p_ar_database, p_sr_database, p_data):
         """
         Check if search data is ok and evaluates what is the best table that fits with search criteria
 
@@ -935,6 +937,26 @@ class Utilities(object):
             if type(p_data) is list:
                 for data in p_data:
                     validate(data, schema, format_checker=FormatChecker())
+                    # Validating table columns
+                    ar_columns = Utilities.get_table_columns(p_ar_database, data['table'])
+                    sr_columns = Utilities.get_table_columns(p_sr_database, data['table'])
+                    if ar_columns and sr_columns or ar_columns and not sr_columns:
+                        # Shared columns, we only check in one schema
+                        for key, value in data['criteria'].items():
+                            if ar_columns.get(key, None) is None:
+                                logging.error(
+                                    "The entered columns doesn't exist in this table. Available columns are: %s" % ar_columns.keys())
+                                raise ValidationError(
+                                    "The entered columns doesn't exist in this table. Available columns are: %s" % ar_columns.keys())
+                    else:
+                        # Only sr_columns, we check the SR schema
+                        for key, value in data['criteria'].items():
+                            if sr_columns.get(key, None) is None:
+                                logging.error(
+                                    "The entered columns doesn't exist in this table. Available columns are: %s" % sr_columns.keys())
+                                raise ValidationError(
+                                    "The entered columns doesn't exist in this table. Available columns are: %s" % sr_columns.keys())
+                    # Once we validate that data is OK, we are going to validate database tables and columns
         except ValidationError as e:
             logging.error("The schema entered by the user is invalid")
             msg = e.message
@@ -1289,6 +1311,55 @@ class Utilities(object):
 
         :return:
         """
-        available_tables = ['executed_action', 'measure',
-                            'EXECUTED_ACTION', 'MEASURE']
+        available_tables = ['executed_action', 'cd_action', 'cd_activity', 'executed_activity', 'variation_measure_value']
         return available_tables
+
+
+
+    ###################################################################################################
+    ###################################################################################################
+    ######                              Universal get functions
+    ###################################################################################################
+    ###################################################################################################
+
+    @staticmethod
+    def get_table_by_name(p_database, p_table):
+        """
+        By giving the database instance and the name of the table this method returns the table instance
+
+        :param p_database: The database instance
+        :param p_table: The name of the table
+        :return:
+        """
+        res = None
+        if isinstance(p_table, str) or isinstance(p_table, unicode):
+            if p_database.__class__.__name__ == 'ARPostORM':
+                # Obtaining the table instance by name
+                for c in ar_tables.Base._decl_class_registry.values():
+                    if hasattr(c, '__tablename__') and c.__tablename__ == p_table:
+                        res = c
+                        break
+            else:
+                for c in sr_tables.Base._decl_class_registry.values():
+                    if hasattr(c, '__tablename__') and c.__tablename__ == p_table:
+                        res = c
+                        break
+        return res
+
+    @staticmethod
+    def get_table_columns(p_database, p_table):
+        """
+        By giving a table, obtain the columns of this table
+
+
+        :param p_database The database instance
+        :param p_table The name of the table
+        :return: The columns of the given table or none if nothing is founded
+        """
+        res = None
+        if isinstance(p_table, str) or isinstance(p_table, unicode):
+            res = Utilities.get_table_by_name(p_database, p_table)
+            if res:
+                # We found the table, obtain its columns.
+                res = res.__table__.columns
+        return res

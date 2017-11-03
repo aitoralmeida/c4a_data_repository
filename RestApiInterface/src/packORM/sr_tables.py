@@ -23,8 +23,6 @@ from sqlalchemy.schema import CreateSchema
 from sqlalchemy.sql import expression
 from sqlalchemy.ext.compiler import compiles
 from sqlalchemy_utils import ArrowType
-from sqlalchemy_searchable import make_searchable
-from sqlalchemy_utils.types import TSVectorType
 
 from PasswordHash import PasswordHash
 from Encryption import Encryption
@@ -56,10 +54,6 @@ else:
 
 # Global variable declarative base
 Base = declarative_base(metadata=MetaData(schema='city4age_sr'))
-
-# Executing the making of searchable index
-# make_searchable()
-
 
 """
 Definition of a special recompilation of utcnow class to obtain the current time in UTC
@@ -248,9 +242,6 @@ class FrailtyStatusTimeline(Base):
     time_interval = relationship('TimeInterval')
     cd_frailty_status = relationship('CDFrailtyStatus')
 
-    # Vector search
-    ar_search_vector = Column(TSVectorType('time_interval_id', 'user_in_role_id', 'frailty_status'))
-
 
 class MDPilotDetectionVariable(Base):
     """
@@ -388,10 +379,6 @@ class ExecutedAction(Base):
     executed_activity = relationship("ExecutedActivity")
     location = relationship("Location")
 
-    # Vector search
-    sr_search_vector = Column(TSVectorType('location_id', 'user_in_role_id'))
-
-
 
 class LocationLocationTypeRel(Base):
     """
@@ -491,9 +478,6 @@ class CDRole(Base):
 
     # M2M Relationship
     assessment_audience_role = relationship('AssessmentAudienceRole')
-
-    # Vector search
-    sr_search_vector = Column(TSVectorType('role_name', 'role_abbreviation'))
 
     def __repr__(self):
         return "<CDRole(id='%s', role_name='%s', role_abbreviation='%s', role_description='%s'," \
@@ -677,8 +661,6 @@ class Pilot(Base):
     # M2M Relationship
     #md_pilot_detection_variable = relationship('MDPilotDetectionVariable')
 
-    sr_search_vector = Column(TSVectorType('pilot_code', 'pilot_name'))
-
     def __repr__(self):
         return "<Pilot(pilot_code='%s', pilot_name='%s', population_size='%s')>" % \
                (self.pilot_code, self.pilot_name, self.population_size)
@@ -703,9 +685,6 @@ class Location(Base):
     # many2many
     # executed_activity = relationship("LocationExecutedActivityRel")
     location_type = relationship("LocationLocationTypeRel")
-
-    # Vector search
-    sr_search_vector = Column(TSVectorType('location_name'))
 
     def __repr__(self):
         return "<Location(location_name='%s', indoor='%s')>" % (self.location_name, self.indoor)
@@ -800,9 +779,6 @@ class CDActivity(Base):
     # expected_inter_behaviour = relationship("InterBehaviour", foreign_keys='InterBehaviour.expected_activity_id')
     # real_inter_behaviour = relationship("InterBehaviour", foreign_keys='InterBehaviour.real_activity_id')
 
-    # Vector search
-    sr_search_vector = Column(TSVectorType('activity_name'))
-
     def __repr__(self):
         return "<CDActivity(activity_name='%s')>" % self.activity_name
 
@@ -891,6 +867,7 @@ class VariationMeasureValue(Base):
     """
 
     __tablename__ = 'variation_measure_value'
+    __searchable__ = ['measure_value', 'data_source_type', 'extra_information', 'user_in_role_id', 'measure_type_id']
 
     # Generating the Sequence
     variation_measure_value_seq = Sequence('variation_measure_value_seq', metadata=Base.metadata)
@@ -921,6 +898,7 @@ class NumericIndicatorValue(Base):
     """
 
     __tablename__ = 'numeric_indicator_value'
+    __searchable__ = ['nui_value', 'user_in_role_id', 'time_interval_ide']
 
     # Generating the Sequence
     numeric_indicator_value_seq = Sequence('numeric_indicator_value_seq', metadata=Base.metadata)
@@ -989,6 +967,7 @@ class GeriatricFactorValue(Base):
     """
 
     __tablename__ = 'geriatric_factor_value'
+    __searchable__ = ['time_interval_id', 'data_source_type', 'derivation_weight', 'gef_value', 'gef_type_id']
 
     # Generating the Sequence
     geriatric_factor_value_seq = Sequence('geriatric_factor_value_seq', metadata=Base.metadata)
@@ -1045,6 +1024,7 @@ class CareProfile(Base):
     """
 
     __tablename__ = 'care_profile'
+    __searchable__ = ['attention_status', 'last_intervention_date', 'created', 'last_updated', 'created_by']
 
     user_in_role_id = Column(Integer, ForeignKey('user_in_role.id'), primary_key=True)
     individual_summary = Column(String, nullable=False)
@@ -1232,6 +1212,3 @@ class CDMetric(Base):
     metric_base_unit = Column(String(50), nullable=True)
     # M2M relationship
     payload_value = relationship('PayloadValue')
-
-    # Vector search
-    sr_search_vector = Column(TSVectorType('metric_name'))

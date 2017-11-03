@@ -25,8 +25,6 @@ from sqlalchemy.ext.compiler import compiles
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, validates
 from sqlalchemy.schema import CreateSchema
-from sqlalchemy_searchable import make_searchable
-from sqlalchemy_utils.types import TSVectorType
 
 from PasswordHash import PasswordHash
 from Encryption import Encryption
@@ -58,10 +56,6 @@ else:
 
 # Global variable declarative base
 Base = declarative_base(metadata=MetaData(schema='city4age_ar'))
-
-# Executing the making of searchable index
-# make_searchable()
-
 
 
 """
@@ -220,6 +214,7 @@ class ExecutedAction(Base):
     """
 
     __tablename__ = 'executed_action'
+    __searchable__ = ['data_source_type', 'user_in_role_id', 'location_id', 'acquisition_datetime', 'execution_datetime']
 
     # Generating the Sequence
     executed_action_id_seq = Sequence('executed_action_id_seq', metadata=Base.metadata)
@@ -244,9 +239,6 @@ class ExecutedAction(Base):
     cd_action = relationship("CDAction")
     location = relationship("Location")
 
-    # Vector search
-    search_vector = Column(TSVectorType('location_id', 'user_in_role_id'))
-
     def __repr__(self):
         return "<ExecutedAction(id='%s', acquisition_datetime='%s', execution_datetime='%s', " \
                "rating='%s')>" % (self.id, self.acquisition_datetime, self.execution_datetime, self.rating)
@@ -262,7 +254,7 @@ class ExecutedActivity(Base):
     """
 
     __tablename__ = 'executed_activity'
-    # __searchable__ = ['data_source_type', 'start_time', 'end_time', 'duration']
+    __searchable__ = ['data_source_type', 'start_time', 'end_time', 'duration']
 
     # Generating the Sequence
     executed_activity_id_seq = Sequence('executed_activity_id_seq', metadata=Base.metadata)
@@ -442,12 +434,13 @@ class PayloadValue(Base):
     """
 
     __tablename__ = 'payload_value'
+    __searchable__ = ['acquisition_datetime', 'execution_datetime', 'cd_action_id']
 
     cd_metric_id = Column(Integer, ForeignKey('cd_metric.id'), primary_key=True)
     cd_action_id = Column(Integer, ForeignKey('cd_action.id'), primary_key=True)
     acquisition_datetime = Column(ArrowType(timezone=True), primary_key=True)  # Same as executed_action registered time
     execution_datetime = Column(ArrowType(timezone=True), nullable=False)
-    value = Column(String(50), nullable=False)
+    value = Column(String(1000), nullable=False)
     cd_action = relationship('CDAction')
 
 
@@ -458,6 +451,7 @@ class UserInRole(Base):
     """
 
     __tablename__ = 'user_in_role'
+    __searchable__ = ['valid_from', 'valid_to', 'pilot_code']
 
     # Generating the Sequence
     user_in_role_seq = Sequence('user_in_role_seq', metadata=Base.metadata)
@@ -562,8 +556,6 @@ class CDAction(Base):
     action_category = Column(String(25))
     action_description = Column(String(250), nullable=False)
 
-    # Search vector tables
-    search_vector = Column(TSVectorType('action_name'))
 
     def __repr__(self):
         return "<CDAction(action_name='%s', action_category='%s', action_description='%s')>" % \
@@ -576,6 +568,7 @@ class Location(Base):
     """
 
     __tablename__ = 'location'
+    __searchable__ = ['location_name', 'pilot_code']
 
     # Generating the Sequence
     location_id_seq = Sequence('location_id_seq', metadata=Base.metadata)
@@ -585,9 +578,6 @@ class Location(Base):
     indoor = Column(Boolean)
     # One2Many
     pilot_code = Column(String(4), ForeignKey('pilot.pilot_code'), nullable=True)
-
-    # Vector search
-    search_vector = Column(TSVectorType('location_name'))
 
     def __repr__(self):
         return "<Location(location_name='%s', indoor='%s')>" % (
@@ -647,9 +637,6 @@ class CDActivity(Base):
     # expected_inter_behaviour = relationship("InterBehaviour", foreign_keys='InterBehaviour.expected_activity_id')
     # real_inter_behaviour = relationship("InterBehaviour", foreign_keys='InterBehaviour.real_activity_id')
 
-    # Vector search
-    search_vector = Column(TSVectorType('activity_name'))
-
     def __repr__(self):
         return "<CDActivity(activity_name='%s')>" % self.activity_name
 
@@ -667,9 +654,6 @@ class Pilot(Base):
     # One2Many
     user_in_role = relationship('UserInRole')
     location = relationship('Location')
-
-    # Vector search
-    search_vector = Column(TSVectorType('pilot_code', 'pilot_name'))
 
     def __repr__(self):
         return "<Pilot(pilot_code='%s', pilot_name='%s', population_size='%s')>" % \
@@ -724,9 +708,6 @@ class CDRole(Base):
 
     # one2many
     user_in_role = relationship('UserInRole')
-
-    # Vector search
-    search_vector = Column(TSVectorType('role_name', 'role_abbreviation'))
 
     def __repr__(self):
         return "<CDRole(id='%s', role_name='%s', role_abbreviation='%s', role_description='%s'," \
@@ -789,6 +770,7 @@ class UserAction(Base):
     """
 
     __tablename__ = 'user_action'
+    __searchable__ = ['date', 'user_in_system_id']
 
     # Generating the Sequence
     user_action_seq = Sequence('user_action_seq', metadata=Base.metadata)
@@ -827,9 +809,6 @@ class CDMetric(Base):
     # M2M relationship
     payload_value = relationship('PayloadValue')
 
-    # Vector search
-    search_vector = Column(TSVectorType('metric_name'))
-
 
 class CDTransformedAction(Base):
     """
@@ -855,6 +834,3 @@ class CDTransformedAction(Base):
     furniture_type = Column(String(50), nullable=True)
     state_type = Column(String(50), nullable=True)
     calling_number = Column(String(50), nullable=True)
-
-    # Vector search
-    # ar_search_vector = Column(TSVectorType('transformed_action_name'))

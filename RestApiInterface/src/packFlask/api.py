@@ -121,7 +121,7 @@ def before_request():
     # Make sessions permanent with some time
     session.permanent = True
     app.permanent_session_lifetime = timedelta(days=30)  # minutes=30 days=232323 years=2312321 and so on.
-    session.modified = True  # To force seesion expiration
+    session.modified = True  # To force session expiration
 
 
 @app.teardown_request
@@ -422,7 +422,8 @@ def search(version=app.config['ACTUAL_API']):
         # We created a list of Python dict.
         data = _convert_to_dict(request.json)
         if len(data) == 1:
-            msg = Utilities.check_search_data(data)
+            # TODO uncoment later the database isntance
+            msg = Utilities.check_search_data(AR_DATABASE, SR_DATABASE, data)
             if data and not msg and USER:
                 # User and data are OK. save data into DB
                 # Finding the desired table in the proper schema
@@ -908,6 +909,24 @@ def add_eam(version=app.config['ACTUAL_API']):
             else:
                 # Standard Error
                 return Response(msg), 400
+
+
+@app.route('/api/<version>/add_factor', methods=['POST'])
+@limit_content_length(MAX_LENGHT)
+@auth.login_required
+@required_roles('administrator', 'system', 'Pilot source system')
+def add_factor(version=app.config['ACTUAL_API']):
+    """
+
+    :param version: Api version
+    :return:
+    """
+
+    # TODO to be implemented. --> frail -- pre-frail -- non-frail
+
+    return Response("This method is under development", 501)
+
+
 
 
 @app.route('/api/<version>/commit_measure', methods=['GET'])

@@ -18,7 +18,8 @@ from sqlalchemy import create_engine, desc, orm, cast, MetaData, String
 from sqlalchemy.engine.url import URL
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import sessionmaker, scoped_session
-from sqlalchemy_searchable import search
+# from sqlalchemy_searchable import search
+from whooshalchemy import IndexService
 
 __author__ = 'Rubén Mulero'
 __copyright__ = "Copyright 2016, City4Age project"
@@ -72,6 +73,8 @@ class PostORM(object):
                 print("Database connection OK")
                 logging.debug(inspect.stack()[0][3], "Database session opened successfully")
                 self.session = session
+                # Registering the index service
+                # self._index_tables()
             else:
                 print("Failed to open a database session")
                 logging.error(inspect.stack()[0][3], "Failed to open database session")
@@ -222,7 +225,7 @@ class PostORM(object):
 
     def close(self):
         """
-        Force close the connection of the actual session
+        Force connection back to the connection pool of Engine
 
         :return: None
         """
@@ -391,9 +394,11 @@ class PostORM(object):
             list_of_payload_values = []
             for key, value in data['payload'].items():
                 cd_metric = self._get_or_create(self.tables.CDMetric, metric_name=key)
+                if isinstance(value, list):
+                    value = ' '.join(value).lower()
                 payload_value = self.tables.PayloadValue(cd_metric_id=cd_metric.id, cd_action_id=cd_action.id,
                                                          acquisition_datetime=executed_action.acquisition_datetime,
-                                                         value=value,
+                                                         value=str(value).lower(),
                                                          execution_datetime=data['timestamp'])
                 list_of_payload_values.append(payload_value)
             # Insert all elements in pending insert
@@ -684,7 +689,7 @@ class PostORM(object):
 
     def get_table_instance(self, p_table_name, p_schema=None):
         """
-        By giving a name of a table, this method returns the base instance
+        By giving a name of a table, this method returns the base instance using reflection.
 
         :param p_table_name The name of the table
         :param p_schema The name of the given schema
@@ -700,7 +705,11 @@ class PostORM(object):
 
 
 
-    ########################################
+    ###################################################################################################
+    ###################################################################################################
+    ######                              PRIVATE METHODS
+    ###################################################################################################
+    ###################################################################################################
 
     def _get_or_create(self, model, **kwargs):
         # type: (object, object) -> object
@@ -723,3 +732,29 @@ class PostORM(object):
             self.insert_one(instance)
             # self.commit()
             return instance
+
+    def _index_tables(self):
+        """
+        Index the needed tables according to the current session
+
+        :return:
+        """
+        if self.session and self.tables and len(self.get_tables()) != 0:
+            logging.debug(inspect.stack()[0][3], "Executing index service")
+            # Registering index session
+            index_service = IndexService(session=self.session)
+            # Registering tables
+            if self.__class__.__name__ == 'ARPostORM':
+                # Registering AR tables
+                index_service.register_class(self.tables.Location)
+                index_service.register_class(self.tables.ExecutedAction)
+                index_service.register_class(self.tables.ExecutedActivity)
+                index_service.register_class(self.tables.PayloadValue)
+                index_service.register_class(self.tables.UserInRole)
+                index_service.register_class(self.tables.UserAction)
+            else:
+                #Registering SR tables
+                index_service.register_class(self.tables.VariationMeasureValue)
+                index_service.register_class(self.tables.NumericIndicatorValue)
+                index_service.register_class(self.tables.GeriatricFactorValue)
+                index_service.register_class(self.tables.CareProfile)
