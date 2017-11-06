@@ -99,10 +99,7 @@ class ARPostORM(PostORM):
         :return:  True if everything is ok
         """
 
-        # TODO users can't insert in CD_transformed
-
         logging.info(inspect.stack()[0][3], "adding data to database")
-        insert_list = []
         for data in p_data:
             # Recovering basic data
             if data.get('user', False):
@@ -111,18 +108,21 @@ class ARPostORM(PostORM):
             else:
                 # The User doesn't provide a user, back to Pilot ID
                 user_in_role = self._get_or_create(self.tables.UserInRole, id=p_user_id)
-            cd_activity = self._get_or_create(self.tables.CDActivity, activity_name=data['activity_name'])
+            cd_activity = self._get_or_create(self.tables.CDActivity, activity_name=data['activity'])
             # Insert new EAM
             cd_eam = self.tables.CDEAM(duration=data['duration'])
-            insert_list.append(cd_eam)
+            self.insert_one(cd_eam)
+            # Obtaining the cd_eam id
+            self.session.flush()
             ## Intermediate tables
             # For each location
             for location in data['locations']:
                 # Insert EAM location REL and locationType
                 location = self._get_or_create(ar_tables.Location, location_name=location.lower())
+                self.session.flush()
                 # Adding the relationship to EAM
                 cd_eam_location_rel = ar_tables.CDEAMLocationRel(location_id=location.id, cd_eam_id=cd_eam.id)
-                insert_list.append(cd_eam_location_rel)
+                self.insert_one(cd_eam_location_rel)
             # For each start_range
             for date_range in data['start']:
                 # Insert the actual range
@@ -130,28 +130,49 @@ class ARPostORM(PostORM):
                                                   start_time=date_range[0],
                                                   end_time=date_range[1])
                 # Insert the m2m table
+                self.session.flush()
                 cd_eam_start_range_rel = ar_tables.CDEAMStartRangeRel(start_range_id=start_range.id,
                                                                       cd_eam_id=cd_eam.id)
-                insert_list.append(cd_eam_start_range_rel)
-            # For each transformed action
-            for transformed_action in data['transformed_action']:
-                # Insert the transformed actions
-                # TODO review this to considering not to add new transformed actions
-                transformed_action = self._get_or_create(ar_tables.CDTransformedAction,
-                                                         transformed_action_name=transformed_action)
-                cd_eam__cd_transformed_action_rel = ar_tables.CDEAMCDTransformedActionRel(
-                    cd_transformed_action_id=transformed_action.id, cd_eam_id=cd_eam.id)
-                insert_list.append(cd_eam__cd_transformed_action_rel)
+                self.insert_one(cd_eam_start_range_rel)
+            for transformed_action_name in data['transformed_action']:
+                transformed_action = self.session.query(ar_tables.CDTransformedAction).filter_by(
+                                                    transformed_action_name=transformed_action_name.lower())
+                cd_eam_cd_transformed_action_rel = ar_tables.CDEAMCDTransformedActionRel(
+                    cd_transformed_action_id=transformed_action[0].id, cd_eam_id=cd_eam.id)
+                self.insert_one(cd_eam_cd_transformed_action_rel)
             # Inserting the rest of relationships
             cd_eam_user_in_role_rel = ar_tables.CDEAMUserInRoleRel(user_in_role_id=user_in_role.id,
                                                                    cd_eam_id=cd_eam.id)
             user_in_eam = ar_tables.UserInEAM(cd_activity_id=cd_activity.id, user_in_role_id=user_in_role.id,
                                               cd_eam_id=cd_eam.id)
-            insert_list.extend([cd_eam_user_in_role_rel, user_in_eam])
-            # Adding info to database
-            self.insert_all(insert_list)
+            self.insert_all([cd_eam_user_in_role_rel, user_in_eam])
         # Commit changes and exiting
+        logging.info(inspect.stack()[0][3], "data added successful")
         return self.commit()
+
+    def clear_user_data(self, p_data):
+        """
+        Given a user in system ID, the system will perform a clean of stored database of this user
+
+        :param p_data: The user_in_role ide A.K.A. city4ageID
+        :return: True if data is erased
+                False if something happened
+        """
+
+        # TODO code this clean server
+
+        # You need to set in the ORM 'cascade' values
+
+        # 1º - AR SCHEMA
+
+        # Remvoe data from: executed_action
+        # Remove data from: executed_activity
+        # Remove data from: user_in_eam
+        # Remove data from: cd_eam_user_in_role
+        # Remove data from: executed_transformed_action
+        # Remove data from: user_in_role
+
+        pass
 
     def _add_transformed_action(self, p_add_action_data, p_executed_action):
         """

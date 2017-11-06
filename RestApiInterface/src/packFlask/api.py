@@ -422,7 +422,6 @@ def search(version=app.config['ACTUAL_API']):
         # We created a list of Python dict.
         data = _convert_to_dict(request.json)
         if len(data) == 1:
-            # TODO uncoment later the database isntance
             msg = Utilities.check_search_data(AR_DATABASE, SR_DATABASE, data)
             if data and not msg and USER:
                 # User and data are OK. save data into DB
@@ -893,7 +892,7 @@ def add_eam(version=app.config['ACTUAL_API']):
         msg = Utilities.check_add_eam_data(AR_DATABASE, data)
         if data and not msg and USER:
             # The user data are correct. We proceed to insert it into DB
-            res = AR_DATABASE.add_eam(data)
+            res = AR_DATABASE.add_eam(data, USER.id)
             if res:
                 logging.info("add_eam: the username: %s adds new EAM into database" % USER.username)
                 return Response('add_eam: data stored in database OK\n'), 200
@@ -925,6 +924,13 @@ def add_factor(version=app.config['ACTUAL_API']):
     # TODO to be implemented. --> frail -- pre-frail -- non-frail
 
     return Response("This method is under development", 501)
+
+
+"""
+· add_measure: to add conventional measures, such as SHOP_VISITS
+· add_factor: to directly add geriatric factors’ 1-5 scores (GESs or GEFs without children, like Dependence or Physical Activity), bypassing computation from measures (e.g. for green factors obtained through Caregiver App manual input)
+· add_frailty_status: to add a pseudo-measure (or pseudo-factor?) that essentially provides a ground truth for frailty, as assessed by local geriatric staff
+"""
 
 
 

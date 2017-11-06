@@ -96,7 +96,7 @@ class SRPostORM(PostORM):
                 # Check if there are extra information and insert data
                 if data.get('extra', False):
                     dictlist = []
-                    for key, value in data.get('extra', None).iteritems():
+                    for key, value in data.get('extra', None).items():
                         # Creating a temp list of items
                         temp = key + ':' + value
                         dictlist.append(temp)
@@ -126,6 +126,29 @@ class SRPostORM(PostORM):
         pilot.latest_data_submission_completed = arrow.utcnow()
 
         return self.commit()
+
+    def clear_user_data(self, p_data):
+        """
+        Given a user in system ID, the system will perform a clean of stored database of this user
+
+        :param p_data: The user_in_role ide A.K.A. city4ageID
+        :return: True if data is erased
+                False if something happened
+        """
+
+        # TODO code this clean server
+
+        # 2º-  SR SCHEMA
+        # Remove data from: executed_action
+        # Remove data from: executed_activity
+        # Remove data from: variation_measure_value
+        # Remove data from: frailty_status_timeline
+        # Remove data from: care_profile
+        # Remove data from: numeric_indicator_value
+        # Remove data from: assessment
+        # Remove data from: geriatric_factor_value
+        # Remove data from: source_evidence
+        pass
 
 
     ###################################################################################################

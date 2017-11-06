@@ -1259,7 +1259,7 @@ class Utilities(object):
         if p_one_data and p_one_data.get('transformed_action', False):
             transformed_action = p_one_data.get('transformed_action', False)
             for t_action in transformed_action:
-                res = p_database.check_transformed_action(t_action)
+                res = p_database.check_transformed_action(t_action.lower())
                 if not res:
                     # One of the transformed actions doesn't exist in database
                     break

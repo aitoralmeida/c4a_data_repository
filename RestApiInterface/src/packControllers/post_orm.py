@@ -59,6 +59,10 @@ else:
     }
 
 
+# List containing the values that are considered as OUTDOOR
+OUTDOOR_VALUES = ['outdoor', 'publicpark', 'cityzone', 'foodcourt', 'transportationmean']
+
+
 class PostORM(object):
     def __init__(self, p_tables, autoflush=True):
         # Database tables schema
@@ -266,7 +270,7 @@ class PostORM(object):
                                                valid_to=data.get('valid_to', None),
                                                cd_role_id=cd_role.id,
                                                pilot_code=pilot_code,
-                                               pilot_source_user_id=data.get('pilot_source_id', None),
+                                               pilot_source_user_id=data.get('pilot_user_source_id', None),
                                                user_in_system_id=user_in_system.id)
             # Getting the new ID
             self.flush()
@@ -369,10 +373,16 @@ class PostORM(object):
             # location_type = self._get_or_create(sr_tables.LocationType,
             #                                   location_type_name=data['location'].split(':')[-2].lower())
             # location = self._get_or_create(sr_tables.Location, location_name=data['location'].split(':')[-1].lower(),
+            # Determining if the location is indoor or outdoor location
+            # We asume by default that is indoor value
+            indoor = True
+            for value in OUTDOOR_VALUES:
+                if value in data['location'].lower():
+                    indoor = False
+                    break
             location = self._get_or_create(self.tables.Location, location_name=data['location'].lower(),
-                                           indoor=True,
+                                           indoor=indoor,
                                            pilot_code=pilot.pilot_code)
-
             # Creating flush to obtain the possible location id
             self.session.flush()
             # Insert a new executed action
@@ -533,7 +543,6 @@ class PostORM(object):
 
             # TODO once you have the needed data, think about filtering by PILOT
 
-
         return res
 
         # TODO implement a full text based search
@@ -670,7 +679,6 @@ class PostORM(object):
             res = True
         return res
 
-
     ###################################################################################################
     ###################################################################################################
     ######                              DATABASE GETTERS
@@ -702,8 +710,6 @@ class PostORM(object):
         # Getting table instance
         table_instance = m.tables[p_schema + '.' + p_table_name]
         return table_instance
-
-
 
     ###################################################################################################
     ###################################################################################################
@@ -753,7 +759,7 @@ class PostORM(object):
                 index_service.register_class(self.tables.UserInRole)
                 index_service.register_class(self.tables.UserAction)
             else:
-                #Registering SR tables
+                # Registering SR tables
                 index_service.register_class(self.tables.VariationMeasureValue)
                 index_service.register_class(self.tables.NumericIndicatorValue)
                 index_service.register_class(self.tables.GeriatricFactorValue)
