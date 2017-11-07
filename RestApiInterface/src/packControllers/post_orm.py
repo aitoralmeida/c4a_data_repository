@@ -671,13 +671,28 @@ class PostORM(object):
 
         :param p_location_name: The name of the location
         :return: True if the location exist in the system
-                False if the location deesn't exist in the system
+                False if the location doesn't exist in the system
         """
         res = False
         location = self.session.query(self.tables.Location).filter_by(location_name=p_location_name)
         if location and location.count() == 1:
             res = True
         return res
+
+    def check_eam(self, p_eam_name):
+        """
+        Giving a EAM name pattern, we check if it exist or not in the database
+
+        :param p_eam_name: The EAM name
+        :return: True if the eam exist in the system
+                False if the eam doesn't exist in the system
+        """
+        res = False
+        eam = self.session.query(self.tables.CDEAM).filter_by(eam_name=p_eam_name)
+        if eam and eam.count() == 1:
+            res = True
+        return res
+
 
     ###################################################################################################
     ###################################################################################################

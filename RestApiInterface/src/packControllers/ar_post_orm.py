@@ -110,9 +110,8 @@ class ARPostORM(PostORM):
                 user_in_role = self._get_or_create(self.tables.UserInRole, id=p_user_id)
             cd_activity = self._get_or_create(self.tables.CDActivity, activity_name=data['activity'])
             # Insert new EAM
-            cd_eam = self.tables.CDEAM(duration=data['duration'])
-            self.insert_one(cd_eam)
-            # Obtaining the cd_eam id
+            cd_eam = self._get_or_create(self.tables.CDEAM, eam_name=data['eam'], duration=data['duration'])
+            # Obtaining the cd_eam id if not provided
             self.session.flush()
             ## Intermediate tables
             # For each location
@@ -141,11 +140,10 @@ class ARPostORM(PostORM):
                     cd_transformed_action_id=transformed_action[0].id, cd_eam_id=cd_eam.id)
                 self.insert_one(cd_eam_cd_transformed_action_rel)
             # Inserting the rest of relationships
-            cd_eam_user_in_role_rel = ar_tables.CDEAMUserInRoleRel(user_in_role_id=user_in_role.id,
-                                                                   cd_eam_id=cd_eam.id)
             user_in_eam = ar_tables.UserInEAM(cd_activity_id=cd_activity.id, user_in_role_id=user_in_role.id,
                                               cd_eam_id=cd_eam.id)
-            self.insert_all([cd_eam_user_in_role_rel, user_in_eam])
+
+            self.insert_one(user_in_eam)
         # Commit changes and exiting
         logging.info(inspect.stack()[0][3], "data added successful")
         return self.commit()
@@ -397,9 +395,10 @@ class ARPostORM(PostORM):
             # Extracting the needed data and obtaining additional values
             transformed_action = self.session.query(ar_tables.CDTransformedAction).filter_by(id=q.id)[0]
             lea = {
+                'user_in_role_id': q.user_in_role_id,
                 'executed_action_id': q.executed_action_id,
                 'execution_datetime': q.transformed_execution_datetime,
-                'location_name': transformed_action.location_type,
+                'location_name': transformed_action.location_type,  # TODO rev
                 'action_name': transformed_action.transformed_action_name
             }
             # Adding the dict to the final list

@@ -963,7 +963,7 @@ class Utilities(object):
         return msg
 
     @staticmethod
-    def check_add_eam_data(p_database, p_data):
+    def check_add_eam_data(p_database, p_data, p_pilot_code):
         """
         This method checks if the current data is properly JSON formatted with the required files
 
@@ -980,6 +980,13 @@ class Utilities(object):
             "title": "Eam database additional data validator",
             "type": "object",
             "properties": {
+                "eam": {
+                    "description": "The unique name of the EAM",
+                    "type": "string",
+                    "minLength": 3,
+                    "maxLength": 50,
+                    "pattern": "^(mad|sin|ath|bhx|lcc|mpl):[0-9]{1,20}:[a-z]{1,55}$",
+                },
                 "user": {
                     "description": "The user in role of the EAM. Default to Pilot if not filled",
                     "type": "string",
@@ -1053,6 +1060,7 @@ class Utilities(object):
         try:
             if type(p_data) is list:
                 # We have a list of dicts
+                list_of_eams = []
                 for data in p_data:
                     validate(data, schema, format_checker=FormatChecker())
                     # Checking data integrity
@@ -1066,45 +1074,53 @@ class Utilities(object):
                                       data.get('activity'), False)
                         raise ValidationError("The entered activity is not valid: %s" %
                                               data.get('activity'), False)
+
+                    if Utilities.validate_eam_name(p_database, data):
+                        logging.error("The entered eam name is in database already: %s" %
+                                      data.get('eam'), False)
+                        raise ValidationError("The entered eam is in database already: %s" %
+                                              data.get('eam'), False)
                     if data.get('user', False):
                         # There is a user attached to this EAM
                         if not Utilities.validate_user(p_database, data):
                             logging.error("The entered user doesn't exist in database: %s" % data.get('user', False))
                             raise ValidationError("The entered user doesn't exist in database: %s" %
                                                   data.get('user', False))
+                        # check if the entered user is from the current Pilot
+                        if not Utilities.validate_user_pilot(p_database, data['user'].split(':')[-1], p_pilot_code):
+                            logging.error("The entered user isn't belongs to your Pilot: %s" % data.get('user', False))
+                            raise ValidationError("The entered user isn't belongs to your Pilot: %s" %
+                                                  data.get('user', False))
+                    # After knowing that entered data is valid, we are going to check if the given eam format is
+                    # correct and it fits with the sent data
+                    eam_name = data['eam'].lower().split(':')
+                    city4age_id = data['user'].split(':')[-1]
+                    if eam_name[-2] != city4age_id or eam_name[-1] != data['activity'].lower():
+                        # The entered EAM name is not correct
+                        logging.error("The entered EAM name is not correct according to the city4age id or activity name"
+                                      "\n Entered City4AgeId: %s"
+                                      "\n Entered Activity: %s"
+                                      "\n Entered EAM: %s" % (data['user'].split(':')[-1], data['activity'], data['eam']))
 
-                            # TODO make a validation of the locations
-            """
-            else:
-                validate(p_data, schema, format_checker=FormatChecker())
-                # Checking data integrity
-                if not Utilities.validate_transformed_action(p_database, p_data):
-                    logging.error("The entered transformed action is not valid: %s" %
-                                  p_data.get('transformed_action', False))
-                    raise ValidationError("The entered transformed action is not valid: %s" %
-                                          p_data.get('transformed_action', False))
-                if not Utilities.validate_activity(p_database, p_data):
-                    logging.error("The entered activity is not valid: %s" %
-                                  p_data.get('activity'), False)
-                    raise ValidationError("The entered activity is not valid: %s" %
-                                          p_data.get('activity'), False)
-                if p_data.get('user', False):
-                    # There is a user attached to this EAM
-                    if not Utilities.validate_user(p_database, p_data):
-                        logging.error("The entered user doesn't exist in database: %s" % p_data.get('user', False))
-                        raise ValidationError("The entered user doesn't exist in database: %s" %
-                                              p_data.get('user', False))
-                        # TODO make a validation of the locations
-
-            """
-
+                        raise ValidationError("The entered EAM name is not correct acording to the city4age id or activity name"
+                                      "\n Entered City4AgeId: %s"
+                                      "\n Entered Activity: %s"
+                                      "\n Entered EAM: %s" % (data['user'].split(':')[-1], data['activity'], data['eam']))
+                    # EAM is valid, we append in a list to avoid duplicated entries
+                    list_of_eams.append(data['eam'])
+                # Check if exist duplicated values in the provided eam list
+                duplicated = [k for k, v in Counter(list_of_eams).items() if v > 1]
+                if len(duplicated) > 0:
+                    # Raise an error for duplicated values
+                    logging.error("There are are duplicated eam names in the JSON: %s" % duplicated)
+                    raise ValidationError("There are are duplicated eam names in the JSON: %s" % duplicated)
         except ValidationError as e:
             logging.error("The schema entered by the user is invalid")
             msg = e.message
         return msg
 
     ###################################################################################################
-    ###################################################################################################
+    ############################################Utilities#######################################################
     ######                              Validation functions
     ###################################################################################################
     ###################################################################################################
@@ -1278,6 +1294,22 @@ class Utilities(object):
         if p_one_data and p_one_data.get('location', False):
             location = p_one_data['location'].lower() or None
             res = p_database.check_location(location)
+        return res
+
+    @staticmethod
+    def validate_eam_name(p_database, p_one_data):
+        """
+        This method checks if the given eam name exits previously in database
+
+        :param p_database: Database instance
+        :param p_one_data: The element to be checked
+        :return: True if validation is  OK
+                False if validation is KO
+        """
+        res = False
+        if p_one_data and p_one_data.get('eam', False):
+            eam = p_one_data['eam'].lower() or None
+            res = p_database.check_eam(eam)
         return res
 
     @staticmethod

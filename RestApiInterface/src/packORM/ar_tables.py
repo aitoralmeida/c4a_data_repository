@@ -387,18 +387,6 @@ class CDEAMLocationRel(Base):
     location = relationship('Location')
 
 
-class CDEAMUserInRoleRel(Base):
-    """
-    CDEAM < -- > UserInRole
-    """
-
-    __tablename__ = 'cd_eam_user_in_role_rel'
-
-    cd_eam_id = Column(Integer, ForeignKey('cd_eam.id'), primary_key=True)
-    user_in_role_id = Column(Integer, ForeignKey('user_in_role.id'), primary_key=True)
-    user_in_role = relationship('UserInRole')
-
-
 class CDLocationTypeExecutedActivityRel(Base):
     """
     ExecutedActivity < -- > Location
@@ -727,6 +715,7 @@ class CDEAM(Base):
     cd_eam_seq = Sequence('cd_eam_seq', metadata=Base.metadata)
     # Creating the columns
     id = Column(Integer, server_default=cd_eam_seq.next_value(), primary_key=True)
+    eam_name = Column(String(50), unique=True)
     duration = Column(Integer)
     creation_date = Column(ArrowType(timezone=True), server_default=utcnow())
     # one2one
@@ -738,7 +727,6 @@ class CDEAM(Base):
     start_range = relationship("CDEAMStartRangeRel")
     cd_transformed_action = relationship("CDEAMCDTransformedActionRel")
     location = relationship("CDEAMLocationRel")
-    user_in_role = relationship("CDEAMUserInRoleRel")
 
     def __repr__(self):
         return "<EAM(duration='%s')>" % self.duration

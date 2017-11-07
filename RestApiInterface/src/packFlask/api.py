@@ -61,7 +61,8 @@ def limit_content_length(max_length):
 
     If user sends data that is too long this method makes an error code 413
 
-    :param max_length: The maximum length of the requested data in bytes
+    :param string max_length: The maximum length of the requested data in bytes
+
     :return: decorator if all is ok or an error code 413 if data is too long
     """
 
@@ -84,7 +85,8 @@ def required_roles(*roles):
     This decorator method checks the current user role into the system and allows the execution of certain endpoints in
      the API.
 
-    :param roles: A list containing required roles
+    :param list roles: A list containing required roles
+
     :return: decorator if all is ok or an
     """
 
@@ -142,7 +144,8 @@ def after_request(response):
     This signal is used to write information in the INFO log
 
     :param response: The needed information
-    :return:
+
+    :return: The response instance
     """
     # If the action is succesfull we write into INFO log file
     route = request.url_rule and request.url_rule.endpoint or "No route provided"
@@ -206,12 +209,12 @@ def verify_password(username_or_token, password):
 
     The method is defined to validate user when it sends either its username/password or token.
 
-    :param username_or_token: The username or validation token
-    :param password: The user password
+    :param basestring username_or_token: The username or validation token
+    :param basestring password: The user password
 
     :return: True if the user credentials are ok
             False if the user credentials are ko
-
+    :rtype: bool
     """
 
     global USER
@@ -245,7 +248,8 @@ def login(version=app.config['ACTUAL_API']):
     Gives the ability to login into API. It returns an encrypted cookie with the token information and a JSON containing
     the string of the token to use in the validation process.
 
-    :param version: Api version
+    :param basestring version: Api version
+
     :return: A token with user ID information in two formats: 1) in a cookie encrypted; 2) in a JSON decoded.
     """
     if Utilities.check_version(app, version):
@@ -266,8 +270,9 @@ def logout(version=app.config['ACTUAL_API']):
     """
     Logout from the system and removes session mark
 
-    :param version: APi version
-    :return:
+    :param basestring version: APi version
+
+    :return: Redirection of the API
     """
     if Utilities.check_version(app, version):
         global USER
@@ -342,8 +347,9 @@ def api(version=app.config['ACTUAL_API']):
     """
     This is our main page.
 
-    :param version: Api version
-    :return:
+    :param basestring version: Api version
+
+    :return: Render with the index page of the API
     """
     if Utilities.check_version(app, version):
         # Loading main page of the APi
@@ -358,7 +364,8 @@ def get_my_info(version=app.config['ACTUAL_API']):
     """
     This endpoint returns user information given its login credentials
 
-    :param version: Api version
+    :param basestring version: Api version
+
     :return: The Pilot of the user and its role in the system
     """
     if USER:
@@ -411,8 +418,9 @@ def search(version=app.config['ACTUAL_API']):
     You only need to define a JSON with needed filters and you can optionally add some data to define limits, orders
     and offsets.
 
-    :param version: Api version
-    :return:
+    :param basestring version: Api version
+
+    :return: Response of the request
     """
 
     # TODO this endpoint will be different if the user is admin or pilot --> Using roles
@@ -498,7 +506,8 @@ def add_action(version=app.config['ACTUAL_API']):
         }
     }
 
-    :param version: Api version
+    :param basestring version: Api version
+
     :return: Different kind of HTML codes explaining if the action was successful
     """
 
@@ -566,8 +575,9 @@ def add_activity(version=app.config['ACTUAL_API']):
         "data_source_type": ["sensors", "external_dataset"]
     }
 
-    :param version: Api version
-    :return:
+    :param basestring version: Api version
+
+    :return: Response of the request
     """
     if Utilities.check_connection(app, version):
         data = _convert_to_dict(request.json)
@@ -607,8 +617,9 @@ def add_new_activity(version=app.config['ACTUAL_API']):
         "instrumental": true
     }
 
-    :param version: Api version
-    :return: Confirmation message
+    :param basestring version: Api version
+
+    :return: Response of the API
     """
     if Utilities.check_connection(app, version):
         data = _convert_to_dict(request.json)
@@ -658,8 +669,9 @@ def add_new_user(version=app.config['ACTUAL_API']):
     There are optional parameters that are used only if the administrator wants to add access credentials to ana ctive
     user in the system.
 
-    :param version: Api version
-    :return:
+    :param basestring version: Api version
+
+    :return: Response of the API
     """
 
     # TODO think about put pilot as an optional field.
@@ -709,8 +721,9 @@ def add_care_receiver(version=app.config['ACTUAL_API']):
         "password": "ruben"
     }
     
-    :param version: 
-    :return: A urn with --> eu:c4a:user:{city4AgeId}
+    :param base version: Api version
+
+    :return: Response of the request
     """
     if Utilities.check_connection(app, version):
         data = _convert_to_dict(request.json)
@@ -754,8 +767,9 @@ def clear_user(version=app.config['ACTUAL_API']):
         "id": "eu:c4a:pilot:lecce:user:12345",
     }
 
-    :param version: Api version
-    :return: A message containing the res of the operation
+    :param basestring version: Api version
+
+    :return: Response of the request
     """
 
     # TODO this class will be coded when all database structure has in stable stage
@@ -827,8 +841,9 @@ def add_measure(version=app.config['ACTUAL_API']):
         }
     }
 
-    :param version: Api version
-    :return:
+    :param basestring version: Api version
+
+    :return: Response of the request
 
     """
     if Utilities.check_connection(app, version):
@@ -869,6 +884,7 @@ def add_eam(version=app.config['ACTUAL_API']):
     An example in JSON could be:
 
     {
+    	"name": "mad:8:makedinner",
         "user": "eu:c4a:user:12345",                            # OPTIONAL user information. Default: Pilot Id
         "activity": "AnsweringPhone",                           # This must exist previously
         "locations": ["Kitchen", "Office", "Bedroom"],
@@ -880,16 +896,15 @@ def add_eam(version=app.config['ACTUAL_API']):
         ]
     }
 
-    :param version: Api version
-    :return:
-    """
+    :param basestring version: Api version
 
-    # TODO: this part needs to be re-checked in order to improve some of the new parts of the EAM
+    :return: Response of the request
+    """
 
     if Utilities.check_connection(app, version):
         # We created a list of Python dict.
         data = _convert_to_dict(request.json)
-        msg = Utilities.check_add_eam_data(AR_DATABASE, data)
+        msg = Utilities.check_add_eam_data(AR_DATABASE, data, USER.user_in_role[0].pilot_code)
         if data and not msg and USER:
             # The user data are correct. We proceed to insert it into DB
             res = AR_DATABASE.add_eam(data, USER.id)
@@ -917,8 +932,9 @@ def add_eam(version=app.config['ACTUAL_API']):
 def add_factor(version=app.config['ACTUAL_API']):
     """
 
-    :param version: Api version
-    :return:
+    :param basestring version: Api version
+
+    :return: Response of the request
     """
 
     # TODO to be implemented. --> frail -- pre-frail -- non-frail
@@ -945,8 +961,9 @@ def commit_measure(version=app.config['ACTUAL_API']):
     updates some tables
 
 
-    :param version: API version
-    :return:
+    :param basestring version: API version
+
+    :return: Response of the request
     """
 
     if Utilities.check_connection(app, version) and USER:
@@ -993,7 +1010,8 @@ def _convert_to_dict(p_requested_data):
     """
     This method checks if current data is in JSON list format or it needs to be convert to one
 
-    :param p_requested_data: A list containing Json Strings datasets or a List of JSON dicts
+    :param list p_requested_data: A list containing Json Strings datasets or a List of JSON dicts
+
     :return: A Python dict list, containing requiring data or an error code in some rare cases
     """
     list_of_dicts = []
