@@ -27,15 +27,16 @@ Transactions on Systems, Man, and Cybernetics, Part B, 2013.
 
 import os
 import inspect
-
 import arrow
 import logging
 import csv
-from collections import OrderedDict
-from subprocess import PIPE, STDOUT, Popen
 
+from collections import OrderedDict
+from subprocess import PIPE, STDOUT, Popen, CalledProcessError
+
+from pattern_model_matching import PatternModelMatching
 from packControllers import ar_post_orm
-from subprocess import CalledProcessError
+
 
 
 #import sys
@@ -55,6 +56,7 @@ __status__ = "Prototype"
 
 # Global variables
 DATA_FILE = 'casas.csv'
+DATA_FILE_ANNOTATED = 'casas.csv.annotated'
 CONFIG_FILE = 'casas.config'
 LOG_FILE = 'casas_log.txt'
 
@@ -174,10 +176,19 @@ class ActivityDiscoverer(object):
         This method executes the HARS algorithm to discover new activities.
 
         :param p_list_leas: The extracted list of leas from DB
-        :return:
+        :type p_list_leas: list
+
+        :return: None
         """
 
-        # TODO execute hars to discover new activities. Remember to return something
+        # Loading saved files from disk
+        eams_file = open(DATA_FILE, 'r')
+        annotated_file = open(DATA_FILE_ANNOTATED, 'r')
+        log_file = open(LOG_FILE, 'r')
+        # Instantiation of PatternModelMatching
+        PatternModelMatching(eams_file, annotated_file, log_file, None)
+        # TODO continue here
+
 
         pass
 

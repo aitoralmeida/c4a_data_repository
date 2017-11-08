@@ -956,7 +956,7 @@ class Utilities(object):
                                     "The entered columns doesn't exist in this table. Available columns are: %s" % sr_columns.keys())
                                 raise ValidationError(
                                     "The entered columns doesn't exist in this table. Available columns are: %s" % sr_columns.keys())
-                    # Once we validate that data is OK, we are going to validate database tables and columns
+                                # Once we validate that data is OK, we are going to validate database tables and columns
         except ValidationError as e:
             logging.error("The schema entered by the user is invalid")
             msg = e.message
@@ -1097,15 +1097,19 @@ class Utilities(object):
                     city4age_id = data['user'].split(':')[-1]
                     if eam_name[-2] != city4age_id or eam_name[-1] != data['activity'].lower():
                         # The entered EAM name is not correct
-                        logging.error("The entered EAM name is not correct according to the city4age id or activity name"
-                                      "\n Entered City4AgeId: %s"
-                                      "\n Entered Activity: %s"
-                                      "\n Entered EAM: %s" % (data['user'].split(':')[-1], data['activity'], data['eam']))
+                        logging.error(
+                            "The entered EAM name is not correct according to the city4age id or activity name."
+                            "The entered format should be: pilot_code:city4ageid:activity"
+                            "\n * Entered City4AgeId: %s"
+                            "\n * Entered Activity: %s"
+                            "\n * Entered EAM: %s" % (data['user'].split(':')[-1], data['activity'], data['eam']))
 
-                        raise ValidationError("The entered EAM name is not correct acording to the city4age id or activity name"
-                                      "\n Entered City4AgeId: %s"
-                                      "\n Entered Activity: %s"
-                                      "\n Entered EAM: %s" % (data['user'].split(':')[-1], data['activity'], data['eam']))
+                        raise ValidationError(
+                            "The entered EAM name is not correct acording to the city4age id or activity name"
+                            "The entered format should be: pilot_code:city4ageid:activity:"
+                            "\n * Entered City4AgeId: %s"
+                            "\n * Entered Activity: %s"
+                            "\n * Entered EAM: %s" % (data['user'].split(':')[-1], data['activity'], data['eam']))
                     # EAM is valid, we append in a list to avoid duplicated entries
                     list_of_eams.append(data['eam'])
                 # Check if exist duplicated values in the provided eam list
@@ -1114,6 +1118,98 @@ class Utilities(object):
                     # Raise an error for duplicated values
                     logging.error("There are are duplicated eam names in the JSON: %s" % duplicated)
                     raise ValidationError("There are are duplicated eam names in the JSON: %s" % duplicated)
+        except ValidationError as e:
+            logging.error("The schema entered by the user is invalid")
+            msg = e.message
+        return msg
+
+    @staticmethod
+    def check_add_frailty_status(p_database, p_data):
+        """
+        This method checks if the given frailty_status data is correct
+
+
+        :param p_database: The database instance
+        :param dict p_data: The data sent by the user
+
+        :return:  --> None: If all is OK
+                  --> Message: A message containing the encountered error
+
+        :rtype basestring or None
+        """
+        msg = None
+        schema = {
+            "title": "The frailty status condition validation",
+            "type": "object",
+            "properties": {
+                "user": {
+                    "description": "The user in role of the EAM. Default to Pilot if not filled",
+                    "type": "string",
+                    "minLength": 3,
+                    "maxLength": 50,
+                    "pattern": "^eu:c4a:user:[0-9]{1,15}$",
+                },
+                "interval_start": {
+                    "description": "The start time when the measure is recorded",
+                    "type": "string",
+                    "format": "date-time",
+                    "minLength": 3,
+                    "maxLength": 45
+                },
+                "duration": {
+                    "description": "A nominal value e.g Day, Week and so on to define the end time of the measure",
+                    "type": "string",
+                    "minLength": 2,
+                    "maxLength": 45,
+                    "enum": [
+                        "DAY", "1WK", "2WK", "MON", "QTR", "SEM", "1YR", "2YR", "3YR", "5YR",
+                        "day", "1wk", "2wk", "mon", "qtr", "sem", "1yr", "2yr", "3yr", "5yr"
+                    ]
+                },
+                "interval_end": {
+                    "description": "The end time when the measure is recorded",
+                    "type": "string",
+                    "format": "date-time",
+                    "minLength": 3,
+                    "maxLength": 45
+                },
+                "condition": {
+                    "description": "Sets the user condition",
+                    "type": "string",
+                    "minLength": 2,
+                    "maxLength": 10,
+                    "enum": ["frail", "pre-frail", "non-frail", "FRAIL", "PRE-FRAIL", "NON-FRAIL"]
+                },
+                "notice": {
+                    "description": "Description of the selected status",
+                    "type": "string",
+                    "minLength": 2,
+                    "maxLength": 200,
+
+                },
+            },
+            "additionalProperties": False,
+            "oneOf": [
+                {"required": ["user", "interval_start", "condition", "notice", "duration"]},
+                {"required": ["user", "interval_start", "condition", "notice", "interval_end"]}
+            ]
+        }
+
+        try:
+            if type(p_data) is list:
+                # Initializing the list of users to avoid duplicated users
+                list_of_users = []
+                for data in p_data:
+                    validate(data, schema, format_checker=FormatChecker())
+                    Utilities.validate_user(p_database, data)
+                    # If data is valid we add the current user
+                    list_of_users.append(data['user'])
+                # Once finished, we check for duplicated users
+                duplicated = [k for k, v in Counter(list_of_users).items() if v > 1]
+                if len(duplicated) > 0:
+                    # Raise an error for duplicated values
+                    logging.error("There are are duplicated users in the JSON: %s" % duplicated)
+                    raise ValidationError("There are are duplicated users in the JSON: %s" % duplicated)
         except ValidationError as e:
             logging.error("The schema entered by the user is invalid")
             msg = e.message
@@ -1343,10 +1439,9 @@ class Utilities(object):
 
         :return:
         """
-        available_tables = ['executed_action', 'cd_action', 'cd_activity', 'executed_activity', 'variation_measure_value']
+        available_tables = ['executed_action', 'cd_action', 'cd_activity', 'executed_activity',
+                            'variation_measure_value']
         return available_tables
-
-
 
     ###################################################################################################
     ###################################################################################################

@@ -904,7 +904,7 @@ def add_eam(version=app.config['ACTUAL_API']):
     if Utilities.check_connection(app, version):
         # We created a list of Python dict.
         data = _convert_to_dict(request.json)
-        msg = Utilities.check_add_eam_data(AR_DATABASE, data, USER.user_in_role[0].pilot_code)
+        msg = Utilities.check_add_eam_data(AR_DATABASE, data, USER.user_in_role[0].pilot_code or 'lcc')
         if data and not msg and USER:
             # The user data are correct. We proceed to insert it into DB
             res = AR_DATABASE.add_eam(data, USER.id)
@@ -925,31 +925,56 @@ def add_eam(version=app.config['ACTUAL_API']):
                 return Response(msg), 400
 
 
-@app.route('/api/<version>/add_factor', methods=['POST'])
+@app.route('/api/<version>/add_frailty_status', methods=['POST'])
 @limit_content_length(MAX_LENGHT)
 @auth.login_required
 @required_roles('administrator', 'system', 'Pilot source system')
-def add_factor(version=app.config['ACTUAL_API']):
+def add_frailty_status(version=app.config['ACTUAL_API']):
     """
+    This endpoint allows to geriatricians, add a ground truth of the status of each citizen, by selecting their status
+
+    * Non-Frail
+    * Pre-Frail
+    * Frail
+
+    An example of JSON could be
+
+    {
+          "user": "eu:c4a:user:9",
+          "interval_start": "2014-01-20T00:00:00.000+08:00",
+          "duration": "MON",
+          "condition": "frail",
+          "notice": "Jon Doe is the best"
+    }
+
 
     :param basestring version: Api version
 
     :return: Response of the request
     """
 
-    # TODO to be implemented. --> frail -- pre-frail -- non-frail
-
-    return Response("This method is under development", 501)
-
-
-"""
-· add_measure: to add conventional measures, such as SHOP_VISITS
-· add_factor: to directly add geriatric factors’ 1-5 scores (GESs or GEFs without children, like Dependence or Physical Activity), bypassing computation from measures (e.g. for green factors obtained through Caregiver App manual input)
-· add_frailty_status: to add a pseudo-measure (or pseudo-factor?) that essentially provides a ground truth for frailty, as assessed by local geriatric staff
-"""
-
-
-
+    if Utilities.check_connection(app, version):
+        # We created a list of Python dict.
+        data = _convert_to_dict(request.json)
+        msg = Utilities.check_add_frailty_status(SR_DATABASE, data)
+        if data and not msg and USER:
+            # Data entered ok, executing the needed method to insert data in DB
+            res = SR_DATABASE.add_frailty_status(data, USER.id)
+            if res:
+                logging.info("add_frailty_status: the username: %s adds new Frailty_Status into database" % USER.username)
+                return Response('add_frailty_status: data stored in database OK\n'), 200
+            else:
+                logging.error("add_frailty_status: the username: %s failed to store data into database. 500" % USER.username)
+                return "There is an error in DB", 500
+        else:
+            logging.error("add_frailty_status: there is a problem with entered data")
+            # Data is not valid, check the problem
+            if "duplicated" in msg:
+                # Data sent is duplicated.
+                return Response(msg), 409
+            else:
+                # Standard Error
+                return Response(msg), 400
 
 @app.route('/api/<version>/commit_measure', methods=['GET'])
 @limit_content_length(MAX_LENGHT)
@@ -965,19 +990,24 @@ def commit_measure(version=app.config['ACTUAL_API']):
 
     :return: Response of the request
     """
-
-    if Utilities.check_connection(app, version) and USER:
+    if Utilities.check_version(app=app, p_ver=version) and USER:
         # Calling to external java jar file to update database data
         res = SR_DATABASE.commit_measure(USER)
         if res:
-            logging.info("commit_measure: data commit sucesfully")
+            logging.info("commit_measure: data commit successfully")
             return Response('Your measures are successfully saved and committed in database\n'), 200
         else:
             logging.error("commit_measure: failed to commit measures data in DB")
             return Response('FAILED: the commit script was encountered an error. Contact with administrator'), 500
 
 
-# TODO --> Add new function to the API --> add_ges() # Adds a new geriatric data into the SR schema
+"""
+TODO endpoints
+
+· add_measure: to add conventional measures, such as SHOP_VISITS
+· add_factor: (formerly add_ges) to directly add geriatric factors’ 1-5 scores (GESs or GEFs without children, like Dependence or Physical 
+    Activity), bypassing computation from measures (e.g. for green factors obtained through Caregiver App manual input)
+"""
 
 
 ###################################################################################################

@@ -48,7 +48,11 @@ class SRPostORM(PostORM):
         """
         Adds a new measure into database according to the University of Salento guidelines.
 
-        :return:
+        :param list p_data: The entered list of measures
+
+        :return: True if everything is OK
+                False is something fails
+        :rtype boolean
         """
 
         res = False
@@ -126,6 +130,47 @@ class SRPostORM(PostORM):
         pilot.latest_data_submission_completed = arrow.utcnow()
 
         return self.commit()
+
+    def add_frailty_status(self, p_data, p_user_id):
+        """
+        This method allow to enter data manually from geriatricians to provide a ground truth of the current state
+        of the citizen
+
+        :param list p_data: The entered data by the user
+        :param int p_p_user_id: The id of the current user
+        :return: True if everything is OK
+                False if something fails
+        :rtype bool
+        """
+
+        res = False
+        logging.info(inspect.stack()[0][3], "adding data to database")
+        try:
+            for data in p_data:
+                user_in_role_id = data['user'].split(':')[-1]
+                # Insert time interval data
+                if not data.get('interval_end', False) and data.get('duration', False):
+                    # nominal interval
+                    logging.info(inspect.stack()[0][3], ": user entered a duration")
+                    time_interval = self._get_or_create(sr_tables.TimeInterval, interval_start=data['interval_start'],
+                                                        typical_period=data['duration'].lower())
+                else:
+                    # discrete interval
+                    logging.info(inspect.stack()[0][3], ":user entered a interval end value")
+                    time_interval = self._get_or_create(sr_tables.TimeInterval, interval_start=data['interval_start'],
+                                                        interval_end=data['interval_end'])
+                # Setting th condition of the user
+                self._get_or_create(sr_tables.FrailtyStatusTimeline, time_interval_id=time_interval.id,
+                                    user_in_role_id=user_in_role_id, frailty_notice=data['notice'],
+                                    changed_by=p_user_id)
+                res = True
+        except Exception as e:
+            logging.error("An error happened in " + inspect.stack()[0][3] + " the exception is: " + e)
+            res = False
+        # Committing and exit
+        self.commit()
+        logging.info(inspect.stack()[0][3], "data entered successfully")
+        return res
 
     def clear_user_data(self, p_data):
         """
