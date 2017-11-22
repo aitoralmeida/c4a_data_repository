@@ -859,20 +859,11 @@ class Utilities(object):
                                       data['user'])
                         raise ValidationError("The entered user pilot is incorrect or the user doesn't exist: %s" %
                                               data['user'])
-            else:
-                validate(p_data, schema, format_checker=FormatChecker())
-                # Validating measures
-                for payload in p_data['payload']:
-                    if payload.lower() not in list_of_measures:
-                        # This measure doesn't exist in database
-                        logging.error("The entered measure doesn't exist: %s" % payload)
-                        raise ValidationError("The entered measure doesn't exist: %s" % payload)
-                # Validating the user with its pilot
-                if not Utilities.validate_user_pilot(p_database, p_data['user'].split(':')[-1].lower(),
-                                                     p_data['pilot'].lower()):
-                    logging.error("The entered user pilot is incorrect or the user doesn't exist: %s" % p_data['user'])
-                    raise ValidationError("The entered user pilot is incorrect or the user doesn't exist: %s" %
-                                          p_data['user'])
+
+                    # TODO validate measure
+
+
+
 
         except ValidationError as e:
             logging.error("The schema entered by the user is invalid")
@@ -1095,7 +1086,7 @@ class Utilities(object):
                     # correct and it fits with the sent data
                     eam_name = data['eam'].lower().split(':')
                     city4age_id = data['user'].split(':')[-1]
-                    if eam_name[-2] != city4age_id or eam_name[-1] != data['activity'].lower():
+                    if eam_name[-2] != city4age_id or eam_name[-1].lower() != data['activity'].lower():
                         # The entered EAM name is not correct
                         logging.error(
                             "The entered EAM name is not correct according to the city4age id or activity name."
@@ -1124,7 +1115,7 @@ class Utilities(object):
         return msg
 
     @staticmethod
-    def check_add_frailty_status(p_database, p_data):
+    def check_add_frailty_status(p_database, p_data, p_pilot_code):
         """
         This method checks if the given frailty_status data is correct
 
@@ -1178,7 +1169,7 @@ class Utilities(object):
                     "type": "string",
                     "minLength": 2,
                     "maxLength": 10,
-                    "enum": ["frail", "pre-frail", "non-frail", "FRAIL", "PRE-FRAIL", "NON-FRAIL"]
+                    "enum": ["frail", "pre-frail", "fit", "FRAIL", "PRE-FRAIL", "FIT"]
                 },
                 "notice": {
                     "description": "Description of the selected status",
@@ -1201,7 +1192,16 @@ class Utilities(object):
                 list_of_users = []
                 for data in p_data:
                     validate(data, schema, format_checker=FormatChecker())
-                    Utilities.validate_user(p_database, data)
+                    # Validating the entered user
+                    if not Utilities.validate_user(p_database, data):
+                        logging.error("The entered user doesn't exist in database: %s" % data.get('user', False))
+                        raise ValidationError("The entered user doesn't exist in database: %s" %
+                                              data.get('user', False))
+                    # check if the entered user is from the current Pilot
+                    if not Utilities.validate_user_pilot(p_database, data['user'].split(':')[-1], p_pilot_code):
+                        logging.error("The entered user isn't belongs to your Pilot: %s" % data.get('user', False))
+                        raise ValidationError("The entered user isn't belongs to your Pilot: %s" %
+                                              data.get('user', False))
                     # If data is valid we add the current user
                     list_of_users.append(data['user'])
                 # Once finished, we check for duplicated users
@@ -1214,6 +1214,158 @@ class Utilities(object):
             logging.error("The schema entered by the user is invalid")
             msg = e.message
         return msg
+
+    @staticmethod
+    def check_add_factor(self, p_database, p_data):
+        """
+        This method check if the gven data in the addd_factor_method is consistent
+
+        :param p_database: The database instance
+        :param dict p_data: The data sent by the user
+
+        :return:  --> None: If all is OK
+                  --> Message: A message containing the encountered error
+
+        :rtype basestring or None
+
+        """
+
+        msg = None
+        schema = {
+            "title": "The frailty status condition validation",
+            "type": "object",
+            "properties": {
+                "user": {
+                    "description": "The user in role of the EAM. Default to Pilot if not filled",
+                    "type": "string",
+                    "minLength": 3,
+                    "maxLength": 50,
+                    "pattern": "^eu:c4a:user:[0-9]{1,15}$",
+                },
+                "pilot": {
+                    "description": "the name of the city where is the location",
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 10,
+                    "enum": [
+                        "ATH", "BHX", "LCC", "MAD", "MPL", "SIN",
+                        "ath", "bhx", "lcc", "mad", "mpl", "sin",
+                    ]
+                },
+                "interval_start": {
+                    "description": "The start time when the measure is recorded",
+                    "type": "string",
+                    "format": "date-time",
+                    "minLength": 3,
+                    "maxLength": 45
+                },
+                "duration": {
+                    "description": "A nominal value e.g Day, Week and so on to define the end time of the measure",
+                    "type": "string",
+                    "minLength": 2,
+                    "maxLength": 45,
+                    "enum": [
+                        "DAY", "1WK", "2WK", "MON", "QTR", "SEM", "1YR", "2YR", "3YR", "5YR",
+                        "day", "1wk", "2wk", "mon", "qtr", "sem", "1yr", "2yr", "3yr", "5yr"
+                    ]
+                },
+                "interval_end": {
+                    "description": "The end time when the measure is recorded",
+                    "type": "string",
+                    "format": "date-time",
+                    "minLength": 3,
+                    "maxLength": 45
+                },
+                "factor": {
+                    "description": "Identifier of the geriatric factor or sub-factor to which the assessment refers",
+                    "type": "string",
+                    "minLength": 3,
+                    "maxLength": 10,
+                    "enum": [
+                            "walking", "climbing_stairs", "still_Moving", "moving_across_rooms", "gait_balance", "physical_activity",
+                        "bathing_and_showering", "dressing", "self_feeding","personal_hygiene_and_grooming", "toilet_hygiene",
+                        "going_out", "ability_to_cook_food", "housekeeping", "laundry", "phone_usage", "new_media_communication",
+                        "shopping", "transportation", "finance_management", "medication", "visits", "attending_senior_centers",
+                        "attending_other_social_places", "restaurant", "visit_entertainment_culture_places", "watching_TV",
+                        "reading_newspapers", "reading_books", "quality_of_housing", "quality_of_neighbourhood", "dependence",
+                        "falls", "weight", "weakness", "exhaustion", "pain", "appetite", "quality_of_sleep", "visit_to_doctors",
+                        "visit_to_health_related_places", "abstraction", "attention", "memory", "mood"
+                    ]
+                },
+                "score": {
+                    "description": "Score assessing the Care Receiver’s geriatric factor, as determined by Pilot’s "
+                                   "geriatric staff, according to commonly accepted standards.",
+                    "type": "number",
+                    "minimum": 1,
+                    "maximum": 5,
+                    "exclusiveMinimum": False,
+                    "exclusiveMaximum": False,
+                },
+                "notice": {
+                    "description": "Description of the selected status",
+                    "type": "string",
+                    "minLength": 2,
+                    "maxLength": 200,
+
+                },
+            },
+            "additionalProperties": False,
+            "oneOf": [
+                {
+                  "required": [
+                    "user",
+                    "pilot",
+                    "interval_start",
+                    "duration",
+                    "factor",
+                    "score",
+                    "notice",
+                  ]
+                },
+                {
+                  "required": [
+                    "user",
+                    "pilot",
+                    "interval_start",
+                    "interval_end",
+                    "factor",
+                    "score",
+                    "notice"
+                  ]
+                }
+              ]
+        }
+
+        try:
+            if type(p_data) is list:
+                # Initializing the list of users to avoid duplicated users
+                list_of_factor = []
+                for data in p_data:
+                    validate(data, schema, format_checker=FormatChecker())
+                    # Check if the user exist in the system
+                    if not Utilities.validate_user(p_database, data):
+                        logging.error("The entered user doesn't exist in database: %s" % data.get('user', False))
+                        raise ValidationError("The entered user doesn't exist in database: %s" %
+                                              data.get('user', False))
+                    # check if the entered user is from the current Pilot
+                    if not Utilities.validate_user_pilot(p_database, data['user'].split(':')[-1], data['pilot']):
+                        logging.error("The entered user isn't belongs to your Pilot: %s" % data.get('user', False))
+                        raise ValidationError("The entered user isn't belongs to your Pilot: %s" %
+                                              data.get('user', False))
+
+                    # IF the given data is ok, add it to the list
+                    list_of_factor.append(data['user'])
+                # Once finished, we check for duplicated users
+                duplicated = [k for k, v in Counter(list_of_factor).items() if v > 1]
+                if len(duplicated) > 0:
+                    # Raise an error for duplicated values
+                    logging.error("There are are duplicated users in the JSON: %s" % duplicated)
+                    raise ValidationError("There are are duplicated users in the JSON: %s" % duplicated)
+        except ValidationError as e:
+            logging.error("The schema entered by the user is invalid")
+            msg = e.message
+        return msg
+
 
     ###################################################################################################
     ############################################Utilities#######################################################
@@ -1241,7 +1393,6 @@ class Utilities(object):
         return res
 
     # TODO some of this methods are repetet. check to unify it
-
     @staticmethod
     def validate_user_registered(p_database, p_one_data):
         """

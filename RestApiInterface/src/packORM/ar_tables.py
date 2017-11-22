@@ -448,6 +448,10 @@ class UserInRole(Base):
     valid_from = Column(ArrowType(timezone=True), server_default=utcnow())
     valid_to = Column(ArrowType(timezone=True))
     pilot_source_user_id = Column(String(20))
+    wa = Column(Float, default=1.3)     # Action weight
+    wl = Column(Float, default=1.0)     # Location weight
+    wd = Column(Float, default=0.1)     # Duration weight
+    ws = Column(Float, default=1.5)     # starting_time weight
 
     # one2many
     user_in_system_id = Column(Integer, ForeignKey('user_in_system.id'))

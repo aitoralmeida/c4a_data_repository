@@ -16,7 +16,7 @@ import arrow
 from itsdangerous import (TimedJSONWebSignatureSerializer
                           as Serializer, BadSignature, SignatureExpired)
 from sqlalchemy import Column, Integer, String, Boolean, Sequence, Numeric, Float, BigInteger, ForeignKey, \
-    LargeBinary, TIMESTAMP, Text, DateTime, TypeDecorator, event, MetaData
+    LargeBinary, TIMESTAMP, Text, DateTime, TypeDecorator, event, MetaData, UniqueConstraint
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, validates
 from sqlalchemy.schema import CreateSchema
@@ -868,6 +868,9 @@ class VariationMeasureValue(Base):
 
     __tablename__ = 'variation_measure_value'
     __searchable__ = ['measure_value', 'data_source_type', 'extra_information', 'user_in_role_id', 'measure_type_id']
+    __table_args__ = (UniqueConstraint('user_in_role_id', 'measure_type_id', 'time_interval_id',
+                                       name='variation_measure_value_user_in_role_id_measure_type_id_tim_key'),
+                      )
 
     # Generating the Sequence
     variation_measure_value_seq = Sequence('variation_measure_value_seq', metadata=Base.metadata)

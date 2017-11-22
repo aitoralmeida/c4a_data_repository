@@ -1153,8 +1153,8 @@ def create_frailty_status(p_tables, p_orm):
     # Creating the needed entries
     frail = p_tables.CDFrailtyStatus(frailty_status='frail',
                                      frailty_status_description='The user is in frail condition')
-    non_frail = p_tables.CDFrailtyStatus(frailty_status='non_frail',
-                                         frailty_status_description='The user is in non-frail condition')
+    non_frail = p_tables.CDFrailtyStatus(frailty_status='fit',
+                                         frailty_status_description='The user is fit')
     pre_frail = p_tables.CDFrailtyStatus(frailty_status='pre_frail',
                                          frailty_status_description='The user is in pre-frail condition')
 

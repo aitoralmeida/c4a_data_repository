@@ -11,8 +11,11 @@ import datetime
 import logging
 import arrow
 import inspect
+import json
+import pandas as pd
 from sqlalchemy import MetaData
-from src.packORM import ar_tables
+# from src.packORM import ar_tables
+from packORM import ar_tables
 from post_orm import PostORM
 
 __author__ = 'Rubén Mulero'
@@ -108,7 +111,7 @@ class ARPostORM(PostORM):
             else:
                 # The User doesn't provide a user, back to Pilot ID
                 user_in_role = self._get_or_create(self.tables.UserInRole, id=p_user_id)
-            cd_activity = self._get_or_create(self.tables.CDActivity, activity_name=data['activity'])
+            cd_activity = self._get_or_create(self.tables.CDActivity, activity_name=data['activity'].lower())
             # Insert new EAM
             cd_eam = self._get_or_create(self.tables.CDEAM, eam_name=data['eam'], duration=data['duration'])
             # Obtaining the cd_eam id if not provided
@@ -144,6 +147,45 @@ class ARPostORM(PostORM):
                                               cd_eam_id=cd_eam.id)
 
             self.insert_one(user_in_eam)
+        # Commit changes and exiting
+        logging.info(inspect.stack()[0][3], "data added successful")
+        return self.commit()
+
+
+    # TODO
+    def add_discovered_activities(self, p_data_frame, p_user_in_role_id):
+        """
+
+        :param p_data_frame: A pandas object containing the needed data to insert
+        :param p_user_in_role_id: the city4ageuserID
+
+        :return:
+        """
+        logging.info(inspect.stack()[0][3], "adding data to database")
+        # We extract the list of possible activity values
+        discovered_activities = p_data_frame['detected_activities'][0]
+        # For each activity, we have to create a new 'executed_activity
+        for activity in discovered_activities:
+            # Finding the activity in database
+            cd_activity = self.session.query(self.tables.CDActivity).filter_by(activity_name=activity)[0]
+            # Format the time according to database time
+            start_time = arrow.get(pd.to_datetime(str(p_data_frame.index.values[0])))
+            end_time = arrow.get(pd.to_datetime(str(p_data_frame.index.values[-1])))
+            duration = end_time - start_time
+            executed_activity = self._get_or_create(self.tables.ExecutedActivity, start_time=start_time,
+                                                    end_time=end_time,
+                                                    duration=duration.seconds,
+                                                    data_source_type='discovered_by_hars',
+                                                    cd_activity_id=cd_activity.id,
+                                                    user_in_role_id=p_user_in_role_id)
+            self.session.flush()
+            for executed_action in p_data_frame['executed_action']:
+                # Filling the intermediate table with the instantiated activity
+                executed_activity_executed_action_rel = self.tables.ExecutedActivityExecutedActionRel(
+                    executed_activity_id=executed_activity.id,
+                    executed_action_id=executed_action)
+                self.insert_one(executed_activity_executed_action_rel)
+
         # Commit changes and exiting
         logging.info(inspect.stack()[0][3], "data added successful")
         return self.commit()
@@ -376,24 +418,27 @@ class ARPostORM(PostORM):
             list_of_leas.append(lea)
         return list_of_leas
 
-    def get_transformed_action(self, p_start_time, p_end_time):
+    def get_transformed_action(self, p_user_in_role, p_start_time, p_end_time):
         """
         By giving a start and end time, this method extract from database the stored Transformed actions
         to create a proper Python dict to be used by HARS.
 
-
+        :param p_user_in_role: The id of the user in role to extract its leas
         :param p_start_time: The interval start date of the extraction
         :param p_end_time: The final end date of the extraction
+
         :return:  A list containing a Python dictionaries with the needed LEAS.
+        :type list
         """
         list_of_leas = list()
         # Dates are ok, we are going to extract needed LEAS from executed action table
         query = self.session.query(ar_tables.ExecutedTransformedAction).filter(
-            ar_tables.ExecutedTransformedAction.transformed_execution_datetime.between(p_start_time, p_end_time))
-        logging.info(inspect.stack()[0][3], "Total founded LEAS in database: ", query.count())
+            ar_tables.ExecutedTransformedAction.transformed_execution_datetime.between(p_start_time, p_end_time),
+            ar_tables.ExecutedTransformedAction.user_in_role_id == p_user_in_role)
+        logging.debug(inspect.stack()[0][3], "Total founded LEAS in database: ", query.count(), "\nfor user: ", p_user_in_role)
         for q in query:
             # Extracting the needed data and obtaining additional values
-            transformed_action = self.session.query(ar_tables.CDTransformedAction).filter_by(id=q.id)[0]
+            transformed_action = self.session.query(ar_tables.CDTransformedAction).filter_by(id=q.cd_transformed_action_id)[0]
             lea = {
                 'user_in_role_id': q.user_in_role_id,
                 'executed_action_id': q.executed_action_id,
@@ -404,3 +449,83 @@ class ARPostORM(PostORM):
             # Adding the dict to the final list
             list_of_leas.append(lea)
         return list_of_leas
+
+    def get_eam(self, p_user_in_role):
+        """
+        Giving the user id of the system, this method build the EAM JSON structure to be used by HARSS
+
+
+        Example file
+
+        {
+            "LeaveHouse": {
+                "locations": ["Hall"],
+                "actions": ["Frontdoor"],
+                "duration": 10800,
+                "start": [["00:00", "23:59"]]
+             },
+             "Eating": {
+                 "locations": ["Kitchen", "LivingRoom"],
+                 "actions": ["Cutlery", "PlatesCupboard", "Couch"],
+                 "duration": 700,
+                 "start": [["7:00", "8:00"], ["10:00", "12:00"], ["13:00", "14:30"], ["17:30", "18:30"], ["22:00", "23:59"]]
+             }
+        }
+
+        :param p_user_in_role: The current user id in the system
+        :return: A json list containing the needed data
+        """
+        transformed_json_list = {}
+
+        # Recovering the given EAMS of the current user
+        user_in_eam_query = self.session.query(ar_tables.UserInEAM).filter_by(user_in_role_id=p_user_in_role)
+        for user_in_eam in user_in_eam_query:
+            # Recovering the needed EAM IDS with the needed data
+            # Obtaining the eam activity name
+            activity_name = self.session.query(ar_tables.CDActivity).filter_by(id=user_in_eam.cd_activity_id)[0].activity_name
+            # Insert the activty name in the dictionary
+            transformed_json_list[activity_name] = {}
+            # Obtaining the eam location IDS
+            locations = self.session.query(ar_tables.CDEAMLocationRel).filter_by(cd_eam_id=user_in_eam.cd_eam_id)
+            # Creating the locations list
+            transformed_json_list[activity_name]['locations'] = []
+            for location in locations:
+                # Adding location into the dict
+                location_name = self.session.query(ar_tables.Location).filter_by(id=location.location_id)[0].location_name
+                transformed_json_list[activity_name]['locations'].append(location_name)
+            # Obtaining transformed actions
+            actions = self.session.query(ar_tables.CDEAMCDTransformedActionRel).filter_by(cd_eam_id=user_in_eam.cd_eam_id)
+            # Creating the actions list
+            transformed_json_list[activity_name]['actions'] = []
+            for action in actions:
+                # Adding actions into the dict
+                transformed_action_name = self.session.query(ar_tables.CDTransformedAction).filter_by(id=action.cd_transformed_action_id)[0].transformed_action_name
+                transformed_json_list[activity_name]['actions'].append(transformed_action_name)
+            # Setting the duration
+            duration = self.session.query(ar_tables.CDEAM).filter_by(id=user_in_eam.cd_eam_id)
+            transformed_json_list[activity_name]['duration'] = duration[0].duration
+            # Setting start
+            start_time = self.session.query(ar_tables.CDEAMStartRangeRel).filter_by(cd_eam_id=user_in_eam.cd_eam_id)
+            # Creating the start list
+            transformed_json_list[activity_name]['start'] = []
+            for start in start_time:
+                # Adding start time into the dict
+                time_range = self.session.query(ar_tables.StartRange).filter_by(id=start.start_range_id)[0]
+                transformed_json_list[activity_name]['start'].append([time_range.start_time, time_range.end_time])
+
+        logging.info("get_eam: created the json list of elements per user")
+        return transformed_json_list
+
+    def get_user_in_eam(self):
+        """
+        This method extract all user id from user_in_eam table to know which users contains an EAM attached
+
+
+        :return: A list of users
+        :rtype list
+        """
+
+        query = self.session.query(ar_tables.UserInEAM.user_in_role_id.distinct().label("user_in_role_id"))
+        list_of_user = [row.user_in_role_id for row in query.all()]
+
+        return list_of_user

@@ -956,7 +956,7 @@ def add_frailty_status(version=app.config['ACTUAL_API']):
     if Utilities.check_connection(app, version):
         # We created a list of Python dict.
         data = _convert_to_dict(request.json)
-        msg = Utilities.check_add_frailty_status(SR_DATABASE, data)
+        msg = Utilities.check_add_frailty_status(SR_DATABASE, data, USER.user_in_role[0].pilot_code or 'lcc')
         if data and not msg and USER:
             # Data entered ok, executing the needed method to insert data in DB
             res = SR_DATABASE.add_frailty_status(data, USER.id)
@@ -975,6 +975,62 @@ def add_frailty_status(version=app.config['ACTUAL_API']):
             else:
                 # Standard Error
                 return Response(msg), 400
+
+@app.route('/api/<version>/add_factor', methods=['POST'])
+@limit_content_length(MAX_LENGHT)
+@auth.login_required
+@required_roles('administrator', 'system', 'Pilot source system')
+def add_factor(version=app.config['ACTUAL_API']):
+    """
+    This method allows to insert data to geriatric factor table directly
+
+
+    {
+          "user": "eu:c4a:user:9",
+          "pilot": "lcc",
+          "interval_start": "2014-01-20T00:00:00.000+08:00",
+          "duration": "MON",
+          "factor": "GES",
+          "score": 2,
+          "notice": "Jon Doe is the best"
+    }
+
+
+    :param basestring version: Api version
+
+    :return: Response of the request
+    """
+
+    """
+    if Utilities.check_connection(app, version):
+        # We created a list of Python dict.
+        data = _convert_to_dict(request.json)
+        msg = Utilities.check_add_factor(SR_DATABASE, data)
+        if data and not msg and USER:
+            # Data entered ok, executing the needed method to insert data in DB
+            res = SR_DATABASE.add_factor(data, USER.id)
+            if res:
+                logging.info("add_factor: the username: %s adds new factor into database" % USER.username)
+                return Response('add_frailty_status: data stored in database OK\n'), 200
+            else:
+                logging.error("add_factor: the username: %s failed to store data into database. 500" % USER.username)
+                return "There is an error in DB", 500
+        else:
+            logging.error("add_factor: there is a problem with entered data")
+            # Data is not valid, check the problem
+            if "duplicated" in msg:
+                # Data sent is duplicated.
+                return Response(msg), 409
+            else:
+                # Standard Error
+                return Response(msg), 400
+
+    """
+
+    return "Not implemented yet", 501
+
+
+
 
 @app.route('/api/<version>/commit_measure', methods=['GET'])
 @limit_content_length(MAX_LENGHT)

@@ -12,7 +12,10 @@ import inspect
 import logging
 import subprocess
 
-from src.packORM import sr_tables
+#from src.packORM import sr_tables
+
+from packORM import sr_tables
+
 from post_orm import PostORM
 from sqlalchemy import MetaData
 
@@ -170,6 +173,45 @@ class SRPostORM(PostORM):
         # Committing and exit
         self.commit()
         logging.info(inspect.stack()[0][3], "data entered successfully")
+        return res
+
+    def add_factor(self, p_data):
+        """
+        This method inserts new GEF/GES factors in the database given by the user apps
+
+        :param p_data: The add_factor data to be introduced in the database
+        :return: True if data is erased
+                False if something happened
+        """
+
+        res = False
+
+        """
+        o
+        store
+        the
+        value in the
+        geriatric_factor_value
+        table, gef_value
+        column(
+        with the corresponding time_interval_id resolved previously), and return the inserted row id of that value
+
+        o
+        store
+        this
+        returned
+        id in the
+        value_id
+        column
+        of
+        source_evidence, along
+        with ‘GES’ in the detection_variable_type column.
+    
+        """
+
+        # Store values as
+
+
         return res
 
     def clear_user_data(self, p_data):
