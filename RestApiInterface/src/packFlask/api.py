@@ -830,14 +830,14 @@ def add_measure(version=app.config['ACTUAL_API']):
         "user": "eu:c4a:user:12345",
         "pilot": "SIN",
         "interval_start": "2014-01-20T00:00:00.000+08:00",
-        "duration": "DAY",                                  # OPTIONALLY COULD BE INTERVAL_END
+        "duration": "DAY",                                  # COULD BE INTERVAL_END INSTEAD OF THIS VALUE
         "payload": {
-          "WALK_STEPS": { "value": 1728 },
+          "WALK_STEPS": { "value": 1728, "notice": "the user walks a lot in this day" },
           "SHOP_VISITS": { "value": 3, "data_source_type": ["sensors", "external_dataset"]},
           "PHONECALLS_PLACED_PERC": { "value": 21.23, "data_source_type": ["external_dataset"] }
         },
         "extra": {
-          "pilot_specific_field": “some value”
+          "pilot_specific_field": "some value"
         }
     }
 
@@ -846,6 +846,7 @@ def add_measure(version=app.config['ACTUAL_API']):
     :return: Response of the request
 
     """
+
     if Utilities.check_connection(app, version):
         # We created a list of Python dict.
         data = _convert_to_dict(request.json)
@@ -883,18 +884,17 @@ def add_eam(version=app.config['ACTUAL_API']):
 
     An example in JSON could be:
 
+
     {
-    	"name": "mad:8:makedinner",
-        "user": "eu:c4a:user:12345",                            # OPTIONAL user information. Default: Pilot Id
-        "activity": "AnsweringPhone",                           # This must exist previously
-        "locations": ["Kitchen", "Office", "Bedroom"],
-        "transformed_action": ["KitchenPIR", "BedroomPIR"],     # Transformed actions of the new EAM
-        "duration": 120,                                        # Duration time
-        "start": [
-            ["12:00", "12:05"],
-            ["20:00", "20:10"]
-        ]
+        "eam": "mad:11:payingvisits",
+        "user": "eu:c4a:user:11",
+        "activity": "payingvisits",
+        "locations": ["eu:c4a:seniorcenter", "eu:c4a:friendhome", "eu:c4a:familymemberhome"],
+        "transformed_action": ["seniorcenter_enter", "seniorcenter_exit", "friendhome_enter"],
+        "duration": 800,
+        "start": [["10:00", "22:00"]]
     }
+
 
     :param basestring version: Api version
 
@@ -975,6 +975,7 @@ def add_frailty_status(version=app.config['ACTUAL_API']):
             else:
                 # Standard Error
                 return Response(msg), 400
+
 
 @app.route('/api/<version>/add_factor', methods=['POST'])
 @limit_content_length(MAX_LENGHT)

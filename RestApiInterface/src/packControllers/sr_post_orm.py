@@ -12,7 +12,7 @@ import inspect
 import logging
 import subprocess
 
-#from src.packORM import sr_tables
+# from src.packORM import sr_tables
 
 from packORM import sr_tables
 
@@ -86,19 +86,35 @@ class SRPostORM(PostORM):
                     # Adding measure information in detection variable.
                     measure_cd_detection_variable = self._get_or_create(sr_tables.CDDetectionVariable,
                                                                         detection_variable_name=key.lower())
-                    # Admin measures values
-                    variation_measure_value = self._get_or_create(sr_tables.VariationMeasureValue,
-                                                                  user_in_role_id=user_in_role.id,
-                                                                  measure_value=round(value.get('value', 0), 2),
-                                                                  measure_type_id=measure_cd_detection_variable.id,
-                                                                  time_interval_id=time_interval.id,
-                                                                  data_source_type=' '.join(
-                                                                      value.get('data_source_type', ['sensors'])))
+
+                    variation_measure_value = self._update_or_create(sr_tables.VariationMeasureValue,
+                                                                     'user_in_role_id', 'time_interval_id',
+                                                                     'measure_type_id',
+                                                                     user_in_role_id=user_in_role.id,
+                                                                     measure_value=round(value.get('value', 0), 2),
+                                                                     measure_type_id=measure_cd_detection_variable.id,
+                                                                     time_interval_id=time_interval.id,
+                                                                     data_source_type=' '.join(
+                                                                         value.get('data_source_type', ['sensors'])))
+                    # Adding comments (if available)
+                    if value.get('notice', False):
+                        # Flush to obtain the variation_measure_id
+                        self.session.flush()
+                        # This measure contains comments, adding it into database
+                        value_evidence_notice = self._update_or_create(sr_tables.ValueEvidenceNotice,
+                                                                       #'value_id', 'author_id',
+                                                                       'value_id', 'author_id',
+                                                                       value_id=variation_measure_value.id,
+                                                                       notice=value.get('notice',
+                                                                                        'ERROR: notice is not registered well'),
+                                                                       author_id=user_in_role.id)
 
                     # OPTIONALLY adding pilot data
-                    self._get_or_create(sr_tables.MDPilotDetectionVariable, pilot_code=data['pilot'].lower(),
-                                        detection_variable_id=measure_cd_detection_variable.id,
-                                        derived_detection_variable_id=measure_cd_detection_variable.derived_detection_variable_id or None)
+                    self._update_or_create(sr_tables.MDPilotDetectionVariable,
+                                           'pilot_code', 'detection_variable_id', 'derived_detection_variable_id',
+                                           pilot_code=data['pilot'].lower(),
+                                           detection_variable_id=measure_cd_detection_variable.id,
+                                           derived_detection_variable_id=measure_cd_detection_variable.derived_detection_variable_id or None)
 
                 # Check if there are extra information and insert data
                 if data.get('extra', False):
@@ -140,7 +156,7 @@ class SRPostORM(PostORM):
         of the citizen
 
         :param list p_data: The entered data by the user
-        :param int p_p_user_id: The id of the current user
+        :param int p_user_id: The id of the current user
         :return: True if everything is OK
                 False if something fails
         :rtype bool
@@ -162,10 +178,14 @@ class SRPostORM(PostORM):
                     logging.info(inspect.stack()[0][3], ":user entered a interval end value")
                     time_interval = self._get_or_create(sr_tables.TimeInterval, interval_start=data['interval_start'],
                                                         interval_end=data['interval_end'])
+                self.session.flush()
                 # Setting th condition of the user
-                self._get_or_create(sr_tables.FrailtyStatusTimeline, time_interval_id=time_interval.id,
-                                    user_in_role_id=user_in_role_id, frailty_notice=data['notice'],
-                                    changed_by=p_user_id)
+                self._update_or_create(sr_tables.FrailtyStatusTimeline, 'time_interval_id', 'user_in_role_id',
+                                       'frailty_status',
+                                       time_interval_id=time_interval.id,
+                                       user_in_role_id=user_in_role_id, frailty_notice=data['notice'],
+                                       frailty_status=data['condition'],
+                                       changed_by=p_user_id)
                 res = True
         except Exception as e:
             logging.error("An error happened in " + inspect.stack()[0][3] + " the exception is: " + e)
@@ -236,7 +256,6 @@ class SRPostORM(PostORM):
         # Remove data from: geriatric_factor_value
         # Remove data from: source_evidence
         pass
-
 
     ###################################################################################################
     ###################################################################################################

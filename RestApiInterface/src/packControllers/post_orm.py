@@ -669,13 +669,30 @@ class PostORM(object):
         """
         giving the location name, we check if it exist or not in the system.
 
-        :param p_location_name: The name of the location
+        :param basestring p_location_name: The name of the location
         :return: True if the location exist in the system
                 False if the location doesn't exist in the system
+        :rtype: bool
         """
         res = False
         location = self.session.query(self.tables.Location).filter_by(location_name=p_location_name)
         if location and location.count() == 1:
+            res = True
+        return res
+
+    def check_like_location(self, p_location_name):
+        """
+        giving the location name, we check if it exist or not in the system using LIKE operator
+
+        :param  basestring p_location_name: The name of the location
+        :return: True if the location exist in the system
+                False if the location doesn't exist in the system
+        :rtype: bool
+        """
+        res = False
+        location = self.session.query(self.tables.Location).filter(self.tables.Location.location_name.like(p_location_name+'%'))
+        if location.count() > 0:
+            # We have data in DB
             res = True
         return res
 
@@ -753,6 +770,38 @@ class PostORM(object):
             self.insert_one(instance)
             # self.commit()
             return instance
+
+    def _update_or_create(self, model, *constraint, **kwargs):
+        """
+        This method creates a new entrty in db if this isn't exsist yet or makes an update information based on some
+        arguments
+
+        :param model: The table name defined in Tables class
+        :param *constraint: The name of variables to use in the constraint
+        :param **kwargs: Search criteria
+        :return:
+        """
+        # Return the constraint values from **kwargs
+        search_constraint = {}
+        for value in constraint:
+            # Building a dict of constraints of the table
+            search_constraint[value] = kwargs.get(value, None)
+        # Performing the search criteria
+        instance = self.session.query(model).filter_by(**search_constraint)
+        if instance.count() == 1:
+            # We only update data if count is == 1
+            instance.update(dict(**kwargs))
+            return instance.first()
+        elif instance.count() == 0:
+            # we don't have data, insert it
+            instance = model(**kwargs)
+            self.insert_one(instance)
+            # self.commit()
+            return instance
+        else:
+            # This never should happen
+            logging.warn('Multiple instances founded to update, skipping...')
+            return None
 
     def _index_tables(self):
         """

@@ -780,7 +780,6 @@ class Utilities(object):
                         "day", "1wk", "2wk", "mon", "qtr", "sem", "1yr", "2yr", "3yr", "5yr"
                     ]
                 },
-                # TODO this part would be deleted in favour of using "duration" as interval end duration"
                 "interval_end": {
                     "description": "The end time when the measure is recorded",
                     "type": "string",
@@ -816,6 +815,12 @@ class Utilities(object):
                                             "manual_input",
                                         ],
                                     },
+                                },
+                                "notice": {
+                                    "description": "additional comments of the given measure",
+                                    "type": "string",
+                                    "minLength": 5,
+                                    "maxLength": 2000,
                                 },
                             },
                             "additionalProperties": False,
@@ -995,12 +1000,12 @@ class Utilities(object):
                     "description": "A list containing the possible locations of the EAM",
                     "type": "array",
                     "items": {
-                        "type": "string"
+                        "type": "string",
+                        "pattern": "^eu:c4a:[a-z,A-Z]{3,25}$",
                     },
                     "minItems": 1,
                     "uniqueItems": True,
                     "additionalProperties": False,
-                    "pattern": "^(eu:c4a:[a-z,A-Z,0-9]{3,25}:[a-z,A-Z,0-9]{1,30}|eu:c4a:[a-z,A-Z,0-9]{3,25}:[a-z,A-Z,0-9]{1,35}:[a-z,A-Z,0-9]{1,35})$",
                 },
                 "transformed_action": {
                     "description": "A list containing the transformed actions of the EAM",
@@ -1065,7 +1070,6 @@ class Utilities(object):
                                       data.get('activity'), False)
                         raise ValidationError("The entered activity is not valid: %s" %
                                               data.get('activity'), False)
-
                     if Utilities.validate_eam_name(p_database, data):
                         logging.error("The entered eam name is in database already: %s" %
                                       data.get('eam'), False)
@@ -1082,6 +1086,15 @@ class Utilities(object):
                             logging.error("The entered user isn't belongs to your Pilot: %s" % data.get('user', False))
                             raise ValidationError("The entered user isn't belongs to your Pilot: %s" %
                                                   data.get('user', False))
+
+                    # Check if locations exist previosly in database
+                    for location in data['locations']:
+                        # We need to format the location in order to use the validator
+                        a_location = {'location': location}
+                        if not Utilities.validate_like_location(p_database, a_location):
+                            logging.error("The entered location doesn't exist in database")
+                            raise ValidationError("The entered location doesn't exsit in database: %s" %
+                                                  a_location.get('location', False))
                     # After knowing that entered data is valid, we are going to check if the given eam format is
                     # correct and it fits with the sent data
                     eam_name = data['eam'].lower().split(':')
@@ -1178,6 +1191,16 @@ class Utilities(object):
                     "maxLength": 200,
 
                 },
+                "pilot": {
+                    "description": "the name of the city where is the location",
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 10,
+                    "enum": [
+                        "ATH", "BHX", "LCC", "MAD", "MPL", "SIN",
+                        "ath", "bhx", "lcc", "mad", "mpl", "sin",
+                    ]
+                },
             },
             "additionalProperties": False,
             "oneOf": [
@@ -1202,6 +1225,10 @@ class Utilities(object):
                         logging.error("The entered user isn't belongs to your Pilot: %s" % data.get('user', False))
                         raise ValidationError("The entered user isn't belongs to your Pilot: %s" %
                                               data.get('user', False))
+
+
+                    # TODO control check of duplicated values --> SAME user in the SAME INTERVAL DIFFERENT FRAILT STATUS
+
                     # If data is valid we add the current user
                     list_of_users.append(data['user'])
                 # Once finished, we check for duplicated users
@@ -1541,6 +1568,24 @@ class Utilities(object):
         if p_one_data and p_one_data.get('location', False):
             location = p_one_data['location'].lower() or None
             res = p_database.check_location(location)
+        return res
+
+    @staticmethod
+    def validate_like_location(p_database, p_one_data):
+        """
+        This method checks if the database contains a location LIKE the given one, it only returns
+        a True o False confirmation.
+
+        This methodd has been developed taking into account the EAM class
+
+        :param p_database: Database instance
+        :param p_one_data: The element to be checked
+        :return:
+        """
+        res = False
+        if p_one_data and p_one_data.get('location', False):
+            location = p_one_data['location'].lower() or None
+            res = p_database.check_like_location(location)
         return res
 
     @staticmethod

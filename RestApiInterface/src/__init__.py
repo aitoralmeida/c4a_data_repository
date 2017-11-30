@@ -42,6 +42,7 @@ logHandler.setFormatter(formatter)
 application.logger.setLevel(logging.INFO)
 application.logger.addHandler(logHandler)
 
+
 # Set the jinja2 templates path
 my_loader = jinja2.ChoiceLoader([
         application.jinja_loader,

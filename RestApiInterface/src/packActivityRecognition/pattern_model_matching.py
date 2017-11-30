@@ -176,7 +176,7 @@ class PatternModelMatching:
         detected_activities = [['None']]*len(self.df)
         self.df['detected_activities'] = detected_activities
         for timestamp in auxdf.index:                   # Lines in which casas encountered something
-            if auxdf.loc[timestamp, "pattern"] != pat:
+            if auxdf.loc[timestamp, "pattern"] != pat:          # TODO Gorka we need to review this part, problems with dates?
                 if len(actions) > 0:
                     print 'New pattern'
                     print '   actions:', actions

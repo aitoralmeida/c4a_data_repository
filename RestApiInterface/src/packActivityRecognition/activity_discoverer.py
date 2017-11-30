@@ -241,19 +241,6 @@ class ActivityDiscoverer(object):
         pmd.store_result('casas_final_%s.csv' % p_user_in_role)
         logging.info("execute_hars: The execution of HARS has finished successfully for the user: ", p_user_in_role)
 
-    def inser_data(self, p_list_discovered_activities, p_list_leas):
-        """
-        Given the final results from HARS, insert needed data into database
-
-
-        :p_p_list_discovered_activities: The discovered activities from HARS
-        :param p_list_activity: The extracted list of LEAS
-        :return:
-        """
-
-        # TODO insert data thought API into database
-        pass
-
     def _eam_extractor(self, p_user_in_role_id):
         """
         Get stored EAMS in database and convert it to JSON format based on:

@@ -119,9 +119,9 @@ class ARPostORM(PostORM):
             ## Intermediate tables
             # For each location
             for location in data['locations']:
-                # Insert EAM location REL and locationType
-                location = self._get_or_create(ar_tables.Location, location_name=location.lower())
-                self.session.flush()
+                # Obtaining the first location ID from database
+                location = self.session.query(self.tables.Location).\
+                    filter(self.tables.Location.location_name.like(location+'%')).first()
                 # Adding the relationship to EAM
                 cd_eam_location_rel = ar_tables.CDEAMLocationRel(location_id=location.id, cd_eam_id=cd_eam.id)
                 self.insert_one(cd_eam_location_rel)
@@ -151,8 +151,6 @@ class ARPostORM(PostORM):
         logging.info(inspect.stack()[0][3], "data added successful")
         return self.commit()
 
-
-    # TODO
     def add_discovered_activities(self, p_data_frame, p_user_in_role_id):
         """
 
@@ -439,11 +437,13 @@ class ARPostORM(PostORM):
         for q in query:
             # Extracting the needed data and obtaining additional values
             transformed_action = self.session.query(ar_tables.CDTransformedAction).filter_by(id=q.cd_transformed_action_id)[0]
+            executed_action = self.session.query(ar_tables.ExecutedAction).filter_by(id=q.executed_action_id).first()
+            location = self.session.query(ar_tables.Location).filter_by(id=executed_action.location_id).first()
             lea = {
                 'user_in_role_id': q.user_in_role_id,
                 'executed_action_id': q.executed_action_id,
                 'execution_datetime': q.transformed_execution_datetime,
-                'location_name': transformed_action.location_type,  # TODO rev
+                'location_name': location.location_name.split(':')[2].lower(),
                 'action_name': transformed_action.transformed_action_name
             }
             # Adding the dict to the final list

@@ -17,7 +17,7 @@ from sqlalchemy_utils import ArrowType
 from itsdangerous import (TimedJSONWebSignatureSerializer
                           as Serializer, BadSignature, SignatureExpired)
 from sqlalchemy import Column, Integer, String, Boolean, Sequence, Float, BigInteger, ForeignKey, Numeric, \
-    Text, TypeDecorator, event, MetaData, DateTime
+    Text, TypeDecorator, event, MetaData, DateTime, UniqueConstraint
 
 from sqlalchemy.sql import expression
 from sqlalchemy.ext.compiler import compiles
@@ -215,6 +215,10 @@ class ExecutedAction(Base):
 
     __tablename__ = 'executed_action'
     __searchable__ = ['data_source_type', 'user_in_role_id', 'location_id', 'acquisition_datetime', 'execution_datetime']
+    __table_args__ = (UniqueConstraint('execution_datetime', 'user_in_role_id', 'cd_action_id', 'location_id',
+                                       name='executed_action_uq'),
+                      )
+
 
     # Generating the Sequence
     executed_action_id_seq = Sequence('executed_action_id_seq', metadata=Base.metadata)
@@ -439,7 +443,10 @@ class UserInRole(Base):
     """
 
     __tablename__ = 'user_in_role'
-    __searchable__ = ['valid_from', 'valid_to', 'pilot_code']
+    #__searchable__ = ['valid_from', 'valid_to', 'pilot_code']
+    __table_args__ = (UniqueConstraint('user_in_system_id', 'cd_role_id', 'pilot_code', 'valid_from', 'valid_to',
+                                       name='user_in_role_natural1_uq'),
+                      )
 
     # Generating the Sequence
     user_in_role_seq = Sequence('user_in_role_seq', metadata=Base.metadata)

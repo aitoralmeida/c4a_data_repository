@@ -16,7 +16,7 @@ import arrow
 from itsdangerous import (TimedJSONWebSignatureSerializer
                           as Serializer, BadSignature, SignatureExpired)
 from sqlalchemy import Column, Integer, String, Boolean, Sequence, Numeric, Float, BigInteger, ForeignKey, \
-    LargeBinary, TIMESTAMP, Text, DateTime, TypeDecorator, event, MetaData, UniqueConstraint
+    LargeBinary, TIMESTAMP, Text, DateTime, TypeDecorator, event, MetaData, UniqueConstraint, Index
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, validates
 from sqlalchemy.schema import CreateSchema
@@ -226,17 +226,20 @@ class FrailtyStatusTimeline(Base):
     """
 
     __tablename__ = 'frailty_status_timeline'
+    __table_args__ = (UniqueConstraint('time_interval_id', 'user_in_role_id', 'frailty_status',
+                                       name='frailty_status_timeline1_uq'),
+                      )
 
     time_interval_id = Column(Integer, ForeignKey('time_interval.id'), primary_key=True)
     user_in_role_id = Column(Integer, ForeignKey('user_in_role.id'), primary_key=True)
     changed = Column(ArrowType(timezone=True), server_default=utcnow(), primary_key=True)
+    frailty_status = Column(String(9), ForeignKey('cd_frailty_status.frailty_status'), primary_key=True)
 
     # Data
     frailty_notice = Column(String(200))
 
     # FK
     changed_by = Column(Integer, ForeignKey('user_in_role.id'), nullable=False)
-    frailty_status = Column(String(9), ForeignKey('cd_frailty_status.frailty_status'), nullable=False)
 
     # Relationships
     time_interval = relationship('TimeInterval')
@@ -249,6 +252,9 @@ class MDPilotDetectionVariable(Base):
     """
 
     __tablename__ = 'md_pilot_detection_variable'
+    __table_args__ = (UniqueConstraint('pilot_code', 'detection_variable_id', 'derived_detection_variable_id',
+                                       name='md_pilot_detection_variable_natural1_uq'),
+                      )
 
     # Generating the Sequence
     md_pilot_detection_variable_id_seq = Sequence('md_pilot_detection_variable_id_seq', metadata=Base.metadata)
@@ -354,6 +360,9 @@ class ExecutedAction(Base):
     """
 
     __tablename__ = 'executed_action'
+    __table_args__ = (UniqueConstraint('execution_datetime', 'user_in_role_id', 'cd_action_id', 'location_id',
+                                       name='executed_action_uq'),
+                      )
 
     # Generating the Sequence
     executed_action_id_seq = Sequence('executed_action_id_seq', metadata=Base.metadata)
@@ -509,6 +518,9 @@ class UserInRole(Base):
     """
 
     __tablename__ = 'user_in_role'
+    __table_args__ = (UniqueConstraint('user_in_system_id', 'cd_role_id', 'pilot_code', 'valid_from', 'valid_to',
+                                       name='user_in_role_natural1_uq'),
+                      )
 
     # Generating the Sequence
     user_in_role_seq = Sequence('user_in_role_seq', metadata=Base.metadata)
@@ -538,6 +550,7 @@ class UserInRole(Base):
     geriatric_factor_value = relationship('GeriatricFactorValue')
     assessment = relationship('Assessment')
     executed_activity = relationship('ExecutedActivity')
+    value_evidence_notice = relationship('ValueEvidenceNotice')
 
     # one2many (Multiple)
     created_by = relationship("CareProfile", foreign_keys='CareProfile.created_by')
@@ -818,6 +831,7 @@ class TimeInterval(Base):
 
     __tablename__ = 'time_interval'
 
+
     # Generating the Sequence
     time_interval_seq = Sequence('time_interval_seq', metadata=Base.metadata)
     # Creating the columns
@@ -833,6 +847,20 @@ class TimeInterval(Base):
     numeric_indicator_value = relationship('NumericIndicatorValue')
     geriatric_factor_value = relationship('GeriatricFactorValue')
     executed_activity = relationship('ExecutedActivity')
+
+    # Unique index constrains
+    __table_args__ = (
+        Index(
+            'time_interval_with_typical_period_uq',
+            'interval_start', 'typical_period',
+            unique=True,
+            postgresql_where=(typical_period.isnot(None))),
+        Index(
+            'time_interval_with_end_uq',
+            'interval_start', 'interval_end',
+            unique=True,
+            postgresql_where=(interval_end.isnot(None))),
+    )
 
     def __repr__(self):
         return "<TimeInterval(interval_start='%s', interval_end='%s')>" % \
@@ -869,7 +897,7 @@ class VariationMeasureValue(Base):
     __tablename__ = 'variation_measure_value'
     __searchable__ = ['measure_value', 'data_source_type', 'extra_information', 'user_in_role_id', 'measure_type_id']
     __table_args__ = (UniqueConstraint('user_in_role_id', 'measure_type_id', 'time_interval_id',
-                                       name='variation_measure_value_user_in_role_id_measure_type_id_tim_key'),
+                                       name='variation_measure_value_uq'),
                       )
 
     # Generating the Sequence
@@ -887,6 +915,9 @@ class VariationMeasureValue(Base):
     measure_type_id = Column(Integer, ForeignKey('cd_detection_variable.id'), nullable=False)
     time_interval_id = Column(Integer, ForeignKey('time_interval.id'), nullable=False)
 
+    # Relationships
+    value_evidence_notice = relationship('ValueEvidenceNotice')
+
     def __repr__(self):
         return "<VariationMeasureValue(id='%s', detection_variable_name='%s')>" % \
                (self.id, self.measure_value)
@@ -902,6 +933,9 @@ class NumericIndicatorValue(Base):
 
     __tablename__ = 'numeric_indicator_value'
     __searchable__ = ['nui_value', 'user_in_role_id', 'time_interval_ide']
+    __table_args__ = (UniqueConstraint('user_in_role_id', 'nui_type_id', 'time_interval_id',
+                                       name='numeric_indicator_value_uq'),
+                      )
 
     # Generating the Sequence
     numeric_indicator_value_seq = Sequence('numeric_indicator_value_seq', metadata=Base.metadata)
@@ -948,7 +982,10 @@ class SourceEvidence(Base):
 
     __tablename__ = 'source_evidence'
 
-    geriatric_factor_id = Column(Integer, ForeignKey('geriatric_factor_value.id'), primary_key=True)
+    # Generating the Sequence
+    source_evidence_seq = Sequence('source_evidence_seq', metadata=Base.metadata)
+    # Creating the columns
+    id = Column(Integer, server_default=source_evidence_seq.next_value(), primary_key=True)
     text_evidence = Column(Text)
     multimedia_evidence = Column(LargeBinary)
     uploaded = Column(ArrowType(timezone=True), server_default=utcnow(), nullable=False)
@@ -956,9 +993,12 @@ class SourceEvidence(Base):
     # Many2One
     author_id = Column(Integer, ForeignKey('user_in_role.id'))
 
+    # One2Many Relationship
+    value_evidence_notice = relationship('ValueEvidenceNotice')
+
     def __repr__(self):
-        return "<SourceEvidence(geriatric_factor_id='%s', text_evidence='%s', uploaded='%s', author_id='%s')>" % \
-               (self.geriatric_factor_id, self.text_evidence, self.uploaded, self.author_id)
+        return "<SourceEvidence(id='%s', text_evidence='%s', uploaded='%s', author_id='%s')>" % \
+               (self.id, self.text_evidence, self.uploaded, self.author_id)
 
 
 class GeriatricFactorValue(Base):
@@ -971,6 +1011,9 @@ class GeriatricFactorValue(Base):
 
     __tablename__ = 'geriatric_factor_value'
     __searchable__ = ['time_interval_id', 'data_source_type', 'derivation_weight', 'gef_value', 'gef_type_id']
+    __table_args__ = (UniqueConstraint('user_in_role_id', 'gef_type_id', 'time_interval_id',
+                                       name='geriatric_factor_value_uq'),
+                      )
 
     # Generating the Sequence
     geriatric_factor_value_seq = Sequence('geriatric_factor_value_seq', metadata=Base.metadata)
@@ -1215,3 +1258,27 @@ class CDMetric(Base):
     metric_base_unit = Column(String(50), nullable=True)
     # M2M relationship
     payload_value = relationship('PayloadValue')
+
+
+class ValueEvidenceNotice(Base):
+    """
+    The value evidence notice table contains the value of the comments when a user uploads measure data with comments.
+    In addition it opens the gate to include files and videos from different source data
+
+    """
+
+    __tablename__ = 'value_evidence_notice'
+    __table_args__ = (UniqueConstraint('value_id', 'notice',
+                                       name='value_evidence_notice_uq'),
+                      )
+
+    # Generating the Sequence
+    value_evidence_notice_seq = Sequence('value_evidence_notice_seq', metadata=Base.metadata)
+    # Creating the columns
+    id = Column(Integer, server_default=value_evidence_notice_seq.next_value(), primary_key=True)
+    # Creating the columns
+    notice = Column(String(2000), nullable=True)
+    # FK keys
+    source_evidence_id = Column(Integer, ForeignKey('source_evidence.id'), nullable=True)
+    author_id = Column(Integer, ForeignKey('user_in_role.id'))
+    value_id = Column(Integer, ForeignKey('variation_measure_value.id'))
