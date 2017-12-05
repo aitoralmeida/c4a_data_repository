@@ -201,6 +201,18 @@ class ActivityDiscoverer(object):
                 # Changes the third column with the given locations
                 df['executed_action'] = list_of_executed_actions
                 # Store the annotated data with its locations
+
+
+                ######################################################
+                # TODO hardcoed, remove duplicated index
+                # Creating a new dataframe to remove duplicated values
+                #new_df = pd.DataFrame(data=df, index=None)
+                #new_df['date'] = new_df.index
+                #new_df = new_df.drop_duplicates(subset=['date', 1], keep='first')
+                # Update the info of DF
+                #df = new_df[new_df.columns[0:6]]
+                ####################################################
+
                 df.to_csv(DATA_FILE_ANNOTATED, sep='\t', header=False, encoding='utf-8')
                 res = True
 
@@ -237,7 +249,6 @@ class ActivityDiscoverer(object):
         pmd.process_patterns()
         # 3º Store the result in database
         pmd.store_result_database(self.database, p_user_in_role)
-        # TODO --> store_result to csv userID_startTime_endTime.csv
         pmd.store_result('casas_final_%s.csv' % p_user_in_role)
         logging.info("execute_hars: The execution of HARS has finished successfully for the user: ", p_user_in_role)
 

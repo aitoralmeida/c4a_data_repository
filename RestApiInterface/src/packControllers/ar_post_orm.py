@@ -161,14 +161,14 @@ class ARPostORM(PostORM):
         """
         logging.info(inspect.stack()[0][3], "adding data to database")
         # We extract the list of possible activity values
-        discovered_activities = p_data_frame['detected_activities'][0]
+        discovered_activities = p_data_frame['detected_activities'].values[0]
         # For each activity, we have to create a new 'executed_activity
         for activity in discovered_activities:
             # Finding the activity in database
             cd_activity = self.session.query(self.tables.CDActivity).filter_by(activity_name=activity)[0]
             # Format the time according to database time
-            start_time = arrow.get(pd.to_datetime(str(p_data_frame.index.values[0])))
-            end_time = arrow.get(pd.to_datetime(str(p_data_frame.index.values[-1])))
+            start_time = arrow.get(pd.to_datetime(str(p_data_frame['timestamp'].values[0])))
+            end_time = arrow.get(pd.to_datetime(str(p_data_frame['timestamp'].values[-1])))
             duration = end_time - start_time
             executed_activity = self._get_or_create(self.tables.ExecutedActivity, start_time=start_time,
                                                     end_time=end_time,
@@ -176,6 +176,8 @@ class ARPostORM(PostORM):
                                                     data_source_type='discovered_by_hars',
                                                     cd_activity_id=cd_activity.id,
                                                     user_in_role_id=p_user_in_role_id)
+
+            # Check the id generated in executed_activity
             self.session.flush()
             for executed_action in p_data_frame['executed_action']:
                 # Filling the intermediate table with the instantiated activity

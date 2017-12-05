@@ -58,9 +58,9 @@ else:
         'database': 'postgres'
     }
 
-
 # List containing the values that are considered as OUTDOOR
-OUTDOOR_VALUES = ['outdoor', 'publicpark', 'cityzone', 'foodcourt', 'transportationmean']
+OUTDOOR_VALUES = ['outdoor', 'publicpark', 'cityzone', 'foodcourt', 'transportationmean', 'publictransportationmean',
+                  'privatetransportationmean', 'bus', 'car', 'taxi', 'train']
 
 
 class PostORM(object):
@@ -386,6 +386,25 @@ class PostORM(object):
             # Creating flush to obtain the possible location id
             self.session.flush()
             # Insert a new executed action
+
+
+            # TODO consider to update the stored data if the user send sthe same combination of user, time action and location
+            """
+            executed_action = self._update_or_create(self.tables.ExecutedAction,
+                                                     'execution_datetime', 'cd_action_id', 'user_in_role_id',
+                                                     execution_datetime=data['timestamp'],
+                                                     location_id=location.id,
+                                                     cd_action_id=cd_action.id,
+                                                     user_in_role_id=user.id,
+                                                     position=data['position'],
+                                                     rating=round(data.get('rating', 0), 1),
+                                                     data_source_type=' '.join(data.get('data_source_type',
+                                                                                        ['sensors'])),
+                                                     extra_information=' '.join(data.get('extra', None))
+                                                     )
+            """
+            #####
+
             executed_action = self.tables.ExecutedAction(execution_datetime=data['timestamp'],
                                                          location_id=location.id,
                                                          cd_action_id=cd_action.id,
@@ -396,6 +415,7 @@ class PostORM(object):
                                                                                             ['sensors'])),
                                                          extra_information=' '.join(data.get('extra', None))
                                                          )
+
             # pending insert
             self.insert_one(executed_action)
             # Generating IDS
@@ -406,6 +426,9 @@ class PostORM(object):
                 cd_metric = self._get_or_create(self.tables.CDMetric, metric_name=key)
                 if isinstance(value, list):
                     value = ' '.join(value).lower()
+
+                # TODO consider to update the payload values
+
                 payload_value = self.tables.PayloadValue(cd_metric_id=cd_metric.id, cd_action_id=cd_action.id,
                                                          acquisition_datetime=executed_action.acquisition_datetime,
                                                          value=str(value).lower(),
@@ -416,8 +439,15 @@ class PostORM(object):
             # Insert transformed action elements in DB
             if self.__class__.__name__ == 'ARPostORM':
                 # We are going to insert the needed transformed actions
-                res = self._add_transformed_action(data, executed_action)
 
+                # TODO if the data is 'updated' we need to update the transformed action too
+
+                res = self._add_transformed_action(data, executed_action)
+                if not res:
+                    log_msg = "The entered actions doesn't transformed well in add_transformed_action \n" \
+                              "*action = %s \n" \
+                              "location = %s \n" % (cd_action.action_name, location.location_name)
+                    logging.warn(log_msg)
         logging.info(inspect.stack()[0][3], "data entered successfully")
         return self.commit()
 
@@ -542,6 +572,10 @@ class PostORM(object):
 
 
             # TODO once you have the needed data, think about filtering by PILOT
+
+
+
+
 
         return res
 
@@ -690,7 +724,8 @@ class PostORM(object):
         :rtype: bool
         """
         res = False
-        location = self.session.query(self.tables.Location).filter(self.tables.Location.location_name.like(p_location_name+'%'))
+        location = self.session.query(self.tables.Location).filter(
+            self.tables.Location.location_name.like(p_location_name + '%'))
         if location.count() > 0:
             # We have data in DB
             res = True
@@ -709,7 +744,6 @@ class PostORM(object):
         if eam and eam.count() == 1:
             res = True
         return res
-
 
     ###################################################################################################
     ###################################################################################################

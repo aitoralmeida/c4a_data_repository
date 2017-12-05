@@ -85,10 +85,13 @@ class PatternModelMatching:
         None
         
         """
-        self.df = pd.read_csv(self.annotatedfile, parse_dates=[[0, 1]], header=None, index_col=0, sep='\t')
-        #self.df.columns = ['location', 'action', 'event', 'pattern']
-        self.df.columns = ['location', 'action', 'event', 'pattern', 'executed_action']
-        self.df.index.names = ["timestamp"]
+        #self.df = pd.read_csv(self.annotatedfile, parse_dates=[[0, 1]], header=None, index_col=0, sep='\t')
+        #self.df.columns = ['location', 'action', 'event', 'pattern', 'executed_action']
+        #self.df.index.names = ["timestamp"]
+
+        self.df = pd.read_csv(self.annotatedfile, parse_dates=[[0, 1]], header=None, sep='\t')
+        self.df.columns = ['timestamp', 'location', 'action', 'event', 'pattern', 'executed_action']
+
 
 
     def annotate_data_frame(self, start, end, bestnames):
@@ -114,7 +117,7 @@ class PatternModelMatching:
         None
         
         """
-        aux_df = self.df[start:end]
+        aux_df = self.df[start:end+1]
         for index in aux_df.index:
             self.df.set_value(index, 'detected_activities', bestnames)
 
@@ -165,22 +168,25 @@ class PatternModelMatching:
         # Filter all the actions tagged as Other_Activity
         auxdf = self.df[self.df["pattern"] != "Other_Activity"]
         actions = []
-        # TODO GORKA review sensors, they are needed?
         locations = []
         pat = ""
         start = None
         end = None
         previous = None
+        start_index = None
+        end_index = None
+        previous_index = None
         # Add a new column to self.df for the activities detected by the algorithm
         # The new column is initialized with 'None'
         detected_activities = [['None']]*len(self.df)
         self.df['detected_activities'] = detected_activities
-        for timestamp in auxdf.index:                   # Lines in which casas encountered something
-            if auxdf.loc[timestamp, "pattern"] != pat:          # TODO Gorka we need to review this part, problems with dates?
+        for index in auxdf.index:                               # Lines in which casas encountered something
+            if auxdf.loc[index, "pattern"] != pat:
                 if len(actions) > 0:
                     print 'New pattern'
                     print '   actions:', actions
                     end = previous
+                    end_index = previous_index
                     # Call here to the real matcher                    
                     [maxscore, bestnames, partialscores] = self.find_models_for_pattern(locations, actions, start, end)
                     # TESTING!! Action based filter  
@@ -195,18 +201,20 @@ class PatternModelMatching:
                     print '   start:', start, 'end:', end
                     print '   best eams:', bestnames, '(', maxscore, ')'
                     print '   partial scores: a(', partialscores[0], '), d(', partialscores[1], '), s(', partialscores[2], '), l(', partialscores[3], ')'
-                    self.annotate_data_frame(start, end, bestnames)
+                    self.annotate_data_frame(start_index, end_index, bestnames)
                 
                 # Assign start the index value (the timestampt itself)
-                start = timestamp
+                start = auxdf.loc[index, 'timestamp']
+                start_index = index
                 #print 'New pattern!', auxdf.loc[timestamp, "pattern"]                
-                pat = auxdf.loc[timestamp, "pattern"]
+                pat = auxdf.loc[index, "pattern"]
                 actions = []
                 locations = []
                 
-            actions.append(auxdf.loc[timestamp, "action"])
-            locations.append(auxdf.loc[timestamp, "location"])
-            previous = timestamp
+            actions.append(auxdf.loc[index, "action"])
+            locations.append(auxdf.loc[index, "location"])
+            previous = auxdf.loc[index, 'timestamp']
+            previous_index = index
             
     def shared_actions(self, actions, eamindices):
 #        print 'EAMS:', eams
@@ -571,8 +579,7 @@ class PatternModelMatching:
         None
         
         """
-        self.df.to_csv(filename)
-
+        self.df.to_csv(filename, index=False)
 
     def store_result_database(self, p_database, p_user_in_role):
         """
@@ -587,8 +594,12 @@ class PatternModelMatching:
 
         res = False
         if 'detected_activities' in self.df.columns:
+            # Data and index row of the given dataFrame
             start_date = None
             end_date = None
+            start_date_index = None
+            end_date_index = None
+            # Action and previous action
             action = None
             previous_action = None
             # We have executed well this method because we have results
@@ -597,35 +608,41 @@ class PatternModelMatching:
                     action = row['detected_activities']
                     if action[0] == 'None' and start_date is not None and end_date is not None:
                         # We have valid data to insert in DB
-                        aux_df = self.df[start_date:end_date]
+                        aux_df = self.df[start_date_index:end_date_index+1]
                         p_database.add_discovered_activities(aux_df, p_user_in_role)
                         # Deleting the data
                         start_date = None
                         end_date = None
+                        start_date_index = None
+                        end_date_index = None
                         previous_action = None
                     elif action != previous_action and start_date is not None and end_date is not None:
                         # We have valid data to insert in DB
-                        aux_df = self.df[start_date:end_date]
+                        aux_df = self.df[start_date_index:end_date_index+1]
                         p_database.add_discovered_activities(aux_df, p_user_in_role)
                         # Update data with the current valid one
-                        start_date = index
-                        end_date = index
+                        start_date = self.df.loc[index, 'timestamp']
+                        end_date = self.df.loc[index, 'timestamp']
+                        start_date_index = index
+                        end_date_index = index
                         previous_action = action
                     elif action[0] != 'None':
                         # Add more data to the current one
                         if start_date is None:
                             # First action date
-                            start_date = index
-                        end_date = index
+                            start_date = self.df.loc[index, 'timestamp']
+                            start_date_index = index
+                        end_date = self.df.loc[index, 'timestamp']
+                        end_date_index = index
                         previous_action = action
             # When the iteration has finished, we recheck if we have some data
             if previous_action is not None and start_date is not None and end_date is not None:
                 # Insert the last action in DB
-                aux_df = self.df[start_date:end_date]
+                aux_df = self.df[start_date_index:end_date_index+1]
                 p_database.add_discovered_activities(aux_df, p_user_in_role)
+            # For the moment, we 'assume' that everything is ok
+            res = True
 
-
-        # TODO you need to set to true this value
         return res
 
     def filter_with_actions(self, action_score):
