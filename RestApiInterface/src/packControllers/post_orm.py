@@ -315,7 +315,7 @@ class PostORM(object):
                                                    valid_to=data.get('valid_to', None),
                                                    cd_role_id=cd_role.id,
                                                    user_in_system_id=user_in_system.id,
-                                                   pilot_code=pilot.code)
+                                                   pilot_code=pilot.pilot_code)
                 # Adding City4Age ID to the return value
                 user_in_role_ids[data['username'].lower()] = user_in_role.id
 

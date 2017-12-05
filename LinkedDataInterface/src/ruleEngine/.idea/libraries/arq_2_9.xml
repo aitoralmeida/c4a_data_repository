@@ -12,6 +12,7 @@
       <root url="jar://$PROJECT_DIR$/lib/arq-2.9/jena-core-2.7.0-incubating-tests.jar!/" />
       <root url="jar://$PROJECT_DIR$/lib/arq-2.9/jena-iri-0.9.0-incubating.jar!/" />
       <root url="jar://$PROJECT_DIR$/lib/arq-2.9/xercesImpl.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/arq-2.9/jena-tdb-0.9.0-incubating.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />

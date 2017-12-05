@@ -25,7 +25,7 @@ import java.util.logging.SimpleFormatter;
 public class InferenceMain {
 
     private static boolean run = true;
-    private static final long defaultTime = 172800000;           // 24h defined in milliseconds
+    private static final long defaultTime = 604800000;           // 24h defined in milliseconds
 
     public static void main(String[] args) {
         if (args.length > 0 && args[0].length() > 0 && args[0].contains(".ttl") &&

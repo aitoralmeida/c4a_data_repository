@@ -10,6 +10,7 @@ import com.hp.hpl.jena.reasoner.ValidityReport;
 import com.hp.hpl.jena.reasoner.rulesys.GenericRuleReasoner;
 import com.hp.hpl.jena.reasoner.rulesys.Rule;
 import com.hp.hpl.jena.sparql.util.NodeFactory;
+import com.hp.hpl.jena.tdb.TDBFactory;
 import com.hp.hpl.jena.util.FileManager;
 
 import com.hp.hpl.jena.vocabulary.RDF;
@@ -22,10 +23,9 @@ import javax.xml.ws.http.HTTPException;
 import java.io.*;
 import java.lang.reflect.Array;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.*;
 import java.util.logging.FileHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -55,7 +55,9 @@ public class RuleEngine {
     private static final String c4aBaseURI = "http://www.morelab.deusto.es/ontologies/city4age#";
     private static final String owlBaseURI = "http://www.w3.org/2002/07/owl#";
     private static final String dbpedia = "https://dbpedia.org/sparql";
-
+    private static final DateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
+    // TODO review this directory creation
+    private static final String tdbDirectory = System.getProperty("user.dir") + "/../../city4agetdb";
 
     /**
      * The constructor of the class. Here is defined the parameters of this class.
@@ -87,33 +89,50 @@ public class RuleEngine {
      */
     public boolean inference() {
         boolean res = false;
-        Model instances = null;
+        Model instances;
         // Loading mapModelFile from Path
         Model mapModel = FileManager.get().loadModel(this.mapFile);
         // Load rules defined by the user.
         List<Rule> listRules = Rule.rulesFromURL("file:" + this.rulesFile);
         // We check if we have usefull data
         if (!mapModel.isEmpty() && !listRules.isEmpty()) {
+            // open TDB dataset
+            Dataset dataset = TDBFactory.createDataset(tdbDirectory);
+            dataset.begin(ReadWrite.WRITE) ;
+            Model tdbModel = dataset.getDefaultModel() ;
             instances = new ModelD2RQ(mapModel, c4aBaseURI);
-            // Create a new ontoloyModel
+            // Create a new ontologyModel
             final OntModel finalResult = ModelFactory.createOntologyModel();
             // Creating the reasoner based on previously loaded rules
-            Reasoner myReasoner = new GenericRuleReasoner(listRules);
-            myReasoner.setDerivationLogging(true);        // Allow to getDerivation: return useful information.
+            // Reasoner myReasoner = new GenericRuleReasoner(listRules);
+            // myReasoner.setDerivationLogging(true);        // Allow to getDerivation: return useful information.
+            //Computing total execution of inference
+            Date initialDate = new Date();
+            System.out.println("Data inference starting at: "+dateFormat.format(initialDate));
+            LOGGER.info("Data inference starting at: "+dateFormat.format(initialDate));
             // Infer new instances using rules and our instances
-            InfModel inf = ModelFactory.createInfModel(myReasoner, instances);
-            if (!inf.isEmpty()) {
+            // InfModel inf = ModelFactory.createInfModel(myReasoner, instances);
+            //if (!inf.isEmpty()) {
+                Date finalDate = new Date();
+                System.out.println("Data inference finished at: "+dateFormat.format(finalDate));
+                LOGGER.info("Data inference finished at: "+dateFormat.format(finalDate));
+                ///////////////////// Working part. Don't touch it
                 // Check if new Model is consistent
-                ValidityReport validity = inf.validate();
-                if (validity.isValid()) {
+                System.out.println("Validating inference data");
+                LOGGER.info("Validating inference data");
+            //    ValidityReport validity = inf.validate();
+            //    if (validity.isValid()) {
+                    System.out.println("The inference data is valid and consistent");
+                    LOGGER.info("The inference data is valid and consistent");
                     // Add new knowledge to the model.
                     finalResult.add(instances);
-                    finalResult.add(inf.getDeductionsModel());
+            //        finalResult.add(inf.getDeductionsModel());
                     // Set prefix map
                     finalResult.setNsPrefixes(instances.getNsPrefixMap());
-                    finalResult.setNsPrefixes(inf.getDeductionsModel().getNsPrefixMap());
+            //        finalResult.setNsPrefixes(inf.getDeductionsModel().getNsPrefixMap());
                     // Obtaining knowledge from Geocities API about different cities to have a 5 star-based Ontology.
-                    this.updateCityInformation(finalResult);
+                    // TODO remember to check this part
+                    // this.updateCityInformation(finalResult);
                     // Print current data structure to stdout
                     // this.printResults(finalResult, inf, finalResult.getBaseModel());
                     //Upload into Fuseki
@@ -124,28 +143,32 @@ public class RuleEngine {
                             this.oldOntModel.close();
                         }
                         this.oldOntModel = finalResult;
-                        this.serve(finalResult);
+                        // this.serve(finalResult);
+                        tdbModel.add(finalResult);
+                        dataset.commit();
                     } else {
                         finalResult.close();
                     }
                     // The function works well, so we return a True state
                     res = true;
-                } else {
+            //    } else {
                     // There are conflicts
-                    System.err.println("Conflicts");
-                    for (Iterator i = validity.getReports(); i.hasNext(); ) {
-                        System.err.println(" - " + i.next());
-                    }
-                    LOGGER.severe("There are conflicts with inferred values. Check system err output");
-                }
-            } else {
+            //        System.err.println("Conflicts");
+            //        for (Iterator i = validity.getReports(); i.hasNext(); ) {
+            //            System.err.println(" - " + i.next());
+            //        }
+            //       LOGGER.severe("There are conflicts with inferred values. Check system err output");
+            //    }
+            //} else {
                 // There is a problem in the inference model
-                System.err.println("Problems in the inference model, it returns a empty state");
-                LOGGER.severe("The inference returns a empty state. May the rule reasoner is not working well " +
-                        "or instances model is bad formed.");
-            }
+            //    System.err.println("Problems in the inference model, it returns a empty state");
+            //    LOGGER.severe("The inference returns a empty state. May the rule reasoner is not working well " +
+            //            "or instances model is bad formed.");
+            //}
             // Closing Files.
-            inf.close();
+            instances.close();
+            dataset.end();
+            //inf.close();
         } else {
             System.err.println(" The mapping file or the rules file are empty. Please check if they are OK.");
             LOGGER.severe("Mapping file or Rules file are empty. Check if they are valid.");
@@ -176,9 +199,9 @@ public class RuleEngine {
             bw.close();
             // Launch curl to upload or current knowledge into Fuseki
             ProcessBuilder p = new ProcessBuilder("curl", "-k", "-X", "POST", "--header", "Content-Type: application/rdf+xml",
-                    "-d", "@"+tempFile.getAbsolutePath(), "https://localhost:8443/city4age/data");
+                    //"-d", "@"+tempFile.getAbsolutePath(), "https://localhost:8443/city4age/data");
                     // This piece of code is used for server testing purposes
-                    //"-d", "@"+tempFile.getAbsolutePath(), "http://localhost:8080/fuseki/city4age/data");
+                    "-d", "@"+tempFile.getAbsolutePath(), "http://localhost:8080/fuseki/city4age/data");
             System.out.println("Uploading new Knowledge to Fuseki......................\n");
             LOGGER.info("Uploading data to Fuseki server");
             // Execute our command
@@ -370,7 +393,7 @@ public class RuleEngine {
      * ruleEngine
      *
      *
-     * @param pOntology The actual knowledge ( Base + inferred)
+     * @param pOntology: The actual knowledge ( Base + inferred)
      * @param pInf: The list containing the inferred elements.
      */
     private void printResults(OntModel pOntology, InfModel pInf, Model pInstances) {
@@ -383,6 +406,7 @@ public class RuleEngine {
     }
 
 }
+
 
 // curl -X PUT -H "Content-Type: application/rdf+xml" -d @./knowledge.rdf http://localhost:3030/city4age/data
 
