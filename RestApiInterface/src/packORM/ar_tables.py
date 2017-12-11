@@ -489,6 +489,7 @@ class UserInSystem(Base):
     password = Column(Password(rounds=13), nullable=False)
     display_name = Column(String(100))
     created_date = Column(ArrowType(timezone=True), server_default=utcnow())
+    is_active = Column(Boolean, unique=False, default=True)
 
     # one2many
     user_action = relationship('UserAction')

@@ -61,8 +61,8 @@ class ARPostORM(PostORM):
         if p_username and p_password and p_app:
             res = self.query(ar_tables.UserInSystem, {'username': p_username})
             if res and res.count() == 1 and res[0].password == p_password \
-                    and res[0].username == p_username:
-                logging.info("verify_user_login: Login ok.")
+                    and res[0].username == p_username and res[0].is_active:
+                logging.info(inspect.stack()[0][3], "verify_user_login: Login ok.")
                 user_data = res[0]
             else:
                 logging.error(inspect.stack()[0][3], "User entered invalid username/password combination")
@@ -84,6 +84,10 @@ class ARPostORM(PostORM):
             res = ar_tables.UserInSystem.verify_auth_token(token, app)
             if res and res.get('id', False):
                 user_data = self.session.query(ar_tables.UserInSystem).get(res.get('id', 0))
+                # Check if user is active
+                if user_data.is_active is not True:
+                    # Forcing to none because the user is deactivated
+                    user_data = None
         return user_data
 
     ###################################################################################################
@@ -91,6 +95,49 @@ class ARPostORM(PostORM):
     ######                              DATABASE ADDERS
     ###################################################################################################
     ###################################################################################################
+
+    def add_global_eam(self, p_data, p_user):
+        """
+        Giving the EAM inforamtion data, this method inserts the needed data into DB to all users
+        from an specific Pilot
+
+
+        :param p_data: A list containing the instances of JSON that it will applied to each user
+        :param p_user: The user which performs the upload of the data
+        :return:  A true state if everyting is OK
+        """
+        logging.info(inspect.stack()[0][3], "adding data to database")
+
+        # Getting the care_recipient id
+        cd_role_id = self.session.query(ar_tables.CDRole).filter_by(role_name='Care recipient').first()
+        # Getting the list of involved users for the current pilot
+        list_of_pilot_user = self.session.query(ar_tables.UserInRole).filter_by(
+                                                                        pilot_code=p_user.user_in_role[0].pilot_code,
+                                                                        cd_role_id=cd_role_id.id).all()
+        # Having the affected list of users we are going to build the required data
+        res = False
+        for data in p_data:
+            # Building the list
+            list_of_eams = []
+            for user in list_of_pilot_user:
+                eam = {}
+                eam['user'] = 'eu:c4a:user:%s' % user.id
+                eam['eam'] = "%s:%s:%s" % (p_user.user_in_role[0].pilot_code, user.id, data['activity'].lower())
+                eam['activity'] = data['activity'].lower()
+                eam['locations'] = data['locations']
+                eam['transformed_action'] = data['transformed_action']
+                eam['duration'] = data['duration']
+                eam['start'] = data['start']
+                list_of_eams.append(eam)
+            # Obtained the list, we can add the current data as a EAM of GLOBAL users
+            if not(self.add_eam(list_of_eams, p_user.id)):
+                logging.error(inspect.stack()[0][3], "Failed to add new EAM in the DB")
+                res = False
+                break
+            else:
+                res = True
+        # Return the final data
+        return res
 
     def add_eam(self, p_data, p_user_id):
         """

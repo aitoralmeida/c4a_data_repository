@@ -150,6 +150,7 @@ class Utilities(object):
                 "payload": {
                     "description": "In this field there are send the optional parameters of the LEA",
                     "type": "object",
+                    "minProperties": 1,
                     "additionalProperties": True
                 },
                 "rating": {
@@ -187,7 +188,6 @@ class Utilities(object):
         }
 
         try:
-            # TODO use a method to check actions name
             # Obtaining the list of action from database
             list_of_actions = p_database.get_action_name()
             # Extracting actions from the two level lists
@@ -976,20 +976,20 @@ class Utilities(object):
             "title": "Eam database additional data validator",
             "type": "object",
             "properties": {
-                "eam": {
-                    "description": "The unique name of the EAM",
-                    "type": "string",
-                    "minLength": 3,
-                    "maxLength": 50,
-                    "pattern": "^(mad|sin|ath|bhx|lcc|mpl):[0-9]{1,20}:[a-z]{1,55}$",
-                },
-                "user": {
-                    "description": "The user in role of the EAM. Default to Pilot if not filled",
-                    "type": "string",
-                    "minLength": 3,
-                    "maxLength": 50,
-                    "pattern": "^eu:c4a:user:[0-9]{1,15}$",
-                },
+                # "eam": {
+                #     "description": "The unique name of the EAM",
+                #     "type": "string",
+                #     "minLength": 3,
+                #     "maxLength": 50,
+                #     "pattern": "^(mad|sin|ath|bhx|lcc|mpl):[0-9]{1,20}:[a-z]{1,55}$",
+                # },
+                # "user": {
+                #     "description": "The user in role of the EAM. Default to Pilot if not filled",
+                #     "type": "string",
+                #     "minLength": 3,
+                #     "maxLength": 50,
+                #     "pattern": "^eu:c4a:user:[0-9]{1,15}$",
+                # },
                 "activity": {
                     "description": "The name of the current activity",
                     "type": "string",
@@ -1070,24 +1070,24 @@ class Utilities(object):
                                       data.get('activity'), False)
                         raise ValidationError("The entered activity is not valid: %s" %
                                               data.get('activity'), False)
-                    if Utilities.validate_eam_name(p_database, data):
-                        logging.error("The entered eam name is in database already: %s" %
-                                      data.get('eam'), False)
-                        raise ValidationError("The entered eam is in database already: %s" %
-                                              data.get('eam'), False)
-                    if data.get('user', False):
-                        # There is a user attached to this EAM
-                        if not Utilities.validate_user(p_database, data):
-                            logging.error("The entered user doesn't exist in database: %s" % data.get('user', False))
-                            raise ValidationError("The entered user doesn't exist in database: %s" %
-                                                  data.get('user', False))
-                        # check if the entered user is from the current Pilot
-                        if not Utilities.validate_user_pilot(p_database, data['user'].split(':')[-1], p_pilot_code):
-                            logging.error("The entered user isn't belongs to your Pilot: %s" % data.get('user', False))
-                            raise ValidationError("The entered user isn't belongs to your Pilot: %s" %
-                                                  data.get('user', False))
+                    # if Utilities.validate_eam_name(p_database, data):
+                    #     logging.error("The entered eam name is in database already: %s" %
+                    #                   data.get('eam'), False)
+                    #     raise ValidationError("The entered eam is in database already: %s" %
+                    #                           data.get('eam'), False)
+                    # if data.get('user', False):
+                    #     # There is a user attached to this EAM
+                    #     if not Utilities.validate_user(p_database, data):
+                    #         logging.error("The entered user doesn't exist in database: %s" % data.get('user', False))
+                    #         raise ValidationError("The entered user doesn't exist in database: %s" %
+                    #                               data.get('user', False))
+                    #     # check if the entered user is from the current Pilot
+                    #     if not Utilities.validate_user_pilot(p_database, data['user'].split(':')[-1], p_pilot_code):
+                    #         logging.error("The entered user isn't belongs to your Pilot: %s" % data.get('user', False))
+                    #         raise ValidationError("The entered user isn't belongs to your Pilot: %s" %
+                    #                               data.get('user', False))
 
-                    # Check if locations exist previosly in database
+                    # Check if locations exist previously in database
                     for location in data['locations']:
                         # We need to format the location in order to use the validator
                         a_location = {'location': location}
@@ -1097,31 +1097,31 @@ class Utilities(object):
                                                   a_location.get('location', False))
                     # After knowing that entered data is valid, we are going to check if the given eam format is
                     # correct and it fits with the sent data
-                    eam_name = data['eam'].lower().split(':')
-                    city4age_id = data['user'].split(':')[-1]
-                    if eam_name[-2] != city4age_id or eam_name[-1].lower() != data['activity'].lower():
-                        # The entered EAM name is not correct
-                        logging.error(
-                            "The entered EAM name is not correct according to the city4age id or activity name."
-                            "The entered format should be: pilot_code:city4ageid:activity"
-                            "\n * Entered City4AgeId: %s"
-                            "\n * Entered Activity: %s"
-                            "\n * Entered EAM: %s" % (data['user'].split(':')[-1], data['activity'], data['eam']))
-
-                        raise ValidationError(
-                            "The entered EAM name is not correct acording to the city4age id or activity name"
-                            "The entered format should be: pilot_code:city4ageid:activity:"
-                            "\n * Entered City4AgeId: %s"
-                            "\n * Entered Activity: %s"
-                            "\n * Entered EAM: %s" % (data['user'].split(':')[-1], data['activity'], data['eam']))
+                    # eam_name = data['eam'].lower().split(':')
+                    # city4age_id = data['user'].split(':')[-1]
+                    # if eam_name[-2] != city4age_id or eam_name[-1].lower() != data['activity'].lower():
+                    #     # The entered EAM name is not correct
+                    #     logging.error(
+                    #         "The entered EAM name is not correct according to the city4age id or activity name."
+                    #         "The entered format should be: pilot_code:city4ageid:activity"
+                    #         "\n * Entered City4AgeId: %s"
+                    #         "\n * Entered Activity: %s"
+                    #         "\n * Entered EAM: %s" % (data['user'].split(':')[-1], data['activity'], data['eam']))
+                    #
+                    #     raise ValidationError(
+                    #         "The entered EAM name is not correct acording to the city4age id or activity name"
+                    #         "The entered format should be: pilot_code:city4ageid:activity:"
+                    #         "\n * Entered City4AgeId: %s"
+                    #         "\n * Entered Activity: %s"
+                    #         "\n * Entered EAM: %s" % (data['user'].split(':')[-1], data['activity'], data['eam']))
                     # EAM is valid, we append in a list to avoid duplicated entries
-                    list_of_eams.append(data['eam'])
+                    # list_of_eams.append(data['eam'])
                 # Check if exist duplicated values in the provided eam list
-                duplicated = [k for k, v in Counter(list_of_eams).items() if v > 1]
-                if len(duplicated) > 0:
+                #duplicated = [k for k, v in Counter(list_of_eams).items() if v > 1]
+                #if len(duplicated) > 0:
                     # Raise an error for duplicated values
-                    logging.error("There are are duplicated eam names in the JSON: %s" % duplicated)
-                    raise ValidationError("There are are duplicated eam names in the JSON: %s" % duplicated)
+                #    logging.error("There are are duplicated eam names in the JSON: %s" % duplicated)
+                #    raise ValidationError("There are are duplicated eam names in the JSON: %s" % duplicated)
         except ValidationError as e:
             logging.error("The schema entered by the user is invalid")
             msg = e.message

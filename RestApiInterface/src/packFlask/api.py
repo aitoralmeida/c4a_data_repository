@@ -674,7 +674,7 @@ def add_new_user(version=app.config['ACTUAL_API']):
     :return: Response of the API
     """
 
-    # TODO think about put pilot as an optional field.
+    # TODO review if validation if the given role exist or not in DB
 
     if Utilities.check_connection(app, version):
         data = _convert_to_dict(request.json)
@@ -886,8 +886,6 @@ def add_eam(version=app.config['ACTUAL_API']):
 
 
     {
-        "eam": "mad:11:payingvisits",
-        "user": "eu:c4a:user:11",
         "activity": "payingvisits",
         "locations": ["eu:c4a:seniorcenter", "eu:c4a:friendhome", "eu:c4a:familymemberhome"],
         "transformed_action": ["seniorcenter_enter", "seniorcenter_exit", "friendhome_enter"],
@@ -907,7 +905,8 @@ def add_eam(version=app.config['ACTUAL_API']):
         msg = Utilities.check_add_eam_data(AR_DATABASE, data, USER.user_in_role[0].pilot_code or 'lcc')
         if data and not msg and USER:
             # The user data are correct. We proceed to insert it into DB
-            res = AR_DATABASE.add_eam(data, USER.id)
+            # res = AR_DATABASE.add_eam(data, USER)
+            res = AR_DATABASE.add_global_eam(data, USER)
             if res:
                 logging.info("add_eam: the username: %s adds new EAM into database" % USER.username)
                 return Response('add_eam: data stored in database OK\n'), 200
