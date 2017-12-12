@@ -201,18 +201,6 @@ class ActivityDiscoverer(object):
                 # Changes the third column with the given locations
                 df['executed_action'] = list_of_executed_actions
                 # Store the annotated data with its locations
-
-
-                ######################################################
-                # TODO hardcoed, remove duplicated index
-                # Creating a new dataframe to remove duplicated values
-                #new_df = pd.DataFrame(data=df, index=None)
-                #new_df['date'] = new_df.index
-                #new_df = new_df.drop_duplicates(subset=['date', 1], keep='first')
-                # Update the info of DF
-                #df = new_df[new_df.columns[0:6]]
-                ####################################################
-
                 df.to_csv(DATA_FILE_ANNOTATED, sep='\t', header=False, encoding='utf-8')
                 res = True
 

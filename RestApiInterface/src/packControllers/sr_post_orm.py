@@ -11,10 +11,11 @@ import arrow
 import inspect
 import logging
 import subprocess
+import sys
+sys.path.append('../packORM')               # Append the ORM classes
+from src.packORM import sr_tables
 
-# from src.packORM import sr_tables
-
-from packORM import sr_tables
+# from packORM import sr_tables
 
 from post_orm import PostORM
 from sqlalchemy import MetaData

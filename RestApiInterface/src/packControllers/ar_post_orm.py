@@ -12,11 +12,16 @@ import logging
 import arrow
 import inspect
 import json
+import sys
+sys.path.append('../packORM')               # Append the ORM classes
 import pandas as pd
 from sqlalchemy import MetaData
-# from src.packORM import ar_tables
-from packORM import ar_tables
+from src.packORM import ar_tables
 from post_orm import PostORM
+
+
+
+
 
 __author__ = 'Rubén Mulero'
 __copyright__ = "Copyright 2016, City4Age project"
@@ -228,10 +233,9 @@ class ARPostORM(PostORM):
             self.session.flush()
             for executed_action in p_data_frame['executed_action']:
                 # Filling the intermediate table with the instantiated activity
-                executed_activity_executed_action_rel = self.tables.ExecutedActivityExecutedActionRel(
-                    executed_activity_id=executed_activity.id,
-                    executed_action_id=executed_action)
-                self.insert_one(executed_activity_executed_action_rel)
+                self._get_or_create(self.tables.ExecutedActivityExecutedActionRel,
+                                    executed_activity_id=executed_activity.id,
+                                    executed_action_id=executed_action)
 
         # Commit changes and exiting
         logging.info(inspect.stack()[0][3], "data added successful")
