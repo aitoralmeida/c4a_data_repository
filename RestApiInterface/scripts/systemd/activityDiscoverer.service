@@ -1,0 +1,10 @@
+[Unit]
+Description=This script executes the activity discoverer service to discover new activities
+
+[Service]
+Type=simple
+# Set working dir to activity_discoverer.py file
+WorkingDirectory=<project path>
+ExecStart=<project path>/bin/python activity_discoverer_main.py
+User=root
+Group=www-data

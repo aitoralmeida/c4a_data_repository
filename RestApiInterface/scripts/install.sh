@@ -22,9 +22,15 @@ MAINFOLDER=`cd .. ; pwd`    # MainFolder of the RestAPiInterface
 # Source folders
 NGINXCONFIGFILE=$PWD/nginx_config/nginxCity4ageAPI
 SYSTEMDCONFILE=$PWD/systemd/city4ageAPI.service
+SYSTEMDCONFILE2=$PWD/systemd/activityDiscoverer.service
+SYSTEMDCONFILE2TIMER=$PWD/systemd/activityDiscoverer.timer
+
 # Destination folders
 NGINXDESTFILE=$NGINX/sites-available/nginxCity4ageAPI
 SYSTEMDDESTFILE="/etc/systemd/system/city4ageAPI.service"
+SYSTEMDDESTFILE2="/etc/systemd/system/activityDiscoverer.service"
+SYSTEMDDESTFILE2TIMER="/etc/systemd/system/activityDiscoverer.timer"
+
 # Text to be replaced (this text is inside config files)
 OLD="<project path>"
 
@@ -83,7 +89,7 @@ if [ -f $SYSTEMDCONFILE -a -r $SYSTEMDCONFILE ]; then
     # Change old text with Path of the projecs' mainfolder and copy to DestFile
     sudo sed "s+$OLD+$MAINFOLDER+g" "$SYSTEMDCONFILE" > $TFILE && sudo mv $TFILE $SYSTEMDDESTFILE
     sudo chmod 664 $SYSTEMDDESTFILE
-    echo "uWSGI unit file installed succesfully!!"
+    echo "uWSGI unit file installed successfully!!"
     echo "We are going to reload systemd unit files and activate our new unit"
     # Launch daemon-reload and start uWSGI service
     sudo systemctl daemon-reload
@@ -95,7 +101,32 @@ else
     exit 1
 fi
 
-# Copy Nging config file and replace with configuration paths
+# Copy Systemd unit file to activate the activity discoverer service
+if [ -f $SYSTEMDCONFILE2 -a -r $SYSTEMDCONFILE2 ]; then
+    if [ -f $SYSTEMDCONFILE2TIMER -a -r $SYSTEMDCONFILE2TIMER ]; then
+        # Change old text with Path of the projecs' mainfolder and copy to DestFile
+        sudo sed "s+$OLD+$MAINFOLDER+g" "$SYSTEMDCONFILE2" > $TFILE && sudo mv $TFILE $SYSTEMDDESTFILE2
+        # Same with the timer FILE
+        sudo sed "s+$OLD+$MAINFOLDER+g" "$SYSTEMDCONFILE2TIMER" > $TFILE && sudo mv $TFILE $SYSTEMDDESTFILE2TIMER
+        # Modify the chmod status of both files
+        sudo chmod 664 $SYSTEMDDESTFILE2
+        sudo chmod 664 $SYSTEMDDESTFILE2TIMER
+        echo "Activity discoverer unit file and timer installed successfully!!"
+        echo "We are going to reload systemd unit files and activate the timer"
+        # Reload daemons and activating the timer
+        sudo systemctl daemon-reload
+        sudo systemctl start activityDiscoverer.timer
+        echo "Service timer file installed and activated!!"
+    else
+        echo "Error: Cannot read $SYSTEMDCONFILE2TIMER"
+        exit 1
+    fi
+else
+    echo "Error: Cannot read $SYSTEMDCONFILE2"
+    exit 1
+fi
+
+# Copy Nginx config file and replace with configuration paths
 if [ -f $NGINXCONFIGFILE -a -r $NGINXCONFIGFILE ]; then
     # Change old text with Path of the projecs' mainfolder and copy to DestFile
     sudo sed "s+$OLD+$MAINFOLDER+g" "$NGINXCONFIGFILE" > $TFILE && sudo mv $TFILE $NGINXDESTFILE

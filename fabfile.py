@@ -12,7 +12,7 @@ ssh.util.log_to_file("paramiko.log", 10)
 
 # Server Hosts
 env.hosts = [
-    '10.48.1.115:5800'
+    '10.48.1.172:5800'
     #'odin.deusto.es:5800',
     #'10.48.1.142:22',
     # and.so.on ......
@@ -129,8 +129,8 @@ def main_install():
     :return:
     """
     # Call to every part of the program to install entire system.
-    _install_deps()
-    _deploy()
+    #_install_deps()
+    #_deploy()
     #_create_database()
     _install_rest_api()
-    _install_linked_data()
+    #_install_linked_data()
