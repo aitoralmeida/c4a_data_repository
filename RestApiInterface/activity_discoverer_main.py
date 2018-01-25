@@ -48,10 +48,10 @@ if __name__ == '__main__':
         logging.debug("Starting activity recognition for the user: ", user)
         # Setting some time intervals
         # TODO delete when finish
-        start_date = '2016-01-02 06:08:41.013+02'
-        end_date = '2018-05-18 06:08:41.013+02'
-        #end_date = arrow.utcnow()                         # current time
-        #start_date = end_date.shift(weeks=-1)             # duration = -1 week
+        #start_date = '2016-01-02 06:08:41.013+02'
+        #end_date = '2018-05-18 06:08:41.013+02'
+        end_date = arrow.utcnow()                         # current time
+        start_date = end_date.shift(weeks=-1)             # duration = -1 week
         data = ar.lea_extractor(user, start_date, end_date)
         # After obtained the list of leas we are going to process it
         if len(data) > 0:

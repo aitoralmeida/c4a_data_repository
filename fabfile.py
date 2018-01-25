@@ -129,8 +129,8 @@ def main_install():
     :return:
     """
     # Call to every part of the program to install entire system.
-    #_install_deps()
-    #_deploy()
-    #_create_database()
+    _install_deps()
+    _deploy()
+    _create_database()
     _install_rest_api()
-    #_install_linked_data()
+    _install_linked_data()
