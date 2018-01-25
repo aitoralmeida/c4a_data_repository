@@ -102,6 +102,9 @@ def generate_database(p_ar_post_orm, p_sr_post_orm):
         # Creating CDFrailtyStatus information
         create_frailty_status(sr_tables, sr_orm)
         logging.info(inspect.stack()[0][3], "Created Frailty Status for Shared Repository schema")
+        # Creating CDRiskStatus information
+        create_risk_status(sr_tables, sr_orm)
+        logging.info(inspect.stack()[0][3], "Created Risk Status for Shared Repository schema")
         # Commit and closing connection
         sr_orm.commit()
         sr_orm.close()
@@ -703,7 +706,6 @@ def create_transformed_actions(p_tables, p_orm):
     """
     list_of_transformed_action = []
 
-
     # Enter locations
     home_enter = p_tables.CDTransformedAction(transformed_action_name='home_enter',
                                               transformed_action_description='The user enters in home',
@@ -932,9 +934,9 @@ def create_transformed_actions(p_tables, p_orm):
                                              action_name='transport_enter', location_type='car')
 
     transportationmean_enter = p_tables.CDTransformedAction(transformed_action_name='transportationmean_enter',
-                                                           transformed_action_description='The user exits from a transportationmean',
-                                                           action_name='transport_enter',
-                                                           location_type='transportationmean')
+                                                            transformed_action_description='The user exits from a transportationmean',
+                                                            action_name='transport_enter',
+                                                            location_type='transportationmean')
 
     publictransportationmean_enter = p_tables.CDTransformedAction(
         transformed_action_name='publictransportationmean_enter',
@@ -945,7 +947,6 @@ def create_transformed_actions(p_tables, p_orm):
         transformed_action_name='privatetransportationmean_enter',
         transformed_action_description='The user exits from a privatetransportationmean',
         action_name='transport_enter', location_type='privatetransportationmean')
-
 
     bus_exit = p_tables.CDTransformedAction(transformed_action_name='bus_exit',
                                             transformed_action_description='The user exits from a bus',
@@ -964,18 +965,19 @@ def create_transformed_actions(p_tables, p_orm):
                                             action_name='transport_exit', location_type='car')
 
     transportationmean_exit = p_tables.CDTransformedAction(transformed_action_name='transportationmean_exit',
-                                            transformed_action_description='The user exits from a transportationmean',
-                                            action_name='transport_exit', location_type='transportationmean')
+                                                           transformed_action_description='The user exits from a transportationmean',
+                                                           action_name='transport_exit',
+                                                           location_type='transportationmean')
 
-    publictransportationmean_exit = p_tables.CDTransformedAction(transformed_action_name='publictransportationmean_exit',
-                                            transformed_action_description='The user exits from a publictransportationmean',
-                                            action_name='transport_exit', location_type='publictransportationmean')
+    publictransportationmean_exit = p_tables.CDTransformedAction(
+        transformed_action_name='publictransportationmean_exit',
+        transformed_action_description='The user exits from a publictransportationmean',
+        action_name='transport_exit', location_type='publictransportationmean')
 
-
-    privatetransportationmean_exit = p_tables.CDTransformedAction(transformed_action_name='privatetransportationmean_exit',
-                                            transformed_action_description='The user exits from a privatetransportationmean',
-                                            action_name='transport_exit', location_type='privatetransportationmean')
-
+    privatetransportationmean_exit = p_tables.CDTransformedAction(
+        transformed_action_name='privatetransportationmean_exit',
+        transformed_action_description='The user exits from a privatetransportationmean',
+        action_name='transport_exit', location_type='privatetransportationmean')
 
     # Transformed actions based on they value in the PAYLOAD
     # Appliance based LEAS
@@ -1080,18 +1082,16 @@ def create_transformed_actions(p_tables, p_orm):
                                                   action_name='body_state_stop', state_type='climbingstairs')
 
     walking_in = p_tables.CDTransformedAction(transformed_action_name='walking_in',
-                                                 transformed_action_description='The user is walking',
-                                                 action_name='body_state_in', state_type='walking')
+                                              transformed_action_description='The user is walking',
+                                              action_name='body_state_in', state_type='walking')
 
     sleeping_in = p_tables.CDTransformedAction(transformed_action_name='sleeping_in',
-                                                  transformed_action_description='The user is sleeping',
-                                                  action_name='body_state_in', state_type='sleeping')
+                                               transformed_action_description='The user is sleeping',
+                                               action_name='body_state_in', state_type='sleeping')
 
     stairs_up_in = p_tables.CDTransformedAction(transformed_action_name='stairs_up_in',
-                                                   transformed_action_description='The user is climbing stairs',
-                                                   action_name='body_state_in', state_type='climbingstairs')
-
-
+                                                transformed_action_description='The user is climbing stairs',
+                                                action_name='body_state_in', state_type='climbingstairs')
 
     # TODO what things we can do with the body_state_in ¿? threat them as start of stop¿?
 
@@ -1112,7 +1112,8 @@ def create_transformed_actions(p_tables, p_orm):
         foodcourt_exit, publicpark_exit, restroom_exit, bedroom_exit, kitchen_exit,
         livingroom_exit, anteroom_exit, othersocialplace_exit, cityzone_exit, culturalplace_exit, newsshop_exit,
         healthplace_exit, socializingplace_exit, room_exit, supermarket_exit,
-        transportationmean_enter, publictransportationmean_enter, privatetransportationmean_enter, transportationmean_exit,
+        transportationmean_enter, publictransportationmean_enter, privatetransportationmean_enter,
+        transportationmean_exit,
         publictransportationmean_exit, privatetransportationmean_exit, bus_enter, train_enter, taxi_enter, car_enter,
         bus_exit, bus_exit, train_exit, taxi_exit, car_exit, fridge_open, oven_open, microwave_open,
         fridge_closed, oven_closed, microwave_closed, walking_start, sleeping_start,
@@ -1280,3 +1281,29 @@ def create_frailty_status(p_tables, p_orm):
     p_orm.insert_all(list_of_frailty_status)
     # Commit changes
     p_orm.commit()
+
+
+def create_risk_status(p_tables, p_orm):
+    """
+    Creating the needed information about the risk status to be used by the IMD dashboards
+
+    :param p_tables: the instantiation of the tables in database
+    :param p_orm: the orm connection to the database
+    :return:
+    """
+
+    list_of_risk_status = []
+    risk_alert = p_tables.CDRiskStatus(risk_status='A', risk_status_description='Risk alert', confidence_rating=1.00,
+                                       icon_image_path='images/risk_alert.png')
+    no_risk = p_tables.CDRiskStatus(risk_status='N', risk_status_description='No risk', confidence_rating=1.00,
+                                    icon_image_path='images/comment.png')
+    risk_warning = p_tables.CDRiskStatus(risk_status='W', risk_status_description='Risk warning',
+                                         confidence_rating=1.00,
+                                         icon_image_path='images/risk_warning.png')
+    # Filling the list
+    list_of_risk_status.extend([risk_alert, no_risk, risk_warning])
+    # Insert data, pending action
+    p_orm.insert_all(list_of_risk_status)
+    # Commit changes
+    p_orm.commit()
+

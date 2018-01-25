@@ -570,7 +570,7 @@ class UserInSystem(Base):
     user_in_system_seq = Sequence('user_in_system_seq', metadata=Base.metadata)
     # Creating the columns
     id = Column(Integer, server_default=user_in_system_seq.next_value(), primary_key=True)
-    username = Column(String(25), nullable=False, unique=True)
+    username = Column(String(50), nullable=False, unique=True)
     password = Column(Password(rounds=13), nullable=False)
     display_name = Column(String(100))
     created_date = Column(ArrowType(timezone=True), server_default=utcnow())
@@ -1121,6 +1121,7 @@ class CDRiskStatus(Base):
     risk_status_description = Column(String(250), nullable=False)
     confidence_rating = Column(Numeric(precision=3, scale=2), nullable=False)
     icon_image = Column(LargeBinary)
+    icon_image_path = Column(String(200), nullable=False)
 
     # One2Many
     assessment = relationship('Assessment')

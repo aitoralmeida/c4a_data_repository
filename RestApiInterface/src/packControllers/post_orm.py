@@ -258,7 +258,7 @@ class PostORM(object):
             # Registering the actual user in the system
             user_in_system = self._get_or_create(self.tables.UserInSystem, username=data['username'].lower(),
                                                  password=data['password'])
-            # Gettig the CD role id of care_receiver
+            # Getting the CD role id of care_receiver
             cd_role = self._get_or_create(self.tables.CDRole, role_name='Care recipient')
             # Obtaining Pilot ID through the Pilot credentials
             # TODO think to make a control check to enter Pilot abrv when the user is admin --> in utilities control check
@@ -807,7 +807,7 @@ class PostORM(object):
 
     def _update_or_create(self, model, *constraint, **kwargs):
         """
-        This method creates a new entrty in db if this isn't exsist yet or makes an update information based on some
+        This method creates a new entry in db if this isn't exist yet or makes an update information based on some
         arguments
 
         :param model: The table name defined in Tables class

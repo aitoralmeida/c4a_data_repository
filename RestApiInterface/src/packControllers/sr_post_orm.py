@@ -85,6 +85,8 @@ class SRPostORM(PostORM):
                 for key, value in data['payload'].items():
                     # We are filtering user an data. Adding values.....
                     # Adding measure information in detection variable.
+
+                    # TODO this codebook needs to be only searched ?¿
                     measure_cd_detection_variable = self._get_or_create(sr_tables.CDDetectionVariable,
                                                                         detection_variable_name=key.lower())
 
