@@ -59,6 +59,9 @@ def generate_database(p_ar_post_orm, p_sr_post_orm):
         # Creating CDTransformedAction information
         create_transformed_actions(ar_tables, ar_orm)
         logging.info(inspect.stack()[0][3], "Created Trasformed Actions for Activity Recognition schema")
+        # Creating stakeholder information
+        create_stakeholder(ar_tables, ar_orm)
+        logging.info(inspect.stack()[0][3], "Created Stakeholder for Shared Repository schema")
         # Commit and closing connection
         ar_orm.commit()
         ar_orm.close()
@@ -105,6 +108,9 @@ def generate_database(p_ar_post_orm, p_sr_post_orm):
         # Creating CDRiskStatus information
         create_risk_status(sr_tables, sr_orm)
         logging.info(inspect.stack()[0][3], "Created Risk Status for Shared Repository schema")
+        # Creating stakeholder information
+        create_stakeholder(ar_tables, ar_orm)
+        logging.info(inspect.stack()[0][3], "Created Stakeholder for Shared Repository schema")
         # Commit and closing connection
         sr_orm.commit()
         sr_orm.close()
@@ -1307,3 +1313,39 @@ def create_risk_status(p_tables, p_orm):
     # Commit changes
     p_orm.commit()
 
+
+def create_stakeholder(p_tables, p_orm):
+    """
+    Creating the need information about the stakeholders in the project.
+
+    :param p_tables: the instantiation of the tables in database
+    :param p_orm: the orm connection to the database
+    :return:
+    """
+
+    list_of_stakeholders = []
+    caregivers = p_tables.Stakeholder(abbreviation='cgs', stakeholder_name='Caregivers',
+                                      stakeholder_description='All caregiver types')
+    city_services = p_tables.Stakeholder(abbreviation='css', stakeholder_name='City services',
+                                         stakeholder_description='City and social services executives and planners')
+    external_systems = p_tables.Stakeholder(abbreviation='exs', stakeholder_name='External systems',
+                                            stakeholder_description='External systems - M2M accounts (pilot systems '
+                                                                    'uploading data, EHR systems etc..)')
+    general_practice_doctors = p_tables.Stakeholder(abbreviation='gps', stakeholder_name='General practice doctors',
+                                                    stakeholder_description='General practitioner team')
+    geriatricians = p_tables.Stakeholder(abbreviation='grs', stakeholder_name='Geriatricians',
+                                         stakeholder_description='All geriatricians')
+    public_health_professionals = p_tables.Stakeholder(abbreviation='phs', stakeholder_name='Public health '
+                                                                                            'professionals',
+                                                       stakeholder_description='Public health '
+                                                                               'professionals/executives/administration')
+    researchers = p_tables.Stakeholder(abbreviation='rss', stakeholder_name='Researchers',
+                                       stakeholder_description='Medical behavioural, social, data and other researchers')
+
+    # Filling the list
+    list_of_stakeholders.extend(([caregivers, city_services, external_systems, general_practice_doctors, geriatricians,
+                                  public_health_professionals, researchers]))
+    # Insert data, pending action
+    p_orm.insert_all(list_of_stakeholders)
+    # Commit changes
+    p_orm.commit()

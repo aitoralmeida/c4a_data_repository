@@ -463,7 +463,7 @@ class UserInRole(Base):
     # one2many
     user_in_system_id = Column(Integer, ForeignKey('user_in_system.id'))
     cd_role_id = Column(Integer, ForeignKey('cd_role.id'))
-    pilot_code = Column(String(4), ForeignKey('pilot.pilot_code'))
+    pilot_code = Column(String(3), ForeignKey('pilot.pilot_code'))
 
     # m2m
     action = relationship("ExecutedAction", cascade="all, delete-orphan")
@@ -577,7 +577,7 @@ class Location(Base):
     location_name = Column(String(500), unique=True, nullable=False)
     indoor = Column(Boolean)
     # One2Many
-    pilot_code = Column(String(4), ForeignKey('pilot.pilot_code'), nullable=True)
+    pilot_code = Column(String(3), ForeignKey('pilot.pilot_code'), nullable=True)
 
     def __repr__(self):
         return "<Location(location_name='%s', indoor='%s')>" % (

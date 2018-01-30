@@ -86,9 +86,11 @@ class SRPostORM(PostORM):
                     # We are filtering user an data. Adding values.....
                     # Adding measure information in detection variable.
 
-                    # TODO this codebook needs to be only searched ?¿
-                    measure_cd_detection_variable = self._get_or_create(sr_tables.CDDetectionVariable,
-                                                                        detection_variable_name=key.lower())
+
+                    #measure_cd_detection_variable = self._get_or_create(sr_tables.CDDetectionVariable,
+                    #                                                    detection_variable_name=key.lower())
+                    measure_cd_detection_variable = self.session.query(self.tables.CDDetectionVariable).filter_by(
+                                                                        detection_variable_name=key.lower()).first()
 
                     variation_measure_value = self._update_or_create(sr_tables.VariationMeasureValue,
                                                                      'user_in_role_id', 'time_interval_id',
@@ -113,11 +115,11 @@ class SRPostORM(PostORM):
                                                                        author_id=user_in_role.id)
 
                     # OPTIONALLY adding pilot data
-                    self._update_or_create(sr_tables.MDPilotDetectionVariable,
-                                           'pilot_code', 'detection_variable_id', 'derived_detection_variable_id',
-                                           pilot_code=data['pilot'].lower(),
-                                           detection_variable_id=measure_cd_detection_variable.id,
-                                           derived_detection_variable_id=measure_cd_detection_variable.derived_detection_variable_id or None)
+                    # self._update_or_create(sr_tables.MDPilotDetectionVariable,
+                    #                        'pilot_code', 'detection_variable_id', 'derived_detection_variable_id',
+                    #                        pilot_code=data['pilot'].lower(),
+                    #                        detection_variable_id=measure_cd_detection_variable.id,
+                    #                        derived_detection_variable_id=measure_cd_detection_variable.derived_detection_variable_id or None)
 
                 # Check if there are extra information and insert data
                 if data.get('extra', False):

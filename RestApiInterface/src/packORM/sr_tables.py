@@ -232,7 +232,8 @@ class FrailtyStatusTimeline(Base):
 
     time_interval_id = Column(Integer, ForeignKey('time_interval.id'), primary_key=True)
     user_in_role_id = Column(Integer, ForeignKey('user_in_role.id'), primary_key=True)
-    changed = Column(ArrowType(timezone=True), server_default=utcnow(), primary_key=True)
+    created = Column(ArrowType(timezone=True), server_default=utcnow(), nullable=False)
+    changed = Column(ArrowType(timezone=True), server_onupdate=utcnow(), primary_key=True)
     frailty_status = Column(String(9), ForeignKey('cd_frailty_status.frailty_status'), primary_key=True)
 
     # Data
@@ -268,7 +269,7 @@ class MDPilotDetectionVariable(Base):
     detection_variable_usage_status = Column(String(3))
 
     # Foreign Keys
-    pilot_code = Column(String(50), ForeignKey('pilot.pilot_code'))
+    pilot_code = Column(String(3), ForeignKey('pilot.pilot_code'))
     main_data_source_type = Column(String(3), ForeignKey('cd_data_source_type.data_source_type'))
     # Two relationship from detection variable
     detection_variable_id = Column(Integer, ForeignKey('cd_detection_variable.id'))
@@ -533,7 +534,7 @@ class UserInRole(Base):
     # Many2One
     user_in_system_id = Column(Integer, ForeignKey('user_in_system.id'))
     cd_role_id = Column(Integer, ForeignKey('cd_role.id'))
-    pilot_code = Column(String(4), ForeignKey('pilot.pilot_code'))
+    pilot_code = Column(String(3), ForeignKey('pilot.pilot_code'))
 
     # M2M relationships
     action = relationship("ExecutedAction", cascade="all, delete-orphan")
@@ -694,7 +695,7 @@ class Location(Base):
     location_name = Column(String(500), unique=True, nullable=False)
     indoor = Column(Boolean)
     # One2Many
-    pilot_code = Column(String(4), ForeignKey('pilot.pilot_code'), nullable=True)
+    pilot_code = Column(String(3), ForeignKey('pilot.pilot_code'), nullable=True)
 
     # many2many
     # executed_activity = relationship("LocationExecutedActivityRel")
@@ -1053,7 +1054,7 @@ class Assessment(Base):
     assessment_comment = Column(String)
     data_validity_status = Column(String(1))
     created = Column(ArrowType(timezone=True), server_default=utcnow(), nullable=False)
-    updated = Column(ArrowType(timezone=True), onupdate=utcnow())
+    updated = Column(ArrowType(timezone=True), server_onupdate=utcnow())
 
     # Many2One
     risk_status = Column(String(1), ForeignKey('cd_risk_status.risk_status'), nullable=False)
@@ -1079,7 +1080,7 @@ class CareProfile(Base):
     intervention_status = Column(String(1))
     last_intervention_date = Column(ArrowType(timezone=True))
     created = Column(ArrowType(timezone=True), server_default=utcnow(), nullable=False)
-    last_updated = Column(ArrowType(timezone=True), onupdate=utcnow())
+    last_updated = Column(ArrowType(timezone=True), server_onupdate=utcnow())
     # Many 2 one Relationships
     created_by = Column(Integer, ForeignKey('user_in_role.id'), nullable=False)
     last_updated_by = Column(Integer, ForeignKey('user_in_role.id'))
