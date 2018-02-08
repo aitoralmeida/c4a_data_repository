@@ -230,7 +230,7 @@ class ExecutedAction(Base):
     execution_datetime = Column(ArrowType(timezone=True))  # Time of registered action
     rating = Column(Numeric(precision=5, scale=2))
     sensor_id = Column(Integer)
-    position = Column(String(25))
+    position = Column(String(100))
     data_source_type = Column(String(1000))  # An "array" containing the data source
     extra_information = Column(String(1000))  # An "array" containing extra information
 

@@ -138,7 +138,7 @@ class Utilities(object):
                     "description": "The exact position given in Lat/Long format",
                     "type": "string",
                     "minLength": 3,
-                    "maxLength": 50
+                    "maxLength": 100
                 },
                 "timestamp": {
                     "description": "The time when de action was performed",
@@ -493,7 +493,7 @@ class Utilities(object):
                     "description": "The username of the actual user",
                     "type": "string",
                     "minLength": 3,
-                    "maxLength": 15
+                    "maxLength": 50
                 },
                 "password": {
                     "description": "The password for the user",
@@ -512,7 +512,7 @@ class Utilities(object):
                     "description": "The role name of registered user",
                     "type": "string",
                     "minLength": 3,
-                    "maxLength": 20,
+                    "maxLength": 70,
                     "enum": Utilities.get_user_roles(p_database)
                 },
                 "pilot": {
