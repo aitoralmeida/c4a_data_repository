@@ -467,7 +467,7 @@ def search(version=app.config['ACTUAL_API']):
             else:
                 logging.error("add_action: there is a problem with entered data")
                 # Data is not valid, check the problem
-                if "duplicated" in msg:
+                if msg and "duplicated" in msg:
                     # Data sent is duplicated.
                     return Response(msg), 409
                 else:
@@ -515,6 +515,7 @@ def add_action(version=app.config['ACTUAL_API']):
         # We created a list of Python dict.
         data = _convert_to_dict(request.json)
         msg = Utilities.check_add_action_data(AR_DATABASE, data)
+        # TODO review in the future
         if data and not msg and USER:
             # User and data are OK. save data into DB
             res_ar = AR_DATABASE.add_action(data)
@@ -528,7 +529,7 @@ def add_action(version=app.config['ACTUAL_API']):
         else:
             logging.error("add_action: there is a problem with entered data")
             # Data is not valid, check the problem
-            if "duplicated" in msg:
+            if msg and "duplicated" in msg:
                 # Data sent is duplicated.
                 return Response(msg), 409
             else:
@@ -595,7 +596,7 @@ def add_activity(version=app.config['ACTUAL_API']):
         else:
             logging.error("add_activity: there is a problem with entered data")
             # Data is not valid, check the problem
-            if "duplicated" in msg:
+            if msg and "duplicated" in msg:
                 # Data sent is duplicated.
                 return Response(msg), 409
             else:
@@ -638,7 +639,7 @@ def add_new_activity(version=app.config['ACTUAL_API']):
         else:
             logging.error("add_new_activity: there is a problem with entered data")
             # Data is not valid, check the problem
-            if "duplicated" in msg:
+            if msg and "duplicated" in msg:
                 # Data sent is duplicated.
                 return Response(msg), 409
             else:
@@ -694,7 +695,7 @@ def add_new_user(version=app.config['ACTUAL_API']):
         else:
             logging.error("add_new_user: there is a problem with entered data")
             # Data is not valid, check the problem
-            if "duplicated" in msg:
+            if msg and "duplicated" in msg:
                 # Data sent is duplicated.
                 return Response(msg), 409
             else:
@@ -744,7 +745,7 @@ def add_care_receiver(version=app.config['ACTUAL_API']):
         else:
             logging.error("add_care_receiver: there is a problem with entered data")
             # Data is not valid, check the problem
-            if "duplicated" in msg:
+            if msg and "duplicated" in msg:
                 # Data sent is duplicated.
                 return Response(msg), 409
             else:
@@ -863,7 +864,7 @@ def add_measure(version=app.config['ACTUAL_API']):
         else:
             logging.error("add_measure: there is a problem with entered data")
             # Data is not valid, check the problem
-            if "duplicated" in msg:
+            if msg and "duplicated" in msg:
                 # Data sent is duplicated.
                 return Response(msg), 409
             else:
@@ -916,7 +917,7 @@ def add_eam(version=app.config['ACTUAL_API']):
         else:
             logging.error("add_eam: there is a problem with entered data")
             # Data is not valid, check the problem
-            if "duplicated" in msg:
+            if msg and "duplicated" in msg:
                 # Data sent is duplicated.
                 return Response(msg), 409
             else:
@@ -968,7 +969,7 @@ def add_frailty_status(version=app.config['ACTUAL_API']):
         else:
             logging.error("add_frailty_status: there is a problem with entered data")
             # Data is not valid, check the problem
-            if "duplicated" in msg:
+            if msg and "duplicated" in msg:
                 # Data sent is duplicated.
                 return Response(msg), 409
             else:
@@ -1018,7 +1019,7 @@ def add_factor(version=app.config['ACTUAL_API']):
         else:
             logging.error("add_factor: there is a problem with entered data")
             # Data is not valid, check the problem
-            if "duplicated" in msg:
+            if msg and "duplicated" in msg:
                 # Data sent is duplicated.
                 return Response(msg), 409
             else:
@@ -1028,7 +1029,6 @@ def add_factor(version=app.config['ACTUAL_API']):
     """
 
     return "Not implemented yet", 501
-
 
 
 

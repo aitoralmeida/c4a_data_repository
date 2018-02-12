@@ -64,23 +64,23 @@ class SRPostORM(PostORM):
         for data in p_data:
             try:
                 # insert pilot data
-                pilot = self._get_or_create(sr_tables.Pilot, pilot_code=data['pilot'].lower())
+                pilot = self._get_or_create(sr_tables.Pilot, pilot_code=data['pilot'].lower())[0]
                 # Insert user in role data
-                cd_role = self._get_or_create(sr_tables.CDRole, role_name='Care recipient')
+                cd_role = self._get_or_create(sr_tables.CDRole, role_name='Care recipient')[0]
                 user_in_role = self._get_or_create(sr_tables.UserInRole, id=int(data['user'].split(':')[-1]),
                                                    pilot_code=pilot.pilot_code,
-                                                   cd_role_id=cd_role.id)
+                                                   cd_role_id=cd_role.id)[0]
                 # Insert time interval data
                 if not data.get('interval_end', False) and data.get('duration', False):
                     # nominal interval
                     logging.info(inspect.stack()[0][3], ": user entered a duration")
                     time_interval = self._get_or_create(sr_tables.TimeInterval, interval_start=data['interval_start'],
-                                                        typical_period=data['duration'].lower())
+                                                        typical_period=data['duration'].lower())[0]
                 else:
                     # discrete interval
                     logging.info(inspect.stack()[0][3], ":user entered a interval end value")
                     time_interval = self._get_or_create(sr_tables.TimeInterval, interval_start=data['interval_start'],
-                                                        interval_end=data['interval_end'])
+                                                        interval_end=data['interval_end'])[0]
                 # Adding measure values
                 for key, value in data['payload'].items():
                     # We are filtering user an data. Adding values.....
@@ -103,8 +103,6 @@ class SRPostORM(PostORM):
                                                                          value.get('data_source_type', ['sensors'])))
                     # Adding comments (if available)
                     if value.get('notice', False):
-                        # Flush to obtain the variation_measure_id
-                        self.session.flush()
                         # This measure contains comments, adding it into database
                         value_evidence_notice = self._update_or_create(sr_tables.ValueEvidenceNotice,
                                                                        #'value_id', 'author_id',
@@ -177,13 +175,12 @@ class SRPostORM(PostORM):
                     # nominal interval
                     logging.info(inspect.stack()[0][3], ": user entered a duration")
                     time_interval = self._get_or_create(sr_tables.TimeInterval, interval_start=data['interval_start'],
-                                                        typical_period=data['duration'].lower())
+                                                        typical_period=data['duration'].lower())[0]
                 else:
                     # discrete interval
                     logging.info(inspect.stack()[0][3], ":user entered a interval end value")
                     time_interval = self._get_or_create(sr_tables.TimeInterval, interval_start=data['interval_start'],
-                                                        interval_end=data['interval_end'])
-                self.session.flush()
+                                                        interval_end=data['interval_end'])[0]
                 # Setting th condition of the user
                 self._update_or_create(sr_tables.FrailtyStatusTimeline, 'time_interval_id', 'user_in_role_id',
                                        'frailty_status',

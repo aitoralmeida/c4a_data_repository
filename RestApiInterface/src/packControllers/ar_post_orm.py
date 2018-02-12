@@ -159,15 +159,13 @@ class ARPostORM(PostORM):
             # Recovering basic data
             if data.get('user', False):
                 # The User provides a user in role for this EAM
-                user_in_role = self._get_or_create(self.tables.UserInRole, id=int(data['user'].split(':')[-1]))
+                user_in_role = self._get_or_create(self.tables.UserInRole, id=int(data['user'].split(':')[-1]))[0]
             else:
                 # The User doesn't provide a user, back to Pilot ID
-                user_in_role = self._get_or_create(self.tables.UserInRole, id=p_user_id)
-            cd_activity = self._get_or_create(self.tables.CDActivity, activity_name=data['activity'].lower())
+                user_in_role = self._get_or_create(self.tables.UserInRole, id=p_user_id)[0]
+            cd_activity = self._get_or_create(self.tables.CDActivity, activity_name=data['activity'].lower())[0]
             # Insert new EAM
-            cd_eam = self._get_or_create(self.tables.CDEAM, eam_name=data['eam'], duration=data['duration'])
-            # Obtaining the cd_eam id if not provided
-            self.session.flush()
+            cd_eam = self._get_or_create(self.tables.CDEAM, eam_name=data['eam'], duration=data['duration'])[0]
             ## Intermediate tables
             # For each location
             for location in data['locations']:
@@ -182,9 +180,8 @@ class ARPostORM(PostORM):
                 # Insert the actual range
                 start_range = self._get_or_create(ar_tables.StartRange,
                                                   start_time=date_range[0],
-                                                  end_time=date_range[1])
+                                                  end_time=date_range[1])[0]
                 # Insert the m2m table
-                self.session.flush()
                 cd_eam_start_range_rel = ar_tables.CDEAMStartRangeRel(start_range_id=start_range.id,
                                                                       cd_eam_id=cd_eam.id)
                 self.insert_one(cd_eam_start_range_rel)
@@ -227,10 +224,8 @@ class ARPostORM(PostORM):
                                                     duration=duration.seconds,
                                                     data_source_type='discovered_by_hars',
                                                     cd_activity_id=cd_activity.id,
-                                                    user_in_role_id=p_user_in_role_id)
+                                                    user_in_role_id=p_user_in_role_id)[0]
 
-            # Check the id generated in executed_activity
-            self.session.flush()
             for executed_action in p_data_frame['executed_action']:
                 # Filling the intermediate table with the instantiated activity
                 self._get_or_create(self.tables.ExecutedActivityExecutedActionRel,

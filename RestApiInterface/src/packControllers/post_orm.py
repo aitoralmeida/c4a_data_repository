@@ -16,8 +16,9 @@ import logging
 import arrow
 from sqlalchemy import create_engine, desc, orm, cast, MetaData, String
 from sqlalchemy.engine.url import URL
-from sqlalchemy.exc import OperationalError
+from sqlalchemy.exc import OperationalError, IntegrityError
 from sqlalchemy.orm import sessionmaker, scoped_session
+from sqlalchemy.orm.exc import NoResultFound
 # from sqlalchemy_searchable import search
 from whooshalchemy import IndexService
 
@@ -257,13 +258,13 @@ class PostORM(object):
         for data in p_data:
             # Registering the actual user in the system
             user_in_system = self._get_or_create(self.tables.UserInSystem, username=data['username'].lower(),
-                                                 password=data['password'])
+                                                 password=data['password'])[0]
             # Getting the CD role id of care_receiver
-            cd_role = self._get_or_create(self.tables.CDRole, role_name='Care recipient')
+            cd_role = self._get_or_create(self.tables.CDRole, role_name='Care recipient')[0]
             # Obtaining Pilot ID through the Pilot credentials
-            # TODO think to make a control check to enter Pilot abrv when the user is admin --> in utilities control check
+
             # Obtains the pilot code. If the admin user is who is entering the user, it will default to LECCE
-            pilot_code = self._get_or_create(self.tables.UserInRole, user_in_system_id=p_user_id).pilot_code or 'lcc'
+            pilot_code = self._get_or_create(self.tables.UserInRole, user_in_system_id=p_user_id)[0].pilot_code or 'lcc'
             # Creating the user_in_role table for the new user in the system
             user_in_role = self._get_or_create(self.tables.UserInRole,
                                                valid_from=data.get('valid_from', arrow.utcnow()),
@@ -271,9 +272,7 @@ class PostORM(object):
                                                cd_role_id=cd_role.id,
                                                pilot_code=pilot_code,
                                                pilot_source_user_id=data.get('pilot_user_source_id', None),
-                                               user_in_system_id=user_in_system.id)
-            # Getting the new ID
-            self.flush()
+                                               user_in_system_id=user_in_system.id)[0]
             # Adding City4Age ID to the return value
             user_in_role_ids[data['username'].lower()] = user_in_role.id
 
@@ -298,24 +297,24 @@ class PostORM(object):
         for data in p_data:
             # Creating the user information in the system
             user_in_system = self._get_or_create(self.tables.UserInSystem, username=data['username'].lower(),
-                                                 password=data['password'])
+                                                 password=data['password'])[0]
             # Getting the user information to know if is an update or a new user in the system
             user = data.get('user', False)
             if user:
                 # We have already user information in the system, giving access to the user.
                 # Obtaining the user instance in the system and giving it the access.
-                user_in_role = self._get_or_create(self.tables.UserInRole, id=int(data['user'].split(':')[-1]))
+                user_in_role = self._get_or_create(self.tables.UserInRole, id=int(data['user'].split(':')[-1]))[0]
                 user_in_role.user_in_system_id = user_in_system.id
             else:
                 # The user is not registered in the system, so we need to create it
-                cd_role = self._get_or_create(self.tables.CDRole, role_name=data['roletype'])
-                pilot = self._get_or_create(self.tables.Pilot, pilot_code=data['pilot'].lower())
+                cd_role = self._get_or_create(self.tables.CDRole, role_name=data['roletype'])[0]
+                pilot = self._get_or_create(self.tables.Pilot, pilot_code=data['pilot'].lower())[0]
                 user_in_role = self._get_or_create(self.tables.UserInRole,
                                                    valid_from=data.get('valid_from', arrow.utcnow()),
                                                    valid_to=data.get('valid_to', None),
                                                    cd_role_id=cd_role.id,
                                                    user_in_system_id=user_in_system.id,
-                                                   pilot_code=pilot.pilot_code)
+                                                   pilot_code=pilot.pilot_code)[0]
                 # Adding City4Age ID to the return value
                 user_in_role_ids[data['username'].lower()] = user_in_role.id
 
@@ -363,13 +362,13 @@ class PostORM(object):
         for data in p_data:
             # Basic tables
             # We are going to check if basic data exist in DB and insert it in case that is the first time.
-            cd_action = self._get_or_create(self.tables.CDAction, action_name=data['action'].split(':')[-1].lower())
-            pilot = self._get_or_create(self.tables.Pilot, pilot_code=data['pilot'].lower())
+            cd_action = self._get_or_create(self.tables.CDAction, action_name=data['action'].split(':')[-1].lower())[0]
+            pilot = self._get_or_create(self.tables.Pilot, pilot_code=data['pilot'].lower())[0]
             # Assuming the default value --> care_receiver
-            cd_role = self._get_or_create(self.tables.CDRole, role_name='Care recipient')
+            cd_role = self._get_or_create(self.tables.CDRole, role_name='Care recipient')[0]
             user = self._get_or_create(self.tables.UserInRole, id=int(data['user'].split(':')[-1]),
                                        pilot_code=pilot.pilot_code,
-                                       cd_role_id=cd_role.id)
+                                       cd_role_id=cd_role.id)[0]
             # location_type = self._get_or_create(sr_tables.LocationType,
             #                                   location_type_name=data['location'].split(':')[-2].lower())
             # location = self._get_or_create(sr_tables.Location, location_name=data['location'].split(':')[-1].lower(),
@@ -382,12 +381,8 @@ class PostORM(object):
                     break
             location = self._get_or_create(self.tables.Location, location_name=data['location'].lower(),
                                            indoor=indoor,
-                                           pilot_code=pilot.pilot_code)
-            # Creating flush to obtain the possible location id
-            self.session.flush()
+                                           pilot_code=pilot.pilot_code)[0]
             # Insert a new executed action
-
-
             # TODO consider to update the stored data if the user send sthe same combination of user, time action and location
             """
             executed_action = self._update_or_create(self.tables.ExecutedAction,
@@ -423,7 +418,7 @@ class PostORM(object):
             # Inserting the values attached with this action into database
             list_of_payload_values = []
             for key, value in data['payload'].items():
-                cd_metric = self._get_or_create(self.tables.CDMetric, metric_name=key)
+                cd_metric = self._get_or_create(self.tables.CDMetric, metric_name=key)[0]
                 if isinstance(value, list):
                     value = ' '.join(value).lower()
 
@@ -522,7 +517,7 @@ class PostORM(object):
         for data in p_data:
             cd_activity = self._get_or_create(self.tables.CDActivity, activity_name=data['activity'].lower(),
                                               activity_description=data['description'],
-                                              instrumental=data['instrumental'])
+                                              instrumental=data['instrumental'])[0]
         # Commit changes9
         logging.info(inspect.stack()[0][3], "data entered successfully")
         return self.commit()
@@ -572,9 +567,6 @@ class PostORM(object):
 
 
             # TODO once you have the needed data, think about filtering by PILOT
-
-
-
 
 
         return res
@@ -783,27 +775,30 @@ class PostORM(object):
     ###################################################################################################
     ###################################################################################################
 
-    def _get_or_create(self, model, **kwargs):
-        # type: (object, object) -> object
+    def _get_or_create(self, model, create_method='', create_method_kwargs=None, **kwargs):
         """
-        This method creates a new entry in db if this isn't exist yet or retrieve the instance information based on
-        some arguments.
+        This is an advanced newly created method of get_or_create to handle asyncs when a process try to
+        overlap the database inserts.
 
-        :param model: The Table name defined in Tables class
-        :param kwargs: The needed arguments to create the table for example
-
-                (id=23, name='pako', lastname='rodriguez')
-
-        :return: An instance of  the Table.
+        :param model: The database table
+        :param create_method: To put the classmethod decorator name to use it when creatingh the data
+        :param create_method_kwargs: class method aditional args
+        :param kwargs: The args of the table. Fields
+        :return: Instance --> Selected or created instance
+                 Boolean --> If the instance was not created it returns True, if instance is created it returns False
         """
-        instance = self.session.query(model).filter_by(**kwargs).first()
-        if instance:
-            return instance
-        else:
-            instance = model(**kwargs)
-            self.insert_one(instance)
-            # self.commit()
-            return instance
+        try:
+            return self.session.query(model).filter_by(**kwargs).one(), True
+        except NoResultFound:
+            kwargs.update(create_method_kwargs or {})
+            created = getattr(model, create_method, model)(**kwargs)
+            try:
+                self.session.add(created)
+                self.session.flush()
+                return created, False
+            except IntegrityError:
+                self.session.rollback()
+                return self.session.query(model).filter_by(**kwargs).one(), True
 
     def _update_or_create(self, model, *constraint, **kwargs):
         """
@@ -828,9 +823,7 @@ class PostORM(object):
             return instance.first()
         elif instance.count() == 0:
             # we don't have data, insert it
-            instance = model(**kwargs)
-            self.insert_one(instance)
-            # self.commit()
+            instance = self._get_or_create(model, **kwargs)[0]
             return instance
         else:
             # This never should happen

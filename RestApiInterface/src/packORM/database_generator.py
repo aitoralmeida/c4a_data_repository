@@ -109,7 +109,7 @@ def generate_database(p_ar_post_orm, p_sr_post_orm):
         create_risk_status(sr_tables, sr_orm)
         logging.info(inspect.stack()[0][3], "Created Risk Status for Shared Repository schema")
         # Creating stakeholder information
-        create_stakeholder(ar_tables, ar_orm)
+        create_stakeholder(sr_tables, sr_orm)
         logging.info(inspect.stack()[0][3], "Created Stakeholder for Shared Repository schema")
         # Commit and closing connection
         sr_orm.commit()
