@@ -399,7 +399,6 @@ class PostORM(object):
                                                      )
             """
             #####
-
             executed_action = self.tables.ExecutedAction(execution_datetime=data['timestamp'],
                                                          location_id=location.id,
                                                          cd_action_id=cd_action.id,
@@ -408,9 +407,15 @@ class PostORM(object):
                                                          rating=round(data.get('rating', 0), 1),
                                                          data_source_type=' '.join(data.get('data_source_type',
                                                                                             ['sensors'])),
-                                                         extra_information=' '.join(data.get('extra', None))
                                                          )
-
+            # Check if there are extra information and insert data
+            if data.get('extra', False):
+                dictlist = []
+                for key, value in data.get('extra', None).items():
+                    # Creating a temp list of items
+                    temp = key + ':' + value
+                    dictlist.append(temp)
+                    executed_action.extra_information = ' '.join(dictlist)
             # pending insert
             self.insert_one(executed_action)
             # Generating IDS

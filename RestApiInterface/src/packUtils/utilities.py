@@ -132,7 +132,7 @@ class Utilities(object):
                     "type": "string",
                     "minLength": 3,
                     "maxLength": 100,
-                    "pattern": "^(eu:c4a:[a-z,A-Z,0-9]{3,25}:[a-z,A-Z,0-9]{1,30}|eu:c4a:[a-z,A-Z,0-9]{3,25}:[a-z,A-Z,0-9]{1,35}:[a-z,A-Z,0-9]{1,35})$",
+                    "pattern": "^(eu:c4a:[a-z,A-Z,0-9]{2,25}:[a-z,A-Z,0-9]{1,30}|eu:c4a:[a-z,A-Z,0-9]{2,25}:[a-z,A-Z,0-9]{1,35}:[a-z,A-Z,0-9]{1,35})$",
                 },
                 "position": {
                     "description": "The exact position given in Lat/Long format",
@@ -180,6 +180,7 @@ class Utilities(object):
                     "description": "Additional information given by the Pilot in the LEA",
                     "type": "object",
                     "additionalProperties": True,
+                    "minProperties": 1,
                 },
             },
             "required": ["action", "user", "pilot", "location", "position", "timestamp", "payload", "rating",
@@ -309,7 +310,7 @@ class Utilities(object):
                                 "type": "string",
                                 "minLength": 3,
                                 "maxLength": 50,
-                                "pattern": "^eu:c4a:[a-z,A-Z,0-9]{3,25}:[a-z,A-Z,0-9]{1,30}$",
+                                "pattern": "^(eu:c4a:[a-z,A-Z,0-9]{2,25}:[a-z,A-Z,0-9]{1,30}|eu:c4a:[a-z,A-Z,0-9]{2,25}:[a-z,A-Z,0-9]{1,35}:[a-z,A-Z,0-9]{1,35})$",
                             },
                             "timestamp": {
                                 "description": "The time when de action was performed",
@@ -834,6 +835,8 @@ class Utilities(object):
                 "extra": {
                     "description": "Additional information given by the Pilot in the LEA",
                     "type": "object",
+                    "additionalProperties": True,
+                    "minProperties": 1,
                 }
             },
             "additionalProperties": False,
@@ -1001,7 +1004,7 @@ class Utilities(object):
                     "type": "array",
                     "items": {
                         "type": "string",
-                        "pattern": "^eu:c4a:[a-z,A-Z]{3,25}$",
+                        "pattern": "^eu:c4a:[a-z,A-Z]{2,25}$",
                     },
                     "minItems": 1,
                     "uniqueItems": True,
@@ -1147,7 +1150,7 @@ class Utilities(object):
             "type": "object",
             "properties": {
                 "user": {
-                    "description": "The user in role of the EAM. Default to Pilot if not filled",
+                    "description": "The user in role. Default to Pilot if not filled",
                     "type": "string",
                     "minLength": 3,
                     "maxLength": 50,

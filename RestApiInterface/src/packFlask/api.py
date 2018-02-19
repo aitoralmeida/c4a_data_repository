@@ -36,7 +36,7 @@ SECRET_KEY = '\xc2O\xd1\xbb\xd6\xb2\xc2pxRS\x12l\xee8X\xcb\xc3(\xeer\xc5\x08s'
 AR_DATABASE = None
 SR_DATABASE = None
 USER = None
-MAX_LENGHT = 1398101  # in bytes        ~~ 500 LEAS OR up to 16MB? check if it whort it
+MAX_LENGHT = 26000000  # in bytes        ~~ 26Mb
 
 # Create application and load config.
 app = Flask(__name__)
