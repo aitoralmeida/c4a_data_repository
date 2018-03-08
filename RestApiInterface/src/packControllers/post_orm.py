@@ -413,9 +413,10 @@ class PostORM(object):
                 dictlist = []
                 for key, value in data.get('extra', None).items():
                     # Creating a temp list of items
-                    temp = key + ':' + value
+                    temp = str(key) + ':' + str(value)
                     dictlist.append(temp)
                     executed_action.extra_information = ' '.join(dictlist)
+
             # pending insert
             self.insert_one(executed_action)
             # Generating IDS

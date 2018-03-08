@@ -124,7 +124,7 @@ class SRPostORM(PostORM):
                     dictlist = []
                     for key, value in data.get('extra', None).items():
                         # Creating a temp list of items
-                        temp = key + ':' + value
+                        temp = str(key) + ':' + str(value)
                         dictlist.append(temp)
                     variation_measure_value.extra_information = ' '.join(dictlist)
                 # If all works as intended we return a true state
