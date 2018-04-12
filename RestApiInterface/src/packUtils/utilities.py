@@ -8,9 +8,8 @@ This class has all utilities of the project. The idea is to store all checkers, 
 """
 
 import logging
-import re
 from collections import Counter
-from flask import abort, session, request
+from flask import abort, session, request, jsonify
 from jsonschema import validate, ValidationError, FormatChecker
 from sqlalchemy_utils import functions
 from src.packORM import ar_tables, sr_tables
@@ -189,6 +188,8 @@ class Utilities(object):
         }
 
         try:
+            # Creating a list of duplicated LEAS
+            list_of_duplicated_leas_in_db = []
             # Obtaining the list of action from database
             list_of_actions = p_database.get_action_name()
             # Extracting actions from the two level lists
@@ -208,19 +209,19 @@ class Utilities(object):
                                       data['user'])
                         raise ValidationError("The entered user pilot is incorrect or the user doesn't exist: %s" %
                                               data['user'])
+                    elif not Utilities.validate_lea(p_database, data):
+                        # Duplicated LEA, append to a list to return to the user
+                        list_of_duplicated_leas_in_db.append(data)
+                # Check if we have duplicated LEAS in DB an raise an error
+                if len(list_of_duplicated_leas_in_db) > 0:
+                     logging.error("The entered LEA is duplicated in database (same user doing the same "
+                               "action in the same location at the same time, check the following values:\n %s)" % list_of_duplicated_leas_in_db)
+                     raise ValidationError("The entered LEA is duplicated in database (same user doing the same "
+                                       "action in the same location at the same time, check the following values:\n %s)" % list_of_duplicated_leas_in_db)
+
             else:
-                # TODO review this part: Maybe we don't need it
-                validate(p_data, schema, format_checker=FormatChecker())
-                # We are going to validate if inserted actions are OK
-                if not p_data['action'].split(':')[-1].lower() in list_of_actions:
-                    # Raising
-                    logging.error("The action inserted doesn't exist in the system: %s" % p_data['action'])
-                    raise ValidationError("The action inserted doesn't exist in the system: %s" % p_data['action'])
-                elif not Utilities.validate_user_pilot(p_database, p_data['user'].split(':')[-1].lower(),
-                                                       p_data['pilot'].lower()):
-                    logging.error("The entered user pilot is incorrect or the user doesn't exist: %s" % p_data['user'])
-                    raise ValidationError("The entered user pilot is incorrect or the user doesn't exist: %s" %
-                                          p_data['user'])
+                raise ValidationError("The provided data it seems not to be a JSON list, please create a JSON list")
+
         except ValidationError as e:
             logging.error("The schema entered by the user is invalid")
             msg = e.message
@@ -870,9 +871,6 @@ class Utilities(object):
 
                     # TODO validate measure
 
-
-
-
         except ValidationError as e:
             logging.error("The schema entered by the user is invalid")
             msg = e.message
@@ -1120,9 +1118,9 @@ class Utilities(object):
                     # EAM is valid, we append in a list to avoid duplicated entries
                     # list_of_eams.append(data['eam'])
                 # Check if exist duplicated values in the provided eam list
-                #duplicated = [k for k, v in Counter(list_of_eams).items() if v > 1]
-                #if len(duplicated) > 0:
-                    # Raise an error for duplicated values
+                # duplicated = [k for k, v in Counter(list_of_eams).items() if v > 1]
+                # if len(duplicated) > 0:
+                # Raise an error for duplicated values
                 #    logging.error("There are are duplicated eam names in the JSON: %s" % duplicated)
                 #    raise ValidationError("There are are duplicated eam names in the JSON: %s" % duplicated)
         except ValidationError as e:
@@ -1229,7 +1227,6 @@ class Utilities(object):
                         raise ValidationError("The entered user isn't belongs to your Pilot: %s" %
                                               data.get('user', False))
 
-
                     # TODO control check of duplicated values --> SAME user in the SAME INTERVAL DIFFERENT FRAILT STATUS
 
                     # If data is valid we add the current user
@@ -1312,13 +1309,20 @@ class Utilities(object):
                     "minLength": 3,
                     "maxLength": 10,
                     "enum": [
-                            "walking", "climbing_stairs", "still_Moving", "moving_across_rooms", "gait_balance", "physical_activity",
-                        "bathing_and_showering", "dressing", "self_feeding","personal_hygiene_and_grooming", "toilet_hygiene",
-                        "going_out", "ability_to_cook_food", "housekeeping", "laundry", "phone_usage", "new_media_communication",
-                        "shopping", "transportation", "finance_management", "medication", "visits", "attending_senior_centers",
-                        "attending_other_social_places", "restaurant", "visit_entertainment_culture_places", "watching_TV",
-                        "reading_newspapers", "reading_books", "quality_of_housing", "quality_of_neighbourhood", "dependence",
-                        "falls", "weight", "weakness", "exhaustion", "pain", "appetite", "quality_of_sleep", "visit_to_doctors",
+                        "walking", "climbing_stairs", "still_Moving", "moving_across_rooms", "gait_balance",
+                        "physical_activity",
+                        "bathing_and_showering", "dressing", "self_feeding", "personal_hygiene_and_grooming",
+                        "toilet_hygiene",
+                        "going_out", "ability_to_cook_food", "housekeeping", "laundry", "phone_usage",
+                        "new_media_communication",
+                        "shopping", "transportation", "finance_management", "medication", "visits",
+                        "attending_senior_centers",
+                        "attending_other_social_places", "restaurant", "visit_entertainment_culture_places",
+                        "watching_TV",
+                        "reading_newspapers", "reading_books", "quality_of_housing", "quality_of_neighbourhood",
+                        "dependence",
+                        "falls", "weight", "weakness", "exhaustion", "pain", "appetite", "quality_of_sleep",
+                        "visit_to_doctors",
                         "visit_to_health_related_places", "abstraction", "attention", "memory", "mood"
                     ]
                 },
@@ -1342,28 +1346,28 @@ class Utilities(object):
             "additionalProperties": False,
             "oneOf": [
                 {
-                  "required": [
-                    "user",
-                    "pilot",
-                    "interval_start",
-                    "duration",
-                    "factor",
-                    "score",
-                    "notice",
-                  ]
+                    "required": [
+                        "user",
+                        "pilot",
+                        "interval_start",
+                        "duration",
+                        "factor",
+                        "score",
+                        "notice",
+                    ]
                 },
                 {
-                  "required": [
-                    "user",
-                    "pilot",
-                    "interval_start",
-                    "interval_end",
-                    "factor",
-                    "score",
-                    "notice"
-                  ]
+                    "required": [
+                        "user",
+                        "pilot",
+                        "interval_start",
+                        "interval_end",
+                        "factor",
+                        "score",
+                        "notice"
+                    ]
                 }
-              ]
+            ]
         }
 
         try:
@@ -1395,7 +1399,6 @@ class Utilities(object):
             logging.error("The schema entered by the user is invalid")
             msg = e.message
         return msg
-
 
     ###################################################################################################
     ############################################Utilities#######################################################
@@ -1516,6 +1519,32 @@ class Utilities(object):
             action = p_one_data['action'].split(':')[-1].lower() or None  # lowering string cases
             # Get current registered users
             res = p_database.check_action(action)
+        return res
+
+    @staticmethod
+    def validate_lea(p_database, p_one_data):
+        """
+        Giving a valid LEA (add_action data) check if it exist previously in database or not
+
+        To know if a LEA exist previously in database we need to check if a LEA contains:
+
+            * Same LEA execution datetime from the same user in role doing the same action in the same location
+
+            -->  (execution_datetime, user_in_role_id, cd_action_id, location_id)
+
+
+        :return:
+        """
+        res = False
+        if p_one_data and p_one_data.get('action', False) and p_one_data.get('location', False) and \
+                p_one_data.get('timestamp', False) and p_one_data.get('user', False):
+            # Getting the needed data
+            execution_datetime = p_one_data['timestamp']
+            user_in_role_id = int(p_one_data['user'].split(':')[-1].lower())    # Convert to int value
+            cd_action_name = p_one_data['action'].split(':')[-1].lower()
+            location_name = p_one_data['location'].lower()
+            # Calling to the database to test
+            res = p_database.check_lea(execution_datetime, user_in_role_id, cd_action_name, location_name)
         return res
 
     @staticmethod

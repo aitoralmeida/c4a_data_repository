@@ -1121,7 +1121,72 @@ def _convert_to_dict(p_requested_data):
 
 
 """
-Different curl examples:
+
+    TO-DOS
+==================
+
+# API VERSION 2
+
+---> Proposed ERROR msg
+
+--> Simple ERRORs
+
+{
+  "status_code": 400,
+  "reason_phrase": "Bad Request",
+  "error_code": "geeks-1",
+  "error_message": "The geek already exists"
+}
+
+--> VALIDATION JSON schema errors
+
+{
+  "status_code": 400,
+  "reason_phrase": "Bad Request",
+  "errors": [
+      {"code": "geeks-2", "message": "The first_name is mandatory"},
+      {"code": "geeks-3", "message": "The last_name is mandatory"}
+  ]
+}
+
+(FOR; validation, adding into a list convert to JSON BLE)
+
+
+-->  GZIP compression thought NGINX
+
+activating using config
+
+
+--> Changes in recogniziton
+
+1º User makes a requests
+2º Check data using an internal class.
+    2.1º Check if given data is valid (application/json, JSON complete DATA, and so on)
+    2.2º Check if data is OK (JSON schema)
+    2.3º Check if data is duplicated, has valid values and so on....
+3º Reporting errors to the User.
+
+--> Changes in rate LIMIT
+
+error 429 is too many requests from the same user,  
+
+
+--> Changes in ORM -- SQL Alchemy + Flask SQL Alchemy wrapper.
+--> USE a CFG file to setup config
+
+º EXAMPLE
+
+### SQLALCHEMY_DATABASE_URI = 'sqlite:////tmp/test.db'
+#   SQLALCHEMY_ECHO = False
+#   SECRET_KEY = '\xfb\x12\xdf\xa1@i\xd6>V\xc0\xbb\x8fp\x16#Z\x0b\x81\xeb\x16'
+### DEBUG = True
+
+
+
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
+
+--> Different curl examples:
 
 
 curl -u rubuser:testingpassw -i -X GET http://0.0.0.0:5000/api/0.1/login

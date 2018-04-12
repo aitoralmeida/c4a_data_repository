@@ -743,6 +743,38 @@ class PostORM(object):
             res = True
         return res
 
+    def check_lea(self, p_execution_datetime, p_user_in_role_id, p_cd_action_name, p_location_name):
+        """
+        Giving a LEA basic contraint information this method ensures that a LEA is not dulicated in DB
+
+        :param p_execution_datetime: The execution datetime of a LEA
+        :param p_user_in_role_id: The City4age ID
+        :param p_cd_action_name: The action name of the given LEa
+        :param p_location_name: The location name of the given LEA
+        :return: True if the entered data is NOT in DB
+                FALSE if there is duplicated data with this samples provided
+        """
+        res = False
+        # Obtaining location ID
+        location = self.session.query(self.tables.Location).filter_by(location_name=p_location_name).first()
+        if location and location.id:
+            # Obtaining action ID
+            cd_action = self.session.query(self.tables.CDAction).filter_by(action_name=p_cd_action_name).first()
+            # Checki if the LEA exist or not
+            if cd_action and location and cd_action.id and location.id:
+                # Obtaining lea
+                q = self.session.query(self.tables.ExecutedAction).filter_by(execution_datetime=p_execution_datetime,
+                                                                             user_in_role_id=p_user_in_role_id,
+                                                                             cd_action_id=cd_action.id,
+                                                                             location_id=location.id)
+                if q.count() == 0:
+                    # There are not entries with this combination in database
+                    res = True
+        else:
+            # If location doesn't exist yet, LEA is VALID
+            res = True
+        return res
+
     ###################################################################################################
     ###################################################################################################
     ######                              DATABASE GETTERS
@@ -774,6 +806,22 @@ class PostORM(object):
         # Getting table instance
         table_instance = m.tables[p_schema + '.' + p_table_name]
         return table_instance
+
+    def get_user_in_pilot(self, p_pilot_code):
+        """
+        By giving the a Pilot code we extract the total users from this Pilot
+
+        :param p_pilot_code: The Pilot code
+        :return: The City4ageId (Table ID) of the users of that Pilot if the Pilot exists
+        """
+        list_of_user = []
+        pilot = self.session.query(self.tables.Pilot).filter_by(pilot_code=p_pilot_code)
+        if pilot:
+            query = self.session.query(self.tables.UserInRole).filter_by(pilot_code=p_pilot_code)
+            list_of_user = [row.id for row in query.all()]
+
+        return list_of_user
+
 
     ###################################################################################################
     ###################################################################################################

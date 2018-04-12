@@ -285,7 +285,7 @@ class ARPostORM(PostORM):
         furniture_type = p_add_action_data.get('payload', None) and \
                          p_add_action_data['payload'].get('furniture_type', None) and \
                          p_add_action_data['payload']['furniture_type'].lower()
-        state_type = p_add_action_data.get('payload', None) and p_add_action_data['payload'].get('state_type', None)
+        state_type = p_add_action_data.get('payload', None) and p_add_action_data['payload'].get('state_type', None).lower()
         calling_number = p_add_action_data.get('payload', None) and \
                          p_add_action_data['payload'].get('calling_number', None)
 
@@ -481,7 +481,7 @@ class ARPostORM(PostORM):
         query = self.session.query(ar_tables.ExecutedTransformedAction).filter(
             ar_tables.ExecutedTransformedAction.transformed_execution_datetime.between(p_start_time, p_end_time),
             ar_tables.ExecutedTransformedAction.user_in_role_id == p_user_in_role)
-        logging.debug(inspect.stack()[0][3], "Total founded LEAS in database: ", query.count(), "\nfor user: ", p_user_in_role)
+        logging.debug(inspect.stack()[0][3], "Total LEAS in database: ", query.count(), "\nfor user: ", p_user_in_role)
         for q in query:
             # Extracting the needed data and obtaining additional values
             transformed_action = self.session.query(ar_tables.CDTransformedAction).filter_by(id=q.cd_transformed_action_id)[0]
@@ -577,3 +577,14 @@ class ARPostORM(PostORM):
         list_of_user = [row.user_in_role_id for row in query.all()]
 
         return list_of_user
+
+    def get_transformed_action_codebook(self):
+        """
+        This method recovers all transformed actions from database transformed action cobeook table
+
+        :return:
+        """
+        query = self.session.query(ar_tables.CDTransformedAction)
+        list_of_transformed_action_name = [row.transformed_action_name for row in query.all()]
+
+        return list_of_transformed_action_name

@@ -669,6 +669,8 @@ class Pilot(Base):
     latest_data_submission_completed = Column(ArrowType(timezone=True), nullable=True)
     latest_derived_detection_variables_computed = Column(ArrowType(timezone=True), nullable=True)
     latest_configuration_update = Column(ArrowType(timezone=True), nullable=True)
+    newest_submitted_data = Column(ArrowType(timezone=True), nullable=True)
+    time_of_computation = Column(ArrowType(timezone=True), nullable=True)
     # One2Many
     user_in_role = relationship('UserInRole')
     location = relationship('Location')

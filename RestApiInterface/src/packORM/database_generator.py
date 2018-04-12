@@ -1051,6 +1051,10 @@ def create_transformed_actions(p_tables, p_orm):
                                                  transformed_action_description='The user start to walking',
                                                  action_name='body_state_start', state_type='walking')
 
+    still_start = p_tables.CDTransformedAction(transformed_action_name='still_start',
+                                                 transformed_action_description='The user start to still',
+                                                 action_name='body_state_start', state_type='still')
+
     sleeping_start = p_tables.CDTransformedAction(transformed_action_name='sleeping_start',
                                                   transformed_action_description='The user start to sleep',
                                                   action_name='body_state_start', state_type='sleeping')
@@ -1070,6 +1074,10 @@ def create_transformed_actions(p_tables, p_orm):
     walking_stop = p_tables.CDTransformedAction(transformed_action_name='walking_stop',
                                                 transformed_action_description='The user stop to walking',
                                                 action_name='body_state_stop', state_type='walking')
+
+    still_stop = p_tables.CDTransformedAction(transformed_action_name='still_stop',
+                                                transformed_action_description='The user stop to still',
+                                                action_name='body_state_stop', state_type='still')
 
     sleeping_stop = p_tables.CDTransformedAction(transformed_action_name='sleeping_stop',
                                                  transformed_action_description='The user stop to sleep',
@@ -1091,6 +1099,10 @@ def create_transformed_actions(p_tables, p_orm):
                                               transformed_action_description='The user is walking',
                                               action_name='body_state_in', state_type='walking')
 
+    still_in = p_tables.CDTransformedAction(transformed_action_name='still_in',
+                                              transformed_action_description='The user is stilling',
+                                              action_name='body_state_in', state_type='still')
+
     sleeping_in = p_tables.CDTransformedAction(transformed_action_name='sleeping_in',
                                                transformed_action_description='The user is sleeping',
                                                action_name='body_state_in', state_type='sleeping')
@@ -1100,6 +1112,7 @@ def create_transformed_actions(p_tables, p_orm):
                                                 action_name='body_state_in', state_type='climbingstairs')
 
     # TODO what things we can do with the body_state_in ¿? threat them as start of stop¿?
+
 
     # Phone related LEAS
 
@@ -1125,7 +1138,7 @@ def create_transformed_actions(p_tables, p_orm):
         fridge_closed, oven_closed, microwave_closed, walking_start, sleeping_start,
         stairs_up_start, walking_start, walking_stop, sleeping_stop, stairs_up_stop,
         oven_on, tv_on, cooker_on, washingmachine_on, oven_off, tv_off, cooker_off, washingmachine_off, walking_in,
-        sleeping_in, stairs_up_in
+        sleeping_in, stairs_up_in, still_start, still_in, still_stop
     ])
 
     # Insert data, pending action
