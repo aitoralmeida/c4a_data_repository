@@ -188,7 +188,10 @@ class Utilities(object):
         }
 
         try:
+            # Creating a list of valid leas
+            list_of_valid_leas = []
             # Creating a list of duplicated LEAS
+            list_of_duplicated_leas = []
             list_of_duplicated_leas_in_db = []
             # Obtaining the list of action from database
             list_of_actions = p_database.get_action_name()
@@ -212,12 +215,27 @@ class Utilities(object):
                     elif not Utilities.validate_lea(p_database, data):
                         # Duplicated LEA, append to a list to return to the user
                         list_of_duplicated_leas_in_db.append(data)
+                    else:
+                        # LEA is valid, we are going to see if it is duplicated in the list
+                        # data = dict((k.lower(), v.lower()) for k, v in data.items())    # Lowering key values of dict
+                        if data not in list_of_valid_leas:
+                            # Valid and unique lea, append into the list
+                            list_of_valid_leas.append(data)
+                        else:
+                            # Not a valid LEA
+                            if data not in list_of_duplicated_leas:
+                                list_of_duplicated_leas.append(data)
+
                 # Check if we have duplicated LEAS in DB an raise an error
                 if len(list_of_duplicated_leas_in_db) > 0:
-                     logging.error("The entered LEA is duplicated in database (same user doing the same "
-                               "action in the same location at the same time, check the following values:\n %s)" % list_of_duplicated_leas_in_db)
-                     raise ValidationError("The entered LEA is duplicated in database (same user doing the same "
-                                       "action in the same location at the same time, check the following values:\n %s)" % list_of_duplicated_leas_in_db)
+                    logging.error("The entered LEA is duplicated in database (same user doing the same "
+                                  "action in the same location at the same time, check the following values:\n %s)" % list_of_duplicated_leas_in_db)
+                    raise ValidationError("The entered LEA is duplicated in database (same user doing the same "
+                                          "action in the same location at the same time, check the following values:\n %s)" % list_of_duplicated_leas_in_db)
+
+                elif len(list_of_duplicated_leas) > 0:
+                    logging.error("Your JSON requests contains duplicated LEAS. Please check and remove the following duplicated values:\n %s" % list_of_duplicated_leas)
+                    raise ValidationError("Your JSON requests contains duplicated LEAS. Please check and remove the following duplicated values:\n %s" % list_of_duplicated_leas)
 
             else:
                 raise ValidationError("The provided data it seems not to be a JSON list, please create a JSON list")
@@ -688,7 +706,7 @@ class Utilities(object):
         return msg
 
     @staticmethod
-    def check_clear_user_data(p_data):
+    def check_clear_user_data(p_database, p_data, p_pilot_code):
         """
         Check if data is ok
 
@@ -703,28 +721,29 @@ class Utilities(object):
             "title": "Clear all data related to user in the system",
             "type": "object",
             "properties": {
-                "id": {
-                    "description": "The id of the user in role in system",
+                "user": {
+                    "description": "The user in role who performs the registered action",
                     "type": "string",
-                    "minLength": 10,
-                    "maxLength": 75
+                    "minLength": 3,
+                    "maxLength": 50,
+                    "pattern": "^eu:c4a:user:[0-9]{1,15}$",
                 }
             },
             "required": [
-                "id"
+                "user"
             ],
             "additionalProperties": False
         }
 
-        # TODO Insert a validation to know if the user exist already in the system. Maybe there is implemented yet
-
         try:
-            if type(p_data) is list:
-                # We have a list of dicts
-                for data in p_data:
-                    validate(data, schema, format_checker=FormatChecker())
-            else:
-                validate(p_data, schema, format_checker=FormatChecker())
+            for data in p_data:
+                # Validating user data
+                validate(data, schema, format_checker=FormatChecker())
+                if not Utilities.validate_user_pilot(p_database, data['user'].split(':')[-1].lower(), p_pilot_code):
+                    logging.error("The entered user pilot is incorrect or the user doesn't exist: %s" %
+                                  data['user'])
+                    raise ValidationError("The entered user pilot is incorrect or the user doesn't exist: %s" %
+                                          data['user'])
         except ValidationError as e:
             logging.error("The schema entered by the user is invalid")
             msg = e.message
@@ -1540,7 +1559,7 @@ class Utilities(object):
                 p_one_data.get('timestamp', False) and p_one_data.get('user', False):
             # Getting the needed data
             execution_datetime = p_one_data['timestamp']
-            user_in_role_id = int(p_one_data['user'].split(':')[-1].lower())    # Convert to int value
+            user_in_role_id = int(p_one_data['user'].split(':')[-1].lower())  # Convert to int value
             cd_action_name = p_one_data['action'].split(':')[-1].lower()
             location_name = p_one_data['location'].lower()
             # Calling to the database to test

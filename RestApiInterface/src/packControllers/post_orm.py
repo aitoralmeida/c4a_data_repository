@@ -59,6 +59,8 @@ else:
         'database': 'postgres'
     }
 
+
+# TODO use the ontology to fill this list of outdoor values --> SPARQL query.
 # List containing the values that are considered as OUTDOOR
 OUTDOOR_VALUES = ['outdoor', 'publicpark', 'cityzone', 'foodcourt', 'transportationmean', 'publictransportationmean',
                   'privatetransportationmean', 'bus', 'car', 'taxi', 'train']
@@ -821,6 +823,34 @@ class PostORM(object):
             list_of_user = [row.id for row in query.all()]
 
         return list_of_user
+
+    def get_activity_name(self):
+        """
+        This method recovers all activities name from database codebook of activities
+
+        :return:
+        """
+        query = self.session.query(self.tables.CDActivity)
+        list_of_transformed_action_name = [row.activity_name for row in query.all()]
+
+        return list_of_transformed_action_name
+
+    def get_activity_name_by_id(self, p_activity_id):
+        """
+        Using the ID of the current activity, this method returns an activity instance
+
+        :return:
+        """
+        query = self.session.query(self.tables.CDActivity).filter_by(id=p_activity_id).first()
+        return query.activity_name
+
+    def get_executed_activity(self, p_user_id):
+        """
+        By giving an user id, this method returns the performed executed activities.
+
+        :return:
+        """
+        return self.session.query(self.tables.ExecutedActivity).filter_by(user_in_role_id=p_user_id).all()
 
 
     ###################################################################################################

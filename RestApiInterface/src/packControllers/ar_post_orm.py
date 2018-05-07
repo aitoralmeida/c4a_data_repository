@@ -245,20 +245,45 @@ class ARPostORM(PostORM):
                 False if something happened
         """
 
-        # TODO code this clean server
+        res = False
 
-        # You need to set in the ORM 'cascade' values
+        for data in p_data:
+            # Obtaining data from user requests
+            user_in_role_id = int(data['user'].split(':')[-1])
+            if user_in_role_id:
+                # TODO you need to check if some of the tables can be deleted using CASCADE option
+                logging.info(inspect.stack()[0][3], "Deleting user %s from AR schema" % user_in_role_id)
+                # Removing user's data
+                self.session.query(ar_tables.ExecutedTransformedAction).filter_by(user_in_role_id=user_in_role_id).delete()
+                self.session.query(ar_tables.ExecutedAction).filter_by(user_in_role_id=user_in_role_id).delete()
+                self.session.query(ar_tables.ExecutedActivity).filter_by(user_in_role_id=user_in_role_id).delete()
+                self.session.query(ar_tables.UserInEAM).filter_by(user_in_role_id=user_in_role_id).delete()
 
-        # 1º - AR SCHEMA
 
-        # Remvoe data from: executed_action
-        # Remove data from: executed_activity
-        # Remove data from: user_in_eam
-        # Remove data from: cd_eam_user_in_role
-        # Remove data from: executed_transformed_action
-        # Remove data from: user_in_role
+                # TODO the tables of this part should be deleted using CASCADE in their tables class
 
-        pass
+
+                # TODO user_in_system is NOT deleting in cascade
+
+
+                self.session.query(ar_tables.UserInRole).filter_by(id=user_in_role_id).delete()
+
+                # Obtaining user in role instance
+                # delete_user_in_role = self.session.query(ar_tables.UserInRole).filter_by(id=user_in_role_id)
+                # delete_user_in_system = self.session.query(ar_tables.UserInSystem).filter_by(id=delete_user_in_role.user_in_system[0].id)
+                # delete_user_action = self.session.query(ar_tables.UserAction).filter_by(user_in_system_id=delete_user_in_system[0].id)
+                #
+                # # Deleting tables
+                # delete_user_action.delete() if delete_user_action.count() == 1 else None
+                # delete_user_in_system.delete() if delete_user_in_system.count() == 1 else None
+                # delete_user_in_role.delete() if delete_user_in_role.count() == 1 else None
+
+                # Finishing with a commit
+                res = self.commit()
+            else:
+                logging.error(inspect.stack()[0][3], "Can't extract user from the given p_data value. Something extrange happened")
+
+        return res
 
     def _add_transformed_action(self, p_add_action_data, p_executed_action):
         """
@@ -285,7 +310,9 @@ class ARPostORM(PostORM):
         furniture_type = p_add_action_data.get('payload', None) and \
                          p_add_action_data['payload'].get('furniture_type', None) and \
                          p_add_action_data['payload']['furniture_type'].lower()
-        state_type = p_add_action_data.get('payload', None) and p_add_action_data['payload'].get('state_type', None).lower()
+        state_type = p_add_action_data.get('payload', None) and \
+                     p_add_action_data['payload'].get('state_type', None) and \
+                         p_add_action_data['payload']['state_type'].lower()
         calling_number = p_add_action_data.get('payload', None) and \
                          p_add_action_data['payload'].get('calling_number', None)
 

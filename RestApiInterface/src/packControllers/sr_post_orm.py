@@ -245,19 +245,39 @@ class SRPostORM(PostORM):
                 False if something happened
         """
 
-        # TODO code this clean server
 
-        # 2º-  SR SCHEMA
-        # Remove data from: executed_action
-        # Remove data from: executed_activity
-        # Remove data from: variation_measure_value
-        # Remove data from: frailty_status_timeline
-        # Remove data from: care_profile
-        # Remove data from: numeric_indicator_value
-        # Remove data from: assessment
-        # Remove data from: geriatric_factor_value
-        # Remove data from: source_evidence
-        pass
+        res = False
+        # Obtaining data from user requests
+        for data in p_data:
+
+            user_in_role_id = data.get('user', None)
+            if user_in_role_id:
+                logging.info(inspect.stack()[0][3], "Deleting user %s from SR schema" % user_in_role_id)
+                # TODO you need to check if some of the tables can be deleted using CASCADE option
+                # Removing user's data
+                self.session.query(sr_tables.ExecutedAction).filter_by(user_in_role_id=user_in_role_id).delete()
+                self.session.query(sr_tables.ExecutedActivity).filter_by(user_in_role_id=user_in_role_id).delete()
+                self.session.query(sr_tables.VariationMeasureValue).filter_by(user_in_role_id=user_in_role_id).delete()
+
+                self.session.query(sr_tables.NumericIndicatorValue).filter_by(user_in_role_id=user_in_role_id).delete()
+                self.session.query(sr_tables.GeriatricFactorValue).filter_by(user_in_role_id=user_in_role_id).delete()
+
+                self.session.query(sr_tables.FrailtyStatusTimeline).filter_by(user_in_role_id=user_in_role_id).delete()
+                self.session.query(sr_tables.CareProfile).filter_by(user_in_role_id=user_in_role_id).delete()
+
+                # TODO check if you need to delete more tables or not
+
+                self.session.query(sr_tables.UserInRole).filter_by(user_in_role_id=user_in_role_id).delete()
+
+                # Finishing with a commit
+                res = self.commit()
+            else:
+                logging.error(inspect.stack()[0][3],
+                              "Can't extract user from the given p_data value. Something extrange happened")
+
+        return res
+
+
 
     ###################################################################################################
     ###################################################################################################

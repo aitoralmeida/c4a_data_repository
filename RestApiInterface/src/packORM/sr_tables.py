@@ -578,8 +578,8 @@ class UserInSystem(Base):
     is_active = Column(Boolean, unique=False, default=True)
 
     # one2many
-    user_action = relationship('UserAction')
-    user_in_role = relationship('UserInRole')
+    user_action = relationship('UserAction', cascade="all, delete-orphan")
+    user_in_role = relationship('UserInRole', cascade="all, delete-orphan")
 
     def __repr__(self):
         return "<UserInRole(username='%s', password='%s', created_date='%s')>" % (
