@@ -40,6 +40,6 @@ testfixtures==4.9.1
 urllib3==1.22
 uWSGI==2.0.17.1
 validators==0.12.0
-Werkzeug==0.14.1
+Werkzeug==0.15.3
 Whoosh==2.7.4
 WhooshAlchemy==0.3.1
