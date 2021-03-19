@@ -12,7 +12,7 @@ future==0.16.0
 idna==2.6
 isodate==0.5.4
 itsdangerous==0.24
-Jinja2==2.10
+Jinja2==2.11.3
 jsonschema==2.5.1
 make-deb==0.0.5
 Mako==1.0.7
