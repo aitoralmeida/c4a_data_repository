@@ -37,7 +37,7 @@ SPARQLWrapper==1.8.1
 SQLAlchemy==1.0.12
 SQLAlchemy-Utils==0.32.14
 testfixtures==4.9.1
-urllib3==1.22
+urllib3==1.26.5
 uWSGI==2.0.17.1
 validators==0.12.0
 Werkzeug==0.14.1
